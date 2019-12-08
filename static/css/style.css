@@ -1,0 +1,17 @@
+
+html,
+body {
+    height: 100%;
+}
+
+.autocusto__brand {
+    font-family: cursive;
+}
+
+.required-mark {
+    color: red;
+}
+
+#base-process {
+    width: 52.5rem;
+}
