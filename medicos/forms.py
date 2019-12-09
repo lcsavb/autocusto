@@ -4,11 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 
 class MedicoCadastroFormulario(UserCreationForm):
     email = forms.EmailField()
-    crm = forms.IntegerField()
-    cns_medico = forms.IntegerField()
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'crm',
-         'cns_medico', 'password1', 'password2'
-         ]
+        fields = ['username', 'email', 'password1', 'password2']

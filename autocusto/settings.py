@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'processos.apps.ProcessosConfig',
     'medicos.apps.MedicosConfig',
+    'clinicas.apps.ClinicasConfig',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -124,3 +125,7 @@ STATIC_URL = '/static/'
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+# Login
+LOGIN_REDIRECT_URL = 'home'
+LOGIN_URL = 'login'
