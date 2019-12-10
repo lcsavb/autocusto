@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'processos.apps.ProcessosConfig',
     'medicos.apps.MedicosConfig',
     'clinicas.apps.ClinicasConfig',
+    'pacientes.apps.PacientesConfig',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',

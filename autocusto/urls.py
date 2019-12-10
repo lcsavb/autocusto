@@ -21,5 +21,6 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('admin/', admin.site.urls),
     path('medicos/', include('medicos.urls')),
+    path('pacientes/', include('pacientes.urls')),
     path('processos/', include('processos.urls'))
 ]

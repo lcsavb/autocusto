@@ -2,6 +2,7 @@ from django.db import models
 from medicos.models import Medico
 
 class Clinica(models.Model):
+    id = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=200)
     medicos = models.ManyToManyField(Medico, related_name='clinica')
     cns = models.CharField(max_length=30)

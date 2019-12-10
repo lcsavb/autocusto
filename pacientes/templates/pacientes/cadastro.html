@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+   
+{% block content %}
+
+<div class="container" style="max-width:500px">
+    <form method="POST">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Cadastro de Paciente</legend>
+            {{ formulario|crispy }}
+        </fieldset>
+        <div class="form-group">
+            <button class="btn btn-outline-info" type="submit">Cadastrar</button>
+        </div>
+    </form>
+</div>
+        
+{% endblock content %}

@@ -4,4 +4,5 @@ from django.contrib.auth.models import User
 
 @login_required
 def cadastro(request):
-    return render(request, 'processos/cadastro.html')
+    contexto = {'paciente': request.GET.get('paciente')}
+    return render(request, 'processos/cadastro.html', context=contexto)
