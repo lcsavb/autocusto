@@ -1,11 +1,27 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
-class Medico(models.Model):
-    medico = models.OneToOneField(User, on_delete=models.CASCADE)
-    nome = models.CharField(max_length=200, default='Nome completo do médico')
-    cns = models.CharField(max_length=17, default='CNS do médico')
-    crm = models.CharField(max_length=10, default='CRM do médico')
+from .managers import CustomUserManager
+
+
+class Medico(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(_('email address'), unique=True)
+    nome = models.CharField(max_length=200)
+    crm = models.CharField(max_length=10, unique=True)
+    cns = models.CharField(max_length=15, unique=True)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    date_joined = models.DateTimeField(default=timezone.now)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['nome', 'crm', 'cns']
+
+    objects = CustomUserManager()
 
     def __str__(self):
-         return f'{self.medico.username}'
+        return self.email
+
+        

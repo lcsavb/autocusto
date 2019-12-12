@@ -1,3 +1,33 @@
 from django.db import models
 
-# Create your models here.
+class Processo(models.Model):
+    anamnese = models.TextField(max_length=600)
+    cid = models.CharField(max_length=6)
+    med1 = models.CharField(max_length=100)
+    med2 = models.CharField(max_length=100)
+    med3 = models.CharField(max_length=100)
+    med4 = models.CharField(max_length=100)
+    med5 = models.CharField(max_length=100)
+    qtd_med1_mes1 = models.CharField(max_length=3)
+    qtd_med1_mes2 = models.CharField(max_length=3)
+    qtd_med1_mes3 = models.CharField(max_length=3)
+    qtd_med2_mes1 = models.CharField(max_length=3)
+    qtd_med2_mes2 = models.CharField(max_length=3)
+    qtd_med2_mes3 = models.CharField(max_length=3)
+    qtd_med3_mes1 = models.CharField(max_length=3)
+    qtd_med3_mes2 = models.CharField(max_length=3)
+    qtd_med3_mes3 = models.CharField(max_length=3)
+    qtd_med4_mes1 = models.CharField(max_length=3)
+    qtd_med4_mes2 = models.CharField(max_length=3)
+    qtd_med4_mes3 = models.CharField(max_length=3)
+    qtd_med5_mes1 = models.CharField(max_length=3)
+    qtd_med5_mes2 = models.CharField(max_length=3)
+    qtd_med5_mes3 = models.CharField(max_length=3)
+    tratou = models.BooleanField(default=False)
+    tratamento_previo = models.TextField(max_length=600)
+    data1 = models.DateField()  
+    data2 = models.DateField()
+    data3 = models.DateField()
+    preenchido_por = models.CharField(choices=(('P', 'Paciente'), ('M', 'Mãe'),
+    ('R', 'Responsável'),('M', 'Médico')),
+     max_length=128)    

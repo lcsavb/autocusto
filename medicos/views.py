@@ -10,7 +10,7 @@ def cadastro(request):
         if formulario.is_valid():
             formulario.save()
             username = formulario.cleaned_data.get('username')
-            messages.success(request, f'Conta criada para {username}! Você já pode fazer o login.')
+            messages.success(request, f'Conta criada para {nome}! Você já pode fazer o login.')
             return redirect('login')
     else:
         formulario = MedicoCadastroFormulario()
