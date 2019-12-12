@@ -3,17 +3,68 @@
 
 {% block content %}
 
+<div class="container-fluid">
+  <form method="POST"> {% csrf_token %}
 
-<div class="container" style="max-width:500px">
-  <form method="POST">
-      {% csrf_token %}
-      <fieldset class="form-group">
-          <legend class="border-bottom mb-4">Novo Processo</legend>
-          {{ formulario|crispy }}
-      </fieldset>
-      <div class="form-group">
-          <button class="btn btn-outline-info" type="submit">Cadastrar</button>
-      </div>
+    
+    <div class="card rounded" style="padding: 1.5rem;">
+        <div><h3>Dados do paciente {{ formulario.errors }} </h3></div>
+    <div class="form-row">
+        <div class="col-sm-4"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
+    </div>
+
+     <div class="form-row">
+                 
+        <div class="col-10"> {{ formulario.nome_paciente|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.altura|as_crispy_field }}</div>
+        
+    </div>
+
+    <div class="form-row">
+        <div class="col-10"> {{ formulario.nome_mae|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.peso|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+            <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
+            <div class="col-9">{{ formulario.nome_responsavel|as_crispy_field }}</div>
+    </div>
+
+    <hr>
+    
+    <div><h3>Dados do processo</h3></div>
+
+    <div class="form-row">
+        {{ formulario.data1.errors }}
+        <div class="col-sm-4"> {{ formulario.data1|as_crispy_field }} </div>
+    </div>
+
+    <div class="form-row">
+        <div class="col-2">{{ formulario.cid|as_crispy_field }}</div>
+        <div class="col-10">{{ formulario.diagnostico|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+            <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+        <div class="col-6"> {{ formulario.medicamento1|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.qtd_med1_mes1|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.qtd_med1_mes2|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.qtd_med1_mes3|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+            <div class="col-3">{{ formulario.trat_previo|as_crispy_field }}</div>
+            <div class="col-9">{{ formulario.tratamento_previo|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+            <button class="btn btn-outline-info" type="submit">Cadastrar</button>
+        </div>
+    </div>    
+
   </form>
 </div>
       
