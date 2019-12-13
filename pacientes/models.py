@@ -9,7 +9,7 @@ class Paciente(models.Model):
     idade = models.CharField(max_length=100, null=True)
     sexo = models.CharField(max_length=100, null=True)
     nome_mae = models.CharField(max_length=100, null=True)
-    incapaz = models.BooleanField(null=True)
+    incapaz = models.BooleanField()
     nome_responsavel = models.CharField(max_length=100, null=True)
     rg = models.CharField(max_length=100, null=True)
     peso = models.CharField(max_length=100, null=True)

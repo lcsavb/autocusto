@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block content %}
 
 <div class="container-fluid">
   <form method="POST"> {% csrf_token %}
-        {{ form.name_of_field.errors }}
 
     
     <div class="card rounded" style="padding: 1.5rem;">
@@ -36,8 +36,7 @@
     <div><h3>Dados do processo</h3></div>
 
     <div class="form-row">
-        {{ formulario.data1.errors }}
-        <div class="col-sm-2"> {{ formulario.data1|as_crispy_field }} </div>
+        <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
         <div class="col-sm-4"> {{ formulario.cns_clinica|as_crispy_field }} </div>
         <div class="col-sm-6"> {{ formulario.nome_clinica|as_crispy_field }} </div>
     </div>
@@ -52,19 +51,19 @@
     </div>
 
     <div class="form-row">
-        <div class="col-6"> {{ formulario.medicamento1|as_crispy_field }}</div>
+        <div class="col-6"> {{ formulario.med1|as_crispy_field }}</div>
         <div class="col-2"> {{ formulario.qtd_med1_mes1|as_crispy_field }}</div>
         <div class="col-2"> {{ formulario.qtd_med1_mes2|as_crispy_field }}</div>
         <div class="col-2"> {{ formulario.qtd_med1_mes3|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
-        <div class="col-12"> {{ formulario.posologia_med1|as_crispy_field }}</div>
+        <div class="col-12"> {{ formulario.med1_posologia_mes1|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
             <div class="col-3">{{ formulario.trat_previo|as_crispy_field }}</div>
-            <div class="col-9">{{ formulario.tratamento_previo|as_crispy_field }}</div>
+            <div class="col-9">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
