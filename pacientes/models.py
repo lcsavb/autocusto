@@ -15,7 +15,7 @@ class Paciente(models.Model):
     peso = models.CharField(max_length=100, null=True)
     altura = models.CharField(max_length=100, default='1,70m')
     escolha_etnia = models.CharField(max_length=100, null=True)
-    cpf_paciente = models.CharField(max_length=100, null=True)
+    cpf_paciente = models.CharField(unique=True, max_length=100, null=True)
     cns_paciente = models.CharField(max_length=100, null=True)
     email_paciente = models.EmailField(null=True)
     cidade_paciente = models.CharField(max_length=100, null=True)

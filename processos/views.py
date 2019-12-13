@@ -7,11 +7,13 @@ from .forms import NovoProcesso
 @login_required
 def cadastro(request):
     medico = request.user
-    print(request.user)
+
     
-    formulario = NovoProcesso(request.POST)
-    if request.method == 'POST' and formulario.is_valid():
-            print(request.POST)
+    if request.method == 'POST':
+        formulario = NovoProcesso(request.POST)
+        print(request.POST)
+    
+        if formulario.is_valid(): 
             print(formulario.cleaned_data)
             formulario.save(medico.pk)
     else:

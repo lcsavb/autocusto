@@ -7,6 +7,7 @@ class Processo(models.Model):
     cid = models.CharField(max_length=6)
     diagnostico = models.CharField(max_length=100)
     med1 = models.CharField(max_length=100, null=True)
+    posologia_med1=models.CharField(max_length=300, null=True)
     med2 = models.CharField(max_length=100, null=True)
     med3 = models.CharField(max_length=100, null=True)
     med4 = models.CharField(max_length=100, null=True)
