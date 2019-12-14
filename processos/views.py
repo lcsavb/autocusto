@@ -1,12 +1,25 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.views.generic import ListView
 from django.conf import settings
+from django.db.models import Q
 from medicos.models import Medico
+from pacientes.models import Paciente
 from .forms import NovoProcesso
 import os
 import pypdftk
 from .manejo_pdfs import GeradorPDF
+
+class ResultadosBuscaPacientes(ListView):
+    model = Paciente
+    template_name = 'processos/busca.html'
+
+    def get_queryset(self):
+        busca = self.request.GET.get('b')
+        object_list = Paciente.objects.filter(
+            Q(nome__icontains=busca) | Q(cpf_paciente__icontains=busca)
+        )
+        return object_list
 
 @login_required
 def cadastro(request):
@@ -18,9 +31,14 @@ def cadastro(request):
             
         if formulario.is_valid(): 
             dados = formulario.cleaned_data
+
+            # Registra os dados do médico logado
             dados_medico = {'nome_medico': medico.nome, 'cns_medico': medico.cns}
             dados.update(dados_medico)
+
+            # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
+
             formulario.save(medico.pk)
             args = [dados, dados_condicionais, settings.PATH_LME_BASE]
             pdf = GeradorPDF(*args)

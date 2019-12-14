@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+   
+{% block content %}
+
+<ul>
+    {% for paciente in object_list %}
+        <li> {{ paciente }}, {{ paciente.cpf_paciente }}, {{ paciente.medico.nome }} </li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}

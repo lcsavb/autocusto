@@ -4,7 +4,6 @@ from random import randint
 import pypdftk
 from django.conf import settings
 
-
 def preencher_formularios(lista_pdfs,dados_finais):
     '''Preenche os pdfs individualmente e gera os arquivos
     intermediários com nomes aleatórios '''
@@ -63,10 +62,14 @@ class GeradorPDF():
         cpf_paciente = dados_lme_base['cpf_paciente']
         cid = dados_lme_base['cid']
         nome_final_pdf = f'tmp/pdf_final_{cpf_paciente}_{cid}.pdf'
-        path_pdf_final = os.path.join(settings.BASE_DIR, 'processos/static', nome_final_pdf)
+
+        #Esse é o endereço de output lido pelo PDFTK "localmente"
+        output_pdf_final = os.path.join('processos/static', nome_final_pdf)
+
+        #Não me parece a melhor maneira de fazer isso. Essa é a URL para o redirect.
+        path_pdf_final = settings.STATIC_URL + nome_final_pdf
         
-        
-        pdf = pypdftk.fill_form(path_lme_base,dados_lme_base,path_pdf_final)
+        pdf = pypdftk.fill_form(path_lme_base,dados_lme_base,output_pdf_final)
         return pdf, path_pdf_final
 
     
