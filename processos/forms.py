@@ -1,4 +1,6 @@
 from django import forms
+from django.db import transaction
+from datetime import datetime
 from pacientes.models import Paciente
 from medicos.models import Medico
 from processos.models import Processo
@@ -28,16 +30,17 @@ class NovoProcesso(forms.Form):
     cid = forms.CharField(required=True, label='CID')
     diagnostico = forms.CharField(required=True, label='Diagnóstico')
     anamnese = forms.CharField(required=True, label='Anamnese')
-    trat_previo = forms.ChoiceField(choices=(('sim', 'Sim'),
+    trat_previo = forms.ChoiceField(choices=((True, 'Sim'),
          (False, 'Não')), label='Fez tratamento prévio?')
     tratamentos_previos = forms.CharField(label='Descrição dos tratamentos prévios')
-    data_1 = forms.DateField(required=True, label='Data')
+    data_1 = forms.DateField(required=True, label='Data', widget=forms.DateInput(format='%d/%m/%Y'),
+         input_formats=['%d/%m/%Y',])
 
 
 
 
 
-
+    @transaction.atomic
     def save(self, usuario_ativo):
         dados = self.cleaned_data
 

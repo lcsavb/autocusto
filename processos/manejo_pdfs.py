@@ -3,6 +3,7 @@ import random
 from random import randint
 import pypdftk
 from django.conf import settings
+from datetime import datetime, timedelta
 
 def preencher_formularios(lista_pdfs,dados_finais):
     '''Preenche os pdfs individualmente e gera os arquivos
@@ -47,6 +48,16 @@ def adicionar_exames(arquivos_base,dados_finais):
     arquivos_com_exames = arquivos_base + arquivo_exame
     arquivos = preencher_formularios(arquivos_com_exames,dados_finais)
     return arquivos
+
+
+def formatacao_data(data):
+    '''Recebe a data inicial do processo, cria as datas
+     subsequentes e formata para o padrão brasileiro'''
+    data2 = (data + timedelta(days=30)).strftime('%d/%m/%Y')
+    data3 = (data + timedelta(days=60)).strftime('%d/%m/%Y')
+    data1 = data.strftime('%d/%m/%Y')
+    datas = [data1, data2, data3]
+    return datas
        
 
 
@@ -63,6 +74,16 @@ class GeradorPDF():
         cid = dados_lme_base['cid']
         nome_final_pdf = f'tmp/pdf_final_{cpf_paciente}_{cid}.pdf'
 
+        data1 = dados_lme_base['data_1']
+        datas = formatacao_data(data1)
+
+        dados_lme_base['data_1'] = datas[0]
+        dados_lme_base['data_2'] = datas[1]
+        dados_lme_base['data_3'] = datas[2]
+        
+
+
+
         #Esse é o endereço de output lido pelo PDFTK "localmente"
         output_pdf_final = os.path.join('processos/static', nome_final_pdf)
 
@@ -74,6 +95,7 @@ class GeradorPDF():
 
     
     def emitir_exames(self,dados_lme_base):
+        #Redundância
         if dados_lme_base['emitir_exames'] == 'sim':
             return True
         return False
