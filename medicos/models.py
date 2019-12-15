@@ -1,27 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
-from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
+from usuarios.models import Usuario
 
-from .managers import CustomUserManager
-
-
-class Medico(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(_('email address'), unique=True)
-    nome = models.CharField(max_length=200)
+class Medico(models.Model):
+    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
     crm = models.CharField(max_length=10, unique=True)
     cns = models.CharField(max_length=15, unique=True)
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    date_joined = models.DateTimeField(default=timezone.now)
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['nome', 'crm', 'cns']
-
-    objects = CustomUserManager()
-
+    
     def __str__(self):
-        return self.email
+        return self.crm
 
         

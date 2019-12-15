@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'medicos.apps.MedicosConfig',
     'clinicas.apps.ClinicasConfig',
     'pacientes.apps.PacientesConfig',
+    'usuarios.apps.UsuariosConfig',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -89,7 +90,7 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = 'medicos.Medico'
+AUTH_USER_MODEL = 'usuarios.Usuario'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
