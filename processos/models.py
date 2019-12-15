@@ -36,4 +36,7 @@ class Processo(models.Model):
     ('R', 'Responsável'),('M', 'Médico')),
      max_length=128, null=True)
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
-    medico = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)        
+    medico = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)     
+
+    def __str__(self):
+        return f'{self.cid}'   

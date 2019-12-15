@@ -74,10 +74,12 @@
       {% endif %}
 
     </ul>
-    <form class="form-inline my-2 my-lg-0">
-      <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
-      <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
+    {% if user.is_authenticated %}
+    <form action="{% url 'processos-busca' %}" method="GET" class="form-inline my-2 my-lg-0">
+      <input name="b" class="form-control mr-sm-2" type="text" placeholder="Paciente por nome ou CPF" aria-label="Search">
+      <button class="btn btn-secondary my-2 my-sm-0" type="submit">Buscar</button>
     </form>
+    {% endif %}
   </div>
 </nav>
 

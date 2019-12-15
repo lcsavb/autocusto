@@ -1,6 +1,8 @@
 from django.urls import path
-from . import views
+from .views import cadastro, ResultadosBuscaPacientes
+from django.conf import settings
 
 urlpatterns = [
-    path('cadastro/', views.cadastro, name='processos-cadastro'),
-]
+    path('cadastro/', cadastro, name='processos-cadastro'),
+    path('busca/', ResultadosBuscaPacientes.as_view(), name='processos-busca')
+] 
