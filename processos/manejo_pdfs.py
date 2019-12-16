@@ -3,7 +3,11 @@ import random
 from random import randint
 import pypdftk
 from django.conf import settings
+from django.forms.models import model_to_dict
 from datetime import datetime, timedelta
+from pacientes.models import Paciente
+from medicos.models import Medico
+from processos.models import Processo
 
 def preencher_formularios(lista_pdfs,dados_finais):
     '''Preenche os pdfs individualmente e gera os arquivos
@@ -58,6 +62,25 @@ def formatacao_data(data):
     data1 = data.strftime('%d/%m/%Y')
     datas = [data1, data2, data3]
     return datas
+
+def gerar_dados_renovacao(primeira_data, paciente_id, cid):
+    paciente = Paciente.objects.get(id=paciente_id)
+    dados_paciente = model_to_dict(paciente)
+    processo = paciente.processos.get(cid=cid)
+    dados_processo = model_to_dict(processo)
+    medico = paciente.medico
+    dados_medico = model_to_dict(medico)
+
+    print(type(primeira_data))
+
+    
+    dados = {}
+    dados.update(dados_medico)
+    dados.update(dados_paciente)
+    dados.update(dados_processo)
+    dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
+    return dados
+
        
 
 

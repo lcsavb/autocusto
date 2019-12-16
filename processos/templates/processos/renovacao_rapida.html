@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+   
+{% block content %}
+
+<ul>
+    {% for paciente in pacientes %}
+        <li> {{ paciente.nome }}
+            <form method="POST">
+                {% csrf_token %}
+                    <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                <select name="cid">
+                    {% for processo in paciente.processos.all %}
+                    <option value="{{ processo }}">{{ processo }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="data1">
+                <button type="submit">Renovar</button>       
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}

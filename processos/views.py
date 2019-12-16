@@ -6,11 +6,12 @@ from django.conf import settings
 from django.db.models import Q
 from medicos.models import Medico
 from pacientes.models import Paciente
+from processos.models import Processo
 from usuarios.models import Usuario
 from .forms import NovoProcesso
 import os
 import pypdftk
-from .manejo_pdfs import GeradorPDF
+from .manejo_pdfs import GeradorPDF, gerar_dados_renovacao
 
 class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
     model = Paciente
@@ -26,6 +27,39 @@ class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
             & Q(usuario_id__in=Usuario.objects.filter(medico=self.request.user.pk))
         )
         return object_list
+
+
+@login_required
+def renovacao_rapida(request):
+    if request.method == 'GET':
+        busca = request.GET.get('b')
+        usuario = request.user.pk
+        pacientes = Paciente.objects.filter(
+                (Q(nome__icontains=busca) | 
+                Q(cpf_paciente__icontains=busca)) 
+                & Q(usuario_id__in=Usuario.objects.filter(id=usuario))
+            )
+
+        contexto = {'pacientes': pacientes}
+        return render(request, 'processos/renovacao_rapida.html', contexto)
+
+    else: 
+        paciente_id = request.POST.get('paciente_id')
+        nova_data = request.POST.get('data1')
+        cid = request.POST.get('cid')
+
+        dados = gerar_dados_renovacao(nova_data,paciente_id,cid)
+        print('na view')
+        print(dados)
+
+        
+        args = [dados, {}, settings.PATH_LME_BASE]
+        pdf = GeradorPDF(*args)
+        dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
+        path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
+        print(path_pdf_final)
+        return render(request, 'processos/renovacao_rapida.html')
+        
 
 @login_required
 def cadastro(request):
@@ -52,9 +86,6 @@ def cadastro(request):
             path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
             return redirect(path_pdf_final)
     else:
-        formulario = NovoProcesso()
-
-
-    
+        formulario = NovoProcesso()  
 
     return render(request, 'processos/cadastro.html', {'formulario': formulario})

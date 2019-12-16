@@ -37,7 +37,8 @@ class Processo(models.Model):
     preenchido_por = models.CharField(choices=(('P', 'Paciente'), ('M', 'Mãe'),
     ('R', 'Responsável'),('M', 'Médico')),
      max_length=128)
-    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    paciente = models.ForeignKey(Paciente, 
+                on_delete=models.CASCADE, related_name='processos')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
     #clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)     

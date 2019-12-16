@@ -6,6 +6,7 @@ from medicos.models import Medico
 from processos.models import Processo
 from clinicas.models import Clinica
 
+
 class NovoProcesso(forms.Form):
      # Dados da clínica
     cns_clinica = forms.CharField(label="CNS da clínica")
@@ -35,10 +36,6 @@ class NovoProcesso(forms.Form):
     tratamentos_previos = forms.CharField(label='Descrição dos tratamentos prévios')
     data_1 = forms.DateField(required=True, label='Data', widget=forms.DateInput(format='%d/%m/%Y'),
          input_formats=['%d/%m/%Y',])
-
-
-
-
 
     @transaction.atomic
     def save(self, usuario):
