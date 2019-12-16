@@ -41,13 +41,14 @@ class NovoProcesso(forms.Form):
 
 
     @transaction.atomic
-    def save(self, usuario_ativo):
+    def save(self, usuario):
         dados = self.cleaned_data
+        medico = usuario.medico.pk
 
         paciente = Paciente(nome=dados['nome_paciente'], 
         cpf_paciente=dados['cpf_paciente'], peso =dados['peso'],
         altura=dados['altura'], nome_mae=dados['nome_mae'], 
-        incapaz=dados['incapaz'], medico_id=usuario_ativo,
+        incapaz=dados['incapaz'], usuario_id=usuario.pk, medico_id=medico,
         nome_responsavel=dados['nome_responsavel'])
         paciente.save()
 
@@ -62,5 +63,6 @@ class NovoProcesso(forms.Form):
         qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
         diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
         tratou=dados['trat_previo'], tratamento_previo=dados['tratamentos_previos'],
-        data1=dados['data_1'], medico_id=usuario_ativo, paciente_id=paciente_salvo.pk)
+        data1=dados['data_1'], medico_id=medico, usuario_id=usuario.pk,
+        paciente_id=paciente_salvo.pk)
         processo.save()

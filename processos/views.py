@@ -12,7 +12,6 @@ import os
 import pypdftk
 from .manejo_pdfs import GeradorPDF
 
-#BUG Não consigo colocar o decorator @login_required, por quê? É necessário?
 class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'processos/busca.html'
@@ -24,13 +23,14 @@ class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
         busca = self.request.GET.get('b')
         object_list = Paciente.objects.filter(
             (Q(nome__icontains=busca) | Q(cpf_paciente__icontains=busca)) 
-            & Q(medico_id__in=Usuario.objects.filter(medico=self.request.user.pk))
+            & Q(usuario_id__in=Usuario.objects.filter(medico=self.request.user.pk))
         )
         return object_list
 
 @login_required
 def cadastro(request):
     medico = request.user.medico
+    usuario = request.user
     
     if request.method == 'POST':
         formulario = NovoProcesso(request.POST)
@@ -45,7 +45,7 @@ def cadastro(request):
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
 
-            formulario.save(medico.pk)
+            formulario.save(usuario)
             args = [dados, dados_condicionais, settings.PATH_LME_BASE]
             pdf = GeradorPDF(*args)
             dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
