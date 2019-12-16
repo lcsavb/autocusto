@@ -10,6 +10,7 @@ import os
 import pypdftk
 from .manejo_pdfs import GeradorPDF
 
+#BUG Não consigo colocar o decorator @login_required, por quê? É necessário?
 class ResultadosBuscaPacientes(ListView):
     model = Paciente
     template_name = 'processos/busca.html'
@@ -23,8 +24,7 @@ class ResultadosBuscaPacientes(ListView):
 
 @login_required
 def cadastro(request):
-    medico = request.user
-
+    medico = request.user.medico
     
     if request.method == 'POST':
         formulario = NovoProcesso(request.POST)
@@ -46,6 +46,7 @@ def cadastro(request):
             path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
             return redirect(path_pdf_final)
     else:
+        print(medico)
         formulario = NovoProcesso()
 
 

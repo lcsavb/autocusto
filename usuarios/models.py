@@ -9,7 +9,6 @@ from .managers import CustomUserManager
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_('email address'), unique=True)
-    nome = models.CharField(max_length=200)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -18,7 +17,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_clinica = models.BooleanField('Status de Clínica', default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['nome']
 
     objects = CustomUserManager()
 

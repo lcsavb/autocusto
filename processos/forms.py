@@ -45,7 +45,7 @@ class NovoProcesso(forms.Form):
         dados = self.cleaned_data
 
         paciente = Paciente(nome=dados['nome_paciente'], 
-        cpf_paciente=dados['cpf_paciente'], peso = ['peso'],
+        cpf_paciente=dados['cpf_paciente'], peso =dados['peso'],
         altura=dados['altura'], nome_mae=dados['nome_mae'], 
         incapaz=dados['incapaz'], medico_id=usuario_ativo,
         nome_responsavel=dados['nome_responsavel'])
