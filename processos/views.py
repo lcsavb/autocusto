@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.conf import settings
 from django.db.models import Q
@@ -11,9 +12,11 @@ import pypdftk
 from .manejo_pdfs import GeradorPDF
 
 #BUG Não consigo colocar o decorator @login_required, por quê? É necessário?
-class ResultadosBuscaPacientes(ListView):
+class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'processos/busca.html'
+    login_url = '/login/'
+    raise_exception = True
 
     def get_queryset(self):
         busca = self.request.GET.get('b')
