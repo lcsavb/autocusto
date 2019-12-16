@@ -4,7 +4,7 @@
 
 <ul>
     {% for paciente in object_list %}
-        <li> {{ paciente }}, {{ paciente.cpf_paciente }}, {{ paciente.medico.nome }} </li>
+        <li> {{ paciente }}, {{ paciente.cpf_paciente }}, {{ paciente.medico }} </li>
     {% endfor %}
 </ul>
 

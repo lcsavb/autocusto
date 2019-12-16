@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db.models import Q
 from medicos.models import Medico
 from pacientes.models import Paciente
+from usuarios.models import Usuario
 from .forms import NovoProcesso
 import os
 import pypdftk
@@ -19,9 +20,11 @@ class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
     raise_exception = True
 
     def get_queryset(self):
+        
         busca = self.request.GET.get('b')
         object_list = Paciente.objects.filter(
-            Q(nome__icontains=busca) | Q(cpf_paciente__icontains=busca)
+            (Q(nome__icontains=busca) | Q(cpf_paciente__icontains=busca)) 
+            & Q(medico_id__in=Usuario.objects.filter(medico=self.request.user.pk))
         )
         return object_list
 
@@ -49,7 +52,6 @@ def cadastro(request):
             path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
             return redirect(path_pdf_final)
     else:
-        print(medico)
         formulario = NovoProcesso()
 
 
