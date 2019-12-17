@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import ModelForm
 from .models import Medico
 from clinicas.models import Clinica
 from usuarios.models import Usuario
