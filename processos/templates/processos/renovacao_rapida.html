@@ -4,7 +4,7 @@
 
 <ul>
     {% for paciente in pacientes %}
-        <li> {{ paciente.nome }}
+        <li> {{ paciente.nome_paciente }}
             <form method="POST">
                 {% csrf_token %}
                     <input type="hidden" name="paciente_id" value="{{ paciente.id }}">

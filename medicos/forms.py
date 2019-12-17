@@ -24,10 +24,10 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         usuario.is_medico = True
         usuario.save()
         medico = Medico.objects.create(usuario=usuario)
-        medico.cns = self.cleaned_data['cns']
-        medico.crm = self.cleaned_data['crm']
-        medico.nome = self.cleaned_data['nome']
-        medico.save(update_fields=['cns', 'crm', 'nome'])
+        medico.cns_medico = self.cleaned_data['cns']
+        medico.crm_medico = self.cleaned_data['crm']
+        medico.nome_medico = self.cleaned_data['nome']
+        medico.save(update_fields=['cns_medico', 'crm_medico', 'nome_medico'])
 
         # clinica_cns = self.cleaned_data['cns_clinica']
         # clinica = Clinica.objects.create(cns=clinica_cns)

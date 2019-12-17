@@ -4,7 +4,7 @@ from clinicas.models import Clinica
 from medicos.models import Medico
 
 class Paciente(models.Model):
-    nome = models.CharField(max_length=100)
+    nome_paciente = models.CharField(max_length=100)
     idade = models.CharField(max_length=100)
     sexo = models.CharField(max_length=100)
     nome_mae = models.CharField(max_length=100)
@@ -27,7 +27,7 @@ class Paciente(models.Model):
     #clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.nome}'
+        return f'{self.nome_paciente}'
 
 
     

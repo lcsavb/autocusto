@@ -35,7 +35,7 @@ def renovacao_rapida(request):
         busca = request.GET.get('b')
         usuario = request.user.pk
         pacientes = Paciente.objects.filter(
-                (Q(nome__icontains=busca) | 
+                (Q(nome_paciente__icontains=busca) | 
                 Q(cpf_paciente__icontains=busca)) 
                 & Q(usuario_id__in=Usuario.objects.filter(id=usuario))
             )
@@ -73,7 +73,8 @@ def cadastro(request):
             dados = formulario.cleaned_data
 
             # Registra os dados do médico logado
-            dados_medico = {'nome_medico': medico.nome, 'cns_medico': medico.cns}
+            dados_medico = {'nome_medico': medico.nome_medico,
+             'cns_medico': medico.cns_medico}
             dados.update(dados_medico)
 
             # Jeitinho, ainda não existem dados condicionais

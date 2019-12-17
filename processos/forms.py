@@ -41,21 +41,26 @@ class NovoProcesso(forms.Form):
     def save(self, usuario):
         dados = self.cleaned_data
         medico = usuario.medico.pk
-
-        paciente = Paciente(nome=dados['nome_paciente'], 
-        cpf_paciente=dados['cpf_paciente'], peso =dados['peso'],
-        altura=dados['altura'], nome_mae=dados['nome_mae'], 
-        incapaz=dados['incapaz'], usuario_id=usuario.pk, medico_id=medico,
+        paciente_salvo = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
+        paciente = Paciente(nome_paciente=dados['nome_paciente'], 
+        cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
+        altura=dados['altura'], nome_mae=dados['nome_mae'], incapaz=dados['incapaz'],
+        usuario_id=usuario.pk, medico_id=medico,
         nome_responsavel=dados['nome_responsavel'])
-        paciente.save()
 
+        if paciente_salvo:
+             paciente.save(force_update=True)
+        else:
+             paciente.save()
+
+     
         # Algo me diz que essa não é a melhor maneira, MAS usar plugin de múltiplos modelform parece-me
         # mais complicado
-        paciente_salvo = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
+        
 
         
         processo = Processo(med1=dados['med1'], 
-        posologia_med1=dados['med1_posologia_mes1'], qtd_med1_mes1=dados['qtd_med1_mes1'],
+        med1_posologia_mes1=dados['med1_posologia_mes1'], qtd_med1_mes1=dados['qtd_med1_mes1'],
         qtd_med1_mes2=dados['qtd_med1_mes2'],
         qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
         diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
