@@ -1,23 +1,48 @@
 {% extends "base.html" %}
    
 {% block content %}
+<h3>Renovação Rápida</h3>
+<table class="table table-striped">
+        <thead>
+            <th scope="col">#</th>
+            <th scope="col">Paciente</th>
+            <th scope="col">Processos</th>
+            <th scope="col">Primeira Data</th>
+        </thead>
+        <tbody>
+            {% for paciente in pacientes%}
+            
+            <tr>
+                <form method="POST">
+                        {% csrf_token %}
+                <th scope="row"></th>
+                <td>{{ paciente.nome_paciente }}
+                        <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                </td>
+                
+                <td>
+                        <select name="cid">
+                            {% for processo in paciente.processos.all %}
+                            <option value="{{ processo }}">{{ processo }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                </td>
 
-<ul>
-    {% for paciente in pacientes %}
-        <li> {{ paciente.nome_paciente }}
-            <form method="POST">
-                {% csrf_token %}
-                    <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
-                <select name="cid">
-                    {% for processo in paciente.processos.all %}
-                    <option value="{{ processo }}">{{ processo }}</option>
-                    {% endfor %}
-                </select>
-                <input type="text" name="data1">
-                <button type="submit">Renovar</button>       
-            </form>
-        </li>
-    {% endfor %}
-</ul>
+                <td>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" name="data1" placeholder="Data inicial" aria-label="Data inicial" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button">Renovar</button>
+                        </div>
+                    </div>  
+                </td>
+                </form>
+                
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
 {% endblock content %}
+

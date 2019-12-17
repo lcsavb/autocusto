@@ -37,16 +37,20 @@ class NovoProcesso(forms.Form):
     def save(self, usuario):
         dados = self.cleaned_data
         medico = usuario.medico.pk
-        
-        # Implementar método get_or_create
-        paciente = Paciente(nome_paciente=dados['nome_paciente'], 
-        cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
-        altura=dados['altura'], nome_mae=dados['nome_mae'], incapaz=dados['incapaz'],
-        usuario_id=usuario.pk, medico_id=medico,
-        nome_responsavel=dados['nome_responsavel'])
-        paciente.save()
 
-        paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
+        # Implementar método get_or_create?
+        paciente_existe = paciente = Paciente.objects.filter(cpf_paciente=dados['cpf_paciente'])
+        if paciente_existe:
+             paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
+        else:
+             paciente = Paciente(nome_paciente=dados['nome_paciente'], 
+                    cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
+                    altura=dados['altura'], nome_mae=dados['nome_mae'], 
+                    incapaz=dados['incapaz'],
+                    usuario_id=usuario.pk, medico_id=medico,
+                    nome_responsavel=dados['nome_responsavel'])
+             paciente.save()
+             paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
 
     
         # Algo me diz que essa não é a melhor maneira, MAS usar plugin de múltiplos modelform parece-me
