@@ -71,7 +71,7 @@ def gerar_dados_renovacao(primeira_data, paciente_id, cid):
     medico = paciente.medico
     dados_medico = model_to_dict(medico)
 
-    print(type(primeira_data))
+    print(dados_medico)
 
     
     dados = {}
