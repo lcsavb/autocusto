@@ -74,7 +74,15 @@ def cadastro(request):
 
             # Registra os dados do médico logado
             dados_medico = {'nome_medico': medico.nome_medico,
-             'cns_medico': medico.cns_medico}
+             'cns_medico': medico.cns_medico, 
+             'clinica_ativa_cns': medico.clinica_ativa_cns,
+             'clinica_ativa_nome': medico.clinica_ativa_nome, 
+             'clinica_ativa_bairro': medico.clinica_ativa_bairro,
+             'clinica_ativa_end': medico.clinica_ativa_end,
+             'clinica_ativa_cidade': medico.clinica_ativa_cidade,
+             'clinica_ativa_cep': medico.clinica_ativa_cep,
+             'clinica_ativa_telefone': medico.clinica_ativa_telefone
+            }
             dados.update(dados_medico)
 
             # Jeitinho, ainda não existem dados condicionais

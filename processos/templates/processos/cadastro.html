@@ -37,8 +37,6 @@
 
     <div class="form-row">
         <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
-        <div class="col-sm-4"> {{ formulario.cns_clinica|as_crispy_field }} </div>
-        <div class="col-sm-6"> {{ formulario.nome_clinica|as_crispy_field }} </div>
     </div>
 
     <div class="form-row">
@@ -62,7 +60,7 @@
     </div>
 
     <div class="form-row">
-            <div class="col-3">{{ formulario.trat_previo|as_crispy_field }}</div>
+            <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
             <div class="col-9">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
     </div>
 

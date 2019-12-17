@@ -8,10 +8,6 @@ from clinicas.models import Clinica
 
 
 class NovoProcesso(forms.Form):
-     # Dados da clínica
-    cns_clinica = forms.CharField(label="CNS da clínica")
-    nome_clinica = forms.CharField(label='Nome da clínica')
-
     # Dados do paciente
     cpf_paciente = forms.CharField(required=True, label='CPF do paciente') #BUG adiciona mesmo CPF existente
     nome_paciente = forms.CharField(required=True, label='Nome do paciente')
@@ -31,7 +27,7 @@ class NovoProcesso(forms.Form):
     cid = forms.CharField(required=True, label='CID')
     diagnostico = forms.CharField(required=True, label='Diagnóstico')
     anamnese = forms.CharField(required=True, label='Anamnese')
-    trat_previo = forms.ChoiceField(choices=((True, 'Sim'),
+    tratou = forms.ChoiceField(choices=((True, 'Sim'),
          (False, 'Não')), label='Fez tratamento prévio?')
     tratamentos_previos = forms.CharField(label='Descrição dos tratamentos prévios')
     data_1 = forms.DateField(required=True, label='Data', widget=forms.DateInput(format='%d/%m/%Y'),
@@ -41,19 +37,18 @@ class NovoProcesso(forms.Form):
     def save(self, usuario):
         dados = self.cleaned_data
         medico = usuario.medico.pk
-        paciente_salvo = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
+        
+        # Implementar método get_or_create
         paciente = Paciente(nome_paciente=dados['nome_paciente'], 
         cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
         altura=dados['altura'], nome_mae=dados['nome_mae'], incapaz=dados['incapaz'],
         usuario_id=usuario.pk, medico_id=medico,
         nome_responsavel=dados['nome_responsavel'])
+        paciente.save()
 
-        if paciente_salvo:
-             paciente.save(force_update=True)
-        else:
-             paciente.save()
+        paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
 
-     
+    
         # Algo me diz que essa não é a melhor maneira, MAS usar plugin de múltiplos modelform parece-me
         # mais complicado
         
@@ -64,7 +59,7 @@ class NovoProcesso(forms.Form):
         qtd_med1_mes2=dados['qtd_med1_mes2'],
         qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
         diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
-        tratou=dados['trat_previo'], tratamento_previo=dados['tratamentos_previos'],
+        tratou=dados['tratou'], tratamento_previo=dados['tratamentos_previos'],
         data1=dados['data_1'], medico_id=medico, usuario_id=usuario.pk,
-        paciente_id=paciente_salvo.pk)
+        paciente_id=paciente.pk)
         processo.save()

@@ -1,7 +1,11 @@
 from django.shortcuts import render
+from django.db import transaction
+from django.contrib.auth.decorators import login_required
 from .forms import ClinicaFormulario
 from medicos.models import Medico
 
+@login_required
+@transaction.atomic
 def cadastro(request):
     usuario = request.user
     medico = usuario.medico
