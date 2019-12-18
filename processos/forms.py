@@ -1,5 +1,6 @@
 from django import forms
 from django.db import transaction
+from django.db.models import Q
 from datetime import datetime
 from pacientes.models import Paciente
 from medicos.models import Medico
@@ -8,8 +9,13 @@ from clinicas.models import Clinica
 
 
 class NovoProcesso(forms.Form):
+    
+    def __init__(self, *args, **kwargs):
+         self.request = kwargs.pop('request', None) 
+         super(NovoProcesso, self).__init__(*args, **kwargs)
+
     # Dados do paciente
-    cpf_paciente = forms.CharField(required=True, label='CPF do paciente') #BUG adiciona mesmo CPF existente
+    cpf_paciente = forms.CharField(required=True, label='CPF do paciente')
     nome_paciente = forms.CharField(required=True, label='Nome do paciente')
     nome_mae = forms.CharField(required=True, label='Nome da mãe')
     peso = forms.IntegerField(required=True, label='Peso')
@@ -37,29 +43,40 @@ class NovoProcesso(forms.Form):
     def save(self, usuario):
         dados = self.cleaned_data
         medico = usuario.medico.pk
+        cpf_paciente = dados['cpf_paciente']
 
-        # Implementar método get_or_create?
-        paciente_existe = paciente = Paciente.objects.filter(cpf_paciente=dados['cpf_paciente'])
-        if paciente_existe:
-             paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
-        else:
-             paciente = Paciente(nome_paciente=dados['nome_paciente'], 
+        paciente_existe = Paciente.objects.filter(cpf_paciente=cpf_paciente,usuario=usuario)
+
+        paciente = Paciente(nome_paciente=dados['nome_paciente'], 
                     cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
                     altura=dados['altura'], nome_mae=dados['nome_mae'], 
                     incapaz=dados['incapaz'],
                     usuario_id=usuario.pk, medico_id=medico,
                     nome_responsavel=dados['nome_responsavel'])
+
+        if paciente_existe:
+             pk = paciente_existe[0].pk
+
+             paciente = Paciente(id=pk, nome_paciente=dados['nome_paciente'], 
+                    cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
+                    altura=dados['altura'], nome_mae=dados['nome_mae'], 
+                    incapaz=dados['incapaz'],
+                    usuario_id=usuario.pk, medico_id=medico,
+                    nome_responsavel=dados['nome_responsavel'])  
+
+             paciente.save(force_update=True)  
+        else:
              paciente.save()
-             paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
+        
+        paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
 
     
         # Algo me diz que essa não é a melhor maneira, MAS usar plugin de múltiplos modelform parece-me
         # mais complicado
-        
 
-        
         processo = Processo(med1=dados['med1'], 
-        med1_posologia_mes1=dados['med1_posologia_mes1'], qtd_med1_mes1=dados['qtd_med1_mes1'],
+        med1_posologia_mes1=dados['med1_posologia_mes1'], 
+        qtd_med1_mes1=dados['qtd_med1_mes1'],
         qtd_med1_mes2=dados['qtd_med1_mes2'],
         qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
         diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
@@ -67,3 +84,17 @@ class NovoProcesso(forms.Form):
         data1=dados['data_1'], medico_id=medico, usuario_id=usuario.pk,
         paciente_id=paciente.pk)
         processo.save()
+
+    def clean(self):
+        usuario = self.request.user 
+        dados = self.cleaned_data 
+        cpf_paciente = dados['cpf_paciente']
+        cid = dados['cid']
+
+        paciente = Paciente.objects.filter(cpf_paciente=cpf_paciente,usuario=usuario)
+
+        if paciente.exists():
+             if Processo.objects.filter(paciente=paciente[0], cid=cid).exists():
+                  raise forms.ValidationError('Processo com esse CID já existe para paciente.')
+
+        return dados

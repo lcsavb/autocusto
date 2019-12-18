@@ -6,7 +6,8 @@ body {
   text-align: center;
 }
 
-table.center {
+table.standard {
   margin-left: auto; 
   margin-right: auto;
+  vertical-align: middle;
 }
