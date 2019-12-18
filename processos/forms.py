@@ -1,6 +1,5 @@
 from django import forms
 from django.db import transaction
-from django.db.models import Q
 from datetime import datetime
 from pacientes.models import Paciente
 from medicos.models import Medico
@@ -47,6 +46,7 @@ class NovoProcesso(forms.Form):
 
         paciente_existe = Paciente.objects.filter(cpf_paciente=cpf_paciente,usuario=usuario)
 
+        # precisa melhorar esse código - funciona, mas está nojento
         paciente = Paciente(nome_paciente=dados['nome_paciente'], 
                     cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
                     altura=dados['altura'], nome_mae=dados['nome_mae'], 
@@ -56,7 +56,8 @@ class NovoProcesso(forms.Form):
 
         if paciente_existe:
              pk = paciente_existe[0].pk
-
+             
+             # repetitivo
              paciente = Paciente(id=pk, nome_paciente=dados['nome_paciente'], 
                     cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
                     altura=dados['altura'], nome_mae=dados['nome_mae'], 
@@ -68,11 +69,7 @@ class NovoProcesso(forms.Form):
         else:
              paciente.save()
         
-        paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'])
-
-    
-        # Algo me diz que essa não é a melhor maneira, MAS usar plugin de múltiplos modelform parece-me
-        # mais complicado
+        paciente = Paciente.objects.get(cpf_paciente=dados['cpf_paciente'], usuario=usuario)
 
         processo = Processo(med1=dados['med1'], 
         med1_posologia_mes1=dados['med1_posologia_mes1'], 
