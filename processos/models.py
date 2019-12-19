@@ -56,7 +56,7 @@ class Processo(models.Model):
                 on_delete=models.CASCADE, related_name='processos')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    #clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)     
+    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)     
 
     def __str__(self):
         return f'{self.cid}'   

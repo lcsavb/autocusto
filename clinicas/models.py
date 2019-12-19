@@ -10,9 +10,12 @@ class Clinica(models.Model):
     bairro = models.CharField(max_length=30)
     cep = models.CharField(max_length=9)
     telefone_clinica = models.CharField(max_length=13)
-    medicos = models.ManyToManyField(Medico, related_name='clinica')
+    medicos = models.ManyToManyField(Medico, through='ClinicaMedico', related_name='clinicas')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    ativa = models.BooleanField(default=False)
+    
 
     def __str__(self):
         return f'{self.nome_clinica}'
+
+class ClinicaMedico(models.Model):
+    ativa = models.BooleanField(default=False)
