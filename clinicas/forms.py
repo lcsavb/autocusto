@@ -7,14 +7,6 @@ class ClinicaFormulario(ModelForm):
     class Meta:
         model = Clinica
         fields = ['cns_clinica', 'nome_clinica','end_clinica',
-                  'cidade', 'bairro', 'cep', 'telefone_clinica',
-                  'ativa'
+                  'cidade', 'bairro', 'cep', 'telefone_clinica'
         ]
-        ESCOLHA_ATIVA = (
-            (True,'Sim'),
-            (False,'Não')
-        )
-        labels = {'ativa': 'Tornar clínica ativa'}
-        widgets = {
-            'ativa': forms.Select(choices=ESCOLHA_ATIVA)
-        }
+        
