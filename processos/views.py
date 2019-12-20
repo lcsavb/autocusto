@@ -73,10 +73,7 @@ def cadastro(request):
      
     
     if request.method == 'POST':
-        formulario = NovoProcesso(escolhas, request.POST)
-        print('teste')
-
-        
+        formulario = NovoProcesso(escolhas, request.POST)        
             
         if formulario.is_valid(): 
             dados = formulario.cleaned_data

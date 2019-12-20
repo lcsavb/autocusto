@@ -10,7 +10,8 @@ from clinicas.models import Clinica, Emissor
 class NovoProcesso(forms.Form):
      def __init__(self, escolhas, *args, **kwargs):
          super(NovoProcesso, self).__init__(*args, **kwargs)
-         self.fields['clinicas'].choices = escolhas       
+         self.fields['clinicas'].choices = escolhas
+         self.request = kwargs.pop('request', None)        
      
      # Dados do paciente
      cpf_paciente = forms.CharField(required=True, label='CPF do paciente')
@@ -66,7 +67,7 @@ class NovoProcesso(forms.Form):
          
          emissor = Emissor.objects.get(medico=medico, clinica=clinica)
          print(emissor)
-         emissor.pacientes.add(paciente=paciente_salvo) 
+         emissor.pacientes.add(paciente=paciente_existe) 
          
          processo = Processo(med1=dados['med1'], 
          med1_posologia_mes1=dados['med1_posologia_mes1'], 
