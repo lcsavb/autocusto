@@ -5,14 +5,16 @@ from django.conf import settings
 
 class Clinica(models.Model):
     nome_clinica = models.CharField(max_length=200)
-    cns_clinica = models.CharField(unique=True, max_length=6)
-    end_clinica = models.CharField(max_length=200)
+    cns_clinica = models.CharField(max_length=7)
+    logradouro = models.CharField(max_length=200)
+    logradouro_num = models.CharField(max_length=6)
+    #complemento = models.CharField(max_length=20)
     cidade = models.CharField(max_length=30)
     bairro = models.CharField(max_length=30)
     cep = models.CharField(max_length=9)
     telefone_clinica = models.CharField(max_length=13)
     medicos = models.ManyToManyField(Medico, through='Emissor', related_name='clinicas')
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    usuarios = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ClinicaUsuario')
     
     
 
@@ -27,3 +29,16 @@ class Emissor(models.Model):
 
     def __str__(self):
         return f'Emitido pela clínica: {self.clinica} e pelo médico com CRM: {self.medico}'
+
+
+class ClinicaUsuario(models.Model):
+    #DUVIDA - AQUI DEVE SER SET NULL?
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, 
+                                on_delete=models.SET_NULL, null=True
+                                )
+    clinica = models.ForeignKey(Clinica, 
+                                on_delete=models.SET_NULL, null=True
+                                )
+    
+    def __str__(self):
+        return f'Clínica: {self.clinica} e Usuário {self.usuario}'

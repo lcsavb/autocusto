@@ -67,21 +67,30 @@ def cadastro(request):
     medico = request.user.medico
     usuario = request.user
     clinicas = medico.clinicas.all()
-    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
-
-    print(clinicas)
-     
+    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])    
     
     if request.method == 'POST':
-        formulario = NovoProcesso(escolhas, request.POST)        
+        formulario = NovoProcesso(escolhas, request.POST)    
             
-        if formulario.is_valid(): 
+        if formulario.is_valid():   
             dados = formulario.cleaned_data
+            id_clin = dados['clinicas']
+            clinica = medico.clinicas.get(id=id_clin)
+            end_clinica = clinica.logradouro + clinica.logradouro_num
 
-            # Registra os dados do médico logado
-            dados_medico = {'nome_medico': medico.nome_medico,
-             'cns_medico': medico.cns_medico }
-            dados.update(dados_medico)
+
+            # Registra os dados do médico logado e da clínica associada
+            dados_adicionais = {'nome_medico': medico.nome_medico,
+                            'cns_medico': medico.cns_medico,
+                            'nome_clinica': clinica.nome_clinica,
+                            'cns_clinica': clinica.cns_clinica,
+                            'end_clinica': end_clinica,
+                            'cidade': clinica.cidade,
+                            'bairro': clinica.bairro,
+                            'cep': clinica.cep,
+                            'telefone_clinica': clinica.telefone_clinica,
+                             }
+            dados.update(dados_adicionais)
 
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
@@ -91,7 +100,7 @@ def cadastro(request):
             pdf = GeradorPDF(*args)
             dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
             path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
-            return None
+            return redirect(path_pdf_final)
     else:
         formulario = NovoProcesso(escolhas)
 

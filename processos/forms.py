@@ -14,7 +14,7 @@ class NovoProcesso(forms.Form):
          self.request = kwargs.pop('request', None)        
      
      # Dados do paciente
-     cpf_paciente = forms.CharField(required=True, label='CPF do paciente')
+     cpf_paciente = forms.CharField(required=True, label='CPF do paciente',max_length=14)
      clinicas = forms.ChoiceField(widget=forms.Select, choices=[],
      label='Selecione a clínica')
      nome_paciente = forms.CharField(required=True, label='Nome do paciente')
@@ -44,9 +44,17 @@ class NovoProcesso(forms.Form):
      def save(self, usuario):
          dados = self.cleaned_data
          medico = usuario.medico
-         cpf_paciente = dados['cpf_paciente'] 
+         clinica_id = dados['clinicas']
+         
+         #adicionar dados da clínica
+         cpf_paciente = dados['cpf_paciente']
+         emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
+         print(dados) 
 
-         paciente_existe = Paciente.objects.filter(cpf_paciente=cpf_paciente) 
+         try:
+              paciente_existe = Paciente.objects.get(cpf_paciente=cpf_paciente) 
+         except:
+              paciente_existe = False
 
          # precisa melhorar esse código - funciona, mas está nojento
          paciente = Paciente(nome_paciente=dados['nome_paciente'], 
@@ -55,42 +63,53 @@ class NovoProcesso(forms.Form):
                      incapaz=dados['incapaz'], nome_responsavel=dados['nome_responsavel']) 
 
          if paciente_existe:
-              pk = paciente_existe[0].pk
-              # repetitivo
-              paciente = Paciente(id=pk, nome_paciente=dados['nome_paciente'], 
+              paciente = Paciente(id=paciente_existe.pk, nome_paciente=dados['nome_paciente'], 
                      cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
                      altura=dados['altura'], nome_mae=dados['nome_mae'], 
                      incapaz=dados['incapaz'], nome_responsavel=dados['nome_responsavel'])   
-              paciente.save(force_update=True)  
+              paciente.save(force_update=True)
+              #adicionar aqui salvamento de processo - fazer função
+              processo = Processo(med1=dados['med1'], 
+                              med1_posologia_mes1=dados['med1_posologia_mes1'], 
+                              qtd_med1_mes1=dados['qtd_med1_mes1'],
+                              qtd_med1_mes2=dados['qtd_med1_mes2'],
+                              qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
+                              diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
+                              tratou=dados['tratou'], tratamento_previo=dados['tratamentos_previos'],
+                              data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
+                              clinica = emissor.clinica, emissor=emissor
+                              )
+              emissor.pacientes.add(paciente_existe) 
          else:
               paciente.save()
-         
-         emissor = Emissor.objects.get(medico=medico, clinica=clinica)
-         print(emissor)
-         emissor.pacientes.add(paciente=paciente_existe) 
-         
-         processo = Processo(med1=dados['med1'], 
-         med1_posologia_mes1=dados['med1_posologia_mes1'], 
-         qtd_med1_mes1=dados['qtd_med1_mes1'],
-         qtd_med1_mes2=dados['qtd_med1_mes2'],
-         qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
-         diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
-         tratou=dados['tratou'], tratamento_previo=dados['tratamentos_previos'],
-         data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
-         clinica = emissor.clinica, emissor=emissor)
-         processo.save()
-       
+              
+              paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+
+
+              processo = Processo(med1=dados['med1'], 
+                              med1_posologia_mes1=dados['med1_posologia_mes1'], 
+                              qtd_med1_mes1=dados['qtd_med1_mes1'],
+                              qtd_med1_mes2=dados['qtd_med1_mes2'],
+                              qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
+                              diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
+                              tratou=dados['tratou'], tratamento_previo=dados['tratamentos_previos'],
+                              data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
+                              clinica = emissor.clinica, emissor=emissor
+                              )
+              processo.save()
+              emissor.pacientes.add(paciente)
+                    
           
-     def clean(self):
-         usuario = self.request.user 
-         dados = self.cleaned_data 
-         cpf_paciente = dados['cpf_paciente']
-         cid = dados['cid'] 
+     # def clean(self):
+     #     usuario = self.request.user 
+     #     dados = self.cleaned_data 
+     #     cpf_paciente = dados['cpf_paciente']
+     #     cid = dados['cid'] 
 
-         paciente = Paciente.objects.filter(cpf_paciente=cpf_paciente,usuario=usuario) 
+     #     paciente = Paciente.objects.filter(cpf_paciente=cpf_paciente,usuario=usuario) 
 
-         if paciente.exists():
-              if Processo.objects.filter(paciente=paciente[0], cid=cid).exists():
-                   raise forms.ValidationError('Processo com esse CID já existe para paciente.') 
+     #     if paciente.exists():
+     #          if Processo.objects.filter(paciente=paciente[0], cid=cid).exists():
+     #               raise forms.ValidationError('Processo com esse CID já existe para paciente.') 
 
-         return dados
+     #     return dados

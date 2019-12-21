@@ -3,6 +3,7 @@ from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from .forms import ClinicaFormulario
 from medicos.models import Medico
+from clinicas.models import Clinica 
 
 @login_required
 @transaction.atomic
@@ -10,15 +11,25 @@ def cadastro(request):
     usuario = request.user
     medico = usuario.medico
 
-
     if request.method == 'POST':
         f_clinica = ClinicaFormulario(request.POST)
         
         if f_clinica.is_valid():
-            instance = f_clinica.save(commit=False)
-            instance.usuario = usuario
-            instance.save()
-            instance.medicos.add(medico)         
+            dados = f_clinica.cleaned_data
+
+            clinica_existe = Clinica.objects.filter(cns_clinica__exact=dados['cns_clinica'])
+
+            if clinica_existe:
+                instance = f_clinica.save(commit=False)
+                instance.pk = clinica_existe[0].pk
+                instance.save(force_update=True)
+                instance.usuario.add(usuario)
+                instance.medicos.add(medico)
+            else:   
+                instance = f_clinica.save(commit=False)
+                instance.save()
+                instance.usuario.add(usuario)
+                instance.medicos.add(medico)         
     else:
         f_clinica = ClinicaFormulario()
 
