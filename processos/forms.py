@@ -23,7 +23,9 @@ class NovoProcesso(forms.Form):
      altura = forms.IntegerField(required=True, label='Altura')
      incapaz = forms.ChoiceField(choices=((True, 'Sim'),
           (False, 'Não')), label='Paciente é incapaz?')
-     nome_responsavel= forms.CharField(label='Nome do responsável') 
+     nome_responsavel= forms.CharField(
+          label='Nome do responsável',
+          required=False) 
 
      # Dados do processo
      med1 = forms.CharField(required=True, label='Medicamento')
@@ -34,11 +36,20 @@ class NovoProcesso(forms.Form):
      cid = forms.CharField(required=True, label='CID')
      diagnostico = forms.CharField(required=True, label='Diagnóstico')
      anamnese = forms.CharField(required=True, label='Anamnese')
-     tratou = forms.ChoiceField(choices=((True, 'Sim'),
-          (False, 'Não')), label='Fez tratamento prévio?')
-     tratamentos_previos = forms.CharField(label='Descrição dos tratamentos prévios')
-     data_1 = forms.DateField(required=True, label='Data', 
-     widget=forms.DateInput(format='%d/%m/%Y'), input_formats=['%d/%m/%Y',]) 
+     tratou = forms.ChoiceField(
+          choices=((True, 'Sim'), (False, 'Não')),
+          label='Fez tratamento prévio?',
+          initial=False
+          )
+     tratamentos_previos = forms.CharField(
+          label='Descrição dos tratamentos prévios',
+          required=False
+          )
+     data_1 = forms.DateField(
+          required=True, label='Data', 
+          widget=forms.DateInput(format='%d/%m/%Y'),
+          input_formats=['%d/%m/%Y',]
+          ) 
 
      @transaction.atomic
      def save(self, usuario):
