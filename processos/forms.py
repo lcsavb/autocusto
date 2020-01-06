@@ -89,9 +89,9 @@ class NovoProcesso(forms.Form):
                               qtd_med1_mes2=dados['qtd_med1_mes2'],
                               qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
                               diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
-                              tratou=dados['tratou'], tratamento_previo=dados['tratamentos_previos'],
+                              tratou=dados['tratou'], tratamentos_previos=dados['tratamentos_previos'],
                               data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
-                              clinica = emissor.clinica, emissor=emissor
+                              clinica = emissor.clinica, emissor=emissor, usuario=usuario
                               )
               emissor.pacientes.add(paciente_existe) 
          else:
@@ -106,9 +106,9 @@ class NovoProcesso(forms.Form):
                               qtd_med1_mes2=dados['qtd_med1_mes2'],
                               qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
                               diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
-                              tratou=dados['tratou'], tratamento_previo=dados['tratamentos_previos'],
+                              tratou=dados['tratou'], tratamentos_previos=dados['tratamentos_previos'],
                               data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
-                              clinica = emissor.clinica, emissor=emissor
+                              clinica = emissor.clinica, emissor=emissor, usuario=usuario
                               )
               processo.save()
               emissor.pacientes.add(paciente)

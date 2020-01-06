@@ -47,7 +47,7 @@ class Processo(models.Model):
     qtd_med5_mes2 = models.CharField(max_length=3)
     qtd_med5_mes3 = models.CharField(max_length=3)
     tratou = models.BooleanField(default=False)
-    tratamento_previo = models.TextField(max_length=600)
+    tratamentos_previos = models.TextField(max_length=600)
     data1 = models.DateField(null=True)  
     preenchido_por = models.CharField(choices=(('P', 'Paciente'), ('M', 'Mãe'),
     ('R', 'Responsável'),('M', 'Médico')),

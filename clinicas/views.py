@@ -23,12 +23,12 @@ def cadastro(request):
                 instance = f_clinica.save(commit=False)
                 instance.pk = clinica_existe[0].pk
                 instance.save(force_update=True)
-                instance.usuario.add(usuario)
+                instance.usuarios.add(usuario)
                 instance.medicos.add(medico)
             else:   
                 instance = f_clinica.save(commit=False)
                 instance.save()
-                instance.usuario.add(usuario)
+                instance.usuarios.add(usuario)
                 instance.medicos.add(medico)         
     else:
         f_clinica = ClinicaFormulario()

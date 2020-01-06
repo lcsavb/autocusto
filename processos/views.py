@@ -52,7 +52,6 @@ def renovacao_rapida(request):
         pdf = GeradorPDF(*args)
         dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
         path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
-        print(path_pdf_final)
         return render(request, 'processos/renovacao_rapida.html')
         
 
@@ -70,7 +69,7 @@ def cadastro(request):
             dados = formulario.cleaned_data
             id_clin = dados['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
-            end_clinica = clinica.logradouro + clinica.logradouro_num
+            end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
 
 
             # Registra os dados do médico logado e da clínica associada

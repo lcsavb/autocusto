@@ -72,12 +72,15 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     # pdftk falha se input não for string!
     dados_clinica['medicos'] = ''
     dados_clinica['usuarios'] = ''
-    
+    end_clinica = dados_clinica['logradouro'] + ', ' + dados_clinica['logradouro_num']
+    dados_clinica['end_clinica'] = end_clinica
+
     dados = {}
     dados.update(dados_medico)
     dados.update(dados_paciente)
     dados.update(dados_processo)
     dados.update(dados_clinica)
+    print(dados)
     dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
     return dados
 
