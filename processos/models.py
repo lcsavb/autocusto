@@ -4,6 +4,7 @@ from medicos.models import Medico
 from pacientes.models import Paciente
 from clinicas.models import Clinica
 from clinicas.models import Emissor
+from django.conf import settings
 
 class Processo(models.Model):
     anamnese = models.TextField(max_length=600)
@@ -51,12 +52,31 @@ class Processo(models.Model):
     preenchido_por = models.CharField(choices=(('P', 'Paciente'), ('M', 'Mãe'),
     ('R', 'Responsável'),('M', 'Médico')),
      max_length=128)
-     #adicionar campos required?
-    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='processos')
-    medico = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='processos')
-    clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE, related_name='processos')
-    emissor = models.ForeignKey(Emissor, on_delete=models.CASCADE)
-    #adicionar aqui relação com usuário
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    medico = models.ForeignKey(
+        Medico,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    clinica = models.ForeignKey(
+        Clinica,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    emissor = models.ForeignKey(
+        Emissor,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, 
+        related_name='processos'
+        )
 
 
     def __str__(self):

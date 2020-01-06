@@ -23,9 +23,9 @@
                 
                 <td>
                     <div class="form-group">
-                        <select class="custom-select" name="cid">
+                        <select class="custom-select" name="processo_id">
                             {% for processo in paciente.processos.all %}
-                            <option value="{{ processo }}">{{ processo }}</option>
+                            <option value="{{ processo.id }}">{{ processo }}</option>
                             {% endfor %}
                         </select>
                     </div>

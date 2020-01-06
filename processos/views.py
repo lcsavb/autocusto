@@ -34,25 +34,19 @@ class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
 def renovacao_rapida(request):
     if request.method == 'GET':
         busca = request.GET.get('b')
-        usuario = request.user.pk
         pacientes = Paciente.objects.filter(
                 (Q(nome_paciente__icontains=busca) | 
                 Q(cpf_paciente__icontains=busca)) 
-                & Q(usuario_id__in=Usuario.objects.filter(id=usuario))
             )
 
         contexto = {'pacientes': pacientes}
         return render(request, 'processos/renovacao_rapida.html', contexto)
 
     else: 
-        paciente_id = request.POST.get('paciente_id')
+        processo_id = request.POST.get('processo_id')
         nova_data = request.POST.get('data1')
-        cid = request.POST.get('cid')
 
-        dados = gerar_dados_renovacao(nova_data,paciente_id,cid)
-        print('na view')
-        print(dados)
-
+        dados = gerar_dados_renovacao(nova_data,processo_id)
         
         args = [dados, {}, settings.PATH_LME_BASE]
         pdf = GeradorPDF(*args)

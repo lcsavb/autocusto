@@ -87,11 +87,11 @@ const campoIncapaz = divResponsavel.firstElementChild.firstElementChild.nextElem
 function mostrarCampo(escolha,divAlvo,campoAlvo) {
     if (escolha.value === 'True') {
         divAlvo.classList.remove('d-none');
-        campoAlvo.setAttribute('required');
+        campoAlvo.setAttribute('required', '');
     }
     else {
         divAlvo.classList.add('d-none');
-        campoAlvo.removeAttribute('required');
+        campoAlvo.removeAttribute('required', '');
 }
 
 }

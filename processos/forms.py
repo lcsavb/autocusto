@@ -21,8 +21,11 @@ class NovoProcesso(forms.Form):
      nome_mae = forms.CharField(required=True, label='Nome da mãe')
      peso = forms.IntegerField(required=True, label='Peso')
      altura = forms.IntegerField(required=True, label='Altura')
-     incapaz = forms.ChoiceField(choices=((True, 'Sim'),
-          (False, 'Não')), label='Paciente é incapaz?')
+     incapaz = forms.ChoiceField(
+          choices=((True, 'Sim'),
+          (False, 'Não')), 
+          label='Paciente é incapaz?',
+          initial=False)
      nome_responsavel= forms.CharField(
           label='Nome do responsável',
           required=False) 
