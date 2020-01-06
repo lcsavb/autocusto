@@ -28,7 +28,7 @@
 
     <div class="form-row">
             <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
-            <div class="col-9">{{ formulario.nome_responsavel|as_crispy_field }}</div>
+            <div class="col-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
     </div>
 
     <hr>
@@ -37,6 +37,7 @@
 
     <div class="form-row">
         <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
+        <div class="col-10"> {{ formulario.clinicas|as_crispy_field }} </div>
     </div>
 
     <div class="form-row">
@@ -61,7 +62,7 @@
 
     <div class="form-row">
             <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
-            <div class="col-9">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+            <div class="col-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
@@ -71,7 +72,34 @@
 
   </form>
 </div>
-      
+
+<script>
+const isTratado = document.getElementById('id_tratou');
+const divTratPrevio = document.getElementById('trat-escondido');
+const campoTrat = divTratPrevio.firstElementChild.firstElementChild.nextElementSibling.firstElementChild;
+const isIncapaz = document.getElementById('id_incapaz');
+const divResponsavel = document.getElementById('resp-escondido');
+const campoIncapaz = divResponsavel.firstElementChild.firstElementChild.nextElementSibling.firstElementChild;
+
+
+
+
+function mostrarCampo(escolha,divAlvo,campoAlvo) {
+    if (escolha.value === 'True') {
+        divAlvo.classList.remove('d-none');
+        campoAlvo.setAttribute('required', '');
+    }
+    else {
+        divAlvo.classList.add('d-none');
+        campoAlvo.removeAttribute('required', '');
+}
+
+}
+
+isTratado.addEventListener('ValueChange', () => {mostrarCampo(isTratado,divTratPrevio,campoTrat)});
+isIncapaz.addEventListener('ValueChange', () => {mostrarCampo(isIncapaz,divResponsavel,campoIncapaz)});
+
+</script>
 
 
 {% endblock %}

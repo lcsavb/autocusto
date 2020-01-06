@@ -63,21 +63,24 @@ def formatacao_data(data):
     datas = [data1, data2, data3]
     return datas
 
-def gerar_dados_renovacao(primeira_data, paciente_id, cid):
-    paciente = Paciente.objects.get(id=paciente_id)
-    dados_paciente = model_to_dict(paciente)
-    processo = paciente.processos.get(cid=cid)
+def gerar_dados_renovacao(primeira_data, processo_id):
+    processo = Processo.objects.get(id=processo_id)
     dados_processo = model_to_dict(processo)
-    medico = paciente.medico
-    dados_medico = model_to_dict(medico)
+    dados_paciente = model_to_dict(processo.paciente)
+    dados_medico = model_to_dict(processo.medico)
+    dados_clinica = model_to_dict(processo.clinica)
+    # pdftk falha se input não for string!
+    dados_clinica['medicos'] = ''
+    dados_clinica['usuarios'] = ''
+    end_clinica = dados_clinica['logradouro'] + ', ' + dados_clinica['logradouro_num']
+    dados_clinica['end_clinica'] = end_clinica
 
-    print(dados_medico)
-
-    
     dados = {}
     dados.update(dados_medico)
     dados.update(dados_paciente)
     dados.update(dados_processo)
+    dados.update(dados_clinica)
+    print(dados)
     dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
     return dados
 

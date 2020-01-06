@@ -1,7 +1,9 @@
 from django.db import models
-from pacientes.models import Paciente
+from django.conf import settings
 from medicos.models import Medico
+from pacientes.models import Paciente
 from clinicas.models import Clinica
+from clinicas.models import Emissor
 from django.conf import settings
 
 class Processo(models.Model):
@@ -45,18 +47,37 @@ class Processo(models.Model):
     qtd_med5_mes2 = models.CharField(max_length=3)
     qtd_med5_mes3 = models.CharField(max_length=3)
     tratou = models.BooleanField(default=False)
-    tratamento_previo = models.TextField(max_length=600)
+    tratamentos_previos = models.TextField(max_length=600)
     data1 = models.DateField(null=True)  
-    data2 = models.DateField(null=True)
-    data3 = models.DateField(null=True)
     preenchido_por = models.CharField(choices=(('P', 'Paciente'), ('M', 'Mãe'),
     ('R', 'Responsável'),('M', 'Médico')),
      max_length=128)
-    paciente = models.ForeignKey(Paciente, 
-                on_delete=models.CASCADE, related_name='processos')
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    #clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)     
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    medico = models.ForeignKey(
+        Medico,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    clinica = models.ForeignKey(
+        Clinica,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    emissor = models.ForeignKey(
+        Emissor,
+        on_delete=models.CASCADE,
+        related_name='processos'
+        )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, 
+        related_name='processos'
+        )
+
 
     def __str__(self):
         return f'{self.cid}'   

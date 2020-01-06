@@ -8,6 +8,7 @@ from medicos.models import Medico
 from pacientes.models import Paciente
 from processos.models import Processo
 from usuarios.models import Usuario
+from clinicas.models import Clinica
 from .forms import NovoProcesso
 import os
 import pypdftk
@@ -33,31 +34,24 @@ class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
 def renovacao_rapida(request):
     if request.method == 'GET':
         busca = request.GET.get('b')
-        usuario = request.user.pk
         pacientes = Paciente.objects.filter(
                 (Q(nome_paciente__icontains=busca) | 
                 Q(cpf_paciente__icontains=busca)) 
-                & Q(usuario_id__in=Usuario.objects.filter(id=usuario))
             )
 
         contexto = {'pacientes': pacientes}
         return render(request, 'processos/renovacao_rapida.html', contexto)
 
     else: 
-        paciente_id = request.POST.get('paciente_id')
+        processo_id = request.POST.get('processo_id')
         nova_data = request.POST.get('data1')
-        cid = request.POST.get('cid')
 
-        dados = gerar_dados_renovacao(nova_data,paciente_id,cid)
-        print('na view')
-        print(dados)
-
+        dados = gerar_dados_renovacao(nova_data,processo_id)
         
         args = [dados, {}, settings.PATH_LME_BASE]
         pdf = GeradorPDF(*args)
         dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
         path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
-        print(path_pdf_final)
         return render(request, 'processos/renovacao_rapida.html')
         
 
@@ -65,25 +59,31 @@ def renovacao_rapida(request):
 def cadastro(request):
     medico = request.user.medico
     usuario = request.user
+    clinicas = medico.clinicas.all()
+    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])    
     
     if request.method == 'POST':
-        formulario = NovoProcesso(request.POST)
+        formulario = NovoProcesso(escolhas, request.POST)    
             
-        if formulario.is_valid(): 
+        if formulario.is_valid():   
             dados = formulario.cleaned_data
+            id_clin = dados['clinicas']
+            clinica = medico.clinicas.get(id=id_clin)
+            end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
 
-            # Registra os dados do médico logado
-            dados_medico = {'nome_medico': medico.nome_medico,
-             'cns_medico': medico.cns_medico, 
-             'clinica_ativa_cns': medico.clinica_ativa_cns,
-             'clinica_ativa_nome': medico.clinica_ativa_nome, 
-             'clinica_ativa_bairro': medico.clinica_ativa_bairro,
-             'clinica_ativa_end': medico.clinica_ativa_end,
-             'clinica_ativa_cidade': medico.clinica_ativa_cidade,
-             'clinica_ativa_cep': medico.clinica_ativa_cep,
-             'clinica_ativa_telefone': medico.clinica_ativa_telefone
-            }
-            dados.update(dados_medico)
+
+            # Registra os dados do médico logado e da clínica associada
+            dados_adicionais = {'nome_medico': medico.nome_medico,
+                            'cns_medico': medico.cns_medico,
+                            'nome_clinica': clinica.nome_clinica,
+                            'cns_clinica': clinica.cns_clinica,
+                            'end_clinica': end_clinica,
+                            'cidade': clinica.cidade,
+                            'bairro': clinica.bairro,
+                            'cep': clinica.cep,
+                            'telefone_clinica': clinica.telefone_clinica,
+                             }
+            dados.update(dados_adicionais)
 
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
@@ -95,6 +95,8 @@ def cadastro(request):
             path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
             return redirect(path_pdf_final)
     else:
-        formulario = NovoProcesso()  
+        formulario = NovoProcesso(escolhas)
 
-    return render(request, 'processos/cadastro.html', {'formulario': formulario})
+    contexto = {'formulario': formulario}  
+
+    return render(request, 'processos/cadastro.html', contexto)

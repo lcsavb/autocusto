@@ -1,7 +1,5 @@
 from django.db import models
 from django.conf import settings
-from clinicas.models import Clinica
-from medicos.models import Medico
 
 class Paciente(models.Model):
     nome_paciente = models.CharField(max_length=100)
@@ -14,7 +12,7 @@ class Paciente(models.Model):
     peso = models.CharField(max_length=100)
     altura = models.CharField(max_length=100, default='1,70m')
     escolha_etnia = models.CharField(max_length=100)
-    cpf_paciente = models.CharField(unique=True, max_length=100)
+    cpf_paciente = models.CharField(unique=True, max_length=14)
     cns_paciente = models.CharField(max_length=100)
     email_paciente = models.EmailField(null=True)
     cidade_paciente = models.CharField(max_length=100)
@@ -22,12 +20,8 @@ class Paciente(models.Model):
     cep_paciente = models.CharField(max_length=100)
     telefone1_paciente = models.CharField(max_length=100)
     telefone2_paciente = models.CharField(max_length=100)
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    #clinica = models.ForeignKey(Clinica, on_delete=models.CASCADE)
+
+
 
     def __str__(self):
         return f'{self.nome_paciente}'
-
-
-    
