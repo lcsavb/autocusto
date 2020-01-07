@@ -2,9 +2,15 @@ from django import forms
 from django.db import transaction
 from datetime import datetime
 from pacientes.models import Paciente
-#from medicos.models import Medico
 from processos.models import Processo
 from clinicas.models import Clinica, Emissor
+
+def preparar_modelo(modelo, **kwargs):
+     ''' Recebe o nome do model e os parâmetros a serem salvos,
+     retorna preparado para ser salvo no banco '''
+     modelo_parametrizado = modelo(**kwargs)
+     return modelo_parametrizado
+
 
 
 class NovoProcesso(forms.Form):
@@ -60,56 +66,50 @@ class NovoProcesso(forms.Form):
          medico = usuario.medico
          clinica_id = dados['clinicas']
          
-         #adicionar dados da clínica
+         #adiciona dados da clínica
          cpf_paciente = dados['cpf_paciente']
          emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
-         print(dados) 
 
          try:
               paciente_existe = Paciente.objects.get(cpf_paciente=cpf_paciente) 
          except:
               paciente_existe = False
 
-         # precisa melhorar esse código - funciona, mas está nojento
-         paciente = Paciente(nome_paciente=dados['nome_paciente'], 
+         dados_paciente = dict(nome_paciente=dados['nome_paciente'], 
                      cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
                      altura=dados['altura'], nome_mae=dados['nome_mae'], 
-                     incapaz=dados['incapaz'], nome_responsavel=dados['nome_responsavel']) 
+                     incapaz=dados['incapaz'], nome_responsavel=dados['nome_responsavel'])
+
+         paciente = preparar_modelo(Paciente, **dados_paciente)
+
+         dados_processo = dict(med1=dados['med1'], 
+                              med1_posologia_mes1=dados['med1_posologia_mes1'], 
+                              qtd_med1_mes1=dados['qtd_med1_mes1'],
+                              qtd_med1_mes2=dados['qtd_med1_mes2'],
+                              qtd_med1_mes3=dados['qtd_med1_mes3'],
+                              cid=dados['cid'],
+                              diagnostico=dados['diagnostico'],
+                              anamnese=dados['anamnese'],
+                              tratou=dados['tratou'],
+                              tratamentos_previos=dados['tratamentos_previos'],
+                              data1=dados['data_1'],
+                              medico=emissor.medico,
+                              paciente=paciente,
+                              clinica = emissor.clinica,
+                              emissor=emissor,
+                              usuario=usuario
+                              ) 
 
          if paciente_existe:
-              paciente = Paciente(id=paciente_existe.pk, nome_paciente=dados['nome_paciente'], 
-                     cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
-                     altura=dados['altura'], nome_mae=dados['nome_mae'], 
-                     incapaz=dados['incapaz'], nome_responsavel=dados['nome_responsavel'])   
+              dados_paciente['id'] = paciente_existe.pk
+              paciente = preparar_modelo(Paciente, **dados_paciente)
               paciente.save(force_update=True)
-              #adicionar aqui salvamento de processo - fazer função
-              processo = Processo(med1=dados['med1'], 
-                              med1_posologia_mes1=dados['med1_posologia_mes1'], 
-                              qtd_med1_mes1=dados['qtd_med1_mes1'],
-                              qtd_med1_mes2=dados['qtd_med1_mes2'],
-                              qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
-                              diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
-                              tratou=dados['tratou'], tratamentos_previos=dados['tratamentos_previos'],
-                              data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
-                              clinica = emissor.clinica, emissor=emissor, usuario=usuario
-                              )
+              processo = preparar_modelo(Processo,**dados_processo)
               emissor.pacientes.add(paciente_existe) 
          else:
-              paciente.save()
-              
+              paciente.save()  
               paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
-
-
-              processo = Processo(med1=dados['med1'], 
-                              med1_posologia_mes1=dados['med1_posologia_mes1'], 
-                              qtd_med1_mes1=dados['qtd_med1_mes1'],
-                              qtd_med1_mes2=dados['qtd_med1_mes2'],
-                              qtd_med1_mes3=dados['qtd_med1_mes3'], cid=dados['cid'],
-                              diagnostico=dados['diagnostico'], anamnese=dados['anamnese'],
-                              tratou=dados['tratou'], tratamentos_previos=dados['tratamentos_previos'],
-                              data1=dados['data_1'], medico=emissor.medico, paciente=paciente,
-                              clinica = emissor.clinica, emissor=emissor, usuario=usuario
-                              )
+              processo = preparar_modelo(Processo,**dados_processo)
               processo.save()
               emissor.pacientes.add(paciente)
                     
