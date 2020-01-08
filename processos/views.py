@@ -35,9 +35,10 @@ def renovacao_rapida(request):
     if request.method == 'GET':
         busca = request.GET.get('b')
         pacientes = Paciente.objects.filter(
-                (Q(nome_paciente__icontains=busca) | 
-                Q(cpf_paciente__icontains=busca)) 
-            )
+            Q(processos__usuario=request.user)
+            &
+            (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
+        )
 
         contexto = {'pacientes': pacientes}
         return render(request, 'processos/renovacao_rapida.html', contexto)

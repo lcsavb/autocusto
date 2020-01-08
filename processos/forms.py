@@ -101,6 +101,7 @@ class NovoProcesso(forms.Form):
                               ) 
 
          if paciente_existe:
+              # AQUI É MELHOR REDIRECIONAR PARA ADICIONAR PROCESSO AO CONTRÁRIO DE EDITAR PACIENTE
               dados_paciente['id'] = paciente_existe.pk
               paciente = preparar_modelo(Paciente, **dados_paciente)
               paciente.save(force_update=True)
