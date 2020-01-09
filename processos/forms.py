@@ -27,6 +27,7 @@ class NovoProcesso(forms.Form):
      nome_mae = forms.CharField(required=True, label='Nome da mãe')
      peso = forms.IntegerField(required=True, label='Peso')
      altura = forms.IntegerField(required=True, label='Altura')
+     end_paciente=forms.CharField(required=True, label='Endereço (com complemento)')
      incapaz = forms.ChoiceField(
           choices=((True, 'Sim'),
           (False, 'Não')), 
@@ -39,12 +40,42 @@ class NovoProcesso(forms.Form):
      # Dados do processo
      med1 = forms.CharField(required=True, label='Medicamento')
      med1_posologia_mes1 = forms.CharField(required=True, label='Posologia')
+     med1_posologia_mes2 = forms.CharField(required=False, label='Posologia')
+     med1_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med2_posologia_mes1 = forms.CharField(required=False, label='Posologia')
+     med2_posologia_mes2 = forms.CharField(required=False, label='Posologia')
+     med2_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med3_posologia_mes1 = forms.CharField(required=False, label='Posologia')
+     med3_posologia_mes2 = forms.CharField(required=False, label='Posologia')
+     med3_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med4_posologia_mes1 = forms.CharField(required=False, label='Posologia')
+     med4_posologia_mes2 = forms.CharField(required=False, label='Posologia')
+     med4_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med5_posologia_mes1 = forms.CharField(required=False, label='Posologia')
+     med5_posologia_mes2 = forms.CharField(required=False, label='Posologia')
+     med5_posologia_mes3 = forms.CharField(required=False, label='Posologia')
      qtd_med1_mes1 = forms.CharField(required=True, label="Qtde. 1 mês")
      qtd_med1_mes2 = forms.CharField(required=True, label="Qtde. 2 mês")
      qtd_med1_mes3 = forms.CharField(required=True, label="Qtde. 3 mês")
      cid = forms.CharField(required=True, label='CID')
      diagnostico = forms.CharField(required=True, label='Diagnóstico')
      anamnese = forms.CharField(required=True, label='Anamnese')
+     preenchido_por = forms.ChoiceField(
+                   choices=
+                   [('paciente','Paciente'),
+                   ('mae','Mãe'),
+                   ('responsavel','Responsável'),
+                   ('medico','Médico')])
+     etnia = forms.ChoiceField(label='Etnia', required=False,
+     choices=
+                   [('etnia_branca','Branca'),
+                   ('etnia_parda','Parda'),
+                   ('etnia_amarela','Amarela'),
+                   ('etnia_indigena','Indígena'),
+                   ('etnia_si', 'Sem informação')])
+     email_paciente = forms.EmailField(label='E-Mail')
+     telefone1_paciente = forms.CharField(label='Telefone residencial')
+     telefone2_paciente = forms.CharField(label='Telefone celular')     
      tratou = forms.ChoiceField(
           choices=((True, 'Sim'), (False, 'Não')),
           label='Fez tratamento prévio?',
@@ -75,15 +106,25 @@ class NovoProcesso(forms.Form):
          except:
               paciente_existe = False
 
-         dados_paciente = dict(nome_paciente=dados['nome_paciente'], 
-                     cpf_paciente=dados['cpf_paciente'], peso =dados['peso'], 
-                     altura=dados['altura'], nome_mae=dados['nome_mae'], 
-                     incapaz=dados['incapaz'], nome_responsavel=dados['nome_responsavel'])
+         dados_paciente = dict(
+              nome_paciente=dados['nome_paciente'], 
+              cpf_paciente=dados['cpf_paciente'],
+              peso =dados['peso'], 
+              altura=dados['altura'],
+              nome_mae=dados['nome_mae'], 
+              incapaz=dados['incapaz'],
+              nome_responsavel=dados['nome_responsavel'],
+              etnia=dados['etnia'],
+              telefone1_paciente=dados['telefone1_paciente'],
+              telefone2_paciente=dados['telefone2_paciente'],
+              email_paciente=dados['email_paciente'])
 
          paciente = preparar_modelo(Paciente, **dados_paciente)
 
          dados_processo = dict(med1=dados['med1'], 
-                              med1_posologia_mes1=dados['med1_posologia_mes1'], 
+                              med1_posologia_mes1=dados['med1_posologia_mes1'],
+                              med1_posologia_mes2=dados['med1_posologia_mes2'],
+                              med1_posologia_mes3=dados['med1_posologia_mes3'], 
                               qtd_med1_mes1=dados['qtd_med1_mes1'],
                               qtd_med1_mes2=dados['qtd_med1_mes2'],
                               qtd_med1_mes3=dados['qtd_med1_mes3'],
@@ -93,6 +134,7 @@ class NovoProcesso(forms.Form):
                               tratou=dados['tratou'],
                               tratamentos_previos=dados['tratamentos_previos'],
                               data1=dados['data_1'],
+                              preenchido_por=dados['preenchido_por'],
                               medico=emissor.medico,
                               paciente=paciente,
                               clinica = emissor.clinica,

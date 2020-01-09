@@ -27,6 +27,11 @@
     </div>
 
     <div class="form-row">
+        <div class="col-12"> {{ formulario.end_paciente|as_crispy_field }}</div>
+    </div>
+
+
+    <div class="form-row">
             <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
             <div class="col-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
     </div>
@@ -63,6 +68,15 @@
     <div class="form-row">
             <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
             <div class="col-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+        <div class="col-2"> {{ formulario.preenchido_por|as_crispy_field }}</div>
+        
+        <div class="col-2 campo-18 d-none"> {{ formulario.etnia|as_crispy_field }}</div>
+        <div class="col-2 campo-18 d-none"> {{ formulario.telefone1_paciente|as_crispy_field }}</div>
+        <div class="col-2 campo-18 d-none"> {{ formulario.telefone2_paciente|as_crispy_field }}</div>
+        <div class="col-4 campo-18 d-none"> {{ formulario.email_paciente|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">

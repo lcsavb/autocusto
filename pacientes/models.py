@@ -20,6 +20,7 @@ class Paciente(models.Model):
     cep_paciente = models.CharField(max_length=100)
     telefone1_paciente = models.CharField(max_length=100)
     telefone2_paciente = models.CharField(max_length=100)
+    etnia=models.CharField(max_length=10)
 
 
 
