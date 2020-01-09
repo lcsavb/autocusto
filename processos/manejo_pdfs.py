@@ -84,7 +84,17 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
     return dados
 
-       
+
+def ajustar_campo_18(dados_lme):
+    if dados_lme['preenchido_por'] != 'medico':
+        del dados_lme['cpf_paciente']
+        del dados_lme['etnia']
+        del dados_lme['telefone1_paciente']
+        del dados_lme['telefone2_paciente']
+        del dados_lme['email_paciente']
+        dados_lme['escolha_documento'] = ''
+    else:
+        pass
 
 
 class GeradorPDF():
@@ -106,10 +116,10 @@ class GeradorPDF():
         dados_lme_base['data_1'] = datas[0]
         dados_lme_base['data_2'] = datas[1]
         dados_lme_base['data_3'] = datas[2]
+
+        ## Remove o cpf do campo 18 se preenchimento não foi pelo médico
+        ajustar_campo_18(dados_lme_base)
         
-
-
-
         #Esse é o endereço de output lido pelo PDFTK "localmente"
         output_pdf_final = os.path.join('processos/static', nome_final_pdf)
 

@@ -68,7 +68,6 @@ def cadastro(request):
             
         if formulario.is_valid():   
             dados = formulario.cleaned_data
-            print(dados)
             id_clin = dados['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
             end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
@@ -91,6 +90,7 @@ def cadastro(request):
             dados_condicionais = {}
 
             formulario.save(usuario)
+
             args = [dados, dados_condicionais, settings.PATH_LME_BASE]
             pdf = GeradorPDF(*args)
             dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)

@@ -60,7 +60,7 @@ class NovoProcesso(forms.Form):
      cid = forms.CharField(required=True, label='CID')
      diagnostico = forms.CharField(required=True, label='Diagnóstico')
      anamnese = forms.CharField(required=True, label='Anamnese')
-     preenchido_por = forms.ChoiceField(
+     preenchido_por = forms.ChoiceField(initial={'paciente'},
                    choices=
                    [('paciente','Paciente'),
                    ('mae','Mãe'),
@@ -73,9 +73,9 @@ class NovoProcesso(forms.Form):
                    ('etnia_amarela','Amarela'),
                    ('etnia_indigena','Indígena'),
                    ('etnia_si', 'Sem informação')])
-     email_paciente = forms.EmailField(label='E-Mail')
-     telefone1_paciente = forms.CharField(label='Telefone residencial')
-     telefone2_paciente = forms.CharField(label='Telefone celular')     
+     email_paciente = forms.EmailField(required=False, label='E-Mail')
+     telefone1_paciente = forms.CharField(required=False, label='Tel. residencial')
+     telefone2_paciente = forms.CharField(required=False, label='Celular')     
      tratou = forms.ChoiceField(
           choices=((True, 'Sim'), (False, 'Não')),
           label='Fez tratamento prévio?',
