@@ -40,3 +40,38 @@ campoDezoito.addEventListener('ValueChange', function() {
     }
 
 });
+
+
+// Medicamentos
+
+const addMed = document.querySelector('#add-med');
+
+addMed.addEventListener('click', function(event) {
+    const medSel = document.querySelector('#medicamentos-tab').children;
+    const listaMedSel = Array.from(medSel);
+    const medicamento = document.querySelector('#medicamentos').children;
+    for (let n = 0; n < medSel.length; n++) {
+      if (medSel[n].classList.contains('d-none')) {
+        event.preventDefault();
+        const medicamentoVinculado = querySelector(`#medicamento-${n}`);
+        listaMedSel.forEach(element => { if (element !== medSel[n]) {
+            element.classList.remove('active');
+            element.setAttribute('aria-selected', 'false');
+            medicamentoVinculado.classList.remove('active');
+            medicamentoVinculado.classList.remove('show');
+        }
+            
+        });
+        medSel[n].classList.remove('d-none');
+        medSel[n].classList.add('active');
+        medSel[n].setAttribute('aria-selected', 'true');
+        medicamento[n].classList.toggle('active');
+        medicamento[n].classList.toggle('show');
+        
+
+        break;
+      }
+    }
+  });
+
+

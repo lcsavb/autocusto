@@ -4,6 +4,7 @@
 
 {% block content %}
 
+
 <div class="container-fluid">
   <form method="POST" target="_blank"> {% csrf_token %}
 
@@ -54,11 +55,30 @@
             <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
     </div>
 
-    <div class="form-row">
-        <div class="col-6"> {{ formulario.med1|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.qtd_med1_mes1|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.qtd_med1_mes2|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.qtd_med1_mes3|as_crispy_field }}</div>
+    <!-- Medicamentos -->
+
+    <div class="row">
+      <div class="col-3">
+        <div class="nav flex-column nav-pills" id="medicamentos-tab" role="tablist" aria-orientation="vertical">
+              <a class="nav-link" id="medicamento-1-tab" data-toggle="pill" href="#medicamento-1" role="tab" aria-controls="v-pills-settings" aria-selected="true">Medicamento #1</a>
+              <a class="nav-link d-none" id="medicamento-2-tab" data-toggle="pill" href="#medicamento-2" role="tab" aria-controls="v-pills-settings" aria-selected="true">Medicamento #2</a>
+              <a class="nav-link d-none" id="medicamento-3-tab" data-toggle="pill" href="#medicamento-3" role="tab" aria-controls="v-pills-settings" aria-selected="true">Medicamento #3</a>
+              <a class="nav-link d-none" id="medicamento-4-tab" data-toggle="pill" href="#medicamento-4" role="tab" aria-controls="v-pills-settings" aria-selected="true">Medicamento #4</a>
+              <a class="nav-link d-none" id="medicamento-5-tab" data-toggle="pill" href="#medicamento-5" role="tab" aria-controls="v-pills-settings" aria-selected="true">Medicamento #5</a>
+              
+          <a class="nav-link" href="" id="add-med">Adicionar medicamento</a>
+        </div>
+      </div>
+      <div class="col-9">
+        <div class="tab-content" id="medicamentos">
+          <div class="tab-pane fade" id="medicamento-1" role="tabpanel" aria-labelledby="medicamento-1-tab">Med 1</div>
+          <div class="tab-pane fade" id="medicamento-2" role="tabpanel" aria-labelledby="medicamento-2-tab">Med 2</div>
+          <div class="tab-pane fade" id="medicamento-3" role="tabpanel" aria-labelledby="medicamento-3-tab">Med 3</div>
+          <div class="tab-pane fade" id="medicamento-4" role="tabpanel" aria-labelledby="medicamento-4-tab">Med 4</div>
+          <div class="tab-pane fade" id="medicamento-5" role="tabpanel" aria-labelledby="medicamento-5-tab">Med 5</div>
+          
+        </div>
+      </div>
     </div>
 
     <div class="form-row">
