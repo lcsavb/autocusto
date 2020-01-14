@@ -38,25 +38,64 @@ class NovoProcesso(forms.Form):
           required=False) 
 
      # Dados do processo
+     REPETIR_ESCOLHAS = [(True,'Sim'), (False,'Não')]
      med1 = forms.CharField(required=True, label='Medicamento')
+     med1_via = forms.CharField(required=True, label='Via administração')
      med1_posologia_mes1 = forms.CharField(required=True, label='Posologia')
      med1_posologia_mes2 = forms.CharField(required=False, label='Posologia')
      med1_posologia_mes3 = forms.CharField(required=False, label='Posologia')
      med2_posologia_mes1 = forms.CharField(required=False, label='Posologia')
+     med2 = forms.CharField(required=False, label='Medicamento')
      med2_posologia_mes2 = forms.CharField(required=False, label='Posologia')
      med2_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med3 = forms.CharField(required=False, label='Medicamento')
      med3_posologia_mes1 = forms.CharField(required=False, label='Posologia')
      med3_posologia_mes2 = forms.CharField(required=False, label='Posologia')
      med3_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med4 = forms.CharField(required=False, label='Medicamento')
      med4_posologia_mes1 = forms.CharField(required=False, label='Posologia')
      med4_posologia_mes2 = forms.CharField(required=False, label='Posologia')
      med4_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+     med5 = forms.CharField(required=False, label='Medicamento')
      med5_posologia_mes1 = forms.CharField(required=False, label='Posologia')
      med5_posologia_mes2 = forms.CharField(required=False, label='Posologia')
      med5_posologia_mes3 = forms.CharField(required=False, label='Posologia')
      qtd_med1_mes1 = forms.CharField(required=True, label="Qtde. 1 mês")
      qtd_med1_mes2 = forms.CharField(required=True, label="Qtde. 2 mês")
      qtd_med1_mes3 = forms.CharField(required=True, label="Qtde. 3 mês")
+     qtd_med2_mes1 = forms.CharField(required=False,label="Qtde. 1 mês")
+     qtd_med2_mes2 = forms.CharField(required=False,label="Qtde. 2 mês")
+     qtd_med2_mes3 = forms.CharField(required=False,label="Qtde. 3 mês")
+     qtd_med3_mes1 = forms.CharField(required=False,label="Qtde. 1 mês")
+     qtd_med3_mes2 = forms.CharField(required=False,label="Qtde. 2 mês")
+     qtd_med3_mes3 = forms.CharField(required=False,label="Qtde. 3 mês")
+     qtd_med4_mes1 = forms.CharField(required=False,label="Qtde. 1 mês")
+     qtd_med4_mes2 = forms.CharField(required=False,label="Qtde. 2 mês")
+     qtd_med4_mes3 = forms.CharField(required=False,label="Qtde. 3 mês")
+     qtd_med5_mes1 = forms.CharField(required=False,label="Qtde. 1 mês")
+     qtd_med5_mes2 = forms.CharField(required=False,label="Qtde. 2 mês")
+     qtd_med5_mes3 = forms.CharField(required=False,label="Qtde. 3 mês")
+     med1_repetir_posologia = forms.ChoiceField(required=True,
+                                                initial=True,
+                                                choices=REPETIR_ESCOLHAS,
+                                                label='Repetir posologia?')
+     med2_repetir_posologia = forms.ChoiceField(required=True,
+                                                initial=True,
+                                                choices=REPETIR_ESCOLHAS,
+                                                label='Repetir posologia?')
+     med3_repetir_posologia = forms.ChoiceField(required=True,
+                                                initial=True,
+                                                choices=REPETIR_ESCOLHAS,
+                                                label='Repetir posologia?')
+     med4_repetir_posologia = forms.ChoiceField(required=True,
+                                                initial=True,
+                                                choices=REPETIR_ESCOLHAS,
+                                                label='Repetir posologia?')
+     med5_repetir_posologia = forms.ChoiceField(required=True,
+                                                initial=True,
+                                                choices=REPETIR_ESCOLHAS,
+                                                label='Repetir posologia?')
+
      cid = forms.CharField(required=True, label='CID')
      diagnostico = forms.CharField(required=True, label='Diagnóstico')
      anamnese = forms.CharField(required=True, label='Anamnese')
@@ -121,13 +160,42 @@ class NovoProcesso(forms.Form):
 
          paciente = preparar_modelo(Paciente, **dados_paciente)
 
-         dados_processo = dict(med1=dados['med1'], 
+         dados_processo = dict(med1=dados['med1'],
+                              med1_via=dados['med1_via'],
+                              med2=dados['med2'],
+                              med3=dados['med3'], 
+                              med4=dados['med4'], 
+                              med5=dados['med5'],   
                               med1_posologia_mes1=dados['med1_posologia_mes1'],
                               med1_posologia_mes2=dados['med1_posologia_mes2'],
-                              med1_posologia_mes3=dados['med1_posologia_mes3'], 
+                              med1_posologia_mes3=dados['med1_posologia_mes3'],
+                              med2_posologia_mes1=dados['med2_posologia_mes1'],
+                              med2_posologia_mes2=dados['med2_posologia_mes2'],
+                              med2_posologia_mes3=dados['med2_posologia_mes3'],
+                              med3_posologia_mes1=dados['med3_posologia_mes1'],
+                              med3_posologia_mes2=dados['med3_posologia_mes2'],
+                              med3_posologia_mes3=dados['med3_posologia_mes3'],
+                              med4_posologia_mes1=dados['med4_posologia_mes1'],
+                              med4_posologia_mes2=dados['med4_posologia_mes2'],
+                              med4_posologia_mes3=dados['med4_posologia_mes3'],
+                              med5_posologia_mes1=dados['med5_posologia_mes1'],
+                              med5_posologia_mes2=dados['med5_posologia_mes2'],
+                              med5_posologia_mes3=dados['med5_posologia_mes3'],  
                               qtd_med1_mes1=dados['qtd_med1_mes1'],
                               qtd_med1_mes2=dados['qtd_med1_mes2'],
                               qtd_med1_mes3=dados['qtd_med1_mes3'],
+                              qtd_med2_mes1=dados['qtd_med2_mes1'],
+                              qtd_med2_mes2=dados['qtd_med2_mes2'],
+                              qtd_med2_mes3=dados['qtd_med2_mes3'],
+                              qtd_med3_mes1=dados['qtd_med3_mes1'],
+                              qtd_med3_mes2=dados['qtd_med3_mes2'],
+                              qtd_med3_mes3=dados['qtd_med3_mes3'],
+                              qtd_med4_mes1=dados['qtd_med4_mes1'],
+                              qtd_med4_mes2=dados['qtd_med4_mes2'],
+                              qtd_med4_mes3=dados['qtd_med4_mes3'],
+                              qtd_med5_mes1=dados['qtd_med5_mes1'],
+                              qtd_med5_mes2=dados['qtd_med5_mes2'],
+                              qtd_med5_mes3=dados['qtd_med5_mes3'],
                               cid=dados['cid'],
                               diagnostico=dados['diagnostico'],
                               anamnese=dados['anamnese'],
