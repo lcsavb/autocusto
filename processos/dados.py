@@ -1,3 +1,6 @@
+from django.conf import settings
+from .manejo_pdfs import GeradorPDF
+
 def cria_dict_renovação(modelo):
     dicionario = {
         # Dados paciente
@@ -60,6 +63,44 @@ def cria_dict_renovação(modelo):
 
     }
     return dicionario
+
+
+def gerar_dados_renovacao(primeira_data, processo_id):
+    processo = Processo.objects.get(id=processo_id)
+    dados_processo = model_to_dict(processo)
+    dados_paciente = model_to_dict(processo.paciente)
+    dados_medico = model_to_dict(processo.medico)
+    dados_clinica = model_to_dict(processo.clinica)
+    # pdftk falha se input não for string!
+    dados_clinica['medicos'] = ''
+    dados_clinica['usuarios'] = ''
+    end_clinica = dados_clinica['logradouro'] + ', ' + dados_clinica['logradouro_num']
+    dados_clinica['end_clinica'] = end_clinica
+
+def vincula_dados_emissor(medico, clinica, dados_formulario):
+    ''' Vincula dos dados do emissor logado aos dados do processo '''
+    end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
+    dados_adicionais = {'nome_medico': medico.nome_medico,
+                        'cns_medico': medico.cns_medico,
+                        'nome_clinica': clinica.nome_clinica,
+                        'cns_clinica': clinica.cns_clinica,
+                        'end_clinica': end_clinica,
+                        'cidade': clinica.cidade,
+                        'bairro': clinica.bairro,
+                        'cep': clinica.cep,
+                        'telefone_clinica': clinica.telefone_clinica,
+                        }
+    dados_formulario.update(dados_adicionais)
+    return dados_formulario
+
+
+def transfere_dados_gerador(dados, dados_condicionais):
+    ''' Coleta os dados finais do processo, transfere ao gerador de PDF
+    e retorna o PATH final do arquivo gerado '''
+    pdf = GeradorPDF(dados,dados_condicionais,settings.PATH_LME_BASE)
+    dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
+    path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
+    return path_pdf_final
 
 
 # ############################### Path pdf_final
