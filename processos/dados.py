@@ -1,5 +1,8 @@
 from django.conf import settings
+from django.forms.models import model_to_dict
+from datetime import datetime
 from .manejo_pdfs import GeradorPDF
+from processos.models import Processo
 
 def cria_dict_renovação(modelo):
     dicionario = {
@@ -66,7 +69,11 @@ def cria_dict_renovação(modelo):
 
 
 def gerar_dados_renovacao(primeira_data, processo_id):
+    ''' Usado na renovação rápida para gerar novo processo,
+    mudando somente a data inicial. Retorna dados do processo 
+    completos '''
     processo = Processo.objects.get(id=processo_id)
+    dados = {}
     dados_processo = model_to_dict(processo)
     dados_paciente = model_to_dict(processo.paciente)
     dados_medico = model_to_dict(processo.medico)
@@ -76,6 +83,13 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     dados_clinica['usuarios'] = ''
     end_clinica = dados_clinica['logradouro'] + ', ' + dados_clinica['logradouro_num']
     dados_clinica['end_clinica'] = end_clinica
+    dados.update(dados_processo)
+    dados.update(dados_paciente)
+    dados.update(dados_medico)
+    dados.update(dados_clinica)
+    dados['data_1'] = datetime.strptime(primeira_data, '%d/%m/%Y')
+    return dados  
+    
 
 def vincula_dados_emissor(medico, clinica, dados_formulario):
     ''' Vincula dos dados do emissor logado aos dados do processo '''

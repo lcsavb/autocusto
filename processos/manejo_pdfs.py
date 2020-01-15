@@ -63,13 +63,13 @@ def formatacao_data(data):
     datas = [data1, data2, data3]
     return datas
 
-    dados = {}
-    dados.update(dados_medico)
-    dados.update(dados_paciente)
-    dados.update(dados_processo)
-    dados.update(dados_clinica)
-    dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
-    return dados
+    # dados = {}
+    # dados.update(dados_medico)
+    # dados.update(dados_paciente)
+    # dados.update(dados_processo)
+    # dados.update(dados_clinica)
+    # dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
+    # return dados
 
 
 def ajustar_campo_18(dados_lme):

@@ -48,11 +48,9 @@ def edicao(request):
 
             formulario.save(usuario)
 
-            args = [dados, dados_condicionais, settings.PATH_LME_BASE]
-            pdf = GeradorPDF(*args)
-            dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
-            path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
+            path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
             return redirect(path_pdf_final)
+
     else:
         processo_id = request.GET.get('id')
         processo = Processo.objects.get(id=processo_id)
@@ -79,16 +77,15 @@ def renovacao_rapida(request):
         contexto = {'pacientes': pacientes}
         return render(request, 'processos/renovacao_rapida.html', contexto)
 
-    else: 
+    else:
+        print(request.POST) 
         processo_id = request.POST.get('processo_id')
-        nova_data = request.POST.get('data1')
+        nova_data = request.POST.get('data_1')
 
         dados = gerar_dados_renovacao(nova_data,processo_id)
+        dados_condicionais = {}
         
-        args = [dados, {}, settings.PATH_LME_BASE]
-        pdf = GeradorPDF(*args)
-        dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
-        path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
+        path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
         return redirect(path_pdf_final)
         
 
