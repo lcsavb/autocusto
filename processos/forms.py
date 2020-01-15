@@ -4,6 +4,7 @@ from datetime import datetime
 from pacientes.models import Paciente
 from processos.models import Processo
 from clinicas.models import Clinica, Emissor
+from .dados import gerar_dados_edicao_parcial
 
 def preparar_modelo(modelo, **kwargs):
      ''' Recebe o nome do model e os parâmetros a serem salvos,
@@ -241,10 +242,24 @@ class NovoProcesso(forms.Form):
      #     return dados
 
 class RenovarProcesso(NovoProcesso):
-     edicao_completa = forms.ChoiceField(required=True, initial={'nao'},
+     edicao_completa = forms.ChoiceField(required=True, initial={False},
                    choices=
                    [
-                   ('nao','Não'),
-                   ('sim','Sim')
+                   (False,'Não'),
+                   (True,'Sim')
                    ])
+
+     @transaction.atomic
+     def save(self, processo_id):
+          dados = self.cleaned_data
+          edicao_completa = dados['edicao_completa']
+
+          if edicao_completa == 'True':
+               pass
+          else:
+               dados_modificados, campos_modificados = gerar_dados_edicao_parcial(dados, processo_id)
+               processo = preparar_modelo(Processo,**dados_modificados)
+               processo.save(update_fields=campos_modificados)
+
+
 

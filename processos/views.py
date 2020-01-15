@@ -28,15 +28,17 @@ class BuscaProcessos(LoginRequiredMixin, ListView):
 @login_required
 def edicao(request):
     usuario = request.user
-    medico = request.user.medico
+    medico = usuario.medico
     clinicas = medico.clinicas.all()
-    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])    
+    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+    processo_id = request.GET.get('id')    
     
     if request.method == 'POST':
         formulario = RenovarProcesso(escolhas, request.POST)    
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
+            print(dados_formulario)
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
 
@@ -46,13 +48,12 @@ def edicao(request):
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
 
-            formulario.save(usuario)
+            formulario.save(processo_id)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
             return redirect(path_pdf_final)
 
     else:
-        processo_id = request.GET.get('id')
         processo = Processo.objects.get(id=processo_id)
         dados_iniciais = cria_dict_renovação(processo)
         formulario = RenovarProcesso(escolhas, initial=dados_iniciais)

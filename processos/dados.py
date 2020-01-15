@@ -115,7 +115,59 @@ def transfere_dados_gerador(dados, dados_condicionais):
     dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
     path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
     return path_pdf_final
+    
+def gerar_dados_edicao_parcial(dados, processo_id):
+    ''' Gera o dicionário com os dados que serão atualizados
+    com a renovação parcial e gera lista com os respectivos campos
+    com a exceção do ID. '''
+    
+    novos_dados = dict(
+        id=processo_id,
+        data1=dados['data_1'],
+        med1=dados['med1'],
+        med1_via=dados['med1_via'],
+        med2=dados['med2'],
+        med3=dados['med3'], 
+        med4=dados['med4'], 
+        med5=dados['med5'],   
+        med1_posologia_mes1=dados['med1_posologia_mes1'],
+        med1_posologia_mes2=dados['med1_posologia_mes2'],
+        med1_posologia_mes3=dados['med1_posologia_mes3'],
+        med2_posologia_mes1=dados['med2_posologia_mes1'],
+        med2_posologia_mes2=dados['med2_posologia_mes2'],
+        med2_posologia_mes3=dados['med2_posologia_mes3'],
+        med3_posologia_mes1=dados['med3_posologia_mes1'],
+        med3_posologia_mes2=dados['med3_posologia_mes2'],
+        med3_posologia_mes3=dados['med3_posologia_mes3'],
+        med4_posologia_mes1=dados['med4_posologia_mes1'],
+        med4_posologia_mes2=dados['med4_posologia_mes2'],
+        med4_posologia_mes3=dados['med4_posologia_mes3'],
+        med5_posologia_mes1=dados['med5_posologia_mes1'],
+        med5_posologia_mes2=dados['med5_posologia_mes2'],
+        med5_posologia_mes3=dados['med5_posologia_mes3'],  
+        qtd_med1_mes1=dados['qtd_med1_mes1'],
+        qtd_med1_mes2=dados['qtd_med1_mes2'],
+        qtd_med1_mes3=dados['qtd_med1_mes3'],
+        qtd_med2_mes1=dados['qtd_med2_mes1'],
+        qtd_med2_mes2=dados['qtd_med2_mes2'],
+        qtd_med2_mes3=dados['qtd_med2_mes3'],
+        qtd_med3_mes1=dados['qtd_med3_mes1'],
+        qtd_med3_mes2=dados['qtd_med3_mes2'],
+        qtd_med3_mes3=dados['qtd_med3_mes3'],
+        qtd_med4_mes1=dados['qtd_med4_mes1'],
+        qtd_med4_mes2=dados['qtd_med4_mes2'],
+        qtd_med4_mes3=dados['qtd_med4_mes3'],
+        qtd_med5_mes1=dados['qtd_med5_mes1'],
+        qtd_med5_mes2=dados['qtd_med5_mes2'],
+        qtd_med5_mes3=dados['qtd_med5_mes3']
+        )
 
+    lista_campos = []
+    for key in novos_dados.keys():
+        lista_campos.append(key)
+    del lista_campos[0]
+    
+    return novos_dados, lista_campos
 
 # ############################### Path pdf_final
 
