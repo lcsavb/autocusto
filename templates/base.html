@@ -18,7 +18,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
     <!-- Custom styles for this template -->
-
+    
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
     <link href="{% static 'iconic/font/css/open-iconic-bootstrap.css' %}" rel="stylesheet">
 
   </head>
@@ -46,8 +47,7 @@
         <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Processos</a>
         <div class="dropdown-menu" aria-labelledby="dropdown01">
           <a class="dropdown-item" href="{% url 'processos-cadastro' %}">Novo</a>
-          <a class="dropdown-item" href="#">Renovação</a>
-          <a class="dropdown-item" href="#">Consultar</a>
+          <a class="dropdown-item" href="{% url 'processos-busca' %}">Renovação</a>
         </div>
       </li>
 
@@ -101,9 +101,6 @@
 
 
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    
-    {% load static %}	
-    <script src="{% static 'js/app.js' %}"></script>
   
     {% block scripts %}
     {% endblock %}

@@ -10,50 +10,16 @@
 
     
     <div class="card rounded" style="padding: 1.5rem;">
-        <div><h3>Dados do paciente {{ formulario.errors }} </h3></div>
-    <div class="form-row">
-        <div class="col-sm-4"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
-    </div>
 
-     <div class="form-row">
-                 
-        <div class="col-10"> {{ formulario.nome_paciente|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.altura|as_crispy_field }}</div>
-        
-    </div>
+      <div><h3>Renovação de Processo</h3></div><hr>
+      <div><h5>Paciente: {{ processo.paciente.nome_paciente }}
+        <div>Diagnóstico: {{ processo.diagnostico }}</div>
+        <div> Data última renovação: {{ processo.data1 }} </div>  </h5></div><hr>
 
-    <div class="form-row">
-        <div class="col-10"> {{ formulario.nome_mae|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.peso|as_crispy_field }}</div>
-    </div>
-
-    <div class="form-row">
-        <div class="col-12"> {{ formulario.end_paciente|as_crispy_field }}</div>
-    </div>
-
-
-    <div class="form-row">
-            <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
-            <div class="col-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
-    </div>
-
-    <hr>
-    
-    <div><h3>Dados do processo</h3></div>
-
-    <div class="form-row">
-        <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
-        <div class="col-10"> {{ formulario.clinicas|as_crispy_field }} </div>
-    </div>
-
-    <div class="form-row">
-        <div class="col-2">{{ formulario.cid|as_crispy_field }}</div>
-        <div class="col-10">{{ formulario.diagnostico|as_crispy_field }}</div>
-    </div>
-
-    <div class="form-row">
-            <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
-    </div>
+      <div class="form-row">
+          <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
+          <div class="col-sm-2"> {{ formulario.edicao_completa|as_crispy_field }} </div>
+      </div>
 
             <!-- Medicamentos -->
   
@@ -259,28 +225,74 @@
             
             <!-- Fim Medicamentos -->
 
+      <!-- Dados que são geralmente repetidos -->
+      <div class="d-none" id="dados-repetidos">
+            <div class="form-row">
+              <div class="col-10"> {{ formulario.clinicas|as_crispy_field }} </div>
+            </div>
+      
+  
+      <div class="form-row">
+          <div class="col-2">{{ formulario.cid|as_crispy_field }}</div>
+          <div class="col-10">{{ formulario.diagnostico|as_crispy_field }}</div>
+      </div>
+  
+      <div class="form-row">
+              <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
+      </div>
+  
+  
+      <div class="form-row">
+              <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
+              <div class="col-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+      </div>
+  
+      <div class="form-row">
+          <div class="col-md-2"> {{ formulario.preenchido_por|as_crispy_field }}</div>
+          
+          <div class="col-md-2 campo-18 d-none"> {{ formulario.etnia|as_crispy_field }}</div>
+          <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone1_paciente|as_crispy_field }}</div>
+          <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone2_paciente|as_crispy_field }}</div>
+          <div class="col-md-4 campo-18 d-none"> {{ formulario.email_paciente|as_crispy_field }}</div>
+      </div>
 
     <div class="form-row">
-            <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
-            <div class="col-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+        <div class="col-sm-4"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
     </div>
 
-    <div class="form-row">
-        <div class="col-md-2"> {{ formulario.preenchido_por|as_crispy_field }}</div>
+     <div class="form-row">
+                 
+        <div class="col-10"> {{ formulario.nome_paciente|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.altura|as_crispy_field }}</div>
         
-        <div class="col-md-2 campo-18 d-none"> {{ formulario.etnia|as_crispy_field }}</div>
-        <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone1_paciente|as_crispy_field }}</div>
-        <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone2_paciente|as_crispy_field }}</div>
-        <div class="col-md-4 campo-18 d-none"> {{ formulario.email_paciente|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
-            <button class="btn btn-outline-info" type="submit">Cadastrar</button>
+        <div class="col-10"> {{ formulario.nome_mae|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.peso|as_crispy_field }}</div>
+    </div>
+
+    <div class="form-row">
+        <div class="col-12"> {{ formulario.end_paciente|as_crispy_field }}</div>
+    </div>
+
+
+    <div class="form-row">
+            <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
+            <div class="col-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
+    </div>
+
+    <!-- Fim dos dados geralmente repetidos -->
+  </div>
+
+    <div class="form-row">      
+            <button class="btn btn-outline-info" type="submit">Renovar</button>
         </div>
     </div>    
 
   </form>
 </div>
+
 
 <script src="{% static 'processos/js/processo.js' %}"></script>
 

@@ -9,25 +9,74 @@ from pacientes.models import Paciente
 from processos.models import Processo
 from usuarios.models import Usuario
 from clinicas.models import Clinica
-from .forms import NovoProcesso
+from .forms import NovoProcesso, RenovarProcesso
 import os
 import pypdftk
 from .manejo_pdfs import GeradorPDF, gerar_dados_renovacao
+from .dados import cria_dict_renovação
 
-class ResultadosBuscaPacientes(LoginRequiredMixin, ListView):
+class BuscaProcessos(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'processos/busca.html'
     login_url = '/login/'
     raise_exception = True
 
     def get_queryset(self):
-        
-        busca = self.request.GET.get('b')
-        object_list = Paciente.objects.filter(
-            (Q(nome__icontains=busca) | Q(cpf_paciente__icontains=busca)) 
-            & Q(usuario_id__in=Usuario.objects.filter(medico=self.request.user.pk))
-        )
-        return object_list
+        return Processo.objects.filter(usuario=self.request.user)
+
+
+@login_required
+def edicao(request):
+    medico = request.user.medico
+    usuario = request.user
+    clinicas = medico.clinicas.all()
+    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])    
+    
+    if request.method == 'POST':
+        formulario = RenovarProcesso(escolhas, request.POST)    
+            
+        if formulario.is_valid():   
+            dados = formulario.cleaned_data
+            id_clin = dados['clinicas']
+            clinica = medico.clinicas.get(id=id_clin)
+            end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
+
+
+            # Registra os dados do médico logado e da clínica associada
+            dados_adicionais = {'nome_medico': medico.nome_medico,
+                            'cns_medico': medico.cns_medico,
+                            'nome_clinica': clinica.nome_clinica,
+                            'cns_clinica': clinica.cns_clinica,
+                            'end_clinica': end_clinica,
+                            'cidade': clinica.cidade,
+                            'bairro': clinica.bairro,
+                            'cep': clinica.cep,
+                            'telefone_clinica': clinica.telefone_clinica,
+                             }
+            dados.update(dados_adicionais)
+
+            # Jeitinho, ainda não existem dados condicionais
+            dados_condicionais = {}
+
+            formulario.save(usuario)
+
+            args = [dados, dados_condicionais, settings.PATH_LME_BASE]
+            pdf = GeradorPDF(*args)
+            dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
+            path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
+            return redirect(path_pdf_final)
+    else:
+        processo_id = request.GET.get('id')
+        processo = Processo.objects.get(id=processo_id)
+        dados_iniciais = cria_dict_renovação(processo)
+        print(dados_iniciais)
+        formulario = RenovarProcesso(escolhas, initial=dados_iniciais)
+
+    contexto = {'formulario': formulario, 'processo': processo}  
+
+    return render(request, 'processos/edicao.html', contexto)
+
+
 
 
 @login_required

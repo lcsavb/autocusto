@@ -97,23 +97,31 @@ addMed.addEventListener('click', function(event) {
     const qtdPrimeiroMes = $(`#id_qtd_med${numMed}_mes1`)
     const qtdSegundoMes = $(`#id_qtd_med${numMed}_mes2`)
     const qtdTerceiroMes = $(`#id_qtd_med${numMed}_mes3`)
+    const divPosologiasOpcionais = $(`#posologias-opcionais-med${numMed}`)
+
+    botaoRepetirPosologia.change(function () {
+        divPosologiasOpcionais.toggleClass('d-none');
+    });
 
         posologiaPrimeiroMes.keyup(function() {
-            if (botaoRepetirPosologia.val() == 'True') {
+            if (botaoRepetirPosologia.val() == 'True') {            
             posologiaSegundoMes.val(posologiaPrimeiroMes.val());
             posologiaTerceiroMes.val(posologiaPrimeiroMes.val());
-            }
-
-        })
+            }            
+        });
 
         qtdPrimeiroMes.keyup(function() {
             if (botaoRepetirPosologia.val() == 'True') {
             qtdSegundoMes.val(qtdPrimeiroMes.val());
             qtdTerceiroMes.val(qtdPrimeiroMes.val());
             }
-        })
+        });
 
-  }
+    // else {
+    //     botaoRepetirPosologia.change(function () {
+    //         divPosologiasOpcionais.toggleClass('d-none');
+    //     });
+    }
 
   repetirPosologia(1);
   repetirPosologia(2);
@@ -122,3 +130,13 @@ addMed.addEventListener('click', function(event) {
   repetirPosologia(5);
 
   // Por que posologiaPrimeiroMes.keyup(repetirPosologia) não funciona?
+
+
+  //// Edição completa
+const edicaoCompleta = $('#id_edicao_completa');
+const dadosRepetidos = $('#dados-repetidos');
+
+edicaoCompleta.change(function() {
+    dadosRepetidos.toggleClass('d-none');
+});
+

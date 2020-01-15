@@ -156,7 +156,8 @@ class NovoProcesso(forms.Form):
               etnia=dados['etnia'],
               telefone1_paciente=dados['telefone1_paciente'],
               telefone2_paciente=dados['telefone2_paciente'],
-              email_paciente=dados['email_paciente'])
+              email_paciente=dados['email_paciente'],
+              end_paciente=dados['end_paciente'])
 
          paciente = preparar_modelo(Paciente, **dados_paciente)
 
@@ -238,3 +239,12 @@ class NovoProcesso(forms.Form):
      #               raise forms.ValidationError('Processo com esse CID já existe para paciente.') 
 
      #     return dados
+
+class RenovarProcesso(NovoProcesso):
+     edicao_completa = forms.ChoiceField(required=True, initial={'nao'},
+                   choices=
+                   [
+                   ('nao','Não'),
+                   ('sim','Sim')
+                   ])
+
