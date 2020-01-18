@@ -4,7 +4,7 @@
 {% block content %}
 
 <div class="container" style="max-width:500px">
-    <form action="{% url 'processos-cadastro' %}"method="get">
+    <form method="POST">
         {% csrf_token %}
         {{formulario|crispy}}
         <button class="btn btn-outline-info" type="submit">Cadastrar</button>

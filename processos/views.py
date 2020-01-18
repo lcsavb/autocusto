@@ -93,7 +93,7 @@ def cadastro(request):
     usuario = request.user
     medico = request.user.medico
     clinicas = medico.clinicas.all()
-    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])    
+    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas]) 
     
     if request.method == 'POST':
         formulario = NovoProcesso(escolhas, request.POST)    
