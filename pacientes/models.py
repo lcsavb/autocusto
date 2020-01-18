@@ -21,6 +21,8 @@ class Paciente(models.Model):
     telefone1_paciente = models.CharField(max_length=100)
     telefone2_paciente = models.CharField(max_length=100)
     etnia=models.CharField(max_length=10)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE, related_name='pacientes')
 
 
 

@@ -103,7 +103,9 @@ def vincula_dados_emissor(medico, clinica, dados_formulario):
                         'bairro': clinica.bairro,
                         'cep': clinica.cep,
                         'telefone_clinica': clinica.telefone_clinica,
+                        'usuario': medico.usuario
                         }
+
     dados_formulario.update(dados_adicionais)
     return dados_formulario
 

@@ -8,7 +8,7 @@ from medicos.models import Medico
 from pacientes.models import Paciente
 from processos.models import Processo
 from usuarios.models import Usuario
-from clinicas.models import Clinica
+from clinicas.models import Clinica, Emissor
 from .forms import NovoProcesso, RenovarProcesso
 import os
 import pypdftk
@@ -69,11 +69,9 @@ def edicao(request):
 def renovacao_rapida(request):
     if request.method == 'GET':
         busca = request.GET.get('b')
-        pacientes = Paciente.objects.filter(
-            Q(processos__usuario=request.user)
-            &
-            (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
-        )
+        pacientes = Paciente.objects.filter(Q(usuario=request.user)
+        & (Q(nome_paciente__icontains=busca) & Q(cpf_paciente__icontains=busca)))
+
 
         contexto = {'pacientes': pacientes}
         return render(request, 'processos/renovacao_rapida.html', contexto)

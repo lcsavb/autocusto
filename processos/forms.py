@@ -13,6 +13,11 @@ def preparar_modelo(modelo, **kwargs):
      return modelo_parametrizado
 
 
+class PreProcesso(forms.Form):
+     cpf_paciente = forms.CharField(required=True, label='CPF do paciente',max_length=14)
+     cid = forms.CharField(required=True, label='CID')
+
+
 
 class NovoProcesso(forms.Form):
      def __init__(self, escolhas, *args, **kwargs):
@@ -158,7 +163,8 @@ class NovoProcesso(forms.Form):
               telefone1_paciente=dados['telefone1_paciente'],
               telefone2_paciente=dados['telefone2_paciente'],
               email_paciente=dados['email_paciente'],
-              end_paciente=dados['end_paciente'])
+              end_paciente=dados['end_paciente'],
+              usuario=dados['usuario'])
 
          paciente = preparar_modelo(Paciente, **dados_paciente)
 
@@ -215,10 +221,12 @@ class NovoProcesso(forms.Form):
          if paciente_existe:
               # AQUI É MELHOR REDIRECIONAR PARA ADICIONAR PROCESSO AO CONTRÁRIO DE EDITAR PACIENTE
               dados_paciente['id'] = paciente_existe.pk
-              paciente = preparar_modelo(Paciente, **dados_paciente)
-              paciente.save(force_update=True)
+          #     paciente = preparar_modelo(Paciente, **dados_paciente)
+          #     paciente.save(force_update=True)
+              dados_processo['paciente'] = paciente_existe 
               processo = preparar_modelo(Processo,**dados_processo)
-              emissor.pacientes.add(paciente_existe) 
+              processo.save()
+          #     emissor.pacientes.add(paciente_existe) 
          else:
               paciente.save()  
               paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
