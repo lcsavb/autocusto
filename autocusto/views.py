@@ -4,21 +4,6 @@ from pacientes.models import Paciente
 from processos.models import Processo
 
 
-def redirecionar_com_get(url, nome_parametro, parametro, *args, **kwargs):
-    response = redirect(url)                                                 
-    cid = args[0]
-    if kwargs.get('existe') == 'sim':
-        response['Location'] += ('?' + nome_parametro + '=' + 
-                                str(parametro) + '&existe=sim' + '&cid=' + str(cid))
-    elif kwargs.get('existe') == 'nao':
-        response['Location'] += ('?' + nome_parametro + '=' + 
-                                str(parametro) + '&existe=nao' + '&cid=' + str(cid))
-
-    else:
-        response['Location'] += ('?' + nome_parametro + '=' + str(parametro))
-    return response
-
-
 def home(request):
     if request.method == 'GET':
         formulario = PreProcesso()
@@ -34,21 +19,21 @@ def home(request):
                 paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)            
                 for processo in paciente.processos.all():
                     if processo.cid == cid:
-                        return redirecionar_com_get('processos-edicao', 'id', processo.id)
+                        request.session['processo_id'] = processo.id
+                        return redirect('processos-edicao')
                     else:
-                        print('else')
-                        return redirecionar_com_get('processos-cadastro', 
-                                                    'cpf_paciente',
-                                                    str(cpf_paciente), 
-                                                    cid, 
-                                                    existe='sim')
+                        request.session['paciente_id'] = paciente.id
+                        request.session['paciente_existe'] = True
+                        request.session['cid'] = cid
+                        return redirect('processos-cadastro')
             except:
-                return redirecionar_com_get('processos-cadastro',
-                                            'cpf_paciente',
-                                            str(cpf_paciente),
-                                            cid,
-                                            existe='nao'
-                                            )
+                request.session['paciente_existe'] = False
+                request.session['cid'] = cid
+                request.session['cpf_paciente'] = cpf_paciente
+                return redirect('processos-cadastro')
+            finally:
+                pass
+                #adicionar mensagem de redirecionamento
 
 
 

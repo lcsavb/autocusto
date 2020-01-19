@@ -18,7 +18,7 @@
                 <form method="POST">
                         {% csrf_token %}
                 <th scope="row"></th>
-                <td>{{ paciente.nome_paciente }}
+                <td>{{ paciente.nome_paciente }}, {{ paciente.cpf_paciente }}
                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                 </td>
                 

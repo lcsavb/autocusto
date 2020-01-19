@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.conf import settings
 from django.db.models import Q
+from django.forms.models import model_to_dict
 from medicos.models import Medico
 from pacientes.models import Paciente
 from processos.models import Processo
@@ -31,14 +32,18 @@ def edicao(request):
     medico = usuario.medico
     clinicas = medico.clinicas.all()
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
-    processo_id = request.GET.get('id')    
+
+    try:
+        processo_id = request.session['processo_id']
+    except:
+        processo_id = request.GET.get['id'] 
+
     
     if request.method == 'POST':
         formulario = RenovarProcesso(escolhas, request.POST)    
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
-            print(dados_formulario)
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
 
@@ -93,7 +98,9 @@ def cadastro(request):
     usuario = request.user
     medico = request.user.medico
     clinicas = medico.clinicas.all()
-    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas]) 
+    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+    paciente_existe = request.session['paciente_existe']
+     
     
     if request.method == 'POST':
         formulario = NovoProcesso(escolhas, request.POST)    
@@ -113,7 +120,18 @@ def cadastro(request):
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
             return redirect(path_pdf_final)
     else:
-        formulario = NovoProcesso(escolhas)
+        if paciente_existe:
+            paciente_id = request.session['paciente_id']
+            paciente = Paciente.objects.get(id=paciente_id)
+            dados_paciente = model_to_dict(paciente)
+            formulario = NovoProcesso(escolhas, initial=dados_paciente)
+        else:
+            dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
+                              'cid': request.session['cid']
+                             }
+            
+            
+            formulario = NovoProcesso(escolhas, initial=dados_iniciais)
 
     contexto = {'formulario': formulario}  
 

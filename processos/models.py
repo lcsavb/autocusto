@@ -85,4 +85,4 @@ class Processo(models.Model):
 
 
     def __str__(self):
-        return f'{self.paciente.nome_paciente, self.paciente.id, self.cid, self.id}'   
+        return f'{self.cid, self.med1}'   
