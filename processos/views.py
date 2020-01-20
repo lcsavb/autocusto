@@ -36,6 +36,7 @@ def edicao(request):
     try:
         processo_id = request.session['processo_id']
     except:
+        # BUG POSSÍVEL FALHA DE SEGURANÇA ENVIAR ID VIA GET
         processo_id = request.GET.get['id'] 
 
     
@@ -125,14 +126,16 @@ def cadastro(request):
             paciente = Paciente.objects.get(id=paciente_id)
             dados_paciente = model_to_dict(paciente)
             formulario = NovoProcesso(escolhas, initial=dados_paciente)
+            contexto = {'formulario': formulario, 
+                        'paciente_existe': paciente_existe,
+                        'paciente': paciente}
+            print(paciente_existe)
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'cid': request.session['cid']
-                             }
-            
-            
+                             }         
             formulario = NovoProcesso(escolhas, initial=dados_iniciais)
-
-    contexto = {'formulario': formulario}  
+            contexto = {'formulario': formulario,
+                        'paciente_existe': paciente_existe}  
 
     return render(request, 'processos/cadastro.html', contexto)
