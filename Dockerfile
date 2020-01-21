@@ -21,3 +21,5 @@ RUN apt-get install -y pdftk
 
 # copy project
 COPY . /usr/src/autocusto
+
+
