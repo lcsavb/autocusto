@@ -108,7 +108,7 @@ class GeradorPDF():
         ajustar_campo_18(dados_lme_base)
         
         #Esse é o endereço de output lido pelo PDFTK "localmente"
-        output_pdf_final = os.path.join('processos/static', nome_final_pdf)
+        output_pdf_final = os.path.join('static', nome_final_pdf)
 
         #Não me parece a melhor maneira de fazer isso. Essa é a URL para o redirect.
         path_pdf_final = settings.STATIC_URL + nome_final_pdf

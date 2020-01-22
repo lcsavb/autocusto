@@ -22,4 +22,5 @@ RUN apt-get install -y pdftk
 # copy project
 COPY . /usr/src/autocusto
 
-
+# prepare static files for deployment
+# RUN  python manage.py collectstatic --no-input --clear

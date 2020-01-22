@@ -143,5 +143,5 @@ LOGIN_URL = 'login'
 
 # PDFs
 
-PATH_LME_BASE = os.path.join(BASE_DIR, 'processos/static', 'lme_base_modelo.pdf')
+PATH_LME_BASE = os.path.join(BASE_DIR, 'static', 'lme_base_modelo.pdf')
 
