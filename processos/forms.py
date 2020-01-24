@@ -134,7 +134,9 @@ class NovoProcesso(forms.Form):
           required=True, label='Data', 
           widget=forms.DateInput(format='%d/%m/%Y'),
           input_formats=['%d/%m/%Y',]
-          ) 
+          )
+
+      
 
      @transaction.atomic
      def save(self, usuario):

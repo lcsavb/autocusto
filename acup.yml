@@ -16,7 +16,7 @@ services:
   nginx:
     build: ./nginx
     ports:
-      - 1337:80
+      - 80:80
     volumes:
       - static_volume:/home/autocusto/autocusto/static
     depends_on:
