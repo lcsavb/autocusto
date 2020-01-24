@@ -15,10 +15,15 @@ def cadastro(request):
             messages.success(request, f'Conta médica criada para {nome}! Você já pode fazer o login.')
             return redirect('login')
     else:
-        formulario = MedicoCadastroFormulario()
-    
-    return render(request, 'medicos/cadastro.html', {'formulario': formulario,
-    'titulo': 'Cadastro Médico'})
+        try:
+            convite_aceito = request.session['convite_aceito']
+            if convite_aceito:
+                messages.success(request, f'Código aceito, prossiga com o cadastro')
+                formulario = MedicoCadastroFormulario()
+                return render(request, 'medicos/cadastro.html', {'formulario': formulario,
+                                'titulo': 'Cadastro Médico'})
+        except:
+            return redirect('home')
 
 @login_required
 def perfil(request):

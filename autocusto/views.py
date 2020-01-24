@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from processos.forms import PreProcesso
 from pacientes.models import Paciente
 from processos.models import Processo
@@ -39,10 +40,14 @@ def home(request):
         else:
             convite = request.POST.get('convite')
             print(convite)
-            if convite == 'cgrlmeplus':
+            if convite.lower() == 'cgrlmeplus':
+                request.session['convite_aceito'] = True
                 return redirect('medicos-cadastro')
             else:
-                pass
+                messages.success(request, f'Código inválido')
+                return redirect('home')
+            
+            return render(request, 'home.html', contexto)
 
 
 

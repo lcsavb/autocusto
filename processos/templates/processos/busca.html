@@ -3,15 +3,22 @@
 {% block content %}
 
 <ul>
-    {% for processo in object_list %}
-        <li> {{ processo.pk }}, 
-            {{ processo.paciente.nome_paciente }}, 
-            {{ processo.medico }},
-            <form action="{% url 'processos-edicao' %}" method="GET" class="form-inline my-2 my-lg-0">
-                <input type="hidden" name="id" class="form-control mr-sm-2" type="text" value="{{ processo.id }}">
-                <button class="btn btn-outline-success" type="submit">Editar</button>
-            </form>
+    {% for paciente in object_list %}
+        <li> 
+            {{ paciente }} 
+            <ul>
+                {% for processo in paciente.processos.all %}
+                <li>{{ processo }}
+                <form action="{% url 'processos-edicao' %}" method="GET" class="form-inline my-2 my-lg-0">
+                    <input type="hidden" name="id" class="form-control mr-sm-2" type="text" value="{{ processo.id }}">
+                    <button class="btn btn-outline-success" type="submit">Editar</button>
+                </form>
+                </li>
+                {% endfor %}
+            </ul>
+
         </li>
+            
     {% endfor %}
 </ul>
 

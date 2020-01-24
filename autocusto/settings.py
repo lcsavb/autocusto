@@ -129,15 +129,19 @@ USE_TZ = True
 dev = os.environ.get('DEV')
 
 if dev == 'dev':
-    pass
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static/root')
 else:
-    STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-    STATIC_URL = '/static/'
-    
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'), # your static/ files folder
-    ]
+
+STATIC_URL = '/static/'
+
+
+
+STATICFILES_DIRS = [
+
+    os.path.join(BASE_DIR, 'static'), # your static/ files folder
+
+]
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

@@ -23,7 +23,7 @@ class BuscaProcessos(LoginRequiredMixin, ListView):
     raise_exception = True
 
     def get_queryset(self):
-        return Processo.objects.filter(usuario=self.request.user)
+        return Paciente.objects.filter(usuario=self.request.user)
 
 
 @login_required
@@ -37,7 +37,7 @@ def edicao(request):
         processo_id = request.session['processo_id']
     except:
         # BUG POSSÍVEL FALHA DE SEGURANÇA ENVIAR ID VIA GET
-        processo_id = request.GET.get['id'] 
+        processo_id = request.GET.get('id')
 
     
     if request.method == 'POST':
