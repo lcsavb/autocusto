@@ -14,8 +14,8 @@ COPY ./requirements.txt /usr/src/autocusto/requirements.txt
 RUN pip install -r requirements.txt
 
 # install pdftk
-RUN apt-get update
-RUN apt-get upgrade
+RUN apt-get update -y
+RUN apt-get upgrade -y
 RUN apt-get install -y pdftk
 
 
