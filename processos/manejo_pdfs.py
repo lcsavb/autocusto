@@ -95,7 +95,7 @@ class GeradorPDF():
     def generico(self,dados_lme_base,path_lme_base):
         cpf_paciente = dados_lme_base['cpf_paciente']
         cid = dados_lme_base['cid']
-        nome_final_pdf = f'tmp/pdf_final_{cpf_paciente}_{cid}.pdf'
+        nome_final_pdf = f'pdf_final_{cpf_paciente}_{cid}.pdf'
 
         data1 = dados_lme_base['data_1']
         datas = formatacao_data(data1)
@@ -108,10 +108,12 @@ class GeradorPDF():
         ajustar_campo_18(dados_lme_base)
         
         #Esse é o endereço de output lido pelo PDFTK "localmente"
-        output_pdf_final = os.path.join('static', nome_final_pdf)
+        output_pdf_final = os.path.join(settings.BASE_DIR, 'static/tmp', nome_final_pdf)
+        print('output pdf', output_pdf_final)
+        
 
-        #Não me parece a melhor maneira de fazer isso. Essa é a URL para o redirect.
-        path_pdf_final = settings.STATIC_URL + nome_final_pdf
+        # Essa é a URL para o redirect.
+        path_pdf_final = os.path.join(settings.STATIC_URL, 'tmp', nome_final_pdf)
         
         pdf = pypdftk.fill_form(path_lme_base,dados_lme_base,output_pdf_final)
         return pdf, path_pdf_final
