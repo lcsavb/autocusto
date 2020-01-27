@@ -132,11 +132,11 @@ USE_TZ = True
 #     os.path.join(BASE_DIR, 'processos/static')
 # ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/root')
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'processos/static')
+    os.path.join(BASE_DIR, 'static'), # your static/ files folder
 ]
 
 
