@@ -36,7 +36,7 @@ def edicao(request):
     try:
         processo_id = request.session['processo_id']
     except:
-        # BUG POSSÍVEL FALHA DE SEGURANÇA ENVIAR ID VIA GET
+        # BUG FALHA DE SEGURANÇA ENVIAR ID VIA GET
         processo_id = request.GET.get('id')
 
     
@@ -75,11 +75,15 @@ def edicao(request):
 def renovacao_rapida(request):
     if request.method == 'GET':
         busca = request.GET.get('b')
-        pacientes = Paciente.objects.filter(Q(usuario=request.user)
-        & (Q(nome_paciente__icontains=busca) & Q(cpf_paciente__icontains=busca)))
+        usuario = request.user
+        pacientes_usuario = usuario.pacientes.all()
+        print(pacientes_usuario)
+        resultado_busca = pacientes_usuario.filter(
+            (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca)))
+        print(resultado_busca)
 
 
-        contexto = {'pacientes': pacientes}
+        contexto = {'pacientes': resultado_busca}
         return render(request, 'processos/renovacao_rapida.html', contexto)
 
     else:
@@ -122,20 +126,27 @@ def cadastro(request):
             return redirect(path_pdf_final)
     else:
         if paciente_existe:
-            paciente_id = request.session['paciente_id']
-            paciente = Paciente.objects.get(id=paciente_id)
-            dados_paciente = model_to_dict(paciente)
-            formulario = NovoProcesso(escolhas, initial=dados_paciente)
-            contexto = {'formulario': formulario, 
-                        'paciente_existe': paciente_existe,
-                        'paciente': paciente}
-            print(paciente_existe)
+            try:
+                vincula_usuario = request.session['vincula_usuario']
+            except:
+                vincula_usuario = False
+            finally:
+                paciente_id = request.session['paciente_id']
+                paciente = Paciente.objects.get(id=paciente_id)
+                dados_paciente = model_to_dict(paciente)
+                if vincula_usuario:
+                    dados_paciente['cid'] = request.session['cid']
+                formulario = NovoProcesso(escolhas, initial=dados_paciente)
+                contexto = {'formulario': formulario, 
+                            'paciente_existe': paciente_existe,
+                            'paciente': paciente}
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'cid': request.session['cid']
                              }         
             formulario = NovoProcesso(escolhas, initial=dados_iniciais)
             contexto = {'formulario': formulario,
-                        'paciente_existe': paciente_existe}  
+                        'paciente_existe': paciente_existe}
+        return render(request, 'processos/cadastro.html', contexto)  
 
-    return render(request, 'processos/cadastro.html', contexto)
+    

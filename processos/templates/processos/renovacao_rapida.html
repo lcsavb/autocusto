@@ -25,6 +25,7 @@
                 <td>
                     <div class="form-group">
                         <select class="custom-select" name="processo_id">
+                            <!-- if processo é do request.user -->
                             {% for processo in paciente.processos.all %}
                             <option value="{{ processo.id }}">{{ processo }}</option>
                             {% endfor %}

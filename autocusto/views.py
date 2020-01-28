@@ -19,24 +19,34 @@ def home(request):
                 cid = formulario.cleaned_data['cid']
 
                 try:
-                    paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)            
-                    for processo in paciente.processos.all():
-                        if processo.cid == cid:
-                            request.session['processo_id'] = processo.id
-                            return redirect('processos-edicao')
-                        else:
-                            request.session['paciente_id'] = paciente.id
-                            request.session['paciente_existe'] = True
-                            request.session['cid'] = cid
-                            return redirect('processos-cadastro')
+                    print('paciente existe')
+                    paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+                    request.session['paciente_existe'] = True
+                    request.session['paciente_id'] = paciente.id
+                    request.session['cid'] = cid
+                    request.session['cpf_paciente'] = cpf_paciente
                 except:
+                    print('paciente ñ existe')
                     request.session['paciente_existe'] = False
                     request.session['cid'] = cid
                     request.session['cpf_paciente'] = cpf_paciente
                     return redirect('processos-cadastro')
-                finally:
-                    pass
-                    #adicionar mensagem de redirecionamento
+
+                for processo in paciente.processos.all():
+                    if processo.cid == cid:
+                        print('cid existe')
+                        #continuar aqui, o loop sai na primeira rodada por isso que não está funcionando!
+                        for usuario_existente in paciente.usuarios.all():
+                            if user == usuario_existente:
+                                print('cid cadastrado por esse usuário')
+                                request.session['processo_id'] = processo.id
+                                return redirect('processos-edicao')
+                            else:
+                                print('cid cadastrado por outro usuário')
+                                request.session['vincula_usuario'] = True
+                                return redirect('processos-cadastro')
+                    else:
+                        return redirect('processos-cadastro')
         else:
             convite = request.POST.get('convite')
             print(convite)
@@ -46,10 +56,5 @@ def home(request):
             else:
                 messages.success(request, f'Código inválido')
                 return redirect('home')
-            
+
             return render(request, 'home.html', contexto)
-
-
-
-            
-            
