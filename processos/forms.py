@@ -139,9 +139,8 @@ class NovoProcesso(forms.Form):
       
 
      @transaction.atomic
-     def save(self, usuario):
+     def save(self, usuario, medico):
          dados = self.cleaned_data
-         medico = usuario.medico
          clinica_id = dados['clinicas']
          
          #adiciona dados da clínica

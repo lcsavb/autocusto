@@ -4,13 +4,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import ClinicaFormulario
 from medicos.models import Medico
+from medicos.seletor import medico as seletor_medico
 from clinicas.models import Clinica 
 
 @login_required
 @transaction.atomic
 def cadastro(request):
     usuario = request.user
-    medico = usuario.medico
+    medico = seletor_medico(usuario)
 
     if request.method == 'POST':
         f_clinica = ClinicaFormulario(request.POST)

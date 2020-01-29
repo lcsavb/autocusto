@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.forms.models import model_to_dict
 from medicos.models import Medico
+from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
 from processos.models import Processo
 from usuarios.models import Usuario
@@ -33,7 +34,7 @@ def busca_processos(request):
 @login_required
 def edicao(request):
     usuario = request.user
-    medico = usuario.medico
+    medico = seletor_medico(usuario)
     clinicas = medico.clinicas.all()
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
 
@@ -53,7 +54,7 @@ def edicao(request):
             clinica = medico.clinicas.get(id=id_clin)
 
             # Registra os dados do médico logado e da clínica associada
-            dados = vincula_dados_emissor(medico,clinica,dados_formulario)
+            dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
 
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
@@ -103,7 +104,7 @@ def renovacao_rapida(request):
 @login_required
 def cadastro(request):
     usuario = request.user
-    medico = request.user.medico
+    medico = seletor_medico(usuario)
     clinicas = medico.clinicas.all()
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
     paciente_existe = request.session['paciente_existe']
@@ -117,12 +118,12 @@ def cadastro(request):
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
 
-            dados = vincula_dados_emissor(medico,clinica,dados_formulario)
+            dados = vincula_dados_emissor(usuario,medico,clinica,dados_formulario)
 
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
 
-            formulario.save(usuario)
+            formulario.save(usuario, medico)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
 
