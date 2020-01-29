@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.conf import settings
 from django.db.models import Q
@@ -16,14 +15,19 @@ import pypdftk
 from .manejo_pdfs import GeradorPDF
 from .dados import cria_dict_renovação, gerar_dados_renovacao, vincula_dados_emissor, transfere_dados_gerador
 
-class BuscaProcessos(LoginRequiredMixin, ListView):
-    model = Paciente
-    template_name = 'processos/busca.html'
-    login_url = '/login/'
-    raise_exception = True
+@login_required
+def busca_processos(request):
+    if request.method == 'GET':
+        usuario = request.user
+        pacientes_usuario = usuario.pacientes.all()
 
-    def get_queryset(self):
-        return Paciente.objects.filter(usuario=self.request.user)
+        contexto = {'pacientes_usuario': pacientes_usuario,
+                    'usuario': usuario
+                    }
+
+        return render(request, 'processos/busca.html', contexto)
+    else:
+        pass
 
 
 @login_required
@@ -77,17 +81,15 @@ def renovacao_rapida(request):
         busca = request.GET.get('b')
         usuario = request.user
         pacientes_usuario = usuario.pacientes.all()
-        print(pacientes_usuario)
-        resultado_busca = pacientes_usuario.filter(
+        busca_pacientes = pacientes_usuario.filter(
             (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca)))
-        print(resultado_busca)
 
+        print(busca_pacientes)
 
-        contexto = {'pacientes': resultado_busca}
+        contexto = {'busca_pacientes': busca_pacientes, 'usuario': usuario}
         return render(request, 'processos/renovacao_rapida.html', contexto)
 
     else:
-        print(request.POST) 
         processo_id = request.POST.get('processo_id')
         nova_data = request.POST.get('data_1')
 
@@ -123,8 +125,11 @@ def cadastro(request):
             formulario.save(usuario)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
+
             return redirect(path_pdf_final)
     else:
+        if not usuario.clinicas.exists():
+            return redirect('clinicas-cadastro')
         if paciente_existe:
                 paciente_id = request.session['paciente_id']
                 paciente = Paciente.objects.get(id=paciente_id)
