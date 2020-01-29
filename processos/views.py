@@ -126,16 +126,10 @@ def cadastro(request):
             return redirect(path_pdf_final)
     else:
         if paciente_existe:
-            try:
-                vincula_usuario = request.session['vincula_usuario']
-            except:
-                vincula_usuario = False
-            finally:
                 paciente_id = request.session['paciente_id']
                 paciente = Paciente.objects.get(id=paciente_id)
                 dados_paciente = model_to_dict(paciente)
-                if vincula_usuario:
-                    dados_paciente['cid'] = request.session['cid']
+                dados_paciente['cid'] = request.session['cid']
                 formulario = NovoProcesso(escolhas, initial=dados_paciente)
                 contexto = {'formulario': formulario, 
                             'paciente_existe': paciente_existe,

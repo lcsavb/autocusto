@@ -227,7 +227,7 @@ class NovoProcesso(forms.Form):
               processo = preparar_modelo(Processo,**dados_processo)
               processo.save()
               # ATENÇÃO AQUI PARA VER SE NÃO DUPLICA
-              usuario.pacientes.add(paciente_existe)
+              paciente_existe.usuarios.add(usuario)
               emissor.pacientes.add(paciente_existe)
          else:
               paciente.save()  
