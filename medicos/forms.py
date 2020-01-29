@@ -10,11 +10,10 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
     nome = forms.CharField(max_length=200, label='Nome completo')
     crm = forms.CharField(max_length=10, label='CRM')
     cns = forms.CharField(max_length=15, label='Cartão Nacional de Saúde (CNS)')
-    cns_clinica = forms.CharField(max_length=15, label='CNS da clínica') 
 
     class Meta(CustomUserCreationForm.Meta):
         model = Usuario
-        fields = ['nome', 'crm', 'cns', 'cns_clinica',
+        fields = ['nome', 'crm', 'cns',
          'email', 'password1', 'password2']
 
     @transaction.atomic
