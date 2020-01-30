@@ -139,9 +139,8 @@ class NovoProcesso(forms.Form):
       
 
      @transaction.atomic
-     def save(self, usuario):
+     def save(self, usuario, medico):
          dados = self.cleaned_data
-         medico = usuario.medico
          clinica_id = dados['clinicas']
          
          #adiciona dados da clínica
@@ -166,7 +165,7 @@ class NovoProcesso(forms.Form):
               telefone2_paciente=dados['telefone2_paciente'],
               email_paciente=dados['email_paciente'],
               end_paciente=dados['end_paciente'],
-              usuario=dados['usuario'])
+              )
 
          paciente = preparar_modelo(Paciente, **dados_paciente)
 
@@ -223,17 +222,18 @@ class NovoProcesso(forms.Form):
          if paciente_existe:
               # AQUI É MELHOR REDIRECIONAR PARA ADICIONAR PROCESSO AO CONTRÁRIO DE EDITAR PACIENTE
               dados_paciente['id'] = paciente_existe.pk
-          #     paciente = preparar_modelo(Paciente, **dados_paciente)
-          #     paciente.save(force_update=True)
               dados_processo['paciente'] = paciente_existe 
               processo = preparar_modelo(Processo,**dados_processo)
               processo.save()
-          #     emissor.pacientes.add(paciente_existe) 
+              # ATENÇÃO AQUI PARA VER SE NÃO DUPLICA
+              paciente_existe.usuarios.add(usuario)
+              emissor.pacientes.add(paciente_existe)
          else:
               paciente.save()  
               paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
               processo = preparar_modelo(Processo,**dados_processo)
               processo.save()
+              usuario.pacientes.add(paciente)
               emissor.pacientes.add(paciente)
                     
           

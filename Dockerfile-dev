@@ -28,7 +28,3 @@ COPY . /usr/src/autocusto
 # create database
 RUN python3 manage.py makemigrations
 RUN python3 manage.py migrate
-
-# prepare static files for deployment
-# RUN  python manage.py collectstatic --no-input --clear
-

@@ -12,7 +12,7 @@
             <th scope="col">Primeira Data</th>
         </thead>
         <tbody>
-            {% for paciente in pacientes%}
+            {% for paciente in busca_pacientes %}
             
             <tr>
                 <form method="POST">
@@ -25,11 +25,16 @@
                 <td>
                     <div class="form-group">
                         <select class="custom-select" name="processo_id">
+                            <!-- if processo é do request.user -->
                             {% for processo in paciente.processos.all %}
+                            {% if processo.usuario == usuario %}
                             <option value="{{ processo.id }}">{{ processo }}</option>
+                            {% endif %}
                             {% endfor %}
-                        </select>
+                            </select>
+                        
                     </div>
+                    
                         
                 </td>
 

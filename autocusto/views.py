@@ -6,37 +6,41 @@ from processos.models import Processo
 
 
 def home(request):
-    user = request.user
+    usuario = request.user
     if request.method == 'GET':
         formulario = PreProcesso()
         contexto = {'formulario': formulario}
         return render(request, 'home.html', contexto)
     else:
-        if user.is_authenticated:
+        if usuario.is_authenticated:
             formulario = PreProcesso(request.POST)
             if formulario.is_valid():
                 cpf_paciente = formulario.cleaned_data['cpf_paciente']
                 cid = formulario.cleaned_data['cid']
 
                 try:
-                    paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)            
-                    for processo in paciente.processos.all():
-                        if processo.cid == cid:
-                            request.session['processo_id'] = processo.id
-                            return redirect('processos-edicao')
-                        else:
-                            request.session['paciente_id'] = paciente.id
-                            request.session['paciente_existe'] = True
-                            request.session['cid'] = cid
-                            return redirect('processos-cadastro')
+                    paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+                    request.session['paciente_existe'] = True
+                    request.session['paciente_id'] = paciente.id
+                    request.session['cid'] = cid
+                    request.session['cpf_paciente'] = cpf_paciente
                 except:
                     request.session['paciente_existe'] = False
                     request.session['cid'] = cid
                     request.session['cpf_paciente'] = cpf_paciente
                     return redirect('processos-cadastro')
-                finally:
-                    pass
-                    #adicionar mensagem de redirecionamento
+                
+                busca_processos = paciente.processos.filter(cid=cid)
+                
+                if busca_processos.exists():
+                    processo_cadastrado_pelo_usuario = busca_processos.filter(usuario__id=usuario.id).exists()
+                    if processo_cadastrado_pelo_usuario:
+                        request.session['processo_id'] = busca_processos.get(usuario__id=usuario.id).id
+                        return redirect('processos-edicao')
+                    else:
+                        return redirect('processos-cadastro')
+                else:
+                    return redirect('processos-cadastro')
         else:
             convite = request.POST.get('convite')
             print(convite)
@@ -46,10 +50,5 @@ def home(request):
             else:
                 messages.success(request, f'Código inválido')
                 return redirect('home')
-            
+
             return render(request, 'home.html', contexto)
-
-
-
-            
-            

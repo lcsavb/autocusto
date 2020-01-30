@@ -14,7 +14,7 @@ class Clinica(models.Model):
     cep = models.CharField(max_length=9)
     telefone_clinica = models.CharField(max_length=13)
     medicos = models.ManyToManyField(Medico, through='Emissor', related_name='clinicas')
-    usuarios = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ClinicaUsuario')
+    usuarios = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ClinicaUsuario', related_name='clinicas')
     
     
 

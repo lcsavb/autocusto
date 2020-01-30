@@ -91,7 +91,7 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     return dados  
     
 
-def vincula_dados_emissor(medico, clinica, dados_formulario):
+def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
     ''' Vincula dos dados do emissor logado aos dados do processo '''
     end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
     dados_adicionais = {'nome_medico': medico.nome_medico,
@@ -103,8 +103,9 @@ def vincula_dados_emissor(medico, clinica, dados_formulario):
                         'bairro': clinica.bairro,
                         'cep': clinica.cep,
                         'telefone_clinica': clinica.telefone_clinica,
-                        'usuario': medico.usuario
+                        'usuario': usuario
                         }
+    print(dados_adicionais)
 
     dados_formulario.update(dados_adicionais)
     return dados_formulario

@@ -1,15 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db import transaction
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import ClinicaFormulario
 from medicos.models import Medico
+from medicos.seletor import medico as seletor_medico
 from clinicas.models import Clinica 
 
 @login_required
 @transaction.atomic
 def cadastro(request):
     usuario = request.user
-    medico = usuario.medico
+    medico = seletor_medico(usuario)
 
     if request.method == 'POST':
         f_clinica = ClinicaFormulario(request.POST)
@@ -25,11 +27,15 @@ def cadastro(request):
                 instance.save(force_update=True)
                 instance.usuarios.add(usuario)
                 instance.medicos.add(medico)
+                messages.success(request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!')
+                return redirect('home')
             else:   
                 instance = f_clinica.save(commit=False)
                 instance.save()
                 instance.usuarios.add(usuario)
                 instance.medicos.add(medico)         
+                messages.success(request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!')
+                return redirect('home')
     else:
         f_clinica = ClinicaFormulario()
 
