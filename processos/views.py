@@ -25,10 +25,11 @@ def busca_processos(request):
         contexto = {'pacientes_usuario': pacientes_usuario,
                     'usuario': usuario
                     }
-
         return render(request, 'processos/busca.html', contexto)
     else:
-        pass
+        processo_id = request.POST.get('processo_id')
+        request.session['processo_id'] = processo_id
+        return redirect('processos-edicao')
 
 
 @login_required
@@ -41,8 +42,9 @@ def edicao(request):
     try:
         processo_id = request.session['processo_id']
     except:
+        raise ValueError
         # BUG FALHA DE SEGURANÇA ENVIAR ID VIA GET
-        processo_id = request.GET.get('id')
+        # processo_id = request.GET.get('id')
 
     
     if request.method == 'POST':
@@ -84,8 +86,6 @@ def renovacao_rapida(request):
         pacientes_usuario = usuario.pacientes.all()
         busca_pacientes = pacientes_usuario.filter(
             (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca)))
-
-        print(busca_pacientes)
 
         contexto = {'busca_pacientes': busca_pacientes, 'usuario': usuario}
         return render(request, 'processos/renovacao_rapida.html', contexto)
@@ -132,15 +132,6 @@ def cadastro(request):
         if not usuario.clinicas.exists():
             return redirect('clinicas-cadastro')
         if paciente_existe:
-<<<<<<< HEAD
-            paciente_id = request.session['paciente_id']
-            paciente = Paciente.objects.get(id=paciente_id)
-            dados_paciente = model_to_dict(paciente)
-            formulario = NovoProcesso(escolhas, initial=dados_paciente)
-            contexto = {'formulario': formulario, 
-                        'paciente_existe': paciente_existe,
-                        'paciente': paciente}
-=======
                 paciente_id = request.session['paciente_id']
                 paciente = Paciente.objects.get(id=paciente_id)
                 dados_paciente = model_to_dict(paciente)
@@ -149,7 +140,6 @@ def cadastro(request):
                 contexto = {'formulario': formulario, 
                             'paciente_existe': paciente_existe,
                             'paciente': paciente}
->>>>>>> correcao_db
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'cid': request.session['cid']

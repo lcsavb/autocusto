@@ -10,8 +10,9 @@
                 {% for processo in paciente.processos.all %}
                 {% if processo.usuario == usuario %}
                 <li>{{ processo }}
-                <form action="{% url 'processos-edicao' %}" method="GET" class="form-inline my-2 my-lg-0">
-                    <input type="hidden" name="id" class="form-control mr-sm-2" type="text" value="{{ processo.id }}">
+                <form method="POST" class="form-inline my-2 my-lg-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="processo_id" class="form-control mr-sm-2" type="text" value="{{ processo.id }}">
                     <button class="btn btn-outline-success" type="submit">Editar</button>
                 </form>
                 </li>
