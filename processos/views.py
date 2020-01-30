@@ -129,7 +129,6 @@ def cadastro(request):
             contexto = {'formulario': formulario, 
                         'paciente_existe': paciente_existe,
                         'paciente': paciente}
-            print(paciente_existe)
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'cid': request.session['cid']
