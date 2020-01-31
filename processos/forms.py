@@ -23,7 +23,7 @@ class NovoProcesso(forms.Form):
      def __init__(self, escolhas, *args, **kwargs):
          super(NovoProcesso, self).__init__(*args, **kwargs)
          self.fields['clinicas'].choices = escolhas
-         self.request = kwargs.pop('request', None)        
+         self.request = kwargs.pop('request', None)      
      
      # Dados do paciente
      cpf_paciente = forms.CharField(required=True, label='CPF do paciente',max_length=14)

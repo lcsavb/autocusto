@@ -2,13 +2,14 @@
    
 {% block content %}
 <div class="card rounded" style="max-width: 95%; margin: auto; padding: 1rem;">
-<h3>Renovação Rápida</h3>
+<h3>Renovação de Processos</h3>
 
 <table class="table table-striped standard">
         <thead>
             <th scope="col">#</th>
             <th scope="col">Paciente</th>
             <th scope="col">Processos</th>
+            <th scope="col">Renovar com edição?</th>
             <th scope="col">Primeira Data</th>
         </thead>
         <tbody>
@@ -18,12 +19,12 @@
                 <form method="POST">
                         {% csrf_token %}
                 <th scope="row"></th>
-                <td>{{ paciente.nome_paciente }}, {{ paciente.cpf_paciente }}
+                <td class="col-md-4">{{ paciente.nome_paciente }}
                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                 </td>
                 
-                <td>
-                    <div class="form-group">
+                <td class ="col-md-3 align-middle">
+                    <div class="form-group align-middle">
                         <select class="custom-select" name="processo_id">
                             <!-- if processo é do request.user -->
                             {% for processo in paciente.processos.all %}
@@ -37,16 +38,20 @@
                     
                         
                 </td>
+                <td class="col-md-2 align-middle"><label class="checkbox-inline"><input type="checkbox" name="edicao"></label></td>
 
-                <td>
+                <td class="col-md-3 align-middle"> 
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" name="data_1">
+                        
+                        <input type="text" class="form-control" name="data_1" placeholder="DD/MM/AA">
                         <div class="input-group-append">
+    
                             <button class="btn btn-outline-secondary" type="submit">Renovar <span class="oi oi-reload"></span></button>
                         </div>
                     </div>  
                 </td>
                 </form>
+            
                 
             </tr>
             {% endfor %}

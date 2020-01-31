@@ -4,6 +4,7 @@ from django.views.generic import ListView
 from django.conf import settings
 from django.db.models import Q
 from django.forms.models import model_to_dict
+from datetime import date
 from medicos.models import Medico
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
@@ -45,7 +46,11 @@ def edicao(request):
         raise ValueError
         # BUG FALHA DE SEGURANÇA ENVIAR ID VIA GET
         # processo_id = request.GET.get('id')
-
+    
+    try:
+        primeira_data = request.session['data1']
+    except:
+        primeira_data = date.today().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
         formulario = RenovarProcesso(escolhas, request.POST)    
@@ -69,6 +74,8 @@ def edicao(request):
     else:
         processo = Processo.objects.get(id=processo_id)
         dados_iniciais = cria_dict_renovação(processo)
+        dados_iniciais['data_1'] = primeira_data
+        dados_iniciais['clinicas'] = dados_iniciais['clinica'].id
         formulario = RenovarProcesso(escolhas, initial=dados_iniciais)
 
     contexto = {'formulario': formulario, 'processo': processo}  
@@ -94,11 +101,16 @@ def renovacao_rapida(request):
         processo_id = request.POST.get('processo_id')
         nova_data = request.POST.get('data_1')
 
-        dados = gerar_dados_renovacao(nova_data,processo_id)
-        dados_condicionais = {}
-        
-        path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
-        return redirect(path_pdf_final)
+        try:
+            if request.POST['edicao'] == 'on':
+                request.session['processo_id'] = processo_id
+                request.session['data1'] = nova_data
+                return redirect('processos-edicao')
+        except:        
+            dados = gerar_dados_renovacao(nova_data,processo_id)
+            dados_condicionais = {}
+            path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
+            return redirect(path_pdf_final)
         
 
 @login_required
@@ -108,7 +120,7 @@ def cadastro(request):
     clinicas = medico.clinicas.all()
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
     paciente_existe = request.session['paciente_existe']
-     
+    primeira_data = date.today().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
         formulario = NovoProcesso(escolhas, request.POST)    
@@ -136,13 +148,15 @@ def cadastro(request):
                 paciente = Paciente.objects.get(id=paciente_id)
                 dados_paciente = model_to_dict(paciente)
                 dados_paciente['cid'] = request.session['cid']
+                dados_paciente['data_1'] = primeira_data
                 formulario = NovoProcesso(escolhas, initial=dados_paciente)
                 contexto = {'formulario': formulario, 
                             'paciente_existe': paciente_existe,
                             'paciente': paciente}
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
-                              'cid': request.session['cid']
+                              'cid': request.session['cid'],
+                              'data_1': primeira_data
                              }         
             formulario = NovoProcesso(escolhas, initial=dados_iniciais)
             contexto = {'formulario': formulario,
