@@ -24,9 +24,9 @@ function mostrarCampo(escolha,divAlvo,campoAlvo) {
 
 }
 
-isTratado.addEventListener('ValueChange', () => {mostrarCampo(isTratado,divTratPrevio,campoTrat)});
-isIncapaz.addEventListener('ValueChange', () => {mostrarCampo(isIncapaz,divResponsavel,campoIncapaz)});
-campoDezoito.addEventListener('ValueChange', function() {
+// Checar campos condicionais no carregamento
+
+function mostrarCampoDezoito (event) {
     if (campoDezoito.value == 'medico') {
         for (let n = 0; divCampoDezoito.length; n++) {
             divCampoDezoito[n].classList.remove('d-none');
@@ -40,7 +40,16 @@ campoDezoito.addEventListener('ValueChange', function() {
         } 
     }
 
-});
+}
+
+window.addEventListener("load", () => {mostrarCampo(isIncapaz,divResponsavel,campoIncapaz)});
+window.addEventListener("load", () => {mostrarCampo(isTratado,divTratPrevio,campoTrat)});
+window.addEventListener('load', mostrarCampoDezoito);
+
+// Campos condicionais na mudança de valor
+isTratado.addEventListener('ValueChange', () => {mostrarCampo(isTratado,divTratPrevio,campoTrat)});
+isIncapaz.addEventListener('ValueChange', () => {mostrarCampo(isIncapaz,divResponsavel,campoIncapaz)});
+campoDezoito.addEventListener('ValueChange', mostrarCampoDezoito);
 
 
 // Medicamentos
@@ -117,10 +126,6 @@ addMed.addEventListener('click', function(event) {
             }
         });
 
-    // else {
-    //     botaoRepetirPosologia.change(function () {
-    //         divPosologiasOpcionais.toggleClass('d-none');
-    //     });
     }
 
   repetirPosologia(1);
@@ -129,7 +134,6 @@ addMed.addEventListener('click', function(event) {
   repetirPosologia(4);
   repetirPosologia(5);
 
-  // Por que posologiaPrimeiroMes.keyup(repetirPosologia) não funciona?
 
 
   //// Edição completa
