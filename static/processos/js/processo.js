@@ -1,6 +1,6 @@
 'use strict';
 
-
+(() => {
 const isTratado = document.getElementById('id_tratou');
 const divTratPrevio = document.getElementById('trat-escondido');
 const campoTrat = divTratPrevio.firstElementChild.firstElementChild.nextElementSibling.firstElementChild;
@@ -140,3 +140,4 @@ edicaoCompleta.change(function() {
     dadosRepetidos.toggleClass('d-none');
 });
 
+})();

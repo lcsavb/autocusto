@@ -15,7 +15,7 @@ from .forms import NovoProcesso, RenovarProcesso
 import os
 import pypdftk
 from .manejo_pdfs import GeradorPDF
-from .dados import cria_dict_renovação, gerar_dados_renovacao, vincula_dados_emissor, transfere_dados_gerador
+from .dados import cria_dict_renovação, gerar_dados_renovacao, vincula_dados_emissor, transfere_dados_gerador, mostrar_med
 
 @login_required
 def busca_processos(request):
@@ -78,7 +78,9 @@ def edicao(request):
         dados_iniciais['clinicas'] = dados_iniciais['clinica'].id
         formulario = RenovarProcesso(escolhas, initial=dados_iniciais)
 
-    contexto = {'formulario': formulario, 'processo': processo}  
+    contexto = {'formulario': formulario, 'processo': processo}
+    contexto.update(mostrar_med(True,dados_iniciais['med2'],dados_iniciais['med3'],
+                                dados_iniciais['med4'],dados_iniciais['med5']))  
 
     return render(request, 'processos/edicao.html', contexto)
 
@@ -157,10 +159,13 @@ def cadastro(request):
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'cid': request.session['cid'],
                               'data_1': primeira_data
-                             }         
+                             }     
             formulario = NovoProcesso(escolhas, initial=dados_iniciais)
             contexto = {'formulario': formulario,
                         'paciente_existe': paciente_existe}
+        
+        contexto.update(mostrar_med(False))
+
         return render(request, 'processos/cadastro.html', contexto)  
 
     

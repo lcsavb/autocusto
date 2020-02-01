@@ -172,6 +172,23 @@ def gerar_dados_edicao_parcial(dados, processo_id):
     
     return novos_dados, lista_campos
 
+
+def mostrar_med(mostrar, *medicamentos):
+    dic = {'med2_mostrar': 'd-none',
+                        'med3_mostrar': 'd-none',
+                        'med4_mostrar': 'd-none',
+                        'med5_mostrar': 'd-none',
+                        }
+    if mostrar:
+        for med in medicamentos:
+            n = 2
+            if med != '':
+                dic[f'med{n}_mostrar'] = ''
+                n = n + 1
+    return dic
+
+
+
 # ############################### Path pdf_final
 
 # PATH_PDF_FINAL = 'pdf_final_{}_{}.pdf'.format(dados_paciente['cpf_paciente'],dados_processo['cid'])
