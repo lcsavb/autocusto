@@ -11,11 +11,11 @@ from pacientes.models import Paciente
 from processos.models import Processo
 from usuarios.models import Usuario
 from clinicas.models import Clinica, Emissor
-from .forms import NovoProcesso, RenovarProcesso
+from .forms import NovoProcesso, RenovarProcesso, mostrar_med, ajustar_campos_condicionais
 import os
-import pypdftk
+import pypdftk 
 from .manejo_pdfs import GeradorPDF
-from .dados import cria_dict_renovação, gerar_dados_renovacao, vincula_dados_emissor, transfere_dados_gerador, mostrar_med
+from .dados import cria_dict_renovação, gerar_dados_renovacao, vincula_dados_emissor, transfere_dados_gerador
 
 @login_required
 def busca_processos(request):
@@ -151,10 +151,12 @@ def cadastro(request):
                 dados_paciente = model_to_dict(paciente)
                 dados_paciente['cid'] = request.session['cid']
                 dados_paciente['data_1'] = primeira_data
+                campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
                 formulario = NovoProcesso(escolhas, initial=dados_paciente)
                 contexto = {'formulario': formulario, 
                             'paciente_existe': paciente_existe,
                             'paciente': paciente}
+                contexto.update(campos_ajustados)
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'cid': request.session['cid'],

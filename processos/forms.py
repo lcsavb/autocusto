@@ -12,6 +12,34 @@ def preparar_modelo(modelo, **kwargs):
      modelo_parametrizado = modelo(**kwargs)
      return modelo_parametrizado
 
+def mostrar_med(mostrar, *medicamentos):
+    dic = {'med2_mostrar': 'd-none',
+                        'med3_mostrar': 'd-none',
+                        'med4_mostrar': 'd-none',
+                        'med5_mostrar': 'd-none',
+                        }
+    if mostrar:
+        for med in medicamentos:
+            n = 2
+            if med != '':
+                dic[f'med{n}_mostrar'] = ''
+                n = n + 1
+    return dic
+
+def ajustar_campos_condicionais(dados_paciente):
+     dic = {
+          'responsavel_mostrar': 'd-none', 
+          'campo_18_mostrar': 'd-none'
+          }
+     if dados_paciente['email_paciente'] != '':
+          dic['campo_18_mostrar'] = ''
+          dados_paciente['preenchido_por'] = 'medico'
+     if dados_paciente['incapaz']:
+          dic['responsavel_mostrar'] = ''
+     print(dic)
+     return dic, dados_paciente
+
+
 
 class PreProcesso(forms.Form):
      cpf_paciente = forms.CharField(required=True, label='CPF do paciente',max_length=14)

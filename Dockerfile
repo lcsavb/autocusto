@@ -29,4 +29,4 @@ RUN python3 manage.py makemigrations
 RUN python3 manage.py migrate
 
 # prepare static files for deployment
-# RUN  python manage.py collectstatic --no-input --clear
+RUN  python3 manage.py collectstatic --no-input --clear
