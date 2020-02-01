@@ -132,11 +132,12 @@ USE_TZ = True
 #     os.path.join(BASE_DIR, 'processos/static')
 # ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/root')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'), # your static/ files folder
+    os.path.join(BASE_DIR, 'autocusto/static'),
+    os.path.join(BASE_DIR, 'processos/static') # your static/ files folder
 ]
 
 
@@ -149,4 +150,4 @@ LOGIN_URL = 'login'
 
 # PDFs
 
-PATH_LME_BASE = os.path.join(BASE_DIR, 'static', 'lme_base_modelo.pdf')
+PATH_LME_BASE = os.path.join(BASE_DIR, 'processos/static/processos', 'lme_base_modelo.pdf')
