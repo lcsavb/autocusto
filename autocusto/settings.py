@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '4(=4rbnajm+=ce3)99i9r8t3jqucv@hc(a&pum25qnc)ff@51x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'autocusto.com.br', 'www.autocusto.com.br']
 
@@ -123,22 +123,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-# Config que funcionam no NGINX
-# STATIC_ROOT = os.path.join(BASE_DIR, 'static/root')
-# STATIC_URL = '/static/'
 
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static'), # your static/ files folder
-#     os.path.join(BASE_DIR, 'processos/static')
-# ]
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'autocusto/static'),
     os.path.join(BASE_DIR, 'processos/static') # your static/ files folder
 ]
+
+if DEBUG:
+    STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 # Configurações do Crispy
