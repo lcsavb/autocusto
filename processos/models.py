@@ -11,25 +11,44 @@ class Medicamento(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     apresentacoes = ArrayField(ArrayField(models.CharField(max_length=10)))
 
+    def __str__(self):
+        return f'{self.nome}'
+
 
 class Protocolo(models.Model):
+    nome = models.CharField(max_length=200)
     medicamentos = models.ManyToManyField(Medicamento)
+    dados_condicionais = JSONField()
+
+    def __str__(self):
+        return f'{self.nome}'
     
 
 class Doenca(models.Model):
     cid = models.CharField(max_length=6, unique=True)
-    diagnostico = models.CharField(max_length=100)
+    nome = models.CharField(max_length=100)
     protocolo = models.ForeignKey(Protocolo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.nome}'
 
 
 class Prescricao(models.Model):
     medicamento = models.ForeignKey(Medicamento, on_delete=models.CASCADE)
+    posologia_mes1=models.CharField(max_length=300)
+    posologia_mes2=models.CharField(max_length=300)
+    posologia_mes3=models.CharField(max_length=300)
+    qtd_med_mes1 = models.CharField(max_length=3)
+    qtd_med_mes2 = models.CharField(max_length=3)
+    qtd_med_mes3 = models.CharField(max_length=3)
+
+    def __str__(self):
+        return f'{self.medicamento}'
 
 
-    
 class Processo(models.Model):
     anamnese = models.TextField(max_length=600)
-    diagnostico = models.CharField(max_length=200)
+    diagnostico = models.ForeignKey(Doenca, on_delete=models.CASCADE)
     medicamentos = models.ManyToManyField(Medicamento, 
     through=Prescricao, related_name='processos')
     tratou = models.BooleanField(default=False)
@@ -66,7 +85,7 @@ class Processo(models.Model):
 
 
     def __str__(self):
-        return f'{self.cid, self.med1.nome}'
+        return f'{self.diagnostico}'
 
 
 
