@@ -9,6 +9,9 @@ RUN apt-get update -y
 RUN apt-get upgrade -y
 RUN apt-get install python3 -y
 RUN apt-get install python3-pip -y
+RUN apt-get install postgresql -y
+RUN apt-get install postgresql-server-dev-all -y
+RUN apt-get install libpq-dev -y
 RUN pip3 install --upgrade pip
 COPY ./requirements.txt /usr/src/autocusto/requirements.txt
 RUN pip3 install -r requirements.txt

@@ -20,7 +20,7 @@ class Paciente(models.Model):
     cep_paciente = models.CharField(max_length=100)
     telefone1_paciente = models.CharField(max_length=100)
     telefone2_paciente = models.CharField(max_length=100)
-    etnia=models.CharField(max_length=10)
+    etnia=models.CharField(max_length=100)
     usuarios = models.ManyToManyField(settings.AUTH_USER_MODEL,
                                     related_name='pacientes')
                                     

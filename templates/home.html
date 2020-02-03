@@ -6,7 +6,7 @@
 
 {% if user.is_authenticated %}
 <div class="container card-rounded" style="max-width:500px">
-    <h2>Adicionar processo</h2><hr>
+    <h2>Adicionar processo:</h2><hr>
     <form method="POST">
         {% csrf_token %}
         {{formulario|crispy}}

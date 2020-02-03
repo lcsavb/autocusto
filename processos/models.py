@@ -1,56 +1,37 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField, ArrayField
 from medicos.models import Medico
 from pacientes.models import Paciente
 from clinicas.models import Clinica
 from clinicas.models import Emissor
-from django.conf import settings
 
+
+class Medicamento(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    apresentacoes = ArrayField(ArrayField(models.CharField(max_length=10)))
+
+
+class Protocolo(models.Model):
+    medicamentos = models.ManyToManyField(Medicamento)
+    
+
+class Doenca(models.Model):
+    cid = models.CharField(max_length=6, unique=True)
+    diagnostico = models.CharField(max_length=100)
+    protocolo = models.ForeignKey(Protocolo, on_delete=models.CASCADE)
+
+
+class Prescricao(models.Model):
+    medicamento = models.ForeignKey(Medicamento, on_delete=models.CASCADE)
+
+
+    
 class Processo(models.Model):
     anamnese = models.TextField(max_length=600)
-    cid = models.CharField(max_length=6)
-    diagnostico = models.CharField(max_length=100)
-    med1 = models.CharField(max_length=100)
-    med1_via = models.CharField(max_length=100)
-    med1_posologia_mes1=models.CharField(max_length=300)
-    med1_posologia_mes2=models.CharField(max_length=300)
-    med1_posologia_mes3=models.CharField(max_length=300)
-    med2 = models.CharField(max_length=100)
-    med2_posologia_mes1=models.CharField(max_length=300)
-    med2_posologia_mes2=models.CharField(max_length=300)
-    med2_posologia_mes3=models.CharField(max_length=300)
-    med3 = models.CharField(max_length=100)
-    med3_posologia_mes1=models.CharField(max_length=300)
-    med3_posologia_mes2=models.CharField(max_length=300)
-    med3_posologia_mes3=models.CharField(max_length=300)
-    med4 = models.CharField(max_length=100)
-    med4_posologia_mes1=models.CharField(max_length=300)
-    med4_posologia_mes2=models.CharField(max_length=300)
-    med4_posologia_mes3=models.CharField(max_length=300)
-    med5 = models.CharField(max_length=100)
-    med5_posologia_mes1=models.CharField(max_length=300)
-    med5_posologia_mes2=models.CharField(max_length=300)
-    med5_posologia_mes3=models.CharField(max_length=300)
-    qtd_med1_mes1 = models.CharField(max_length=3)
-    qtd_med1_mes2 = models.CharField(max_length=3)
-    qtd_med1_mes3 = models.CharField(max_length=3)
-    qtd_med2_mes1 = models.CharField(max_length=3)
-    qtd_med2_mes2 = models.CharField(max_length=3)
-    qtd_med2_mes3 = models.CharField(max_length=3)
-    qtd_med3_mes1 = models.CharField(max_length=3)
-    qtd_med3_mes2 = models.CharField(max_length=3)
-    qtd_med3_mes3 = models.CharField(max_length=3)
-    qtd_med4_mes1 = models.CharField(max_length=3)
-    qtd_med4_mes2 = models.CharField(max_length=3)
-    qtd_med4_mes3 = models.CharField(max_length=3)
-    qtd_med5_mes1 = models.CharField(max_length=3)
-    qtd_med5_mes2 = models.CharField(max_length=3)
-    qtd_med5_mes3 = models.CharField(max_length=3)
-    med1_repetir_posologia = models.BooleanField(default=True)
-    med2_repetir_posologia = models.BooleanField(default=True)
-    med3_repetir_posologia = models.BooleanField(default=True)
-    med4_repetir_posologia = models.BooleanField(default=True)
-    med5_repetir_posologia = models.BooleanField(default=True)
+    diagnostico = models.CharField(max_length=200)
+    medicamentos = models.ManyToManyField(Medicamento, 
+    through=Prescricao, related_name='processos')
     tratou = models.BooleanField(default=False)
     tratamentos_previos = models.TextField(max_length=600)
     data1 = models.DateField(null=True)  
@@ -85,4 +66,9 @@ class Processo(models.Model):
 
 
     def __str__(self):
-        return f'{self.cid, self.med1}'   
+        return f'{self.cid, self.med1.nome}'
+
+
+
+
+       
