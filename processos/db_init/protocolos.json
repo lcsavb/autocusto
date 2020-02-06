@@ -225,6 +225,7 @@
             "K50.0",
             "K50.1",
             "K50.8"
+        ]
     },
     "Doença de Gaucher": {
         "arquivo": "21_doencadegaucherv11.pdf",
@@ -602,7 +603,7 @@
     "Púrpura Trombocitopênica Idiopática": {
         "arquivo": "63_purpuratrombidiop_v6.pdf",
         "cids": [
-            "D69.3"
+            "D69.3",
             "D69.3"
         ]
     },

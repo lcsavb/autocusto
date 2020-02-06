@@ -14,9 +14,10 @@ class Medicamento(models.Model):
         return f'{self.nome}'
 
 class Protocolo(models.Model):
-    nome = models.CharField(max_length=200)
+    nome = models.CharField(max_length=600)
+    arquivo = models.CharField(max_length=600)
     medicamentos = models.ManyToManyField(Medicamento)
-    dados_condicionais = JSONField()
+    dados_condicionais = JSONField(null=True)
 
     def __str__(self):
         return f'{self.nome}'
