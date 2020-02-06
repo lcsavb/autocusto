@@ -28,8 +28,8 @@ RUN apt-get install -y pdftk
 COPY . /usr/src/autocusto
 
 # create database
-RUN python3 manage.py makemigrations
-RUN python3 manage.py migrate
+#RUN python3 manage.py makemigrations
+#RUN python3 manage.py migrate
 
 # prepare static files for deployment
 RUN  python3 manage.py collectstatic --no-input --clear

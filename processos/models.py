@@ -7,8 +7,8 @@ from clinicas.models import Clinica, Emissor
 
 
 class Medicamento(models.Model):
-    nome = models.CharField(max_length=100, unique=True)
-    apresentacoes = JSONField()
+    nome = models.CharField(max_length=600, unique=True)
+    apresentacoes = ArrayField(models.CharField(max_length=600, blank=True))
 
     def __str__(self):
         return f'{self.nome}'
@@ -23,7 +23,7 @@ class Protocolo(models.Model):
 
 class Doenca(models.Model):
     cid = models.CharField(max_length=6, unique=True)
-    nome = models.CharField(max_length=100)
+    nome = models.CharField(max_length=500)
     protocolo = models.ForeignKey(Protocolo, on_delete=models.CASCADE, null=True)
 
     def __str__(self):

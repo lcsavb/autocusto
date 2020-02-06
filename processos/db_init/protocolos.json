@@ -1,0 +1,761 @@
+{
+    "Acne Grave": {
+        "arquivo": "1_acnegrave_v8_2.pdf",
+        "cids": [
+            "L70.0",
+            "L70.1",
+            "L70.8"
+        ]
+    },
+    "Acromegalia": {
+        "arquivo": "2_acromegalia_v5.pdf",
+        "cids": [
+            "E22.0"
+        ]
+    },
+    "Anemia Aplástica, Mielodisplasia e Neutropenias Constitucionais": {
+        "arquivo": "4_anaplasticamielodneutconst_v6.pdf",
+        "cids": [
+            "D46.0",
+            "D46.1",
+            "D46.7",
+            "D61.0",
+            "D61.1",
+            "D61.2",
+            "D61.3",
+            "D61.8",
+            "Z94.8"
+        ]
+    },
+    "Anemia Aplástica Adquirida": {
+        "arquivo": "3_anemia_aplastica_adquirida_v3.pdf",
+        "cids": [
+            "D61.0",
+            "D61.1",
+            "D61.2",
+            "D61.3",
+            "D61.8"
+        ]
+    },
+    "Anemia Hemolítica Auto-Imune": {
+        "arquivo": "7_anemiahemoliticaautoimune_v6.pdf",
+        "cids": [
+            "D59.0",
+            "D59.1"
+        ]
+    },
+    "Anemia em pacientes com Insuficiência Renal Crônica - Alfapoetina": {
+        "arquivo": "5_anemiapacientesinsrencr-alfaepoetina_v4.pdf",
+        "cids": [
+            "N18.0",
+            "N18.8"
+        ]
+    },
+    "Anemia em pacientes com Insuficiência Renal Crônica - reposição de ferro": {
+        "arquivo": "6_anemiapacientesinsrencr_-_repferro_v5.pdf",
+        "cids": [
+            "N18.0",
+            "N18.8"
+        ]
+    },
+    "Angioedema": {
+        "arquivo": "8_angioedema_v8.pdf",
+        "cids": [
+            "D84.1"
+        ]
+    },
+    "Aplasia pura adquirida da série vermelha": {
+        "arquivo": "9_aplasiapura_v5.pdf",
+        "cids": [
+            "D60.0"
+        ]
+    },
+    "Artrite Psoríaca": {
+        "arquivo": "10_artritepsoriacav15.pdf",
+        "cids": [
+            "M07.0",
+            "M07.2",
+            "M07.3"
+        ]
+    },
+    "Artrite Reativa - Doença de Reiter": {
+        "arquivo": "11_artritereativa_v5.pdf",
+        "cids": [
+            "M02.3"
+        ]
+    },
+    "Artrite Reumatóide": {
+        "arquivo": "12_artritereumatoide_v21.pdf",
+        "cids": [
+            "M05.0",
+            "M05.3",
+            "M05.8",
+            "M06.0",
+            "M06.8",
+            "M05.0",
+            "M05.3",
+            "M05.8",
+            "M06.0",
+            "M06.8",
+            "M08.0",
+            "M08.0",
+            "M08.1",
+            "M08.2",
+            "M08.3",
+            "M08.4",
+            "M08.8",
+            "M08.9",
+            "M05.1",
+            "M05.2",
+            "M08.0",
+            "M05.0",
+            "M05.1",
+            "M05.2",
+            "M05.3",
+            "M05.8",
+            "M06.0",
+            "M06.8"
+        ]
+    },
+    "Asma": {
+        "arquivo": "13_asmav8.pdf",
+        "cids": [
+            "J45.0",
+            "J45.1",
+            "J45.8"
+        ]
+    },
+    "Comportamento Agressivo no Transtorno do Espectro do Autismo": {
+        "arquivo": "76_comport_agressivo_transt_espectro_autismo_v3.pdf",
+        "cids": [
+            "F84.0",
+            "F84.1",
+            "F84.3",
+            "F84.5",
+            "F84.8"
+        ]
+    },
+    "Deficiência de hormônio do crescimento - hipopituitarismo": {
+        "arquivo": "14_defhormcresc__hipopituitarismo_v9.pdf",
+        "cids": [
+            "E23.0"
+        ]
+    },
+    "Deficiência de Biotinidase": {
+        "arquivo": "274_deficienciabiotinidase_v1.pdf",
+        "cids": [
+            "E88.9"
+        ]
+    },
+    "Dermatomiosite e Polimiosite": {
+        "arquivo": "15_dermatomiositepolimiosite_v3.pdf",
+        "cids": [
+            "M33.0",
+            "M33.1",
+            "M33.2"
+        ]
+    },
+    "Diabetes Insípido": {
+        "arquivo": "16_diabetesinsipido_v4.pdf",
+        "cids": [
+            "E23.2"
+        ]
+    },
+    "Diabetes Mellitus Tipo I": {
+        "arquivo": "200_diabetesmellitus_tipoi__v2.pdf",
+        "cids": [
+            "E10.0",
+            "E10.1",
+            "E10.2",
+            "E10.3",
+            "E10.4",
+            "E10.5",
+            "E10.6",
+            "E10.7",
+            "E10.8",
+            "E10.9"
+        ]
+    },
+    "Dislipidemia": {
+        "arquivo": "17_dislipidemiav12.pdf",
+        "cids": [
+            "E78.0",
+            "E78.1",
+            "E78.2",
+            "E78.3",
+            "E78.4",
+            "E78.5",
+            "E78.6",
+            "E78.8"
+        ]
+    },
+    "Distonia e Espasmo Hemifacial": {
+        "arquivo": "18_distoniasespasmohemifacial_v3.pdf",
+        "cids": [
+            "G24.3",
+            "G24.4",
+            "G24.5",
+            "G24.8",
+            "G51.3",
+            "G51.8"
+        ]
+    },
+    "Distúrbio mineral ósseo na doença renal": {
+        "arquivo": "79_disturbio_mineral_osseo_doenca_renal_v2.pdf",
+        "cids": [
+            "E83.3",
+            "N18.0",
+            "N25.0"
+        ]
+    },
+    "Doença de Alzheimer": {
+        "arquivo": "19_doencadealzheimerv10.pdf",
+        "cids": [
+            "G30.0",
+            "G30.1",
+            "G30.8",
+            "F00.0",
+            "F00.1",
+            "F00.2"
+        ]
+    },
+    "Doença de Chron": {
+        "arquivo": "20_doencadecrohnv9.pdf",
+        "cids": [
+            "K50.0",
+            "K50.1",
+            "K50.8"
+    },
+    "Doença de Gaucher": {
+        "arquivo": "21_doencadegaucherv11.pdf",
+        "cids": [
+            "E75.2"
+        ]
+    },
+    "Doença Falciforme": {
+        "arquivo": "25_doencafalciformev8.pdf",
+        "cids": [
+            "D57.0",
+            "D57.1",
+            "D57.2"
+        ]
+    },
+    "Doença de Paget": {
+        "arquivo": "22_doencapaget_v3.pdf",
+        "cids": [
+            "M88.0",
+            "M88.8"
+        ]
+    },
+    "Doença de Parkinson": {
+        "arquivo": "23_doencaparkinson_v7.pdf",
+        "cids": [
+            "G20"
+        ]
+    },
+    "Doença de Wilson": {
+        "arquivo": "24_doencawilson_v3.pdf",
+        "cids": [
+            "E83.0"
+        ]
+    },
+    "Dor crônica": {
+        "arquivo": "26_dorcronica_v5.pdf",
+        "cids": [
+            "R52.1",
+            "R52.2"
+        ]
+    },
+    "DPOC": {
+        "arquivo": "27_dpoc_v3.pdf",
+        "cids": [
+            "J44.0",
+            "J44.1",
+            "J44.8"
+        ]
+    },
+    "Endometriose": {
+        "arquivo": "28_endometriose_v5.pdf",
+        "cids": [
+            "N80.0",
+            "N80.1",
+            "N80.2",
+            "N80.3",
+            "N80.4",
+            "N80.5",
+            "N80.8"
+        ]
+    },
+    "Epilepsia": {
+        "arquivo": "29_epilepsia_v5.pdf",
+        "cids": [
+            "G40.0",
+            "G40.1",
+            "G40.2",
+            "G40.3",
+            "G40.4",
+            "G40.5",
+            "G40.6",
+            "G40.7",
+            "G40.8"
+        ]
+    },
+    "Esclerose Lateral Amiotrófica": {
+        "arquivo": "30_escleroselateralamiotrofica_v6.pdf",
+        "cids": [
+            "G12.2"
+        ]
+    },
+    "Esclerose Múltipla": {
+        "arquivo": "31_esclerosemultipla_v17.pdf",
+        "cids": [
+            "G35"
+        ]
+    },
+    "Esclerose Sistêmica": {
+        "arquivo": "32_esclerosesistemica_v4.pdf",
+        "cids": [
+            "M34.0",
+            "M34.1",
+            "M34.8"
+        ]
+    },
+    "Espasticidade": {
+        "arquivo": "33_espasticidade_v2.pdf",
+        "cids": [
+            "G04.1",
+            "G80.0",
+            "G80.1",
+            "G80.2",
+            "G81.1",
+            "G82.1",
+            "G82.4",
+            "I69.0",
+            "I69.1",
+            "I69.2",
+            "I69.3",
+            "I69.4",
+            "I69.8",
+            "T90.5",
+            "T90.8"
+        ]
+    },
+    "Espondilite Ancilosante": {
+        "arquivo": "34_espondiliteancilosante_v16.pdf",
+        "cids": [
+            "M45",
+            "M46.8"
+        ]
+    },
+    "Esquizofrenia": {
+        "arquivo": "35_esquizofreniav7.pdf",
+        "cids": [
+            "F20.0",
+            "F20.1",
+            "F20.2",
+            "F20.3",
+            "F20.4",
+            "F20.5",
+            "F20.6",
+            "F20.8"
+        ]
+    },
+    "Fenilcetonúria": {
+        "arquivo": "36_fenilcetonuria_v4.pdf",
+        "cids": [
+            "B12;",
+            "E70.0",
+            "E70.1"
+        ]
+    },
+    "Fibrose Cística - Insuficiência Pancreática": {
+        "arquivo": "37_fibrose_cistica-insuficienciapancreatica_v4.pdf",
+        "cids": [
+            "E84.1",
+            "E84.8"
+        ]
+    },
+    "Fibrose Cística - Manifestações Pulmonares": {
+        "arquivo": "38_fibrose_cistica-manifestacoespulmonares_v2.pdf",
+        "cids": [
+            "E84.0",
+            "E84.8"
+        ]
+    },
+    "Hemangioma Infantil": {
+        "arquivo": "40_hemangiomainfantil_v3_2.pdf",
+        "cids": [
+            "D18.0"
+        ]
+    },
+    "Hepatite Viral B e Coinfecções": {
+        "arquivo": "42_hepatite_viral_b_coinfeccoes_v7_2.pdf",
+        "cids": [
+            "B18.0",
+            "B18.1"
+        ]
+    },
+    "Hepatite Viral C e Coinfecções": {
+        "arquivo": "43_hepatite_viral_c_coinfeccoes_v21.pdf",
+        "cids": [
+            "B17.1",
+            "B18.2",
+            "B17.1",
+            "B18.2"
+        ]
+    },
+    "Hepatite Autoimune": {
+        "arquivo": "41_hepatiteautoimune_v4.pdf",
+        "cids": [
+            "K75.4"
+        ]
+    },
+    "Hiperplasia Adrenal Congênita": {
+        "arquivo": "45_hiperpadrecong_v3_3.pdf",
+        "cids": [
+            "E25.0"
+        ]
+    },
+    "Hiperprolactinemia": {
+        "arquivo": "46_hiperprolactinemia_v5.pdf",
+        "cids": [
+            "E22.1"
+        ]
+    },
+    "Hipertensão Arterial Pulmonar": {
+        "arquivo": "47_hipertensaoarterialpulmonar_v3.pdf",
+        "cids": [
+            "I27.0",
+            "I27.2",
+            "I27.8"
+        ]
+    },
+    "Hipoparatiroidismo": {
+        "arquivo": "48_hipoparatireoidismo_v3.pdf",
+        "cids": [
+            "E20.0",
+            "E20.1",
+            "E20.8",
+            "E89.2"
+        ]
+    },
+    "Ictioses Hereditárias": {
+        "arquivo": "49_ictioseshereditarias_v6.pdf",
+        "cids": [
+            "Q80.0",
+            "Q80.1",
+            "Q80.2",
+            "Q80.3",
+            "Q80.8"
+        ]
+    },
+    "Imunodeficiência primária com predominância de defeitos de anticorpos": {
+        "arquivo": "50_imunodprimpreddefant_v1_2.pdf",
+        "cids": [
+            "D80.0",
+            "D80.1",
+            "D80.3",
+            "D80.5",
+            "D80.6",
+            "D80.7",
+            "D80.8",
+            "D81.0",
+            "D81.1",
+            "D81.2",
+            "D81.3",
+            "D81.4",
+            "D81.5",
+            "D81.6",
+            "D81.7",
+            "D81.8",
+            "D82.0",
+            "D82.1",
+            "D83.0",
+            "D83.2",
+            "D83.8"
+        ]
+    },
+    "Imunosupressão no transplante hepático em pediatria": {
+        "arquivo": "51_imuntransphepped_v6_2.pdf",
+        "cids": [
+            "T86.4",
+            "Z94.4"
+        ]
+    },
+    "Imunossupressão no transplante renal": {
+        "arquivo": "52_imuntransprrenal_v3.pdf",
+        "cids": [
+            "T86.1",
+            "Z94.0"
+        ]
+    },
+    "Insuficiência Adrenal Primária - Doença de Addison": {
+        "arquivo": "53_insadrenprimaria_v3.pdf",
+        "cids": [
+            "E27.1",
+            "E27.4"
+        ]
+    },
+    "Insuficiência Pancreática Exócrina": {
+        "arquivo": "54_inspacexoc_v4.pdf",
+        "cids": [
+            "K86.0",
+            "K86.1",
+            "K90.3"
+        ]
+    },
+    "Leiomioma de Útero": {
+        "arquivo": "55_leiomiomautero_v4.pdf",
+        "cids": [
+            "D25.0",
+            "D25.1",
+            "D25.2"
+        ]
+    },
+    "Lúpus Eritematoso Sistêmico": {
+        "arquivo": "56_lupuseritsist_v4.pdf",
+        "cids": [
+            "L93.0",
+            "L93.1",
+            "M32.1",
+            "M32.8"
+        ]
+    },
+    "Miastenia Gravis": {
+        "arquivo": "57_miasteniagravis_v5_2.pdf",
+        "cids": [
+            "G70.0"
+        ]
+    },
+    "Mucopolissacaridose tipo I": {
+        "arquivo": "80_mucopolissacaridose_tipoi_v1.pdf",
+        "cids": [
+            "E76.0"
+        ]
+    },
+    "Mucopolissacaridose tipo II": {
+        "arquivo": "272_mucopolissacaridose_tipoii_v2.pdf",
+        "cids": [
+            "E76.1"
+        ]
+    },
+    "Colangite Biliar Primária": {
+        "arquivo": "277-colangitebiliarprimaria-v1.pdf",
+        "cids": [
+            "K74.3"
+        ]
+    },
+    "Osteoporose": {
+        "arquivo": "59_osteoporose_v4.pdf",
+        "cids": [
+            "M80.0",
+            "M80.1",
+            "M80.2",
+            "M80.3",
+            "M80.4",
+            "M80.5",
+            "M80.8",
+            "M81.0",
+            "M81.1",
+            "M81.2",
+            "M81.3",
+            "M81.4",
+            "M81.5",
+            "M81.6",
+            "M81.8",
+            "M82.0",
+            "M82.1",
+            "M82.8"
+        ]
+    },
+    "Polineuropatia Amiloidótica Familiar": {
+        "arquivo": "273_polineuropatiaamfam_v3.pdf",
+        "cids": [
+            "E85.1"
+        ]
+    },
+    "Profilaxia da Reinfeção do Vírus da Hepatite B Pós-transplante hepático": {
+        "arquivo": "60_profilaxiavirushepbptransphep_v1_2.pdf",
+        "cids": [
+            "B16.0",
+            "B16.2",
+            "B18.0",
+            "B18.1"
+        ]
+    },
+    "Psoríase": {
+        "arquivo": "61_psoriase_v9.pdf",
+        "cids": [
+            "L40.0",
+            "L40.1",
+            "L40.4",
+            "L40.8",
+            "v16.p"
+        ]
+    },
+    "Puberdade Precoce": {
+        "arquivo": "62_puberdade_precoce_central_v7.pdf",
+        "cids": [
+            "E22.8"
+        ]
+    },
+    "Púrpura Trombocitopênica Idiopática": {
+        "arquivo": "63_purpuratrombidiop_v6.pdf",
+        "cids": [
+            "D69.3"
+            "D69.3"
+        ]
+    },
+    "Raquitismo e Osteomalácia": {
+        "arquivo": "64_raquitismoosteomalacia_v4_2.pdf",
+        "cids": [
+            "E55.0",
+            "E55.9",
+            "E64.3",
+            "E83.3",
+            "M83.0",
+            "M83.1",
+            "M83.2",
+            "M83.3",
+            "M83.8",
+            "t451-"
+        ]
+    },
+    "Retocolite Ulcerativa": {
+        "arquivo": "65_retocoliteulcerativa_v2.pdf",
+        "cids": [
+            "K51.0",
+            "K51.1",
+            "K51.2",
+            "K51.3",
+            "K51.4",
+            "K51.5",
+            "K51.8"
+        ]
+    },
+    "Síndrome Coronariana Aguda": {
+        "arquivo": "66_sindcoronaguda_v1_2.pdf",
+        "cids": [
+            "I20.0",
+            "I20.1",
+            "I21.0",
+            "I21.1",
+            "I21.2",
+            "I21.3",
+            "I21.4",
+            "I21.9",
+            "I22.0",
+            "I22.1",
+            "I22.8",
+            "I22.9",
+            "I23.0",
+            "I23.1",
+            "I23.2",
+            "I23.3",
+            "I23.4",
+            "I23.5",
+            "I23.6",
+            "I23.8",
+            "I24.0",
+            "I24.8",
+            "I24.9"
+        ]
+    },
+    "Síndrome Nefrótica Primária em Adultos": {
+        "arquivo": "70_sindnefprimaadultos_v2.pdf",
+        "cids": [
+            "N04.0",
+            "N04.1",
+            "N04.2",
+            "N04.3",
+            "N04.4",
+            "N04.5",
+            "N04.6",
+            "N04.7",
+            "N04.8"
+        ]
+    },
+    "Síndrome Nefrótica Primária em crianças e adolescentes": {
+        "arquivo": "71_sindnefprimacrianadol_v3.pdf",
+        "cids": [
+            "N04.0",
+            "N04.1",
+            "N04.2",
+            "N04.3",
+            "N04.4",
+            "N04.5",
+            "N04.6",
+            "N04.7",
+            "N04.8"
+        ]
+    },
+    "Síndrome de ovários policísticos e hirsutismo/acne": {
+        "arquivo": "68_sindovpolichirs_v3.pdf",
+        "cids": [
+            "E28.0",
+            "E28.2",
+            "L68.0"
+        ]
+    },
+    "Síndrome de Guillain-Barré": {
+        "arquivo": "67_sindromeguillain-barre_v4_2.pdf",
+        "cids": [
+            "G61.0"
+        ]
+    },
+    "Síndrome de Turner": {
+        "arquivo": "69_sindrometurner_v5.pdf",
+        "cids": [
+            "Q96.0",
+            "Q96.1",
+            "Q96.2",
+            "Q96.3",
+            "Q96.4",
+            "Q96.8"
+        ]
+    },
+    "Sobrecarga de Ferro": {
+        "arquivo": "72_sobrecarga_ferro_v3_2.pdf",
+        "cids": [
+            "E83.1",
+            "T45.4"
+        ]
+    },
+    "Imunossupressão no Transplante Hepático em Adultos": {
+        "arquivo": "78_transplante_hep_adultos_2.pdf",
+        "cids": [
+            "Z94.4",
+            "T86.4"
+        ]
+    },
+    "Transtorno Afetivo Bipolar": {
+        "arquivo": "75_transtornoafetivobipolar_v2.pdf",
+        "cids": [
+            "F31.1",
+            "F31.2",
+            "F31.3",
+            "F31.4",
+            "F31.5",
+            "F31.6",
+            "F31.7"
+        ]
+    },
+    "Transtorno Esquizoafetivo": {
+        "arquivo": "73_transtornoesquizoafetivov6.pdf",
+        "cids": [
+            "F25.0",
+            "F25.1",
+            "F25.2"
+        ]
+    },
+    "Uveítes não-infecciosas": {
+        "arquivo": "74_uveitesnaoinfecciosas_v6.pdf",
+        "cids": [
+            "H30.1",
+            "H30.2",
+            "H30.8",
+            "H20.1",
+            "H15.0"
+        ]
+    }
+}
