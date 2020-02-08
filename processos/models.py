@@ -25,7 +25,7 @@ class Protocolo(models.Model):
 class Doenca(models.Model):
     cid = models.CharField(max_length=6, unique=True)
     nome = models.CharField(max_length=500)
-    protocolo = models.ForeignKey(Protocolo, on_delete=models.CASCADE, null=True)
+    protocolo = models.ForeignKey(Protocolo, on_delete=models.CASCADE, null=True, related_name='doenca')
 
     def __str__(self):
         return f'{self.nome}'

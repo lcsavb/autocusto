@@ -1,0 +1,1086 @@
+{
+    "1": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.1"
+    },
+    "2": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.2"
+    },
+    "3": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.3"
+    },
+    "4": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.4"
+    },
+    "5": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.5"
+    },
+    "6": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.6"
+    },
+    "7": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "H40.8"
+    },
+    "8": {
+        "nome_medicamento": "acetazolamida",
+        "cid": "Q15.0"
+    },
+    "9": {
+        "nome_medicamento": "ácido ursodesoxicólico",
+        "cid": "K74.3"
+    },
+    "10": {
+        "nome_medicamento": "acitretina",
+        "cid": "Q82.8"
+    },
+    "11": {
+        "nome_medicamento": "acitretina",
+        "cid": "L44.0"
+    },
+    "12": {
+        "nome_medicamento": "adalimumabe",
+        "cid": "L73.2"
+    },
+    "13": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M05.1"
+    },
+    "14": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M05.2"
+    },
+    "15": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M33.0"
+    },
+    "16": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M33.1"
+    },
+    "17": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M33.2"
+    },
+    "18": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M34.0"
+    },
+    "19": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M34.1"
+    },
+    "20": {
+        "nome_medicamento": "azatioprina",
+        "cid": "M34.8"
+    },
+    "21": {
+        "nome_medicamento": "azatioprina",
+        "cid": "K75.4"
+    },
+    "22": {
+        "nome_medicamento": "azatioprina",
+        "cid": "Z94.1"
+    },
+    "23": {
+        "nome_medicamento": "azatioprina",
+        "cid": "Z94.2"
+    },
+    "24": {
+        "nome_medicamento": "azatioprina",
+        "cid": "Z94.3"
+    },
+    "25": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.1"
+    },
+    "26": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.2"
+    },
+    "27": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.3"
+    },
+    "28": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.4"
+    },
+    "29": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.5"
+    },
+    "30": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.6"
+    },
+    "31": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "H40.8"
+    },
+    "32": {
+        "nome_medicamento": "bimatoprosta",
+        "cid": "Q15.0"
+    },
+    "33": {
+        "nome_medicamento": "biotina",
+        "cid": "E88.9"
+    },
+    "34": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.1"
+    },
+    "35": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.2"
+    },
+    "36": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.3"
+    },
+    "37": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.4"
+    },
+    "38": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.5"
+    },
+    "39": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.6"
+    },
+    "40": {
+        "nome_medicamento": "brimonidina",
+        "cid": "H40.8"
+    },
+    "41": {
+        "nome_medicamento": "brimonidina",
+        "cid": "Q15.0"
+    },
+    "42": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.1"
+    },
+    "43": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.2"
+    },
+    "44": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.3"
+    },
+    "45": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.4"
+    },
+    "46": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.5"
+    },
+    "47": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.6"
+    },
+    "48": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "H40.8"
+    },
+    "49": {
+        "nome_medicamento": "brinzolamida",
+        "cid": "Q15.0"
+    },
+    "50": {
+        "nome_medicamento": "bromocriptina",
+        "cid": "E22.1"
+    },
+    "51": {
+        "nome_medicamento": "cabergolina",
+        "cid": "E22.1"
+    },
+    "52": {
+        "nome_medicamento": "calcitriol",
+        "cid": "E55.0"
+    },
+    "53": {
+        "nome_medicamento": "calcitriol",
+        "cid": "E55.9"
+    },
+    "54": {
+        "nome_medicamento": "calcitriol",
+        "cid": "E64.3"
+    },
+    "55": {
+        "nome_medicamento": "calcitriol",
+        "cid": "M83.0"
+    },
+    "56": {
+        "nome_medicamento": "calcitriol",
+        "cid": "M83.1"
+    },
+    "57": {
+        "nome_medicamento": "calcitriol",
+        "cid": "M83.2"
+    },
+    "58": {
+        "nome_medicamento": "calcitriol",
+        "cid": "M83.3"
+    },
+    "59": {
+        "nome_medicamento": "calcitriol",
+        "cid": "M83.8"
+    },
+    "60": {
+        "nome_medicamento": "ciclofosfamida",
+        "cid": "D60.0"
+    },
+    "61": {
+        "nome_medicamento": "ciclofosfamida",
+        "cid": "M34.0"
+    },
+    "62": {
+        "nome_medicamento": "ciclofosfamida",
+        "cid": "M34.1"
+    },
+    "63": {
+        "nome_medicamento": "ciclofosfamida",
+        "cid": "M34.8"
+    },
+    "64": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "D60.0"
+    },
+    "65": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "M05.1"
+    },
+    "66": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "M05.2"
+    },
+    "67": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "M33.0"
+    },
+    "68": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "M33.1"
+    },
+    "69": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "M33.2"
+    },
+    "70": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "Z94.1"
+    },
+    "71": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "Z94.2"
+    },
+    "72": {
+        "nome_medicamento": "ciclosporina",
+        "cid": "Z94.3"
+    },
+    "73": {
+        "nome_medicamento": "ciproterona",
+        "cid": "E28.0"
+    },
+    "74": {
+        "nome_medicamento": "ciproterona",
+        "cid": "E28.2"
+    },
+    "75": {
+        "nome_medicamento": "ciproterona",
+        "cid": "L68.0"
+    },
+    "76": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.1"
+    },
+    "77": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.2"
+    },
+    "78": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.3"
+    },
+    "79": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.4"
+    },
+    "80": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.5"
+    },
+    "81": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.6"
+    },
+    "82": {
+        "nome_medicamento": "clozapina",
+        "cid": "F31.7"
+    },
+    "83": {
+        "nome_medicamento": "clozapina",
+        "cid": "F25.0"
+    },
+    "84": {
+        "nome_medicamento": "clozapina",
+        "cid": "F25.1"
+    },
+    "85": {
+        "nome_medicamento": "clozapina",
+        "cid": "F25.2"
+    },
+    "86": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.1"
+    },
+    "87": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.2"
+    },
+    "88": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.3"
+    },
+    "89": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.4"
+    },
+    "90": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.5"
+    },
+    "91": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.6"
+    },
+    "92": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "H40.8"
+    },
+    "93": {
+        "nome_medicamento": "dorzolamida",
+        "cid": "Q15.0"
+    },
+    "94": {
+        "nome_medicamento": "filgrastim",
+        "cid": "D70"
+    },
+    "95": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.0"
+    },
+    "96": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.1"
+    },
+    "97": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.2"
+    },
+    "98": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.3"
+    },
+    "99": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.4"
+    },
+    "100": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.5"
+    },
+    "101": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.6"
+    },
+    "102": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.7"
+    },
+    "103": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.8"
+    },
+    "104": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B20.9"
+    },
+    "105": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B22.0"
+    },
+    "106": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B22.1"
+    },
+    "107": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B22.2"
+    },
+    "108": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B22.7"
+    },
+    "109": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B23.0"
+    },
+    "110": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B23.1"
+    },
+    "111": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B23.2"
+    },
+    "112": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B23.8"
+    },
+    "113": {
+        "nome_medicamento": "filgrastim",
+        "cid": "B24"
+    },
+    "114": {
+        "nome_medicamento": "fludrocortisona",
+        "cid": "E27.1"
+    },
+    "115": {
+        "nome_medicamento": "fludrocortisona",
+        "cid": "E27.4"
+    },
+    "116": {
+        "nome_medicamento": "hidroxicloroquina",
+        "cid": "M33.0"
+    },
+    "117": {
+        "nome_medicamento": "hidroxicloroquina",
+        "cid": "M33.1"
+    },
+    "118": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D60.0"
+    },
+    "119": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "M33.0"
+    },
+    "120": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "M33.1"
+    },
+    "121": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "M33.2"
+    },
+    "122": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.0"
+    },
+    "123": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.1"
+    },
+    "124": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.2"
+    },
+    "125": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.3"
+    },
+    "126": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.4"
+    },
+    "127": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.5"
+    },
+    "128": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.6"
+    },
+    "129": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.7"
+    },
+    "130": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.8"
+    },
+    "131": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B20.9"
+    },
+    "132": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B22.0"
+    },
+    "133": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B22.1"
+    },
+    "134": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B22.2"
+    },
+    "135": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B22.7"
+    },
+    "136": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B23.0"
+    },
+    "137": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B23.1"
+    },
+    "138": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B23.2"
+    },
+    "139": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B23.8"
+    },
+    "140": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "B24"
+    },
+    "141": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.0"
+    },
+    "142": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.1"
+    },
+    "143": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.3"
+    },
+    "144": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.5"
+    },
+    "145": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.6"
+    },
+    "146": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.7"
+    },
+    "147": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D80.8"
+    },
+    "148": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.0"
+    },
+    "149": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.1"
+    },
+    "150": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.2"
+    },
+    "151": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.3"
+    },
+    "152": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.4"
+    },
+    "153": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.5"
+    },
+    "154": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.6"
+    },
+    "155": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.7"
+    },
+    "156": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D81.8"
+    },
+    "157": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D82.0"
+    },
+    "158": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D82.1"
+    },
+    "159": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D83.0"
+    },
+    "160": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D83.2"
+    },
+    "161": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "D83.8"
+    },
+    "162": {
+        "nome_medicamento": "imunoglobulina humana",
+        "cid": "G61.0"
+    },
+    "163": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.1"
+    },
+    "164": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.2"
+    },
+    "165": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.3"
+    },
+    "166": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.4"
+    },
+    "167": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.5"
+    },
+    "168": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.6"
+    },
+    "169": {
+        "nome_medicamento": "lamotrigina",
+        "cid": "F31.7"
+    },
+    "170": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.1"
+    },
+    "171": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.2"
+    },
+    "172": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.3"
+    },
+    "173": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.4"
+    },
+    "174": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.5"
+    },
+    "175": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.6"
+    },
+    "176": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "H40.8"
+    },
+    "177": {
+        "nome_medicamento": "latanoprosta",
+        "cid": "Q15.0"
+    },
+    "178": {
+        "nome_medicamento": "metilprednisolona",
+        "cid": "Z94.1"
+    },
+    "179": {
+        "nome_medicamento": "metilprednisolona",
+        "cid": "Z94.3"
+    },
+    "180": {
+        "nome_medicamento": "metilprednisolona",
+        "cid": "Z94.9"
+    },
+    "181": {
+        "nome_medicamento": "metilprednisolona",
+        "cid": "Z94.2"
+    },
+    "182": {
+        "nome_medicamento": "metilprednisolona",
+        "cid": "Z94.3"
+    },
+    "183": {
+        "nome_medicamento": "metotrexato",
+        "cid": "M33.0"
+    },
+    "184": {
+        "nome_medicamento": "metotrexato",
+        "cid": "M33.1"
+    },
+    "185": {
+        "nome_medicamento": "metotrexato",
+        "cid": "M33.2"
+    },
+    "186": {
+        "nome_medicamento": "metotrexato",
+        "cid": "M34.0"
+    },
+    "187": {
+        "nome_medicamento": "metotrexato",
+        "cid": "M34.1"
+    },
+    "188": {
+        "nome_medicamento": "metotrexato",
+        "cid": "M34.8"
+    },
+    "189": {
+        "nome_medicamento": "micofenolato de mofetila",
+        "cid": "Z94.1"
+    },
+    "190": {
+        "nome_medicamento": "micofenolato de sódio",
+        "cid": "Z94.1"
+    },
+    "191": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.1"
+    },
+    "192": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.2"
+    },
+    "193": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.3"
+    },
+    "194": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.4"
+    },
+    "195": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.5"
+    },
+    "196": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.6"
+    },
+    "197": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F31.7"
+    },
+    "198": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F25.0"
+    },
+    "199": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F25.1"
+    },
+    "200": {
+        "nome_medicamento": "olanzapina",
+        "cid": "F25.2"
+    },
+    "201": {
+        "nome_medicamento": "pancreatina",
+        "cid": "K86.0"
+    },
+    "202": {
+        "nome_medicamento": "pancreatina",
+        "cid": "K86.1"
+    },
+    "203": {
+        "nome_medicamento": "pancreatina",
+        "cid": "K90.3"
+    },
+    "204": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.1"
+    },
+    "205": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.2"
+    },
+    "206": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.3"
+    },
+    "207": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.4"
+    },
+    "208": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.5"
+    },
+    "209": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.6"
+    },
+    "210": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F31.7"
+    },
+    "211": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F25.0"
+    },
+    "212": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F25.1"
+    },
+    "213": {
+        "nome_medicamento": "quetiapina",
+        "cid": "F25.2"
+    },
+    "214": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.1"
+    },
+    "215": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.2"
+    },
+    "216": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.3"
+    },
+    "217": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.4"
+    },
+    "218": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.5"
+    },
+    "219": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.6"
+    },
+    "220": {
+        "nome_medicamento": "risperidona",
+        "cid": "F31.7"
+    },
+    "221": {
+        "nome_medicamento": "risperidona",
+        "cid": "F25.0"
+    },
+    "222": {
+        "nome_medicamento": "risperidona",
+        "cid": "F25.1"
+    },
+    "223": {
+        "nome_medicamento": "risperidona",
+        "cid": "F25.2"
+    },
+    "224": {
+        "nome_medicamento": "sildenafila",
+        "cid": "M34.0"
+    },
+    "225": {
+        "nome_medicamento": "sildenafila",
+        "cid": "M34.1"
+    },
+    "226": {
+        "nome_medicamento": "sildenafila",
+        "cid": "M34.8"
+    },
+    "227": {
+        "nome_medicamento": "somatropina",
+        "cid": "Q96.0"
+    },
+    "228": {
+        "nome_medicamento": "somatropina",
+        "cid": "Q96.1"
+    },
+    "229": {
+        "nome_medicamento": "somatropina",
+        "cid": "Q96.2"
+    },
+    "230": {
+        "nome_medicamento": "somatropina",
+        "cid": "Q96.3"
+    },
+    "231": {
+        "nome_medicamento": "somatropina",
+        "cid": "Q96.4"
+    },
+    "232": {
+        "nome_medicamento": "somatropina",
+        "cid": "Q96.8"
+    },
+    "233": {
+        "nome_medicamento": "sulfassalazina",
+        "cid": "K52.2"
+    },
+    "234": {
+        "nome_medicamento": "sulfassalazina",
+        "cid": "M02.3"
+    },
+    "235": {
+        "nome_medicamento": "sulfassalazina",
+        "cid": "M07.4"
+    },
+    "236": {
+        "nome_medicamento": "sulfassalazina",
+        "cid": "M07.5"
+    },
+    "237": {
+        "nome_medicamento": "sulfassalazina",
+        "cid": "M07.6"
+    },
+    "238": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.1"
+    },
+    "239": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.2"
+    },
+    "240": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.3"
+    },
+    "241": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.4"
+    },
+    "242": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.5"
+    },
+    "243": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.6"
+    },
+    "244": {
+        "nome_medicamento": "timolol",
+        "cid": "H40.8"
+    },
+    "245": {
+        "nome_medicamento": "timolol",
+        "cid": "Q15.0"
+    },
+    "246": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G04.1"
+    },
+    "247": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G80.0"
+    },
+    "248": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G80.1"
+    },
+    "249": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G80.2"
+    },
+    "250": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G81.1"
+    },
+    "251": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G82.1"
+    },
+    "252": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "G82.4"
+    },
+    "253": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "I69.0"
+    },
+    "254": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "I69.1"
+    },
+    "255": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "I69.2"
+    },
+    "256": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "I69.3"
+    },
+    "257": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "I69.4"
+    },
+    "258": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "I69.8"
+    },
+    "259": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "T90.5"
+    },
+    "260": {
+        "nome_medicamento": "toxina botulínica tipo a",
+        "cid": "T90.8"
+    },
+    "261": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.1"
+    },
+    "262": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.2"
+    },
+    "263": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.3"
+    },
+    "264": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.4"
+    },
+    "265": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.5"
+    },
+    "266": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.6"
+    },
+    "267": {
+        "nome_medicamento": "travoprosta",
+        "cid": "H40.8"
+    },
+    "268": {
+        "nome_medicamento": "travoprosta",
+        "cid": "Q15.0"
+    },
+    "269": {
+        "nome_medicamento": "ziprasidona",
+        "cid": "F25.0"
+    },
+    "270": {
+        "nome_medicamento": "ziprasidona",
+        "cid": "F25.1"
+    },
+    "271": {
+        "nome_medicamento": "ziprasidona",
+        "cid": "F25.2"
+    }
+}
