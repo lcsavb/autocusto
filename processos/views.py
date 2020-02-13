@@ -8,14 +8,18 @@ from datetime import date
 from medicos.models import Medico
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
-from processos.models import Processo
+from processos.models import Processo, Protocolo, Medicamento
 from usuarios.models import Usuario
 from clinicas.models import Clinica, Emissor
 from .forms import NovoProcesso, RenovarProcesso, mostrar_med, ajustar_campos_condicionais
 import os
-import pypdftk 
+import pypdftk
 from .manejo_pdfs import GeradorPDF
-from .dados import cria_dict_renovação, gerar_dados_renovacao, vincula_dados_emissor, transfere_dados_gerador
+from .dados import (cria_dict_renovação,
+                    gerar_dados_renovacao,
+                    vincula_dados_emissor,
+                    transfere_dados_gerador,
+                    listar_med)
 
 @login_required
 def busca_processos(request):
@@ -44,8 +48,6 @@ def edicao(request):
         processo_id = request.session['processo_id']
     except:
         raise ValueError
-        # BUG FALHA DE SEGURANÇA ENVIAR ID VIA GET
-        # processo_id = request.GET.get('id')
     
     try:
         primeira_data = request.session['data1']
@@ -123,21 +125,35 @@ def cadastro(request):
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
     paciente_existe = request.session['paciente_existe']
     primeira_data = date.today().strftime('%d/%m/%Y')
+    cid = request.session['cid']
+    medicamentos = listar_med(cid)    
     
     if request.method == 'POST':
-        formulario = NovoProcesso(escolhas, request.POST)    
+        formulario = NovoProcesso(escolhas, medicamentos, request.POST)    
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
 
+            ids_med_cadastrados = [dados_formulario['id_med1'],dados_formulario['id_med2'],
+            dados_formulario['id_med3'],dados_formulario['id_med4'],dados_formulario['id_med5']]
+
+            meds_ids = []
+            n = 0 
+            for id_med in ids_med_cadastrados:
+                n += 1
+                if id_med != 'nenhum':
+                    meds_ids.append(id_med)
+                    med = Medicamento.objects.get(id=id_med)
+                    dados_formulario[f'med{n}'] = f'{med.nome} {med.dosagem} ({med.apres})'
+
             dados = vincula_dados_emissor(usuario,medico,clinica,dados_formulario)
 
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
 
-            formulario.save(usuario, medico)
+            formulario.save(usuario, medico, meds_ids)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
 
@@ -146,23 +162,22 @@ def cadastro(request):
         if not usuario.clinicas.exists():
             return redirect('clinicas-cadastro')
         if paciente_existe:
-                paciente_id = request.session['paciente_id']
-                paciente = Paciente.objects.get(id=paciente_id)
-                dados_paciente = model_to_dict(paciente)
-                dados_paciente['cid'] = request.session['cid']
-                dados_paciente['data_1'] = primeira_data
-                campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
-                formulario = NovoProcesso(escolhas, initial=dados_paciente)
-                contexto = {'formulario': formulario, 
-                            'paciente_existe': paciente_existe,
-                            'paciente': paciente}
-                contexto.update(campos_ajustados)
+            paciente_id = request.session['paciente_id']
+            paciente = Paciente.objects.get(id=paciente_id)
+            dados_paciente = model_to_dict(paciente)
+            dados_paciente['cid'] = request.session['cid']
+            dados_paciente['data_1'] = primeira_data
+            campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
+            formulario = NovoProcesso(escolhas, initial=dados_paciente)
+            contexto = {'formulario': formulario, 
+                        'paciente_existe': paciente_existe,
+                        'paciente': paciente}
+            contexto.update(campos_ajustados)
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
-                              'cid': request.session['cid'],
                               'data_1': primeira_data
                              }     
-            formulario = NovoProcesso(escolhas, initial=dados_iniciais)
+            formulario = NovoProcesso(escolhas, medicamentos, initial=dados_iniciais)
             contexto = {'formulario': formulario,
                         'paciente_existe': paciente_existe}
         

@@ -2,7 +2,38 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from datetime import datetime
 from .manejo_pdfs import GeradorPDF
-from processos.models import Processo
+from processos.models import Processo, Protocolo
+
+def listar_med(cid):
+    ''' Recupera os medicamentos associados ao Protocolo e retorna uma lista de tuplas
+    com o id e o medicamento com dosagem e apresentação respectivamente '''
+    lista_med = [('nenhum', 'Escolha o medicamento...')]
+    protocolo = Protocolo.objects.get(doenca__cid=cid)
+    medicamentos = protocolo.medicamentos.all()
+    for medicamento in medicamentos:
+        item = ([medicamento.id, f'{medicamento.nome}' + ' ' + f'{medicamento.dosagem}' + ' - ' + f'{medicamento.apres}'])
+        lista_med.append(item)
+    return tuple(lista_med)
+
+# def cadastro_med(*meds):
+#     ''' Recebe o id e o nome dos medicamentos cadastrados em uma string
+#     e retorna uma lista constituída por tuplas com os respectivos valores ''' 
+#     meds_cadastrados = []
+#     for med in meds:
+#         if med != 'nenhum':
+#             med_id = substring.substringByChar(med,'[',',')[1:-1]
+#             med_nome = med.split(', ')[1][1:-2]
+#             med_cadastrado = (med_id, med_nome)
+#             meds_cadastrados.append(med_cadastrado)
+#     return meds_cadastrados
+
+def associar_med(processo,meds):
+    meds_cadastrados = processo.medicamentos.all()
+    for med in meds:
+        processo.medicamentos.add(med)
+    for med_cadastrado in meds_cadastrados:
+        if med_cadastrado not in meds:
+            processo.medicamentos.remove(med_cadastrado)
 
 def cria_dict_renovação(modelo):
     dicionario = {

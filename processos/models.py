@@ -8,7 +8,8 @@ from clinicas.models import Clinica, Emissor
 
 class Medicamento(models.Model):
     nome = models.CharField(max_length=600, unique=True)
-    apresentacoes = ArrayField(models.CharField(max_length=600, blank=True))
+    dosagem = models.CharField(max_length=100, blank=True)
+    apres = models.CharField(max_length=600, blank=True)
 
     def __str__(self):
         return f'{self.nome}'
@@ -70,6 +71,6 @@ class Processo(models.Model):
 
 
     def __str__(self):
-        return f'{self.medicamento}'
+        return f'{self.doenca}'
 
 
