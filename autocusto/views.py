@@ -30,7 +30,7 @@ def home(request):
                     request.session['cpf_paciente'] = cpf_paciente
                     return redirect('processos-cadastro')
                 
-                busca_processos = paciente.processos.filter(cid=cid)
+                busca_processos = paciente.processos.filter(doenca__cid=cid)
                 
                 if busca_processos.exists():
                     processo_cadastrado_pelo_usuario = busca_processos.filter(usuario__id=usuario.id).exists()

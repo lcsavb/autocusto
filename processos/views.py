@@ -8,7 +8,7 @@ from datetime import date
 from medicos.models import Medico
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
-from processos.models import Processo, Protocolo, Medicamento
+from processos.models import Processo, Protocolo, Medicamento, Doenca
 from usuarios.models import Usuario
 from clinicas.models import Clinica, Emissor
 from .forms import NovoProcesso, RenovarProcesso, mostrar_med, ajustar_campos_condicionais
@@ -19,7 +19,9 @@ from .dados import (cria_dict_renovação,
                     gerar_dados_renovacao,
                     vincula_dados_emissor,
                     transfere_dados_gerador,
-                    listar_med)
+                    listar_med, gera_med_dosagem,
+                    resgatar_prescricao,
+                    gerar_lista_meds_ids)
 
 @login_required
 def busca_processos(request):
@@ -43,9 +45,12 @@ def edicao(request):
     medico = seletor_medico(usuario)
     clinicas = medico.clinicas.all()
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+    cid = request.session['cid']
+    medicamentos = listar_med(cid)
 
     try:
         processo_id = request.session['processo_id']
+        processo = Processo.objects.get(id=processo_id)
     except:
         raise ValueError
     
@@ -55,12 +60,16 @@ def edicao(request):
         primeira_data = date.today().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
-        formulario = RenovarProcesso(escolhas, request.POST)    
+        formulario = RenovarProcesso(escolhas, medicamentos, request.POST)    
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
+
+            ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+          
+            dados_formulario, meds_ids = gera_med_dosagem(dados_formulario,ids_med_cadastrados)
 
             # Registra os dados do médico logado e da clínica associada
             dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
@@ -68,21 +77,21 @@ def edicao(request):
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
 
-            formulario.save(processo_id)
+            formulario.save(processo_id,meds_ids)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
             return redirect(path_pdf_final)
 
     else:
-        processo = Processo.objects.get(id=processo_id)
         dados_iniciais = cria_dict_renovação(processo)
         dados_iniciais['data_1'] = primeira_data
         dados_iniciais['clinicas'] = dados_iniciais['clinica'].id
-        formulario = RenovarProcesso(escolhas, initial=dados_iniciais)
+        dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
+        formulario = RenovarProcesso(escolhas, medicamentos, initial=dados_iniciais)
 
     contexto = {'formulario': formulario, 'processo': processo}
-    contexto.update(mostrar_med(True,dados_iniciais['med2'],dados_iniciais['med3'],
-                                dados_iniciais['med4'],dados_iniciais['med5']))  
+    contexto.update(mostrar_med(True,processo))
+    # print(contexto)  
 
     return render(request, 'processos/edicao.html', contexto)
 
@@ -136,17 +145,9 @@ def cadastro(request):
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
 
-            ids_med_cadastrados = [dados_formulario['id_med1'],dados_formulario['id_med2'],
-            dados_formulario['id_med3'],dados_formulario['id_med4'],dados_formulario['id_med5']]
-
-            meds_ids = []
-            n = 0 
-            for id_med in ids_med_cadastrados:
-                n += 1
-                if id_med != 'nenhum':
-                    meds_ids.append(id_med)
-                    med = Medicamento.objects.get(id=id_med)
-                    dados_formulario[f'med{n}'] = f'{med.nome} {med.dosagem} ({med.apres})'
+            ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+          
+            dados_formulario, meds_ids = gera_med_dosagem(dados_formulario,ids_med_cadastrados)
 
             dados = vincula_dados_emissor(usuario,medico,clinica,dados_formulario)
 
@@ -165,18 +166,23 @@ def cadastro(request):
             paciente_id = request.session['paciente_id']
             paciente = Paciente.objects.get(id=paciente_id)
             dados_paciente = model_to_dict(paciente)
+            dados_paciente['diagnostico'] = Doenca.objects.get(cid=cid).nome
             dados_paciente['cid'] = request.session['cid']
             dados_paciente['data_1'] = primeira_data
             campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
-            formulario = NovoProcesso(escolhas, initial=dados_paciente)
+            formulario = NovoProcesso(escolhas, medicamentos, initial=dados_paciente)
             contexto = {'formulario': formulario, 
                         'paciente_existe': paciente_existe,
-                        'paciente': paciente}
+                        'paciente': paciente
+                        }
             contexto.update(campos_ajustados)
         else:
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
-                              'data_1': primeira_data
-                             }     
+                              'data_1': primeira_data,
+                              'cid': cid,
+                              'diagnostico': Doenca.objects.get(cid=cid).nome
+                             }
+            print(dados_iniciais)     
             formulario = NovoProcesso(escolhas, medicamentos, initial=dados_iniciais)
             contexto = {'formulario': formulario,
                         'paciente_existe': paciente_existe}

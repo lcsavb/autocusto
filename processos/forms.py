@@ -4,7 +4,7 @@ from datetime import datetime
 from pacientes.models import Paciente
 from processos.models import Processo, Protocolo, Doenca
 from clinicas.models import Clinica, Emissor
-from .dados import gerar_dados_edicao_parcial, associar_med
+from .dados import gerar_dados_edicao_parcial, associar_med, gerar_prescricao
 
 
 def preparar_modelo(modelo, **kwargs):
@@ -14,22 +14,26 @@ def preparar_modelo(modelo, **kwargs):
     return modelo_parametrizado
 
 
-def mostrar_med(mostrar, *medicamentos):
+def mostrar_med(mostrar, *args):
     dic = {'med2_mostrar': 'd-none',
            'med3_mostrar': 'd-none',
            'med4_mostrar': 'd-none',
            'med5_mostrar': 'd-none',
            }
     if mostrar:
-        for med in medicamentos:
-            n = 2
-            if med != '':
-                dic[f'med{n}_mostrar'] = ''
-                n = n + 1
+        processo = args[0]
+        print(processo.medicamentos.all())
+        n = 2
+        for med in processo.medicamentos.all():
+            print('AQUIAQUIAQUI', med)
+            dic[f'med{n}_mostrar'] = ''
+            n = n + 1
     return dic
 
 
 def ajustar_campos_condicionais(dados_paciente):
+    ''' Checa se paciente é incapaz e o responsável pelo preenchimento; mostra
+    os campos condicionais de acordo com a necessidade '''
     dic = {
         'responsavel_mostrar': 'd-none',
         'campo_18_mostrar': 'd-none'
@@ -39,7 +43,6 @@ def ajustar_campos_condicionais(dados_paciente):
         dados_paciente['preenchido_por'] = 'medico'
     if dados_paciente['incapaz']:
         dic['responsavel_mostrar'] = ''
-    print(dic)
     return dic, dados_paciente
 
 
@@ -210,18 +213,7 @@ class NovoProcesso(forms.Form):
 
         paciente = preparar_modelo(Paciente, **dados_paciente)
 
-        prescricao = {}
-        n = 0
-        for id in meds_ids:
-            n += 1
-            med_prescricao = {id: {f'med{n}_posologia_mes1': dados[f'med{n}_posologia_mes1'],
-                                f'med{n}_posologia_mes2': dados[f'med{n}_posologia_mes2'],
-                                f'med{n}_posologia_mes3': dados[f'med{n}_posologia_mes3'],
-                                f'qtd_med{n}_mes1': dados[f'qtd_med{n}_mes1'],
-                                f'qtd_med{n}_mes2': dados[f'qtd_med{n}_mes2'],
-                                f'qtd_med{n}_mes3': dados[f'qtd_med{n}_mes3']}
-                            }
-            prescricao.update(med_prescricao)
+        prescricao = gerar_prescricao(meds_ids, dados)
 
         dados_processo = dict(prescricao=prescricao,
                               anamnese=dados['anamnese'],
@@ -241,6 +233,7 @@ class NovoProcesso(forms.Form):
             dados_processo['paciente'] = paciente_existe
             processo = preparar_modelo(Processo, **dados_processo)
             processo.save()
+            associar_med(processo, meds_ids)
             # ATENÇÃO AQUI PARA VER SE NÃO DUPLICA
             paciente_existe.usuarios.add(usuario)
             emissor.pacientes.add(paciente_existe)
@@ -262,7 +255,7 @@ class RenovarProcesso(NovoProcesso):
     ])
 
     @transaction.atomic
-    def save(self, processo_id):
+    def save(self, processo_id, meds_ids):
         dados = self.cleaned_data
         edicao_completa = dados['edicao_completa']
 
@@ -273,3 +266,4 @@ class RenovarProcesso(NovoProcesso):
                 dados, processo_id)
             processo = preparar_modelo(Processo, **dados_modificados)
             processo.save(update_fields=campos_modificados)
+            associar_med(Processo.objects.get(id=processo_id),meds_ids)

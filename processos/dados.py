@@ -2,7 +2,50 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from datetime import datetime
 from .manejo_pdfs import GeradorPDF
-from processos.models import Processo, Protocolo
+from processos.models import Processo, Protocolo, Medicamento
+
+
+def resgatar_prescricao(dados, processo):
+    n = 1
+    prescricao = processo.prescricao
+    for item in prescricao.items():
+        numero_medicamento = item[0]
+        dados[f'id_med{n}'] = prescricao[numero_medicamento][f'id_med{n}']
+        for i in prescricao[numero_medicamento].items():
+            dados[i[0]] = i[1]
+        n += 1
+    return dados
+
+def gerar_prescricao(meds_ids, dados_formulario):
+        prescricao = {}
+        n = 0
+        for id in meds_ids:
+            n += 1
+            med_prescricao = {f'id_med{n}': id, 
+                            f'med{n}_posologia_mes1': dados_formulario[f'med{n}_posologia_mes1'],
+                            f'med{n}_posologia_mes2': dados_formulario[f'med{n}_posologia_mes2'],
+                            f'med{n}_posologia_mes3': dados_formulario[f'med{n}_posologia_mes3'],
+                            f'qtd_med{n}_mes1': dados_formulario[f'qtd_med{n}_mes1'],
+                            f'qtd_med{n}_mes2': dados_formulario[f'qtd_med{n}_mes2'],
+                            f'qtd_med{n}_mes3': dados_formulario[f'qtd_med{n}_mes3']
+                            }
+            if n == 1:
+                med_prescricao['med1_via'] = dados_formulario['med1_via']
+            prescricao[n] = med_prescricao
+        return prescricao
+
+def gera_med_dosagem(dados_formulario,ids_med_formulario):
+    ''' Busca o medicamento pelo id. Retorna o nome, a dosagem, 
+    apresentação e lista dos ids dos medicamentos '''
+    meds_ids = []
+    n = 0 
+    for id_med in ids_med_formulario:
+        n += 1
+        if id_med != 'nenhum':
+            meds_ids.append(id_med)
+            med = Medicamento.objects.get(id=id_med)
+            dados_formulario[f'med{n}'] = f'{med.nome} {med.dosagem} ({med.apres})'
+    return dados_formulario, meds_ids
 
 def listar_med(cid):
     ''' Recupera os medicamentos associados ao Protocolo e retorna uma lista de tuplas
@@ -15,25 +58,18 @@ def listar_med(cid):
         lista_med.append(item)
     return tuple(lista_med)
 
-# def cadastro_med(*meds):
-#     ''' Recebe o id e o nome dos medicamentos cadastrados em uma string
-#     e retorna uma lista constituída por tuplas com os respectivos valores ''' 
-#     meds_cadastrados = []
-#     for med in meds:
-#         if med != 'nenhum':
-#             med_id = substring.substringByChar(med,'[',',')[1:-1]
-#             med_nome = med.split(', ')[1][1:-2]
-#             med_cadastrado = (med_id, med_nome)
-#             meds_cadastrados.append(med_cadastrado)
-#     return meds_cadastrados
-
 def associar_med(processo,meds):
-    meds_cadastrados = processo.medicamentos.all()
     for med in meds:
+        print(med)
         processo.medicamentos.add(med)
-    for med_cadastrado in meds_cadastrados:
-        if med_cadastrado not in meds:
-            processo.medicamentos.remove(med_cadastrado)
+    # meds_cadastrados = processo.medicamentos.all()
+    # print(meds_cadastrados)
+    # for med_cadastrado in meds_cadastrados:
+    #     med_id = med_cadastrado.id
+    #     if med_id not in meds:
+    #         print(med_cadastrado)
+    #         processo.medicamentos.remove(med_id)
+    # print(meds_cadastrados)
 
 def cria_dict_renovação(modelo):
     dicionario = {
@@ -51,44 +87,9 @@ def cria_dict_renovação(modelo):
         'email_paciente': modelo.paciente.email_paciente,
         'end_paciente': modelo.paciente.end_paciente,
         # Dados processo
-        'med1': modelo.med1,
-        'med1_via': modelo.med1_via,
-        'med2': modelo.med2,
-        'med3': modelo.med3, 
-        'med4': modelo.med4, 
-        'med5': modelo.med4,   
-        'med1_posologia_mes1':modelo.med1_posologia_mes1,
-        'med1_posologia_mes2':modelo.med1_posologia_mes2,
-        'med1_posologia_mes3':modelo.med1_posologia_mes3,
-        'med2_posologia_mes1':modelo.med2_posologia_mes1,
-        'med2_posologia_mes2':modelo.med2_posologia_mes2,
-        'med2_posologia_mes3':modelo.med2_posologia_mes3,
-        'med3_posologia_mes1':modelo.med3_posologia_mes1,
-        'med3_posologia_mes2':modelo.med3_posologia_mes2,
-        'med3_posologia_mes3':modelo.med3_posologia_mes3,
-        'med4_posologia_mes1':modelo.med4_posologia_mes1,
-        'med4_posologia_mes2':modelo.med4_posologia_mes2,
-        'med4_posologia_mes3':modelo.med4_posologia_mes3,
-        'med5_posologia_mes1':modelo.med5_posologia_mes1,
-        'med5_posologia_mes2':modelo.med5_posologia_mes2,
-        'med5_posologia_mes3':modelo.med5_posologia_mes3,  
-        'qtd_med1_mes1':modelo.qtd_med1_mes1,
-        'qtd_med1_mes2':modelo.qtd_med1_mes2,
-        'qtd_med1_mes3':modelo.qtd_med1_mes3,
-        'qtd_med2_mes1':modelo.qtd_med2_mes1,
-        'qtd_med2_mes2':modelo.qtd_med2_mes2,
-        'qtd_med2_mes3':modelo.qtd_med2_mes3,
-        'qtd_med3_mes1':modelo.qtd_med3_mes1,
-        'qtd_med3_mes2':modelo.qtd_med3_mes2,
-        'qtd_med3_mes3':modelo.qtd_med3_mes3,
-        'qtd_med4_mes1':modelo.qtd_med4_mes1,
-        'qtd_med4_mes2':modelo.qtd_med4_mes2,
-        'qtd_med4_mes3':modelo.qtd_med4_mes3,
-        'qtd_med5_mes1':modelo.qtd_med5_mes1,
-        'qtd_med5_mes2':modelo.qtd_med5_mes2,
-        'qtd_med5_mes3':modelo.qtd_med5_mes3,
-        'cid':modelo.cid,
-        'diagnostico':modelo.diagnostico,
+        'prescricao': modelo.prescricao,
+        'cid':modelo.doenca.cid,
+        'diagnostico':modelo.doenca.nome,
         'anamnese':modelo.anamnese,
         'tratou':modelo.tratou,
         'tratamentos_previos':modelo.tratamentos_previos,
@@ -136,8 +137,6 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
                         'telefone_clinica': clinica.telefone_clinica,
                         'usuario': usuario
                         }
-    print(dados_adicionais)
-
     dados_formulario.update(dados_adicionais)
     return dados_formulario
 
@@ -149,51 +148,22 @@ def transfere_dados_gerador(dados, dados_condicionais):
     dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
     path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
     return path_pdf_final
+
+def gerar_lista_meds_ids(dados):
+    lista = [dados['id_med1'],dados['id_med2'],dados['id_med3'],dados['id_med4'],dados['id_med5']]
+    return lista
     
 def gerar_dados_edicao_parcial(dados, processo_id):
     ''' Gera o dicionário com os dados que serão atualizados
     com a renovação parcial e gera lista com os respectivos campos
     com a exceção do ID. '''
-    
+
+    ids_med_cadastrados = gerar_lista_meds_ids(dados)
+    prescricao = gerar_prescricao(ids_med_cadastrados,dados)
     novos_dados = dict(
         id=processo_id,
         data1=dados['data_1'],
-        med1=dados['med1'],
-        med1_via=dados['med1_via'],
-        med2=dados['med2'],
-        med3=dados['med3'], 
-        med4=dados['med4'], 
-        med5=dados['med5'],   
-        med1_posologia_mes1=dados['med1_posologia_mes1'],
-        med1_posologia_mes2=dados['med1_posologia_mes2'],
-        med1_posologia_mes3=dados['med1_posologia_mes3'],
-        med2_posologia_mes1=dados['med2_posologia_mes1'],
-        med2_posologia_mes2=dados['med2_posologia_mes2'],
-        med2_posologia_mes3=dados['med2_posologia_mes3'],
-        med3_posologia_mes1=dados['med3_posologia_mes1'],
-        med3_posologia_mes2=dados['med3_posologia_mes2'],
-        med3_posologia_mes3=dados['med3_posologia_mes3'],
-        med4_posologia_mes1=dados['med4_posologia_mes1'],
-        med4_posologia_mes2=dados['med4_posologia_mes2'],
-        med4_posologia_mes3=dados['med4_posologia_mes3'],
-        med5_posologia_mes1=dados['med5_posologia_mes1'],
-        med5_posologia_mes2=dados['med5_posologia_mes2'],
-        med5_posologia_mes3=dados['med5_posologia_mes3'],  
-        qtd_med1_mes1=dados['qtd_med1_mes1'],
-        qtd_med1_mes2=dados['qtd_med1_mes2'],
-        qtd_med1_mes3=dados['qtd_med1_mes3'],
-        qtd_med2_mes1=dados['qtd_med2_mes1'],
-        qtd_med2_mes2=dados['qtd_med2_mes2'],
-        qtd_med2_mes3=dados['qtd_med2_mes3'],
-        qtd_med3_mes1=dados['qtd_med3_mes1'],
-        qtd_med3_mes2=dados['qtd_med3_mes2'],
-        qtd_med3_mes3=dados['qtd_med3_mes3'],
-        qtd_med4_mes1=dados['qtd_med4_mes1'],
-        qtd_med4_mes2=dados['qtd_med4_mes2'],
-        qtd_med4_mes3=dados['qtd_med4_mes3'],
-        qtd_med5_mes1=dados['qtd_med5_mes1'],
-        qtd_med5_mes2=dados['qtd_med5_mes2'],
-        qtd_med5_mes3=dados['qtd_med5_mes3']
+        prescricao=prescricao
         )
 
     lista_campos = []
