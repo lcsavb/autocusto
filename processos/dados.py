@@ -103,20 +103,22 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     completos '''
     processo = Processo.objects.get(id=processo_id)
     dados = {}
-    dados_processo = model_to_dict(processo)
-    dados_paciente = model_to_dict(processo.paciente)
-    dados_medico = model_to_dict(processo.medico)
-    dados_clinica = model_to_dict(processo.clinica)
+    lista_dados = [model_to_dict(processo),model_to_dict(processo.paciente),
+                    model_to_dict(processo.medico),model_to_dict(processo.clinica)]
+    for d in lista_dados:
+        dados.update(d)
     # pdftk falha se input não for string!
-    dados_clinica['medicos'] = ''
-    dados_clinica['usuarios'] = ''
-    end_clinica = dados_clinica['logradouro'] + ', ' + dados_clinica['logradouro_num']
-    dados_clinica['end_clinica'] = end_clinica
-    dados.update(dados_processo)
-    dados.update(dados_paciente)
-    dados.update(dados_medico)
-    dados.update(dados_clinica)
+    dados['medicos'] = ''
+    dados['usuarios'] = ''
+    dados['medicamentos'] = ''
+    end_clinica = dados['logradouro'] + ', ' + dados['logradouro_num']
+    dados['end_clinica'] = end_clinica
     dados['data_1'] = datetime.strptime(primeira_data, '%d/%m/%Y')
+    dados['cid'] = processo.doenca.cid
+    dados['diagnostico'] = processo.doenca.nome
+    resgatar_prescricao(dados,processo)
+    meds_ids = gerar_lista_meds_ids(dados)
+    dados = gera_med_dosagem(dados,meds_ids)[0]
     return dados  
     
 
@@ -151,11 +153,14 @@ def gerar_lista_meds_ids(dados):
     lista = []
     print(dados)
     while n <=5:
-        if dados[f'id_med{n}'] != 'nenhum':
-            print(n)
-            lista.append(dados[f'id_med{n}'])
-            n = n + 1
-        else:
+        try:
+            if dados[f'id_med{n}'] != 'nenhum':
+                print(n)
+                lista.append(dados[f'id_med{n}'])
+                n = n + 1
+            else:
+                break
+        except:
             break
     return lista
     

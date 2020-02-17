@@ -29,7 +29,7 @@ class Doenca(models.Model):
     protocolo = models.ForeignKey(Protocolo, on_delete=models.CASCADE, null=True, related_name='doenca')
 
     def __str__(self):
-        return f'{self.nome}'
+        return f'{self.cid}'
 
 
 class Processo(models.Model):
