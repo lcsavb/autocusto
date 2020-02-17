@@ -22,10 +22,8 @@ def mostrar_med(mostrar, *args):
            }
     if mostrar:
         processo = args[0]
-        print(processo.medicamentos.all())
-        n = 2
+        n = 1
         for med in processo.medicamentos.all():
-            print('AQUIAQUIAQUI', med)
             dic[f'med{n}_mostrar'] = ''
             n = n + 1
     return dic

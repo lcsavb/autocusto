@@ -10,10 +10,11 @@ def resgatar_prescricao(dados, processo):
     prescricao = processo.prescricao
     for item in prescricao.items():
         numero_medicamento = item[0]
-        dados[f'id_med{n}'] = prescricao[numero_medicamento][f'id_med{n}']
-        for i in prescricao[numero_medicamento].items():
-            dados[i[0]] = i[1]
-        n += 1
+        if numero_medicamento != '':
+            dados[f'id_med{n}'] = prescricao[numero_medicamento][f'id_med{n}']
+            for i in prescricao[numero_medicamento].items():
+                dados[i[0]] = i[1]
+            n += 1
     return dados
 
 def gerar_prescricao(meds_ids, dados_formulario):
@@ -60,16 +61,12 @@ def listar_med(cid):
 
 def associar_med(processo,meds):
     for med in meds:
-        print(med)
         processo.medicamentos.add(med)
-    # meds_cadastrados = processo.medicamentos.all()
-    # print(meds_cadastrados)
-    # for med_cadastrado in meds_cadastrados:
-    #     med_id = med_cadastrado.id
-    #     if med_id not in meds:
-    #         print(med_cadastrado)
-    #         processo.medicamentos.remove(med_id)
-    # print(meds_cadastrados)
+        meds_cadastrados = processo.medicamentos.all()
+        for med_cadastrado in meds_cadastrados:
+            if str(med_cadastrado.id) not in meds:
+                processo.medicamentos.remove(med_cadastrado)
+
 
 def cria_dict_renovação(modelo):
     dicionario = {
@@ -150,7 +147,16 @@ def transfere_dados_gerador(dados, dados_condicionais):
     return path_pdf_final
 
 def gerar_lista_meds_ids(dados):
-    lista = [dados['id_med1'],dados['id_med2'],dados['id_med3'],dados['id_med4'],dados['id_med5']]
+    n = 1
+    lista = []
+    print(dados)
+    while n <=5:
+        if dados[f'id_med{n}'] != 'nenhum':
+            print(n)
+            lista.append(dados[f'id_med{n}'])
+            n = n + 1
+        else:
+            break
     return lista
     
 def gerar_dados_edicao_parcial(dados, processo_id):

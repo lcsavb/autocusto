@@ -146,16 +146,10 @@ def cadastro(request):
             clinica = medico.clinicas.get(id=id_clin)
 
             ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
-          
             dados_formulario, meds_ids = gera_med_dosagem(dados_formulario,ids_med_cadastrados)
-
             dados = vincula_dados_emissor(usuario,medico,clinica,dados_formulario)
-
-            # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
-
             formulario.save(usuario, medico, meds_ids)
-
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
 
             return redirect(path_pdf_final)
@@ -182,7 +176,6 @@ def cadastro(request):
                               'cid': cid,
                               'diagnostico': Doenca.objects.get(cid=cid).nome
                              }
-            print(dados_iniciais)     
             formulario = NovoProcesso(escolhas, medicamentos, initial=dados_iniciais)
             contexto = {'formulario': formulario,
                         'paciente_existe': paciente_existe}
