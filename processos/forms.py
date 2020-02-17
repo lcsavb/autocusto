@@ -4,14 +4,14 @@ from datetime import datetime
 from pacientes.models import Paciente
 from processos.models import Processo, Protocolo, Doenca
 from clinicas.models import Clinica, Emissor
-from .dados import gerar_dados_edicao_parcial, associar_med, gerar_prescricao
-
-
-def preparar_modelo(modelo, **kwargs):
-    ''' Recebe o nome do model e os parâmetros a serem salvos,
-    retorna preparado para ser salvo no banco '''
-    modelo_parametrizado = modelo(**kwargs)
-    return modelo_parametrizado
+from .dados import (gerar_dados_edicao_parcial,
+                    associar_med,
+                    gerar_prescricao,
+                    gerar_dados_paciente,
+                    gerar_dados_processo,
+                    registrar_db,
+                    preparar_modelo,
+                    checar_paciente_existe)
 
 
 def mostrar_med(mostrar, *args):
@@ -184,81 +184,36 @@ class NovoProcesso(forms.Form):
         dados = self.cleaned_data
         clinica_id = dados['clinicas']
         doenca = Doenca.objects.get(cid=dados['cid'])
+        cpf_paciente = dados['cpf_paciente']
 
         # adiciona dados da clínica
-        cpf_paciente = dados['cpf_paciente']
         emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
 
-        try:
-            paciente_existe = Paciente.objects.get(cpf_paciente=cpf_paciente)
-        except:
-            paciente_existe = False
+        paciente_existe = checar_paciente_existe(cpf_paciente)
 
-        dados_paciente = dict(
-            nome_paciente=dados['nome_paciente'],
-            cpf_paciente=dados['cpf_paciente'],
-            peso=dados['peso'],
-            altura=dados['altura'],
-            nome_mae=dados['nome_mae'],
-            incapaz=dados['incapaz'],
-            nome_responsavel=dados['nome_responsavel'],
-            etnia=dados['etnia'],
-            telefone1_paciente=dados['telefone1_paciente'],
-            telefone2_paciente=dados['telefone2_paciente'],
-            email_paciente=dados['email_paciente'],
-            end_paciente=dados['end_paciente'],
-        )
-
-        paciente = preparar_modelo(Paciente, **dados_paciente)
-
-        prescricao = gerar_prescricao(meds_ids, dados)
-
-        dados_processo = dict(prescricao=prescricao,
-                              anamnese=dados['anamnese'],
-                              tratou=dados['tratou'],
-                              tratamentos_previos=dados['tratamentos_previos'],
-                              doenca=doenca,
-                              preenchido_por=dados['preenchido_por'],
-                              medico=emissor.medico,
-                              paciente=paciente,
-                              clinica=emissor.clinica,
-                              emissor=emissor,
-                              usuario=usuario
-                              )
-        if paciente_existe:
-            # AQUI É MELHOR REDIRECIONAR PARA ADICIONAR PROCESSO AO CONTRÁRIO DE EDITAR PACIENTE
-            dados_paciente['id'] = paciente_existe.pk
-            dados_processo['paciente'] = paciente_existe
-            processo = preparar_modelo(Processo, **dados_processo)
-            processo.save()
-            associar_med(processo, meds_ids)
-            # ATENÇÃO AQUI PARA VER SE NÃO DUPLICA
-            paciente_existe.usuarios.add(usuario)
-            emissor.pacientes.add(paciente_existe)
-        else:
-            paciente.save()
-            paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
-            processo = preparar_modelo(Processo, **dados_processo)
-            processo.save()
-            associar_med(processo, meds_ids)
-            usuario.pacientes.add(paciente)
-            emissor.pacientes.add(paciente)
+        registrar_db(dados,meds_ids,doenca,emissor,usuario,paciente_existe=paciente_existe)
 
 
 class RenovarProcesso(NovoProcesso):
     edicao_completa = forms.ChoiceField(required=True, initial={False},
                                         choices=[
         (False, 'Não'),
-        (True, 'Sim')
+        (True, 'Sim') 
     ])
 
     @transaction.atomic
-    def save(self, processo_id, meds_ids):
+    def save(self, usuario, medico, processo_id, meds_ids):
         dados = self.cleaned_data
         edicao_completa = dados['edicao_completa']
 
         if edicao_completa == 'True':
-            pass
+            cpf_paciente = dados['cpf_paciente']
+            paciente_existe = checar_paciente_existe(cpf_paciente)
+            clinica_id = dados['clinicas']
+            doenca = Doenca.objects.get(cid=dados['cid'])
+            emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
+
+            registrar_db(dados,meds_ids,doenca,emissor,usuario,paciente_existe=paciente_existe,cid=dados['cid'])
         else:
             dados_modificados, campos_modificados = gerar_dados_edicao_parcial(
                 dados, processo_id)

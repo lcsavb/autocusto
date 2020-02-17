@@ -3,6 +3,15 @@ from django.forms.models import model_to_dict
 from datetime import datetime
 from .manejo_pdfs import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
+from pacientes.models import Paciente
+
+
+
+def preparar_modelo(modelo, **kwargs):
+    ''' Recebe o nome do model e os parâmetros a serem salvos,
+    retorna preparado para ser salvo no banco '''
+    modelo_parametrizado = modelo(**kwargs)
+    return modelo_parametrizado
 
 
 def resgatar_prescricao(dados, processo):
@@ -151,11 +160,9 @@ def transfere_dados_gerador(dados, dados_condicionais):
 def gerar_lista_meds_ids(dados):
     n = 1
     lista = []
-    print(dados)
     while n <=5:
         try:
             if dados[f'id_med{n}'] != 'nenhum':
-                print(n)
                 lista.append(dados[f'id_med{n}'])
                 n = n + 1
             else:
@@ -184,6 +191,91 @@ def gerar_dados_edicao_parcial(dados, processo_id):
     
     return novos_dados, lista_campos
 
+
+def gerar_dados_paciente(dados):
+    dados_paciente = dict(
+            nome_paciente=dados['nome_paciente'],
+            cpf_paciente=dados['cpf_paciente'],
+            peso=dados['peso'],
+            altura=dados['altura'],
+            nome_mae=dados['nome_mae'],
+            incapaz=dados['incapaz'],
+            nome_responsavel=dados['nome_responsavel'],
+            etnia=dados['etnia'],
+            telefone1_paciente=dados['telefone1_paciente'],
+            telefone2_paciente=dados['telefone2_paciente'],
+            email_paciente=dados['email_paciente'],
+            end_paciente=dados['end_paciente'],
+        )
+    return dados_paciente
+
+
+def gerar_dados_processo(dados,meds_ids,doenca,emissor,paciente,usuario):
+    prescricao = gerar_prescricao(meds_ids, dados)
+    dados_processo= dict(prescricao=prescricao,
+                        anamnese=dados['anamnese'],
+                        tratou=dados['tratou'],
+                        tratamentos_previos=dados['tratamentos_previos'],
+                        doenca=doenca,
+                        preenchido_por=dados['preenchido_por'],
+                        medico=emissor.medico,
+                        paciente=paciente,
+                        clinica=emissor.clinica,
+                        emissor=emissor,
+                        usuario=usuario
+                        )
+    return dados_processo
+
+
+def registrar_db(dados,meds_ids,doenca,emissor,usuario,**kwargs):
+        paciente_existe = kwargs.pop('paciente_existe')
+        dados_paciente = gerar_dados_paciente(dados)
+        cpf_paciente = dados['cpf_paciente']
+
+        if paciente_existe != False:
+            dados_paciente['id'] = paciente_existe.pk
+            paciente = preparar_modelo(Paciente, **dados_paciente)
+            dados_processo = gerar_dados_processo(dados,meds_ids,doenca,
+                                            emissor,paciente,usuario)
+            dados_processo['paciente'] = paciente_existe
+            cid = kwargs.pop('cid', None)
+            for p in paciente_existe.processos.all():
+                if p.doenca.cid == cid:
+                    processo_existe = True
+                    dados_processo['id'] = p.id
+                else:
+                    continue
+
+            processo = preparar_modelo(Processo, **dados_processo)
+            
+            try:
+                if processo_existe:
+                    processo.save(force_update=True)
+            except:
+                processo.save()
+            paciente.save(force_update=True)
+            associar_med(processo, meds_ids)
+            paciente.usuarios.add(usuario)
+            emissor.pacientes.add(paciente_existe)
+        else:
+            paciente = preparar_modelo(Paciente, **dados_paciente)
+            paciente.save()
+            paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+            dados_processo = gerar_dados_processo(dados,meds_ids,doenca,
+                                            emissor,paciente,usuario)
+            processo = preparar_modelo(Processo, **dados_processo)
+            processo.save()
+            associar_med(processo, meds_ids)
+            usuario.pacientes.add(paciente)
+            emissor.pacientes.add(paciente)
+
+
+def checar_paciente_existe(cpf_paciente):
+    try:
+        paciente_existe = Paciente.objects.get(cpf_paciente=cpf_paciente)
+    except:
+        paciente_existe = False
+    return paciente_existe
 
 # ############################### Path pdf_final
 

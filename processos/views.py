@@ -36,6 +36,8 @@ def busca_processos(request):
     else:
         processo_id = request.POST.get('processo_id')
         request.session['processo_id'] = processo_id
+        processo = Processo.objects.get(id=processo_id)
+        request.session['cid'] = processo.doenca.cid
         return redirect('processos-edicao')
 
 
@@ -77,7 +79,7 @@ def edicao(request):
             # Jeitinho, ainda não existem dados condicionais
             dados_condicionais = {}
 
-            formulario.save(processo_id,meds_ids)
+            formulario.save(usuario, medico, processo_id, meds_ids)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
             return redirect(path_pdf_final)
@@ -91,7 +93,6 @@ def edicao(request):
 
     contexto = {'formulario': formulario, 'processo': processo}
     contexto.update(mostrar_med(True,processo))
-    # print(contexto)  
 
     return render(request, 'processos/edicao.html', contexto)
 
