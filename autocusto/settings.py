@@ -133,13 +133,13 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'autocusto/static'),
-    os.path.join(BASE_DIR, 'processos/static') # your static/ files folder
+    os.path.join(BASE_DIR, 'processos/static')
 ]
 
-# if DEBUG:
-#     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
-# else:
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+if DEBUG:
+    STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 # Configurações do Crispy

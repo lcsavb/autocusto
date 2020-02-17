@@ -11,10 +11,10 @@ services:
       - POSTGRES_DB=autocusto
     expose:
       - 5432
-  web:
+  web-dev:
     build: 
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-dev
     command: python3 manage.py runserver 0.0.0.0:8000
     volumes:
       - ./:/usr/src/autocusto/
