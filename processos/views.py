@@ -4,6 +4,7 @@ from django.views.generic import ListView
 from django.conf import settings
 from django.db.models import Q
 from django.forms.models import model_to_dict
+from django.http import JsonResponse
 from datetime import date
 from medicos.models import Medico
 from medicos.seletor import medico as seletor_medico
@@ -185,4 +186,4 @@ def cadastro(request):
 
         return render(request, 'processos/cadastro.html', contexto)  
 
-    
+

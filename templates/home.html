@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
    
 {% block content %}
 
@@ -8,12 +9,16 @@
 <div class="container card-rounded" style="max-width:500px">
     <h2>Adicionar processo:</h2><hr>
     <form method="POST">
-        {% csrf_token %}
-        {{formulario|crispy}}
+        <div>
+            {% csrf_token %}
+            {{formulario|crispy}}
+            <ul class="list-group" id="resultados"></ul>
+        </div>
         <button class="btn btn-outline-info" type="submit">Cadastrar</button>
     </form>
     </div>
-</div>
+
+
 {% else %}
 <div class="container card-rounded" style="max-width:500px">
     <h2>Código de convite</h2><hr>
@@ -27,3 +32,7 @@
 {% endif %}
         
 {% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
+{% endblock %}
