@@ -6,18 +6,31 @@
 
 
 {% if user.is_authenticated %}
-<div class="container card-rounded" style="max-width:500px">
-    <h2>Adicionar processo:</h2><hr>
-    <form method="POST">
-        <div>
-            {% csrf_token %}
-            {{formulario|crispy}}
-            <ul class="list-group" id="resultados"></ul>
-        </div>
-        <button class="btn btn-outline-info" type="submit">Cadastrar</button>
-    </form>
+  <div class="card text-white bg-primary mb-3 center" style="width:450px;">
+    <div class="card-header">Adicionar processo</div>
+    
+   <div class="card-body">
+       <form method="POST">
+       {% csrf_token %}
+       <div class="form-row">
+        <div class="col-sm-6"> CPF paciente </div>
+        <div class="col-sm-3"> Doença </div>
     </div>
+       <div class="form-row">
+            <div class="col-sm-6"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
+            <div class="col-sm-3"> {{ formulario.cid|as_crispy_field }} </div>
+            <div class="col-sm-3"><button class="btn btn-light" type="submit">Cadastrar</button>
+        </div>
+       
+       <ul class="list-group" id="resultados"></ul>
+    </form>
+       
+   </div>
+   
+   <br />
+  </div>
 
+    
 
 {% else %}
 <div class="container card-rounded" style="max-width:500px">

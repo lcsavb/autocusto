@@ -46,8 +46,8 @@ def ajustar_campos_condicionais(dados_paciente):
 
 class PreProcesso(forms.Form):
     cpf_paciente = forms.CharField(
-        required=True, label='CPF do paciente', max_length=14)
-    cid = forms.CharField(required=True, label='CID')
+        required=True, label='', max_length=14)
+    cid = forms.CharField(required=True, label='')
 
 
 class NovoProcesso(forms.Form):

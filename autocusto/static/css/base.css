@@ -12,13 +12,13 @@ table.standard {
   vertical-align: middle;
 }
 
-#resultado {
- position: absolute;
+#resultados {
+ position: inline;
  width: 100%;
- max-width:870px;
+ max-width:500px;
  cursor: pointer;
  overflow-y: auto;
- max-height: 400px;
+ max-height: 250px;
  box-sizing: border-box;
  z-index: 1001;
 }
