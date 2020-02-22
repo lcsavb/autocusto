@@ -43,7 +43,7 @@
                 <td class="col-md-3 align-middle"> 
                     <div class="input-group mb-3">
                         
-                        <input type="text" class="form-control" name="data_1" placeholder="DD/MM/AA">
+                        <input type="text" class="form-control datas" name="data_1" placeholder="DD/MM/AA">
                         <div class="input-group-append">
     
                             <button class="btn btn-outline-secondary" type="submit">Renovar <span class="oi oi-reload"></span></button>
@@ -60,4 +60,11 @@
 </div>
 
 {% endblock content %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
+<script>
+$('.datas').mask('00/00/0000');
+</script>
+{% endblock scripts%}
 

@@ -4,6 +4,7 @@ from datetime import datetime
 from pacientes.models import Paciente
 from processos.models import Processo, Protocolo, Doenca
 from clinicas.models import Clinica, Emissor
+from autocusto.validation import isCpfValid
 from .dados import (gerar_dados_edicao_parcial,
                     associar_med,
                     gerar_prescricao,
@@ -48,6 +49,24 @@ class PreProcesso(forms.Form):
     cpf_paciente = forms.CharField(
         required=True, label='', max_length=14)
     cid = forms.CharField(required=True, label='')
+
+    def clean_cid(self):
+        cid = self.cleaned_data['cid'].upper()
+        doencas = Doenca.objects.all()
+        lista_cids = []
+        for doenca in doencas:
+            lista_cids.append(doenca.cid)
+        if not cid in lista_cids:
+            print('ESTAMOS AQUI, MAS NÁO LEVANTOU O ERRO!')
+            raise forms.ValidationError(f'CID "{cid}" incorreto!')
+        return cid
+
+    def clean_cpf_paciente(self):
+        cpf_paciente = self.cleaned_data['cpf_paciente']
+        if not isCpfValid(cpf_paciente):
+            raise forms.ValidationError(f'CPF {cpf_paciente} inválido!')
+        return cpf_paciente
+
 
 
 class NovoProcesso(forms.Form):

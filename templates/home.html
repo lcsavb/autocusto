@@ -10,12 +10,8 @@
             <div class="card bg-light mb-3" style="max-width: 45%;">
                 <div class="card-header">Adicionar processo</div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" autocomplete="off">
                         {% csrf_token %}
-                        <!-- <div class="form-row">
-                            <div class="col-sm-6"> CPF paciente </div>
-                            <div class="col-sm-3"> Doença </div>
-                        </div> -->
                         <div class="form-row">
                             <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
                             <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
@@ -25,6 +21,7 @@
                     </form>
                     <ul class="list-group" id="resultados"></ul>
                     <ul class="list-group" id="pacientes"></ul>
+                    {{ erros }}
                 </div>
             </div>
 </div>
@@ -46,4 +43,12 @@
 {% block scripts %}
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
 <script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
+
+<script>
+$(document).ready(function(){
+  $('#id_cpf_paciente').mask('000.000.000-00', {reverse: true});
+});
+
+</script>
 {% endblock %}

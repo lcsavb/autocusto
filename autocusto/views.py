@@ -29,7 +29,7 @@ def home(request):
                     request.session['cid'] = cid
                     request.session['cpf_paciente'] = cpf_paciente
                     return redirect('processos-cadastro')
-                
+    
                 busca_processos = paciente.processos.filter(doenca__cid=cid)
                 
                 if busca_processos.exists():
@@ -41,6 +41,10 @@ def home(request):
                         return redirect('processos-cadastro')
                 else:
                     return redirect('processos-cadastro')
+            else:
+                formulario = PreProcesso(request.POST)
+                contexto = {'formulario': formulario}
+                return render(request, 'home.html', contexto)
         else:
             convite = request.POST.get('convite')
             print(convite)
