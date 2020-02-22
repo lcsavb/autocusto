@@ -1,23 +1,4 @@
-// const campoBusca = document.querySelector('#id_cid');
-
-
-
-// campoBusca.addEventListener('keypress', async function () {
-//     let palavraChave = campoBusca.value;
-//     let listaResultados = document.querySelector('#resultados');
-//     if (palavraChave.length > 2) {
-//         let res = await fetch (`http://127.0.0.1:8000/processos/ajax/doencas?b=${palavraChave}`);
-//         let lista = await res.json();
-//         resultados = [];
-//         for (resultado in lista) {
-//             resultado = document.createElement('li');
-//             listaResultados.appendChild(resultado);
-//         }
-
-//     }
-// });
-
-
+(() => {
 const campoBusca = $('#id_cid');
 let listaResultados = $('#resultados');
 
@@ -34,9 +15,16 @@ $.ajax({
     dataType: 'json',
     success: function(data) {
         listaResultados.empty();
-        $.each(data, function(key, value) {
-            listaResultados.append('<li class="list-group-item link-class">'+value.cid+' | <span class="text-muted">'+value.nome+'</span></li>');
-        });
+        if (data.length == 0) {
+            listaResultados.append('<li class="list-group-item link-class">Nenhum resultado encontrado</span></li>');
+        } else {
+            $.each(data, function(key, value) {
+                if (palavraChave.length > 2) {
+                    listaResultados.append('<li class="list-group-item link-class">'+value.cid+' | <span class="text-muted">'+value.nome+'</span></li>');
+                }
+            });
+            
+        }
    
     }
 });
@@ -52,3 +40,5 @@ $('#resultados').on('click', 'li', function() {
     
 });
    
+
+})();

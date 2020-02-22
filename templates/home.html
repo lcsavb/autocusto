@@ -7,22 +7,24 @@
 
 {% if user.is_authenticated %}
 <div class="container col-md-12">
-            <div class="card bg-light mb-3" style="max-width: 500px;">
+            <div class="card bg-light mb-3" style="max-width: 45%;">
                 <div class="card-header">Adicionar processo</div>
                 <div class="card-body">
                     <form method="POST">
                         {% csrf_token %}
-                        <div class="form-row">
+                        <!-- <div class="form-row">
                             <div class="col-sm-6"> CPF paciente </div>
                             <div class="col-sm-3"> Doença </div>
-                        </div>
+                        </div> -->
                         <div class="form-row">
-                            <div class="col-sm-6"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
-                            <div class="col-sm-3"> {{ formulario.cid|as_crispy_field }} </div>
+                            <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
+                            <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
+                            <br>
                             <div class="col-sm-3"><button class="btn btn-dark" type="submit">Cadastrar</button></div>
                         </div>
                     </form>
                     <ul class="list-group" id="resultados"></ul>
+                    <ul class="list-group" id="pacientes"></ul>
                 </div>
             </div>
 </div>
@@ -43,4 +45,5 @@
 
 {% block scripts %}
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
+<script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
 {% endblock %}
