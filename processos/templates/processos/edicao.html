@@ -11,10 +11,7 @@
     
     <div class="card rounded" style="padding: 1.5rem;">
 
-      <div><h3>Renovação de Processo</h3></div><hr>
-      <div><h5>Paciente: {{ processo.paciente.nome_paciente }}
-        <div>Diagnóstico: {{ processo.diagnostico }}</div>
-        <div> Data última renovação: {{ processo.data1 }} </div>  </h5></div><hr>
+      <div><h3>{{ processo.paciente.nome_paciente }} - {{ processo.doenca.cid }}</h3></div><hr>
 
       <div class="form-row">
           <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
@@ -56,7 +53,7 @@
       </div>
 
     <div class="form-row">
-        <div class="col-sm-4"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
+        <div class="col-sm-2"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
     </div>
 
      <div class="form-row">

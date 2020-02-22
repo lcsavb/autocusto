@@ -15,8 +15,7 @@
                         <div class="form-row">
                             <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
                             <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
-                            <br>
-                            <div class="col-sm-3"><button class="btn btn-dark" type="submit">Cadastrar</button></div>
+                            <div class="col-sm-3"><br><button class="btn btn-dark" type="submit">Cadastrar</button></div>
                         </div>
                     </form>
                     <ul class="list-group" id="resultados"></ul>
@@ -44,11 +43,5 @@
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
 <script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
-
-<script>
-$(document).ready(function(){
-  $('#id_cpf_paciente').mask('000.000.000-00', {reverse: true});
-});
-
-</script>
+<script src="{% static 'processos/js/mascaras.js' %}"></script>
 {% endblock %}

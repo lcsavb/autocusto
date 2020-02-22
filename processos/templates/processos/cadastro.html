@@ -40,8 +40,8 @@
 
 
     <div class="form-row">
-            <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
-            <div class="col-9 {{ responsavel_mostrar }}" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
+            <div class="col-2">{{ formulario.incapaz|as_crispy_field }}</div>
+            <div class="col-10 {{ responsavel_mostrar }}" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
     </div>
 
     <hr>
@@ -54,8 +54,8 @@
     </div>
 
     <div class="form-row">
-        <div class="col-2">{{ formulario.cid|as_crispy_field }}</div>
-        <div class="col-10">{{ formulario.diagnostico|as_crispy_field }}</div>
+        <div class="col-1">{{ formulario.cid|as_crispy_field }}</div>
+        <div class="col-11">{{ formulario.diagnostico|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
@@ -94,7 +94,5 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'processos/js/processo.js' %}"></script>
-<script>
-$('#id_data_1').mask('00/00/0000');
-</script>
+<script src="{% static 'processos/js/mascaras.js' %}"></script>
 {% endblock %}

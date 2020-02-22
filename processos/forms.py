@@ -47,7 +47,8 @@ def ajustar_campos_condicionais(dados_paciente):
 
 class PreProcesso(forms.Form):
     cpf_paciente = forms.CharField(
-        required=True, label='', max_length=14)
+        required=True, label='',
+        max_length=14)
     cid = forms.CharField(required=True, label='')
 
     def clean_cid(self):
@@ -57,7 +58,6 @@ class PreProcesso(forms.Form):
         for doenca in doencas:
             lista_cids.append(doenca.cid)
         if not cid in lista_cids:
-            print('ESTAMOS AQUI, MAS NÁO LEVANTOU O ERRO!')
             raise forms.ValidationError(f'CID "{cid}" incorreto!')
         return cid
 
@@ -82,35 +82,37 @@ class NovoProcesso(forms.Form):
 
     # Dados do paciente
     cpf_paciente = forms.CharField(
-        required=True, label='CPF do paciente', max_length=14)
-    clinicas = forms.ChoiceField(widget=forms.Select, choices=[],
-                                 label='Selecione a clínica')
+        required=True, label='CPF do paciente', max_length=14, widget=forms.TextInput(attrs={'readonly':'readonly', 'size': 14}))
+    clinicas = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
+                                choices=[],
+                                label='Selecione a clínica')
     nome_paciente = forms.CharField(required=True, label='Nome do paciente')
     nome_mae = forms.CharField(required=True, label='Nome da mãe')
-    peso = forms.IntegerField(required=True, label='Peso')
-    altura = forms.IntegerField(required=True, label='Altura')
+    peso = forms.IntegerField(required=True, label='Peso (kg)')
+    altura = forms.IntegerField(required=True, label='Altura (centímetros)')
     end_paciente = forms.CharField(
         required=True, label='Endereço (com complemento)')
     incapaz = forms.ChoiceField(
         choices=((True, 'Sim'),
                  (False, 'Não')),
-        label='Paciente é incapaz?',
-        initial=False)
+        label='É incapaz?',
+        initial=False,
+        widget=forms.Select(attrs={'class':'custom-select'}))
     nome_responsavel = forms.CharField(
         label='Nome do responsável',
         required=False)
     
     REPETIR_ESCOLHAS = [(True, 'Sim'), (False, 'Não')]
 
-    id_med1 = forms.ChoiceField(widget=forms.Select,
+    id_med1 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
         choices=[], label='Nome')
-    id_med2 = forms.ChoiceField(widget=forms.Select,
+    id_med2 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
         choices=[], label='Nome')
-    id_med3 = forms.ChoiceField(widget=forms.Select,
+    id_med3 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
         choices=[], label='Nome')
-    id_med4 = forms.ChoiceField(widget=forms.Select,
+    id_med4 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
         choices=[], label='Nome')
-    id_med5 = forms.ChoiceField(widget=forms.Select,
+    id_med5 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
         choices=[], label='Nome')
 
     med1_via = forms.CharField(required=True, label='Via administração')
@@ -147,38 +149,46 @@ class NovoProcesso(forms.Form):
     med1_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
-                                               label='Repetir posologia?')
+                                               label='Repetir posologia?',
+                                               widget=forms.Select(attrs={'class':'custom-select'}))
     med2_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
-                                               label='Repetir posologia?')
+                                               label='Repetir posologia?',
+                                               widget=forms.Select(attrs={'class':'custom-select'}))
     med3_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
-                                               label='Repetir posologia?')
+                                               label='Repetir posologia?',
+                                               widget=forms.Select(attrs={'class':'custom-select'}))
     med4_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
-                                               label='Repetir posologia?')
+                                               label='Repetir posologia?',
+                                               widget=forms.Select(attrs={'class':'custom-select'}))
     med5_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
-                                               label='Repetir posologia?')
+                                               label='Repetir posologia?',
+                                               widget=forms.Select(attrs={'class':'custom-select'}))
 
-    cid = forms.CharField(required=True, label='CID')
-    diagnostico = forms.CharField(required=True, label='Diagnóstico')
+    cid = forms.CharField(required=True, label='CID',widget=forms.TextInput(attrs={'readonly':'readonly', 'size': 5}))
+    diagnostico = forms.CharField(required=True, label='Diagnóstico',widget=forms.TextInput(attrs={'readonly':'readonly'}))
     anamnese = forms.CharField(required=True, label='Anamnese')
     preenchido_por = forms.ChoiceField(initial={'paciente'},
                                        choices=[('paciente', 'Paciente'),
                                                 ('mae', 'Mãe'),
                                                 ('responsavel', 'Responsável'),
-                                                ('medico', 'Médico')])
+                                                ('medico', 'Médico')],
+                                                widget=forms.Select(attrs={'class':'custom-select'}))
+                                                
     etnia = forms.ChoiceField(label='Etnia', required=False,
                               choices=[('etnia_branca', 'Branca'),
                                        ('etnia_parda', 'Parda'),
                                        ('etnia_amarela', 'Amarela'),
                                        ('etnia_indigena', 'Indígena'),
-                                       ('etnia_si', 'Sem informação')])
+                                       ('etnia_si', 'Sem informação')],
+                                       widget=forms.Select(attrs={'class':'custom-select'}))
     email_paciente = forms.EmailField(required=False, label='E-Mail')
     telefone1_paciente = forms.CharField(
         required=False, label='Tel. residencial')
@@ -186,7 +196,8 @@ class NovoProcesso(forms.Form):
     tratou = forms.ChoiceField(
         choices=((True, 'Sim'), (False, 'Não')),
         label='Fez tratamento prévio?',
-        initial=False
+        initial=False,
+        widget=forms.Select(attrs={'class':'custom-select'})
     )
     tratamentos_previos = forms.CharField(
         label='Descrição dos tratamentos prévios',
@@ -205,7 +216,6 @@ class NovoProcesso(forms.Form):
         doenca = Doenca.objects.get(cid=dados['cid'])
         cpf_paciente = dados['cpf_paciente']
 
-        # adiciona dados da clínica
         emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
 
         paciente_existe = checar_paciente_existe(cpf_paciente)
