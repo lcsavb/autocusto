@@ -20,7 +20,6 @@
                     </form>
                     <ul class="list-group" id="resultados"></ul>
                     <ul class="list-group" id="pacientes"></ul>
-                    {{ erros }}
                 </div>
             </div>
 </div>
@@ -40,8 +39,10 @@
 {% endblock content %}
 
 {% block scripts %}
+{% if user.is_authenticated %}
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
 <script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
+{% endif %}
 {% endblock %}
