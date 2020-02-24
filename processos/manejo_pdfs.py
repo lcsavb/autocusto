@@ -97,6 +97,7 @@ class GeradorPDF():
         cpf_paciente = dados_lme_base['cpf_paciente']
         cid = dados_lme_base['cid']
         nome_final_pdf = f'pdf_final_{cpf_paciente}_{cid}.pdf'
+        primeira_vez = dados_lme_base['consentimento']
 
         data1 = dados_lme_base['data_1']
         datas = formatacao_data(data1)
@@ -107,6 +108,7 @@ class GeradorPDF():
 
         arquivos_base = [path_lme_base]
         protocolo = Protocolo.objects.get(doenca__cid=cid)
+
         try:
             arquivos_condicionais = protocolo.dados_condicionais['pdfs']
             for pdf in arquivos_condicionais:
@@ -114,6 +116,13 @@ class GeradorPDF():
                 arquivos_base.append(pdf_path)
         except:
             pass
+
+        if primeira_vez:
+            try:
+                consentimento_pdf = os.path.join(settings.PATH_PDF_DIR, protocolo.nome, 'consentimento.pdf')
+                arquivos_base.append(consentimento_pdf)
+            except:
+                pass
 
         ## Remove o cpf do campo 18 se preenchimento não foi pelo médico
         ajustar_campo_18(dados_lme_base)

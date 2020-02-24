@@ -301,34 +301,6 @@ def checar_paciente_existe(cpf_paciente):
 # TSH (Hormônio Tireoestimulante), ácido fólico, vitamina B12, VDRL, TGO, TGP
 # '''
 
-
-# dados_alzheimer = {
-#     # Mini-exame do estado mental
-#     'ot1': '1',
-#     'ot2': '1',
-#     'ot3': '1',
-#     'ot4': '1',
-#     'ot5': '1',
-#     'oe1': '1',
-#     'oe2': '1',
-#     'oe3': '1',
-#     'oe4': '1',
-#     'mi': '3', # de 0 a 3
-#     'ac': '4', # de 0 a 5
-#     'me': '3', # 0 a 3
-#     'n': '2', # de 0 a 2
-#     'r': '1', 
-#     'ce': '1', # 0 ou 1
-#     'cv': '2', # 0 a 3
-#     'f': '0',
-#     'd': '0',
-#     'total': 'somátoria dos anteriores',
-#     ### CDR
-#     'cdr': '51',
-#     ### Exames
-#     'exames_da_1vez': exames1vez # acrescentar sorologia para hiv se menos de 60 anos
-# }
-
 # #### ARTRITE REUMATÓIDE
 
 

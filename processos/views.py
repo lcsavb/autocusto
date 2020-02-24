@@ -50,6 +50,7 @@ def edicao(request):
     escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
     cid = request.session['cid']
     medicamentos = listar_med(cid)
+    ModeloFormulario = fabricar_formulario(cid,True)
 
     try:
         processo_id = request.session['processo_id']
@@ -63,7 +64,7 @@ def edicao(request):
         primeira_data = date.today().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
-        formulario = RenovarProcesso(escolhas, medicamentos, request.POST)    
+        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)    
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
@@ -90,9 +91,10 @@ def edicao(request):
         dados_iniciais['data_1'] = primeira_data
         dados_iniciais['clinicas'] = dados_iniciais['clinica'].id
         dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
-        formulario = RenovarProcesso(escolhas, medicamentos, initial=dados_iniciais)
+        formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+        campos_condicionais = extrair_campos_condicionais(formulario)
 
-    contexto = {'formulario': formulario, 'processo': processo}
+    contexto = {'formulario': formulario, 'processo': processo, 'campos_condicionais': campos_condicionais}
     contexto.update(mostrar_med(True,processo))
 
     return render(request, 'processos/edicao.html', contexto)
