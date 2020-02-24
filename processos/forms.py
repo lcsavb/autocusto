@@ -12,7 +12,9 @@ from .dados import (gerar_dados_edicao_parcial,
                     gerar_dados_processo,
                     registrar_db,
                     preparar_modelo,
-                    checar_paciente_existe)
+                    checar_paciente_existe
+                    )
+from .seletor import seletor_campos
 
 campos_base = {
     'cpf_paciente': forms.CharField(
@@ -405,12 +407,9 @@ def fabricar_formulario(cid,renovar):
     else:
         modelo_base = NovoProcesso
 
-    campos = {'opt_edss': forms.CharField(max_length=12, label='edss'), 'opt_teste': forms.CharField(max_length=14,label='teste')}
+    protocolo = Protocolo.objects.get(doenca__cid=cid)
 
+    campos = seletor_campos(protocolo)
 
-    if cid == 'G35':
-        print(list(campos))
-        return type('EscleroseMultipla', (modelo_base,), campos)
-    else:
-        return type('NovoFormulario', (modelo_base,), {
-                                                        })
+    return type('SuperForm', (modelo_base,), campos)
+    

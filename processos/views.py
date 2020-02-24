@@ -168,9 +168,11 @@ def cadastro(request):
             dados_paciente['data_1'] = primeira_data
             campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
             formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_paciente)
+            campos_condicionais = extrair_campos_condicionais(formulario)
             contexto = {'formulario': formulario, 
                         'paciente_existe': paciente_existe,
-                        'paciente': paciente
+                        'paciente': paciente,
+                        'campos_condicionais': campos_condicionais
                         }
             contexto.update(campos_ajustados)
         else:

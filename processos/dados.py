@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.forms.models import model_to_dict
+from django import forms
 from datetime import datetime
 from .manejo_pdfs import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
@@ -281,6 +282,7 @@ def checar_paciente_existe(cpf_paciente):
     except:
         paciente_existe = False
     return paciente_existe
+
 
 # ############################### Path pdf_final
 

@@ -1,7 +1,12 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-<h1>Campos Condicionais</h1>
-{% for campo in campos_condicionais %}
-{{ campo|as_crispy_field }}
-{% endfor %}
+<h3>Campos Condicionais</h3>
+<hr>
+<div class="form-row">
+    {% for campo in campos_condicionais %}
+    <div class="col-xs-1">
+        {{ campo|as_crispy_field }}
+    </div>
+    {% endfor %}
+</div>
