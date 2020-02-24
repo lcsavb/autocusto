@@ -8,9 +8,7 @@
   <form method="POST" target="_blank"> {% csrf_token %}
 
     
-    <div class="card rounded" style="padding: 1.5rem;">
-      
-
+    <div class="card rounded" style="padding: 1.5rem;">   
       {% if paciente_existe %}
       <div><h3>Cadastro de processo - {{ paciente.nome_paciente }}</h3></div><hr>
       
@@ -78,6 +76,12 @@
         <div class="col-md-2 campo-18 {{ campo_18_mostrar }}"> {{ formulario.telefone2_paciente|as_crispy_field }}</div>
         <div class="col-md-4 campo-18 {{ campo_18_mostrar }}"> {{ formulario.email_paciente|as_crispy_field }}</div>
     </div>
+
+    <!-- Campos condicionais -->
+
+    {% if campos_condicionais %}
+    {% include 'processos/campos_condicionais.html' %}
+    {% endif %}
 
     <div class="form-row">
             <button class="btn btn-outline-info" type="submit">Cadastrar</button>

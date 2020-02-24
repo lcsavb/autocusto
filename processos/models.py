@@ -43,6 +43,7 @@ class Processo(models.Model):
     preenchido_por = models.CharField(choices=(('P', 'Paciente'), ('M', 'Mãe'),
     ('R', 'Responsável'),('M', 'Médico')),
      max_length=128)
+    dados_condicionais = JSONField() 
     paciente = models.ForeignKey(
         Paciente,
         on_delete=models.CASCADE,

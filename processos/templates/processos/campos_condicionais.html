@@ -1,0 +1,7 @@
+{% load crispy_forms_tags %}
+{% load static %}
+
+<h1>Campos Condicionais</h1>
+{% for campo in campos_condicionais %}
+{{ campo|as_crispy_field }}
+{% endfor %}

@@ -7,16 +7,17 @@ from django.forms.models import model_to_dict
 from datetime import datetime, timedelta
 from pacientes.models import Paciente
 from medicos.models import Medico
-from processos.models import Processo
+from processos.models import Processo, Protocolo
+
 
 def preencher_formularios(lista_pdfs,dados_finais):
     '''Preenche os pdfs individualmente e gera os arquivos
     intermediários com nomes aleatórios '''
     arquivos = []
-    cpf_paciente = dados_finais['cpf_paciente']
     for arquivo in lista_pdfs:
         aleatorio = random.randint(0,10000000000)
-        arquivos.append(pypdftk.fill_form(arquivo,dados_finais,'{}_{}.pdf'.format(aleatorio,cpf_paciente)))
+        output_pdf = os.path.join(settings.BASE_DIR, 'static/tmp', '{}.pdf'.format(aleatorio))
+        arquivos.append(pypdftk.fill_form(arquivo,dados_finais,output_pdf))
     return arquivos
 
 
@@ -104,18 +105,26 @@ class GeradorPDF():
         dados_lme_base['data_2'] = datas[1]
         dados_lme_base['data_3'] = datas[2]
 
+        arquivos_base = [path_lme_base]
+        protocolo = Protocolo.objects.get(doenca__cid=cid)
+        try:
+            arquivos_condicionais = protocolo.dados_condicionais['pdfs']
+            for pdf in arquivos_condicionais:
+                pdf_path = os.path.join(settings.PATH_PDF_DIR, pdf)
+                arquivos_base.append(pdf_path)
+        except:
+            pass
+
         ## Remove o cpf do campo 18 se preenchimento não foi pelo médico
         ajustar_campo_18(dados_lme_base)
-        
-        #Esse é o endereço de output lido pelo PDFTK "localmente"
-        output_pdf_final = os.path.join(settings.BASE_DIR, 'static/tmp', nome_final_pdf)
-        print('output pdf', output_pdf_final)
-        
 
         # Essa é a URL para o redirect.
         path_pdf_final = os.path.join(settings.STATIC_URL, 'tmp', nome_final_pdf)
+        output_pdf_final = os.path.join(settings.BASE_DIR, 'static/tmp', nome_final_pdf)
+
+        arquivos = preencher_formularios(arquivos_base,dados_lme_base)
         
-        pdf = pypdftk.fill_form(path_lme_base,dados_lme_base,output_pdf_final)
+        pdf = gerar_pdf_final(arquivos,output_pdf_final)
         return pdf, path_pdf_final
 
     

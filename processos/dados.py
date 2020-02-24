@@ -222,8 +222,13 @@ def gerar_dados_processo(dados,meds_ids,doenca,emissor,paciente,usuario):
                         paciente=paciente,
                         clinica=emissor.clinica,
                         emissor=emissor,
-                        usuario=usuario
+                        usuario=usuario,
+                        dados_condicionais = {}
                         )
+    print(dados)
+    for dado in dados.items():
+        if dado[0].startswith('opt_'):
+            dados_processo['dados_condicionais'][dado[0]] = dado[1]
     return dados_processo
 
 

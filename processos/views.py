@@ -12,7 +12,7 @@ from pacientes.models import Paciente
 from processos.models import Processo, Protocolo, Medicamento, Doenca
 from usuarios.models import Usuario
 from clinicas.models import Clinica, Emissor
-from .forms import NovoProcesso, RenovarProcesso, mostrar_med, ajustar_campos_condicionais
+from .forms import NovoProcesso, RenovarProcesso, mostrar_med, ajustar_campos_condicionais, extrair_campos_condicionais, fabricar_formulario
 import os
 import pypdftk
 from .manejo_pdfs import GeradorPDF
@@ -137,10 +137,11 @@ def cadastro(request):
     paciente_existe = request.session['paciente_existe']
     primeira_data = date.today().strftime('%d/%m/%Y')
     cid = request.session['cid']
-    medicamentos = listar_med(cid)    
+    medicamentos = listar_med(cid)
+    ModeloFormulario = fabricar_formulario(cid,False)    
     
     if request.method == 'POST':
-        formulario = NovoProcesso(escolhas, medicamentos, request.POST)    
+        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)    
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
@@ -166,7 +167,7 @@ def cadastro(request):
             dados_paciente['cid'] = request.session['cid']
             dados_paciente['data_1'] = primeira_data
             campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
-            formulario = NovoProcesso(escolhas, medicamentos, initial=dados_paciente)
+            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_paciente)
             contexto = {'formulario': formulario, 
                         'paciente_existe': paciente_existe,
                         'paciente': paciente
@@ -178,9 +179,14 @@ def cadastro(request):
                               'cid': cid,
                               'diagnostico': Doenca.objects.get(cid=cid).nome
                              }
-            formulario = NovoProcesso(escolhas, medicamentos, initial=dados_iniciais)
+
+            formulario = ModeloFormulario(escolhas,medicamentos,initial=dados_iniciais)
+            campos_condicionais = extrair_campos_condicionais(formulario)
+
+
             contexto = {'formulario': formulario,
-                        'paciente_existe': paciente_existe}
+                        'paciente_existe': paciente_existe,
+                        'campos_condicionais': campos_condicionais}
         
         contexto.update(mostrar_med(False))
 
