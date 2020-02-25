@@ -1,5 +1,6 @@
 import os
 import random
+import glob
 from random import randint
 import pypdftk
 from django.conf import settings
@@ -21,7 +22,7 @@ def preencher_formularios(lista_pdfs,dados_finais):
     return arquivos
 
 
-def remover_pdfs_intermediarios(*arquivos):
+def remover_pdfs_intermediarios(arquivos):
     '''Remove os arquivos intermediários após a 
     concatenação '''
     for arquivo in arquivos:
@@ -35,12 +36,12 @@ def gerar_pdf_final(arquivos,path_pdf_final):
     return pdf_final
 
 
-def selecionar_med_consentimento(medicamento_1,dados_finais):
+def selecionar_med_consentimento(medicamento_1):
     '''Responsável por definir o medicamento prescrito no
     check-list do termo de consentimento - isola o nome 
     do fármaco da dosagem '''
     med = medicamento_1.split((' '))
-    nome_med = dados_finais['selecionar_med'] = med[0]
+    nome_med = med[0]
     return nome_med
 
 
@@ -110,30 +111,31 @@ class GeradorPDF():
         protocolo = Protocolo.objects.get(doenca__cid=cid)
 
         try:
-            arquivos_condicionais = protocolo.dados_condicionais['pdfs']
-            for pdf in arquivos_condicionais:
-                pdf_path = os.path.join(settings.PATH_PDF_DIR, pdf)
-                arquivos_base.append(pdf_path)
+            dir_pdfs_condicionais = os.path.join(settings.PATH_PDF_DIR, protocolo.nome, 'pdfs_base/')
+            pdfs_condicionais_base = glob.glob(dir_pdfs_condicionais + '*.*')
+            for pdf in pdfs_condicionais_base:
+                arquivos_base.append(pdf)
         except:
             pass
 
-        if primeira_vez:
+        if primeira_vez == 'True':
             try:
                 consentimento_pdf = os.path.join(settings.PATH_PDF_DIR, protocolo.nome, 'consentimento.pdf')
+                dados_lme_base['consentimento_medicamento'] = selecionar_med_consentimento(dados_lme_base['med1'])
                 arquivos_base.append(consentimento_pdf)
+                print(consentimento_pdf, 'ENTROU')
             except:
                 pass
 
         ## Remove o cpf do campo 18 se preenchimento não foi pelo médico
         ajustar_campo_18(dados_lme_base)
 
-        # Essa é a URL para o redirect.
         path_pdf_final = os.path.join(settings.STATIC_URL, 'tmp', nome_final_pdf)
         output_pdf_final = os.path.join(settings.BASE_DIR, 'static/tmp', nome_final_pdf)
+        pdfs_intermediarios_preenchidos = preencher_formularios(arquivos_base,dados_lme_base)
+        pdf = gerar_pdf_final(pdfs_intermediarios_preenchidos,output_pdf_final)
+        remover_pdfs_intermediarios(pdfs_intermediarios_preenchidos)
 
-        arquivos = preencher_formularios(arquivos_base,dados_lme_base)
-        
-        pdf = gerar_pdf_final(arquivos,output_pdf_final)
         return pdf, path_pdf_final
 
     
