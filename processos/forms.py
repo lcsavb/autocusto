@@ -101,7 +101,8 @@ class NovoProcesso(forms.Form):
         widget=forms.Select(attrs={'class':'custom-select'}))
     nome_responsavel = forms.CharField(
         label='Nome do responsável',
-        required=False)
+        required=False,
+        widget=forms.TextInput(attrs={'class':'cond-incapaz'}))
     
     REPETIR_ESCOLHAS = [(True, 'Sim'), (False, 'Não')]
 
@@ -194,11 +195,11 @@ class NovoProcesso(forms.Form):
                                        ('etnia_amarela', 'Amarela'),
                                        ('etnia_indigena', 'Indígena'),
                                        ('etnia_si', 'Sem informação')],
-                                       widget=forms.Select(attrs={'class':'custom-select'}))
-    email_paciente = forms.EmailField(required=False, label='E-Mail')
+                                       widget=forms.Select(attrs={'class':'custom-select cond-campo-18'}))
+    email_paciente = forms.EmailField(required=False, label='E-Mail', widget=forms.TextInput(attrs={'class':'cond-campo-18'}))
     telefone1_paciente = forms.CharField(
-        required=False, label='Tel. residencial')
-    telefone2_paciente = forms.CharField(required=False, label='Celular')
+        required=False, label='Tel. residencial',widget=forms.TextInput(attrs={'class':'cond-campo-18'}))
+    telefone2_paciente = forms.CharField(required=False, label='Celular',widget=forms.TextInput(attrs={'class':'cond-campo-18'}))
     tratou = forms.ChoiceField(
         choices=((True, 'Sim'), (False, 'Não')),
         label='Fez tratamento prévio?',
@@ -207,7 +208,7 @@ class NovoProcesso(forms.Form):
     )
     tratamentos_previos = forms.CharField(
         label='Descrição dos tratamentos prévios',
-        required=False
+        required=False, widget=forms.TextInput(attrs={'class':'cond-trat'})
     )
     data_1 = forms.DateField(
         required=True, label='Data',
