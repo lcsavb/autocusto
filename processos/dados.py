@@ -61,7 +61,7 @@ def gera_med_dosagem(dados_formulario,ids_med_formulario):
 def listar_med(cid):
     ''' Recupera os medicamentos associados ao Protocolo e retorna uma lista de tuplas
     com o id e o medicamento com dosagem e apresentação respectivamente '''
-    lista_med = [('', 'Escolha o medicamento...')]
+    lista_med = [('nenhum', 'Escolha o medicamento...')]
     protocolo = Protocolo.objects.get(doenca__cid=cid)
     medicamentos = protocolo.medicamentos.all()
     for medicamento in medicamentos:

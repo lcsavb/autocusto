@@ -94,5 +94,5 @@ def seletor_campos(protocolo):
                     }
 
         else:
-            campos = []
+            campos = {}
         return campos
