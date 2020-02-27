@@ -28,7 +28,6 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'autocusto.com.br', 'www.autocusto.co
 
 SERVER = os.environ.get('SERVER')
 
-
 # Application definition
 
 INSTALLED_APPS = [
