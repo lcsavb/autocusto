@@ -24,6 +24,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'autocusto.com.br', 'www.autocusto.com.br']
 
+# SERVER CHOICE
+
+SERVER = os.environ.get('SERVER')
+
 
 # Application definition
 
@@ -87,8 +91,6 @@ DATABASES = {
     }
 }
 
-
-
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
@@ -136,7 +138,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'processos/static')
 ]
 
-if DEBUG:
+if SERVER == 'dev':
     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
 else:
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')

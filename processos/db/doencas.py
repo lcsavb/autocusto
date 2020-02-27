@@ -5,7 +5,10 @@ doencas = {'M05.0': 'Síndrome de Felty', 'M05.3': 'Artrite Reumatóide Com Comp
 
 def salvar_doencas(doencas):
     for item in doencas.items():
-        doenca = Doenca(cid=item[0], nome=item[1])
-        doenca.save()
+        try:
+            doenca = Doenca(cid=item[0], nome=item[1])
+            doenca.save()
+        except:
+            print(f'doença {item} não foi salva')
 
 salvar_doencas(doencas)

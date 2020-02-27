@@ -7,7 +7,7 @@ from clinicas.models import Clinica, Emissor
 
 
 class Medicamento(models.Model):
-    nome = models.CharField(max_length=600, unique=True)
+    nome = models.CharField(max_length=600)
     dosagem = models.CharField(max_length=100, blank=True)
     apres = models.CharField(max_length=600, blank=True)
 

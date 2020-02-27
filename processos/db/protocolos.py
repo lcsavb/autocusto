@@ -1,13 +1,15 @@
 from django.db import transaction
+from django.conf import settings
 import json
 import glob
 from processos.models import Protocolo, Doenca
 import os
 
+base_dir = os.path.join(settings.BASE_DIR, 'processos/db')
 
 @transaction.atomic
 def salvar_protocolos():
-    os.chdir('/usr/src/autocusto/processos/db_init/')
+    os.chdir(base_dir)
     with open('protocolos.json', 'r') as protocolos:
         dados = json.load(protocolos)
         for chave in dados.keys():

@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.1
--- Dumped by pg_dump version 12.1
+-- Dumped from database version 11.7
+-- Dumped by pg_dump version 11.7
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,7 +18,7 @@ SET row_security = off;
 
 SET default_tablespace = '';
 
-SET default_table_access_method = heap;
+SET default_with_oids = false;
 
 --
 -- Name: auth_group; Type: TABLE; Schema: public; Owner: lucas
@@ -562,8 +562,8 @@ ALTER SEQUENCE public.processos_doenca_id_seq OWNED BY public.processos_doenca.i
 CREATE TABLE public.processos_medicamento (
     id integer NOT NULL,
     nome character varying(600) NOT NULL,
-    apres character varying(600) NOT NULL,
-    dosagem character varying(100) NOT NULL
+    dosagem character varying(100) NOT NULL,
+    apres character varying(600) NOT NULL
 );
 
 
@@ -603,6 +603,7 @@ CREATE TABLE public.processos_processo (
     tratamentos_previos text NOT NULL,
     data1 date,
     preenchido_por character varying(128) NOT NULL,
+    dados_condicionais jsonb NOT NULL,
     clinica_id integer NOT NULL,
     doenca_id integer,
     emissor_id integer NOT NULL,
@@ -678,8 +679,8 @@ ALTER SEQUENCE public.processos_processo_medicamentos_id_seq OWNED BY public.pro
 CREATE TABLE public.processos_protocolo (
     id integer NOT NULL,
     nome character varying(600) NOT NULL,
-    dados_condicionais jsonb,
-    arquivo character varying(600) NOT NULL
+    arquivo character varying(600) NOT NULL,
+    dados_condicionais jsonb
 );
 
 
@@ -1157,40 +1158,35 @@ COPY public.django_content_type (id, app_label, model) FROM stdin;
 --
 
 COPY public.django_migrations (id, app, name, applied) FROM stdin;
-1	contenttypes	0001_initial	2020-02-12 20:10:36.108662+00
-2	contenttypes	0002_remove_content_type_name	2020-02-12 20:10:36.124611+00
-3	auth	0001_initial	2020-02-12 20:10:36.170122+00
-4	auth	0002_alter_permission_name_max_length	2020-02-12 20:10:36.217892+00
-5	auth	0003_alter_user_email_max_length	2020-02-12 20:10:36.23093+00
-6	auth	0004_alter_user_username_opts	2020-02-12 20:10:36.240219+00
-7	auth	0005_alter_user_last_login_null	2020-02-12 20:10:36.250619+00
-8	auth	0006_require_contenttypes_0002	2020-02-12 20:10:36.255481+00
-9	auth	0007_alter_validators_add_error_messages	2020-02-12 20:10:36.266198+00
-10	auth	0008_alter_user_username_max_length	2020-02-12 20:10:36.274278+00
-11	auth	0009_alter_user_last_name_max_length	2020-02-12 20:10:36.282225+00
-12	auth	0010_alter_group_name_max_length	2020-02-12 20:10:36.290898+00
-13	auth	0011_update_proxy_permissions	2020-02-12 20:10:36.299959+00
-14	usuarios	0001_initial	2020-02-12 20:10:36.338429+00
-15	admin	0001_initial	2020-02-12 20:10:36.430757+00
-16	admin	0002_logentry_remove_auto_add	2020-02-12 20:10:36.463681+00
-17	admin	0003_logentry_add_action_flag_choices	2020-02-12 20:10:36.476019+00
-18	medicos	0001_initial	2020-02-12 20:10:36.509297+00
-19	pacientes	0001_initial	2020-02-12 20:10:36.559598+00
-20	clinicas	0001_initial	2020-02-12 20:10:36.613222+00
-21	clinicas	0002_emissor_medico	2020-02-12 20:10:36.638466+00
-22	processos	0001_initial	2020-02-12 20:10:36.750671+00
-23	clinicas	0003_auto_20200204_0000	2020-02-12 20:10:36.881705+00
-24	clinicas	0004_auto_20200204_0000	2020-02-12 20:10:36.944435+00
-25	medicos	0002_auto_20200204_0000	2020-02-12 20:10:37.008391+00
-26	pacientes	0002_paciente_usuarios	2020-02-12 20:10:37.045771+00
-27	processos	0002_auto_20200204_0000	2020-02-12 20:10:37.123153+00
-28	processos	0003_auto_20200204_0006	2020-02-12 20:10:37.18458+00
-29	processos	0004_protocolo_arquivo	2020-02-12 20:10:37.196484+00
-30	processos	0005_auto_20200206_1446	2020-02-12 20:10:37.2172+00
-31	processos	0006_auto_20200206_1515	2020-02-12 20:10:37.229302+00
-32	processos	0007_auto_20200208_1421	2020-02-12 20:10:37.261529+00
-33	processos	0008_auto_20200212_2010	2020-02-12 20:10:37.294998+00
-34	sessions	0001_initial	2020-02-12 20:10:37.312163+00
+1	contenttypes	0001_initial	2020-02-27 10:35:53.794692+00
+2	contenttypes	0002_remove_content_type_name	2020-02-27 10:35:53.800488+00
+3	auth	0001_initial	2020-02-27 10:35:53.814351+00
+4	auth	0002_alter_permission_name_max_length	2020-02-27 10:35:53.826945+00
+5	auth	0003_alter_user_email_max_length	2020-02-27 10:35:53.831327+00
+6	auth	0004_alter_user_username_opts	2020-02-27 10:35:53.834898+00
+7	auth	0005_alter_user_last_login_null	2020-02-27 10:35:53.838153+00
+8	auth	0006_require_contenttypes_0002	2020-02-27 10:35:53.839285+00
+9	auth	0007_alter_validators_add_error_messages	2020-02-27 10:35:53.84259+00
+10	auth	0008_alter_user_username_max_length	2020-02-27 10:35:53.846154+00
+11	auth	0009_alter_user_last_name_max_length	2020-02-27 10:35:53.851192+00
+12	auth	0010_alter_group_name_max_length	2020-02-27 10:35:53.855069+00
+13	auth	0011_update_proxy_permissions	2020-02-27 10:35:53.860131+00
+14	usuarios	0001_initial	2020-02-27 10:35:53.870926+00
+15	admin	0001_initial	2020-02-27 10:35:53.887591+00
+16	admin	0002_logentry_remove_auto_add	2020-02-27 10:35:53.897005+00
+17	admin	0003_logentry_add_action_flag_choices	2020-02-27 10:35:53.901111+00
+18	medicos	0001_initial	2020-02-27 10:35:53.91+00
+19	pacientes	0001_initial	2020-02-27 10:35:53.920114+00
+20	clinicas	0001_initial	2020-02-27 10:35:53.932232+00
+21	clinicas	0002_emissor_medico	2020-02-27 10:35:53.937981+00
+22	processos	0001_initial	2020-02-27 10:35:53.966726+00
+23	clinicas	0003_auto_20200225_2152	2020-02-27 10:35:53.996127+00
+24	clinicas	0004_auto_20200225_2152	2020-02-27 10:35:54.023463+00
+25	medicos	0002_auto_20200225_2152	2020-02-27 10:35:54.041833+00
+26	pacientes	0002_paciente_usuarios	2020-02-27 10:35:54.055357+00
+27	processos	0002_auto_20200225_2152	2020-02-27 10:35:54.081332+00
+28	processos	0003_auto_20200225_2202	2020-02-27 10:35:54.091628+00
+29	sessions	0001_initial	2020-02-27 10:35:54.096584+00
 \.
 
 
@@ -1199,7 +1195,6 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 --
 
 COPY public.django_session (session_key, session_data, expire_date) FROM stdin;
-2zj33q1q0fx6cfrwd739nup7lfblrd0c	M2U5YWJmYWJkYzFmYWVjMjUzNjU1Yzk3ZDNjMWYwNWVmODQyOWY3YTp7ImNvbnZpdGVfYWNlaXRvIjp0cnVlfQ==	2020-02-26 20:52:04.025554+00
 \.
 
 
@@ -1240,241 +1235,6 @@ COPY public.pacientes_paciente_usuarios (id, paciente_id, usuario_id) FROM stdin
 --
 
 COPY public.processos_doenca (id, cid, nome, protocolo_id) FROM stdin;
-20	Q82.8	Outras Malformações Congênitas Especificadas da Pele	\N
-30	L73.2	Hidradenite Supurativa	\N
-58	E22.0	Acromegalia e Gigantismo Hipofisário	2
-148	D70	Agranulocitose	\N
-157	D56.1	Talassemia Beta	\N
-158	D56.8	Outras Talassemias	\N
-190	Z94.1	Coração Transplantado	\N
-176	L70.0	Acne Vulgar	1
-177	L70.1	Acne Conglobata	1
-178	L70.8	Outras Formas de Acne	1
-141	D46.0	Anemia Refratária Sem Sideroblastos	3
-142	D46.1	Anemia Refratária Com Sideroblastos	3
-143	D46.7	Outras Síndromes Mielodisplásicas	3
-149	Z94.8	Outros Órgãos e Tecidos Transplantados	3
-53	D61.0	Anemia Aplástica Constitucional	4
-144	D61.1	Anemia Aplástica Induzida Por Drogas	4
-145	D61.2	Anemia Aplástica Devida a Outros Agentes Externos	4
-146	D61.3	Anemia Aplástica Idiopática	4
-147	D61.8	Outras Anemias Aplásticas Especificadas	4
-69	D59.0	Anemia Hemolítica Auto-imune Induzida Por Droga	5
-70	D59.1	Outras Anemias Hemolíticas Auto-imunes	5
-43	N18.8	Outra Insuficiência Renal Crônica	7
-120	D84.1	Defeitos no Sistema Complemento	8
-131	M07.0	Artropatia Psoriásica Interfalangiana Distal	10
-132	M07.2	Espondilite Psoriásica	10
-133	M07.3	Outras Artropatias Psoriásicas	10
-21	M08.1	Espondilite Ancilosante Juvenil	12
-22	M08.2	Artrite Juvenil Com Início Sistêmico	12
-23	M08.3	Poliartrite Juvenil (soro-negativa)	12
-24	M08.4	Artrite Juvenil Pauciarticular	12
-25	M08.8	Outras Artrites Juvenis	12
-26	M08.9	Artrite Juvenil Não Especificada	12
-6	M08.0	Artrite Reumatóide Juvenil	12
-1	M05.0	Síndrome de Felty	12
-2	M05.3	Artrite Reumatóide Com Comprometimento de Outros Órgãos e Sistemas	12
-3	M05.8	Outras Artrites Reumatóides Soro-positivas	12
-4	M06.0	Artrite Reumatóide Soro-negativa	12
-5	M06.8	Outras Artrites Reumatóides Especificadas	12
-55	J45.0	Asma Predominantemente Alérgica	13
-56	J45.1	Asma Não-alérgica	13
-57	J45.8	Asma Mista	13
-213	F84.0	Autismo Infantil	14
-214	F84.1	Autismo Atípico	14
-215	F84.3	Outro Transtorno Desintegrativo da Infância	14
-216	F84.5	Síndrome de Asperger	14
-217	F84.8	Outros Transtornos Globais do Desenvolvimento	14
-218	E23.0	Hipopituitarismo	15
-123	E23.2	Diabetes Insípido	18
-166	E10.0	Diabetes Mellitus Insulino-dependente - Com Coma	19
-167	E10.1	Diabetes Mellitus Insulino-dependente - Com Cetoacidose	19
-168	E10.2	Diabetes Mellitus Insulino-dependente - Com Complicações Renais	19
-169	E10.3	Diabetes Mellitus Insulino-dependente - Com Complicações Oftálmicas	19
-170	E10.4	Diabetes Mellitus Insulino-dependente - Com Complicações Neurológicas	19
-171	E10.5	Diabetes Mellitus Insulino-dependente - Com Complicações Circulatórias Periféricas	19
-172	E10.6	Diabetes Mellitus Insulino-dependente - Com Outras Complicações Especificadas	19
-173	E10.7	Diabetes Mellitus Insulino-dependente - Com Complicações Múltiplas	19
-174	E10.8	Diabetes Mellitus Insulino-dependente - Com Complicações Não Especificadas	19
-175	E10.9	Diabetes Mellitus Insulino-dependente - Sem Complicações	19
-7	E78.0	Hipercolesterolemia Pura	20
-8	E78.1	Hipergliceridemia Pura	20
-9	E78.2	Hiperlipidemia Mista	20
-10	E78.3	Hiperquilomicronemia	20
-11	E78.4	Outras Hiperlipidemias	20
-12	E78.5	Hiperlipidemia Não Especificada	20
-13	E78.6	Deficiências de Lipoproteínas	20
-14	E78.8	Outros Distúrbios do Metabolismo de Lipoproteínas	20
-229	G24.3	Torcicolo Espasmódico	21
-230	G24.4	Distonia Orofacial Idiopática	21
-231	G24.5	Blefaroespasmo	21
-232	G24.8	Outras Distonias	21
-233	G51.3	Espasmo Hemifacial Clônico	21
-234	G51.8	Outros Transtornos do Nervo Facial	21
-42	N18.0	Doença Renal em Estádio Final	22
-62	N25.0	Osteodistrofia Renal	22
-124	G30.0	Doença de Alzheimer de Início Precoce	23
-125	G30.1	Doença de Alzheimer de Início Tardio	23
-126	G30.8	Outras Formas de Doença de Alzheimer	23
-127	F00.0	Demência na Doença de Alzheimer de Início Precoce	23
-128	F00.1	Demência na Doença de Alzheimer de Início Tardio	23
-129	F00.2	Demência na Doença de Alzheimer, Forma Atípica ou Mista	23
-27	K50.0	Doença de Crohn do Intestino Delgado	24
-28	K50.1	Doença de Crohn do Intestino Grosso	24
-29	K50.8	Outra Forma de Doença de Crohn	24
-163	E75.2	Outras Esfingolipidoses	25
-159	D57.0	Anemia Falciforme Com Crise	26
-160	D57.1	Anemia Falciforme Sem Crise	26
-161	D57.2	Transtornos Falciformes Heterozigóticos Duplos	26
-59	M88.0	Doença de Paget do Crânio	27
-60	M88.8	Doença de Paget de Outros Ossos	27
-49	G20	Doença de Parkinson	28
-210	E83.0	Distúrbios do Metabolismo do Cobre	29
-116	R52.1	Dor Crônica Intratável	30
-117	R52.2	Outra Dor Crônica	30
-138	J44.0	Doença Pulmonar Obstrutiva Crônica Com Infecção Respiratória Aguda do Trato Respiratório Inferior	31
-139	J44.1	Doença Pulmonar Obstrutiva Crônica Com Exacerbação Aguda Não Especificada	31
-140	J44.8	Outras Formas Especificadas de Doença Pulmonar Obstrutiva Crônica	31
-150	N80.0	Endometriose do Útero	32
-151	N80.1	Endometriose do Ovário	32
-152	N80.2	Endometriose da Trompa de Falópio	32
-153	N80.3	Endometriose do Peritônio Pélvico	32
-154	N80.4	Endometriose do Septo Retovaginal e da Vagina	32
-155	N80.5	Endometriose do Intestino	32
-156	N80.8	Outra Endometriose	32
-72	G40.0	Epilepsia e Síndromes Epilépticas Idiopáticas Definidas Por Sua Localização (focal) (parcial) Com Crises de Início Focal	33
-73	G40.1	Epilepsia e Síndromes Epilépticas Sintomáticas Definidas Por Sua Localização (focal) (parcial) Com Crises Parciais Simples	33
-74	G40.2	Epilepsia e Síndromes Epilépticas Sintomáticas Definidas Por Sua Localização (focal) (parcial) Com Crises Parciais Complexas	33
-75	G40.3	Epilepsia e Síndromes Epilépticas Generalizadas Idiopáticas	33
-76	G40.4	Outras Epilepsias e Síndromes Epilépticas Generalizadas	33
-77	G40.5	Síndromes Epilépticas Especiais	33
-78	G40.6	Crise de Grande Mal, Não Especificada (com ou Sem Pequeno Mal)	33
-79	G40.7	Pequeno Mal Não Especificado, Sem Crises de Grande Mal	33
-80	G40.8	Outras Epilepsias	33
-212	G12.2	Doença do Neurônio Motor	34
-54	G35	Esclerose Múltipla	35
-67	M45	Espondilite Ancilosante	38
-68	M46.8	Outras Espondilopatias Inflamatórias Especificadas	38
-108	F20.0	Esquizofrenia Paranóide	39
-109	F20.1	Esquizofrenia Hebefrênica	39
-110	F20.2	Esquizofrenia Catatônica	39
-111	F20.3	Esquizofrenia Indiferenciada	39
-112	F20.4	Depressão Pós-esquizofrênica	39
-113	F20.5	Esquizofrenia Residual	39
-114	F20.6	Esquizofrenia Simples	39
-115	F20.8	Outras Esquizofrenias	39
-118	E70.0	Fenilcetonúria Clássica	40
-119	E70.1	Outras Hiperfenilalaninemias	40
-209	E84.1	Fibrose Cística Com Manifestações Intestinais	41
-40	E84.0	Fibrose Cística Com Manifestações Pulmonares	42
-41	E84.8	Fibrose Cística Com Outras Manifestações	42
-44	D18.0	Hemangioma de Qualquer Localização	43
-47	B17.1	Hepatite Aguda C	45
-48	B18.2	Hepatite Viral Crônica C	45
-71	E25.0	Transtornos Adrenogenitais Congênitos Associados à Deficiência Enzimática	47
-50	I27.0	Hipertensão Pulmonar Primária	49
-51	I27.2	Outra Hipertensão Pulmonar Secundária	49
-52	I27.8	Outras Doenças Pulmonares do Coração Especificadas	49
-63	E20.0	Hipoparatireoidismo Idiopático	50
-64	E20.1	Pseudohipoparatireoidismo	50
-65	E20.8	Outro Hipoparatireoidismo	50
-66	E89.2	Hipoparatireoidismo Pós-procedimento	50
-15	Q80.0	Ictiose Vulgar	51
-16	Q80.1	Ictiose Ligada ao Cromossomo X	51
-17	Q80.2	Ictiose Lamelar	51
-18	Q80.3	Eritrodermia Ictiosiforme Bulhosa Congênita	51
-19	Q80.8	Outras Ictioses Congênitas	51
-134	T86.1	Falência ou Rejeição de Transplante de Rim	54
-135	Z94.0	Rim Transplantado	54
-180	D25.0	Leiomioma Submucoso do Útero	57
-181	D25.1	Leiomioma Intramural do Útero	57
-182	D25.2	Leiomioma Subseroso do Útero	57
-104	L93.0	Lúpus Eritematoso Discóide	58
-105	L93.1	Lúpus Eritematoso Cutâneo Subagudo	58
-106	M32.1	Lúpus Eritematoso Disseminado (sistêmico) Com Comprometimento de Outros Órgãos e Sistemas	58
-107	M32.8	Outras Formas de Lúpus Eritematoso Disseminado (sistêmico)	58
-211	G70.0	Miastenia Gravis	59
-179	E76.0	Mucopolissacaridose do Tipo I	60
-162	E76.1	Mucopolissacaridose do Tipo II	61
-191	M80.0	Osteoporose Pós-menopáusica Com Fratura Patológica	63
-192	M80.1	Osteoporose Pós-ooforectomia Com Fratura Patológica	63
-193	M80.2	Osteoporose de Desuso Com Fratura Patológica	63
-194	M80.3	Osteoporose Por Má-absorção Pós-cirúrgica Com Fratura Patológica	63
-195	M80.4	Osteoporose Induzida Por Drogas Com Fratura Patológica	63
-196	M80.5	Osteoporose Idiopática Com Fratura Patológica	63
-197	M80.8	Outras Osteoporoses Com Fratura Patológica	63
-198	M81.0	Osteoporose Pós-menopáusica	63
-199	M81.1	Osteoporose Pós-ooforectomia	63
-200	M81.2	Osteoporose de Desuso	63
-201	M81.3	Osteoporose Devida à Má-absorção Pós-cirúrgica	63
-202	M81.4	Osteoporose Induzida Por Drogas	63
-203	M81.5	Osteoporose Idiopática	63
-204	M81.6	Osteoporose Localizada (Lequesne)	63
-205	M81.8	Outras Osteoporoses	63
-206	M82.0	Osteoporose na Mielomatose Múltipla	63
-207	M82.1	Osteoporose em Distúrbios Endócrinos	63
-208	M82.8	Osteoporose em Outras Doenças Classificadas em Outra Parte	63
-219	E85.1	Amiloidose Heredofamiliar Neuropática	64
-164	B16.0	Hepatite Aguda B Com Agente Delta (co-infecção), Com Coma Hepático	65
-165	B16.2	Hepatite Aguda B Sem Agente Delta, Com Coma Hepático	65
-45	B18.0	Hepatite Viral Crônica B Com Agente Delta	65
-46	B18.1	Hepatite Crônica Viral B Sem Agente Delta	65
-31	L40.0	Psoríase Vulgar	66
-32	L40.1	Psoríase Pustulosa Generalizada	66
-33	L40.4	Psoríase Gutata	66
-34	L40.8	Outras Formas de Psoríase	66
-235	E22.8	Outras Hiperfunções da Hipófise	67
-130	D69.3	Púrpura Trombocitopênica Idiopática	68
-61	E83.3	Distúrbios do Metabolismo do Fósforo	69
-183	K51.0	Enterocolite Ulcerativa (crônica)	70
-184	K51.1	Ileocolite Ulcerativa (crônica)	70
-185	K51.2	Proctite Ulcerativa (crônica)	70
-186	K51.3	Retossigmoidite Ulcerativa (crônica)	70
-187	K51.4	Pseudopolipose do Cólon	70
-188	K51.5	Proctocolite Mucosa	70
-189	K51.8	Outras Colites Ulcerativas	70
-81	I20.0	Angina Instável	71
-82	I20.1	Angina Pectoris Com Espasmo Documentado	71
-83	I21.0	Infarto Agudo Transmural da Parede Anterior do Miocárdio	71
-84	I21.1	Infarto Agudo Transmural da Parede Inferior do Miocárdio	71
-85	I21.2	Infarto Agudo Transmural do Miocárdio de Outras Localizações	71
-86	I21.3	Infarto Agudo Transmural do Miocárdio, de Localização Não Especificada	71
-87	I21.4	Infarto Agudo Subendocárdico do Miocárdio	71
-88	I21.9	Infarto Agudo do Miocárdio Não Especificado	71
-89	I22.0	Infarto do Miocárdio Recorrente da Parede Anterior	71
-90	I22.1	Infarto do Miocárdio Recorrente da Parede Inferior	71
-91	I22.8	Infarto do Miocárdio Recorrente de Outras Localizações	71
-92	I22.9	Infarto do Miocárdio Recorrente de Localização Não Especificada	71
-93	I23.0	Hemopericárdio Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-94	I23.1	Comunicação Interatrial Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-95	I23.2	Comunicação Interventricular Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-96	I23.3	Ruptura da Parede do Coração Sem Ocorrência de Hemopericárdio Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-97	I23.4	Ruptura de Cordoalhas Tendíneas Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-98	I23.5	Ruptura de Músculos Papilares Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-99	I23.6	Trombose de Átrio, Aurícula e Ventrículo Como Complicação Atual Subseqüente ao Infarto Agudo do Miocárdio	71
-100	I23.8	Outras Complicações Atuais Subseqüentes ao Infarto Agudo do Miocárdio	71
-101	I24.0	Trombose Coronária Que Não Resulta em Infarto do Miocárdio	71
-102	I24.8	Outras Formas de Doença Isquêmica Aguda do Coração	71
-103	I24.9	Doença Isquêmica Aguda do Coração Não Especificada	71
-220	N04.0	Síndrome Nefrótica - Anormalidade Glomerular Minor	73
-221	N04.1	Síndrome Nefrótica - Lesões Glomerulares Focais e Segmentares	73
-222	N04.2	Síndrome Nefrótica - Glomerulonefrite Membranosa Difusa	73
-223	N04.3	Síndrome Nefrótica - Glomerulonefrite Proliferativa Mesangial Difusa	73
-224	N04.4	Síndrome Nefrótica - Glomerulonefrite Proliferativa Endocapilar Difusa	73
-225	N04.5	Síndrome Nefrótica - Glomerulonefrite Mesangiocapilar Difusa	73
-226	N04.6	Síndrome Nefrótica - Doença de Depósito Denso	73
-227	N04.7	Síndrome Nefrótica - Glomerulonefrite Difusa em Crescente	73
-228	N04.8	Síndrome Nefrótica - Outras	73
-121	E83.1	Doença do Metabolismo do Ferro	77
-122	T45.4	Intoxicação Por Ferro e Seus Compostos	77
-137	Z94.4	Fígado Transplantado	78
-136	T86.4	Falência ou Rejeição de Transplante de Fígado	78
-35	H30.1	Inflamação Corrorretiniana Disseminada	81
-36	H30.2	Ciclite Posterior	81
-37	H30.8	Outras Inflamações Coriorretinianas	81
-38	H20.1	Iridociclite Crônica	81
-39	H15.0	Esclerite	81
 \.
 
 
@@ -1482,325 +1242,7 @@ COPY public.processos_doenca (id, cid, nome, protocolo_id) FROM stdin;
 -- Data for Name: processos_medicamento; Type: TABLE DATA; Schema: public; Owner: lucas
 --
 
-COPY public.processos_medicamento (id, nome, apres, dosagem) FROM stdin;
-1	abatacepte	pó para solução injetável	250 mg
-2	abatacepte	solução injetável	125 mg/mL
-3	acetato de ciproterona	comprimido	50 mg
-4	acetato de desmopressina	solução nasal (frasco com 2,5 mL)	0,1 mg/mL
-5	acetato de desmopressina	comprimido	0,1 mg
-6	acetato de desmopressina	comprimido	0,2 mg
-7	acetato de fludrocortisona	comprimido	0,1 mg
-8	acetato de glatirâmer	solução injetável	20 mg
-9	acetato de glatirâmer	solução injetável	40 mg
-10	acetato de gosserrelina	implante subcutâneo	3,6 mg
-11	acetato de gosserrelina	implante subcutâneo	10,8 mg
-12	acetato de lanreotida	solução injetável	60 mg
-13	acetato de lanreotida	solução injetável	90 mg
-14	acetato de lanreotida	solução injetável	120 mg
-15	acetato de leuprorrelina	pó para suspensão injetável	3,75 mg
-16	acetato de leuprorrelina	pó para suspensão injetável	11,25 mg
-17	acetato de ciproterona	comprimido	50 mg
-18	acetato de fludrocortisona	comprimido	0,1 mg
-19	acetato de octreotida	pó para suspensão injetável	10 mg
-20	acetato de octreotida	pó para suspensão injetável	20 mg
-21	acetato de octreotida	pó para suspensão injetável	30 mg
-22	acetazolamida	comprimido	250 mg
-23	ácido nicotínico	comprimido de liberação prolongada	250 mg
-24	ácido nicotínico	comprimido de liberação prolongada	500 mg
-25	ácido nicotínico	comprimido de liberação prolongada	750 mg
-26	ácido ursodesoxicólico	comprimido	50 mg
-27	ácido ursodesoxicólico	comprimido	150 mg
-28	ácido ursodesoxicólico	comprimido	300 mg
-29	acitretina	cápsula	10 mg
-30	acitretina	cápsula	25 mg
-31	adalimumabe	solução injetável	40 mg
-32	alfacalcidol	cápsula mole	0,25 mcg
-33	alfacalcidol	cápsula mole	1 mcg
-34	alfadornase	solução para inalação (ampola com 2,5 mL)	1 mg/mL
-35	alfaelosulfase	solução injetável	5 mg
-36	alfaepoetina	solução injetável	1.000 UI
-37	alfaepoetina	solução injetável	2.000 UI
-38	alfaepoetina	pó para solução injetável	3.000 UI
-39	alfaepoetina	solução injetável	3.000 UI
-40	alfaepoetina	pó para solução injetável	4.000 UI
-41	alfaepoetina	solução injetável	4.000 UI
-42	alfaepoetina	pó para solução injetável	10.000 UI
-43	alfaepoetina	solução injetável	10.000 UI
-44	alfainterferona 2b	pó para solução injetável	3.000.000 UI
-45	alfainterferona 2b	pó para solução injetável	5.000.000 UI
-46	alfainterferona 2b	pó para solução injetável	10.000.000 UI
-47	alfapeginterferona 2a	solução injetável	180 mcg
-48	alfapeginterferona 2b	pó para solução injetável	118,4 mcg (80 mcg/0,5 mL após reconstituição)
-49	alfapeginterferona 2b	pó para solução injetável	148 mcg (100 mcg/0,5 mL após reconstituição)
-50	alfapeginterferona 2b	pó para solução injetável	177,6 mcg (120 mcg/0,5 mL após reconstituição)
-51	alfataliglicerase	pó para solução injetável	200 U
-52	alfavelaglicerase	pó para solução injetável	200 U
-53	alfavelaglicerase	pó para solução injetável	400 U
-54	ambrisentana	comprimido	5 mg
-55	ambrisentana	comprimido	10 mg
-56	atorvastatina cálcica	comprimido	10 mg
-57	atorvastatina cálcica	comprimido	20 mg
-58	atorvastatina cálcica	comprimido	40 mg
-59	atorvastatina cálcica	comprimido	80 mg
-60	azatioprina	comprimido	50 mg
-61	betainterferona 1a	comprimido	22 mcg (6.000.000 UI)
-62	betainterferona 1a	solução injetável	30 mcg (6.000.000 UI)
-63	betainterferona 1a	solução injetável	44 mcg (12.000.000 UI)
-64	betainterferona 1b	pó para solução injetável	300 mcg (9.600.000 UI)
-65	bezafibrato	comprimido	200 mg
-66	bezafibrato	comprimido de liberação prolongada	400 mg
-67	bimatoprosta	solução oftálmica (frasco com 3 mL)	0,3 mg/mL (0,03%)
-68	biotina	cápsula	2,5 mg
-69	bosentana	comprimido	62,5 mg
-70	bosentana	comprimido	125 mg
-71	brinzolamida	suspensão oftálmica (frasco com 5 mL)	10 mg/mL
-72	brometo de piridostigmina	comprimido	60 mg
-73	bromidrato de fenoterol	solução aerossol (frasco com 200 doses)	100 mcg/dose
-74	bromidrato de galantamina	cápsula de liberação prolongada	8 mg
-75	bromidrato de galantamina	cápsula de liberação prolongada	16 mg
-76	bromidrato de galantamina	cápsula de liberação prolongada	24 mg
-77	budesonida	aerossol bucal	200 mcg
-78	budesonida	cápsula para inalação	200 mcg
-79	budesonida	pó para inalação	200 mcg
-80	budesonida	cápsula para inalação	400 mcg
-81	cabergolina	comprimido	0,5 mg
-82	calcipotriol	pomada (bisnaga com 30 g)	50 mcg/g (0,005%)
-83	calcitonina	solução injetável	50 UI
-84	calcitonina	solução injetável	100 UI
-85	calcitonina	solução spray nasal (frasco com 2 mL)	200 UI/dose
-86	calcitriol	solução injetável (ampola com 1 mL)	1 mcg/mL
-87	calcitriol	cápsula mole	0,25 mcg
-88	certolizumabe pegol	solução injetável	200 mg
-89	ciclofosfamida	comprimido	50 mg
-90	ciclosporina	cápsula mole	10 mg
-91	ciclosporina	cápsula mole	25 mg
-92	ciclosporina	cápsula mole	50 mg
-93	ciclosporina	cápsula mole	100 mg
-94	ciclosporina	solução injetável	50 mg
-95	ciclosporina	solução oral (frasco com 50 mL)	100 mg/mL
-96	ciprofibrato	comprimido	100 mg
-97	citrato de sildenafila	comprimido	20 mg
-98	citrato de sildenafila	comprimido	25 mg
-99	citrato de sildenafila	comprimido	50 mg
-100	clobazam	comprimido	10 mg
-101	clobazam	comprimido	20 mg
-102	clopidogrel	comprimido	75 mg
-103	cloridrato de amantadina	comprimido	100 mg
-104	cloridrato de cinacalcete	comprimido	30 mg
-105	cloridrato de cinacalcete	comprimido	60 mg
-106	cloridrato de donepezila	comprimido	5 mg
-107	cloridrato de donepezila	comprimido	10 mg
-108	cloridrato de dorzolamida	solução oftálmica (frasco com 5 mL)	20 mg/mL
-109	cloridrato de metadona	comprimido	5 mg
-110	cloridrato de metadona	comprimido	10 mg
-111	cloridrato de metadona	solução injetável (ampola com 1 mL)	10 mg/mL
-112	cloridrato de pilocarpina	solução oftálmica (frasco com 10 mL)	20 mg/mL (2%)
-113	cloridrato de raloxifeno	comprimido	60 mg
-114	cloridrato de selegilina	comprimido	5 mg
-115	cloridrato de selegilina	comprimido	10 mg
-116	cloridrato de sevelâmer	comprimido	800 mg
-117	cloridrato de triexifenidil	comprimido	5 mg
-118	cloridrato de ziprasidona	cápsula	40 mg
-119	cloridrato de ziprasidona	cápsula	80 mg
-120	clozapina	comprimido	25 mg
-121	clozapina	comprimido	100 mg
-122	complemento alimentar para paciente fenilcetonúrico maior de 1 ano (fórmula de aminoácidos isenta de fenilalanina)	N/A	N/A
-123	daclatasvir	comprimido	30 mg
-124	daclatasvir	comprimido	60 mg
-125	danazol	cápsula	100 mg
-126	danazol	cápsula	200 mg
-127	deferasirox	comprimido para suspensão	125 mg
-128	deferasirox	comprimido para suspensão	250 mg
-129	deferasirox	comprimido para suspensão	500 mg
-130	deferiprona	comprimido	500 mg
-131	dextrotartarato de brimonidina	solução oftálmica (frasco com 5 mL)	2 mg/mL
-132	dicloridrato de pramipexol	comprimido	0,125 mg
-133	dicloridrato de pramipexol	comprimido	0,25 mg
-134	dicloridrato de pramipexol	comprimido	1 mg
-135	difosfato de cloroquina	comprimido	150 mg
-136	dicloridrato de sapropterina	comprimido	100 mg
-137	eculizumabe	solução para diluição para infusão	10 mg/ml
-138	eltrombopague olamina	comprimido	25 mg
-139	eltrombopague olamina	comprimido	50 mg
-140	enoxaparina sódica	solução injetável	40 mg/0,4 ml
-141	entacapona	comprimido	200 mg
-142	entecavir	comprimido	0,5 mg
-143	entecavir	comprimido	1 mg
-144	etanercepte	solução injetável	25 mg
-145	etanercepte	solução injetável	50 mg
-146	etofibrato	cápsula	500 mg
-147	etossuximida	xarope (frasco com 120 mL)	50 mg/mL
-148	everolimo	comprimido	0,5 mg
-149	everolimo	comprimido	0,75 mg
-150	everolimo	comprimido	1 mg
-151	fenofibrato	cápsula	200 mg
-152	fenofibrato	cápsula de liberação retardada	250 mg
-153	filgrastim	solução injetável	300 mcg
-154	fingolimode	cápsula	0,5 mg
-155	fluvastatina	cápsula	20 mg
-156	fluvastatina	cápsula	40 mg
-157	fosfato de codeína	solução oral (frasco com 120 mL)	3 mg/mL
-158	fosfato de codeína	comprimido	30 mg
-159	fosfato de codeína	comprimido	60 mg
-160	fosfato de codeína	solução injetável (ampola com 2 mL)	30 mg/mL
-161	fumarato de dimetila	cápsula	120 mg
-162	fumarato de dimetila	cápsula	240 mg
-163	fumarato de formoterol	cápsula para inalação	12 mcg
-164	fumarato de formoterol	pó para inalação	12 mcg
-165	fumarato de formoterol + budesonida	cápsula para inalação	6 mcg + 200 mcg
-166	fumarato de formoterol + budesonida	pó para inalação	6 mcg + 200 mcg
-167	fumarato de formoterol + budesonida	cápsula para inalação	12 mcg + 400 mcg
-168	fumarato de formoterol + budesonida	pó para inalação	12 mcg + 400 mcg
-169	fumarato de tenofovir desoproxila	comprimido	300 mg
-170	gabapentina	cápsula	300 mg
-171	gabapentina	cápsula	400 mg
-172	galsulfase	solução injetável	5 mg
-173	genfibrozila	comprimido	600 mg
-174	genfibrozila	comprimido	900 mg
-175	golimumabe	solução injetável	50 mg
-176	hemifumarato de quetiapina	comprimido	25 mg
-177	hemifumarato de quetiapina	comprimido	100 mg
-178	hemifumarato de quetiapina	comprimido	200 mg
-179	hemifumarato de quetiapina	comprimido	300 mg
-180	hidróxido de alumínio	comprimido	230 mg
-181	hidróxido de alumínio	comprimido	300 mg
-182	hidróxido de alumínio	suspensão oral (frasco com 100 mL, 150 mL ou 240 mL)	61,5 mg/mL
-183	hidroxiureia	cápsula	500 mg
-184	idursulfase	solução injetável	2 mg/mL
-185	iloprosta	solução para nebulização	10 mcg/mL
-186	imiglucerase	pó para solução injetável	200 U
-187	imiglucerase	pó para solução injetável	400 U
-188	imunoglobulina humana	pó para solução injetável	0,5 g
-189	imunoglobulina humana	solução injetável	0,5 g
-190	imunoglobulina humana	pó para solução injetável	1 g
-191	imunoglobulina humana	solução injetável	1 g
-192	imunoglobulina humana	pó para solução injetável	2,5 g
-193	imunoglobulina humana	solução injetável	2,5 g
-194	imunoglobulina humana	pó para solução injetável	3 g
-195	imunoglobulina humana	solução injetável	3 g
-196	imunoglobulina humana	pó para solução injetável	5 g
-197	imunoglobulina humana	solução injetável	5 g
-198	imunoglobulina humana	pó para solução injetável	6 g
-199	imunoglobulina humana anti-hepatite B	solução injetável	100 UI
-200	imunoglobulina humana anti-hepatite B	solução injetável	500 UI
-201	imunoglobulina humana anti-hepatite B	solução injetável	600 UI
-202	infliximabe	pó para solução injetável	100 mg
-203	insulina análoga de ação prolongada	(frasco com 10 mL) solução injetável com sistema de aplicação	100 UI/ml
-204	insulina análoga de ação rápida	solução injetável com sistema de aplicação	100 UI/ml
-205	isotretinoína	cápsula mole	10 mg
-206	isotretinoína	cápsula mole	20 mg
-207	lamivudina	solução oral (frasco de 240 mL)	10 mg/mL
-208	lamivudina	comprimido	150 mg
-209	lamotrigina	comprimido	25 mg
-210	lamotrigina	comprimido	50 mg
-211	lamotrigina	comprimido	100 mg
-212	laronidase	solução injetável	0,58 mg/mL
-213	latanoprosta	solução oftálmica (frasco com 2,5 mL)	0,05 mg/mL
-214	leflunomida	comprimido	20 mg
-215	levetiracetam	comprimido	250 mg
-216	levetiracetam	comprimido	750 mg
-217	levetiracetam	solução oral	100 mg/ml
-218	lovastatina	comprimido	10 mg
-219	lovastatina	comprimido	20 mg
-220	lovastatina	comprimido	40 mg
-221	maleato de timolol	solução oftálmica (frasco com 5 mL)	5 mg/mL (0,5%)
-222	memantina	comprimido	10 mg
-223	mesalazina	comprimido	400 mg
-224	mesalazina	comprimido de liberação prolongada	500 mg
-225	mesalazina	comprimido	800 mg
-226	mesalazina	supositório retal	250 mg
-227	mesalazina	supositório retal	500 mg
-228	mesalazina	supositório retal	1.000 mg
-229	mesalazina	enema retal (frasco com 100 mL) 	10 mg/mL
-230	mesalazina	enema retal (frasco com 100 mL)	30 mg/mL
-231	mesilato de bromocriptina	comprimido	2,5 mg
-232	mesilato de desferroxamina	pó para solução injetável	500 mg
-233	mesilato de rasagilina	comprimido	1 mg
-234	metilprednisolona	pó para solução injetável	500 mg
-235	metotrexato	solução injetável (frasco com 2 mL)	25 mg/mL
-236	metotrexato	comprimido	2,5 mg
-237	micofenolato de mofetila	comprimido	500 mg
-238	micofenolato de sódio	comprimido	180 mg
-239	micofenolato de sódio	comprimido	360 mg
-240	miglustate	cápsula	100 mg
-241	naproxeno	comprimido	250 mg
-242	naproxeno	comprimido	500 mg
-243	natalizumabe	solução injetável	20 mg/mL
-244	nusinersena	solução injetável	2,4 mg/ml
-245	octreotida	solução injetável	0,1 mg/mL
-246	olanzapina	comprimido	5 mg
-247	olanzapina	comprimido	10 mg
-248	olanzapina	solução injetável	30 mg
-249	pamidronato dissódico	solução injetável	60 mg
-250	pancreatina	cápsula	10.000 UI
-251	pancreatina	cápsula	25.000 UI
-252	paricalcitol	solução injetável (ampola com 1 mL)	5 mcg/mL
-253	penicilamina	cápsula	250 mg
-254	pravastatina sódica	comprimido	10 mg
-255	pravastatina sódica	comprimido	20 mg
-256	pravastatina sódica	comprimido	40 mg
-257	primidona	comprimido	100 mg
-258	primidona	comprimido	250 mg
-259	propionato de clobetasol	creme (bisnaga com 30 g)	0,5 mg/g
-260	propionato de clobetasol	solução capilar (frasco com 50 g)	0,5 mg/g
-261	ribavirina	cápsula	250 mg
-262	riluzol	comprimido	50 mg
-263	risedronato sódico	comprimido	5 mg
-264	risedronato sódico	comprimido	35 mg
-265	risperidona	solução oral (frasco com 30 mL)	1 mg/mL
-266	risperidona	comprimido	1 mg
-267	risperidona	comprimido	2 mg
-268	risperidona	comprimido	3 mg
-269	rituximabe	solução injetável (frasco com 50 mL)	10 mg/mL
-270	rivastigmina	cápsula	1,5 mg
-271	rivastigmina	cápsula	3 mg
-272	rivastigmina	cápsula	4,5 mg
-273	rivastigmina	cápsula	6 mg
-274	rivastigmina	solução oral (frasco com 120 mL)	2 mg/mL
-275	rivastigmina	adesivo transdérmico	9 mg
-276	rivastigmina	adesivo transdérmico	18 mg
-277	sacarato de hidróxido férrico	solução injetável (frasco com 5 mL)	20 mg/mL
-278	secuquinumabe	pó para solução injetável	150 mg/mL
-279	sirolimo	comprimido	1 mg
-280	sirolimo	comprimido	2 mg
-281	sofosbuvir	comprimido	400 mg
-282	somatropina	pó para solução injetável (frasco-ampola)	4 UI
-283	somatropina	pó para solução injetável (frasco-ampola)	12 UI
-284	somatropina	pó para solução injetável (frasco-ampola)	15 UI
-285	somatropina	pó para solução injetável (frasco-ampola)	16 UI
-286	somatropina	pó para solução injetável (frasco-ampola)	18 UI
-287	somatropina	pó para solução injetável (frasco-ampola)	24 UI
-288	somatropina	pó para solução injetável (frasco-ampola)	30 UI
-289	sulfassalazina	comprimido	500 mg
-290	sulfato de hidroxicloroquina	comprimido	400 mg
-291	sulfato de morfina	solução injetável (ampola com 1 mL)	10 mg/mL
-292	sulfato de morfina	solução oral (frasco com 60 mL)	10 mg/mL
-293	sulfato de morfina	comprimido	10 mg
-294	sulfato de morfina	comprimido	30 mg
-295	sulfato de morfina	cápsula de liberação prolongada	30 mg
-296	sulfato de morfina	cápsula de liberação prolongada	60 mg
-297	sulfato de morfina	cápsula de liberação prolongada	100 mg
-298	tacrolimo	cápsula	1 mg
-299	tacrolimo	cápsula	5 mg
-300	teriflunomida	comprimido	14 mg
-301	tafamidis	cápsula	20 mg
-302	tobramicina	solução inalatória	300 mg
-303	tocilizumabe	solução injetável (frasco com 4 mL)	20 mg/mL
-304	tofacitinibe	comprimido	5 mg
-305	tolcapona	comprimido	100 mg
-306	topiramato	comprimido	25 mg
-307	topiramato	comprimido	50 mg
-308	topiramato	comprimido	100 mg
-309	toxina botulínica A	pó para solução injetável	100 U
-310	toxina botulínica A	pó para solução injetável	500 U
-311	travoprosta	solução oftálmica (frasco com 2,5 mL)	0,04 mg/mL
-312	trientina	cápsula	250 mg
-313	triptorrelina	pó para suspensão injetável	3,75 mg
-314	triptorrelina	pó para suspensão injetável	11,25 mg
-315	ustequinumabe	solução injetável	45 mg
-316	vigabatrina	comprimido	500 mg
-317	xinafoato de salmeterol	aerossol bucal	50 mcg
-318	xinafoato de salmeterol	pó para inalação	50 mcg
+COPY public.processos_medicamento (id, nome, dosagem, apres) FROM stdin;
 \.
 
 
@@ -1808,7 +1250,7 @@ COPY public.processos_medicamento (id, nome, apres, dosagem) FROM stdin;
 -- Data for Name: processos_processo; Type: TABLE DATA; Schema: public; Owner: lucas
 --
 
-COPY public.processos_processo (id, anamnese, prescricao, tratou, tratamentos_previos, data1, preenchido_por, clinica_id, doenca_id, emissor_id, medico_id, paciente_id, usuario_id) FROM stdin;
+COPY public.processos_processo (id, anamnese, prescricao, tratou, tratamentos_previos, data1, preenchido_por, dados_condicionais, clinica_id, doenca_id, emissor_id, medico_id, paciente_id, usuario_id) FROM stdin;
 \.
 
 
@@ -1824,88 +1266,7 @@ COPY public.processos_processo_medicamentos (id, processo_id, medicamento_id) FR
 -- Data for Name: processos_protocolo; Type: TABLE DATA; Schema: public; Owner: lucas
 --
 
-COPY public.processos_protocolo (id, nome, dados_condicionais, arquivo) FROM stdin;
-1	Acne Grave	\N	1_acnegrave_v8_2.pdf
-2	Acromegalia	\N	2_acromegalia_v5.pdf
-3	Anemia Aplástica, Mielodisplasia e Neutropenias Constitucionais	\N	4_anaplasticamielodneutconst_v6.pdf
-4	Anemia Aplástica Adquirida	\N	3_anemia_aplastica_adquirida_v3.pdf
-5	Anemia Hemolítica Auto-Imune	\N	7_anemiahemoliticaautoimune_v6.pdf
-6	Anemia em pacientes com Insuficiência Renal Crônica - Alfapoetina	\N	5_anemiapacientesinsrencr-alfaepoetina_v4.pdf
-7	Anemia em pacientes com Insuficiência Renal Crônica - reposição de ferro	\N	6_anemiapacientesinsrencr_-_repferro_v5.pdf
-8	Angioedema	\N	8_angioedema_v8.pdf
-9	Aplasia pura adquirida da série vermelha	\N	9_aplasiapura_v5.pdf
-10	Artrite Psoríaca	\N	10_artritepsoriacav15.pdf
-11	Artrite Reativa - Doença de Reiter	\N	11_artritereativa_v5.pdf
-12	Artrite Reumatóide	\N	12_artritereumatoide_v21.pdf
-13	Asma	\N	13_asmav8.pdf
-14	Comportamento Agressivo no Transtorno do Espectro do Autismo	\N	76_comport_agressivo_transt_espectro_autismo_v3.pdf
-15	Deficiência de hormônio do crescimento - hipopituitarismo	\N	14_defhormcresc__hipopituitarismo_v9.pdf
-16	Deficiência de Biotinidase	\N	274_deficienciabiotinidase_v1.pdf
-17	Dermatomiosite e Polimiosite	\N	15_dermatomiositepolimiosite_v3.pdf
-18	Diabetes Insípido	\N	16_diabetesinsipido_v4.pdf
-19	Diabetes Mellitus Tipo I	\N	200_diabetesmellitus_tipoi__v2.pdf
-20	Dislipidemia	\N	17_dislipidemiav12.pdf
-21	Distonia e Espasmo Hemifacial	\N	18_distoniasespasmohemifacial_v3.pdf
-22	Distúrbio mineral ósseo na doença renal	\N	79_disturbio_mineral_osseo_doenca_renal_v2.pdf
-23	Doença de Alzheimer	\N	19_doencadealzheimerv10.pdf
-24	Doença de Chron	\N	20_doencadecrohnv9.pdf
-25	Doença de Gaucher	\N	21_doencadegaucherv11.pdf
-26	Doença Falciforme	\N	25_doencafalciformev8.pdf
-27	Doença de Paget	\N	22_doencapaget_v3.pdf
-28	Doença de Parkinson	\N	23_doencaparkinson_v7.pdf
-29	Doença de Wilson	\N	24_doencawilson_v3.pdf
-30	Dor crônica	\N	26_dorcronica_v5.pdf
-31	DPOC	\N	27_dpoc_v3.pdf
-32	Endometriose	\N	28_endometriose_v5.pdf
-33	Epilepsia	\N	29_epilepsia_v5.pdf
-34	Esclerose Lateral Amiotrófica	\N	30_escleroselateralamiotrofica_v6.pdf
-35	Esclerose Múltipla	\N	31_esclerosemultipla_v17.pdf
-36	Esclerose Sistêmica	\N	32_esclerosesistemica_v4.pdf
-37	Espasticidade	\N	33_espasticidade_v2.pdf
-38	Espondilite Ancilosante	\N	34_espondiliteancilosante_v16.pdf
-39	Esquizofrenia	\N	35_esquizofreniav7.pdf
-40	Fenilcetonúria	\N	36_fenilcetonuria_v4.pdf
-41	Fibrose Cística - Insuficiência Pancreática	\N	37_fibrose_cistica-insuficienciapancreatica_v4.pdf
-42	Fibrose Cística - Manifestações Pulmonares	\N	38_fibrose_cistica-manifestacoespulmonares_v2.pdf
-43	Hemangioma Infantil	\N	40_hemangiomainfantil_v3_2.pdf
-44	Hepatite Viral B e Coinfecções	\N	42_hepatite_viral_b_coinfeccoes_v7_2.pdf
-45	Hepatite Viral C e Coinfecções	\N	43_hepatite_viral_c_coinfeccoes_v21.pdf
-46	Hepatite Autoimune	\N	41_hepatiteautoimune_v4.pdf
-47	Hiperplasia Adrenal Congênita	\N	45_hiperpadrecong_v3_3.pdf
-48	Hiperprolactinemia	\N	46_hiperprolactinemia_v5.pdf
-49	Hipertensão Arterial Pulmonar	\N	47_hipertensaoarterialpulmonar_v3.pdf
-50	Hipoparatiroidismo	\N	48_hipoparatireoidismo_v3.pdf
-51	Ictioses Hereditárias	\N	49_ictioseshereditarias_v6.pdf
-52	Imunodeficiência primária com predominância de defeitos de anticorpos	\N	50_imunodprimpreddefant_v1_2.pdf
-53	Imunosupressão no transplante hepático em pediatria	\N	51_imuntransphepped_v6_2.pdf
-54	Imunossupressão no transplante renal	\N	52_imuntransprrenal_v3.pdf
-55	Insuficiência Adrenal Primária - Doença de Addison	\N	53_insadrenprimaria_v3.pdf
-56	Insuficiência Pancreática Exócrina	\N	54_inspacexoc_v4.pdf
-57	Leiomioma de Útero	\N	55_leiomiomautero_v4.pdf
-58	Lúpus Eritematoso Sistêmico	\N	56_lupuseritsist_v4.pdf
-59	Miastenia Gravis	\N	57_miasteniagravis_v5_2.pdf
-60	Mucopolissacaridose tipo I	\N	80_mucopolissacaridose_tipoi_v1.pdf
-61	Mucopolissacaridose tipo II	\N	272_mucopolissacaridose_tipoii_v2.pdf
-62	Colangite Biliar Primária	\N	277-colangitebiliarprimaria-v1.pdf
-63	Osteoporose	\N	59_osteoporose_v4.pdf
-64	Polineuropatia Amiloidótica Familiar	\N	273_polineuropatiaamfam_v3.pdf
-65	Profilaxia da Reinfeção do Vírus da Hepatite B Pós-transplante hepático	\N	60_profilaxiavirushepbptransphep_v1_2.pdf
-66	Psoríase	\N	61_psoriase_v9.pdf
-67	Puberdade Precoce	\N	62_puberdade_precoce_central_v7.pdf
-68	Púrpura Trombocitopênica Idiopática	\N	63_purpuratrombidiop_v6.pdf
-69	Raquitismo e Osteomalácia	\N	64_raquitismoosteomalacia_v4_2.pdf
-70	Retocolite Ulcerativa	\N	65_retocoliteulcerativa_v2.pdf
-71	Síndrome Coronariana Aguda	\N	66_sindcoronaguda_v1_2.pdf
-72	Síndrome Nefrótica Primária em Adultos	\N	70_sindnefprimaadultos_v2.pdf
-73	Síndrome Nefrótica Primária em crianças e adolescentes	\N	71_sindnefprimacrianadol_v3.pdf
-74	Síndrome de ovários policísticos e hirsutismo/acne	\N	68_sindovpolichirs_v3.pdf
-75	Síndrome de Guillain-Barré	\N	67_sindromeguillain-barre_v4_2.pdf
-76	Síndrome de Turner	\N	69_sindrometurner_v5.pdf
-77	Sobrecarga de Ferro	\N	72_sobrecarga_ferro_v3_2.pdf
-78	Imunossupressão no Transplante Hepático em Adultos	\N	78_transplante_hep_adultos_2.pdf
-79	Transtorno Afetivo Bipolar	\N	75_transtornoafetivobipolar_v2.pdf
-80	Transtorno Esquizoafetivo	\N	73_transtornoesquizoafetivov6.pdf
-81	Uveítes não-infecciosas	\N	74_uveitesnaoinfecciosas_v6.pdf
+COPY public.processos_protocolo (id, nome, arquivo, dados_condicionais) FROM stdin;
 \.
 
 
@@ -1914,558 +1275,6 @@ COPY public.processos_protocolo (id, nome, dados_condicionais, arquivo) FROM std
 --
 
 COPY public.processos_protocolo_medicamentos (id, protocolo_id, medicamento_id) FROM stdin;
-1	12	1
-2	12	2
-13	20	23
-14	20	24
-15	20	25
-37	51	29
-38	51	30
-47	66	29
-48	66	30
-55	12	31
-68	10	31
-71	24	31
-74	38	31
-76	66	31
-80	81	31
-85	42	34
-87	22	36
-88	22	37
-89	22	38
-90	22	39
-91	22	40
-92	22	41
-93	22	42
-94	22	43
-95	7	36
-96	7	37
-97	7	38
-98	7	39
-99	7	40
-100	7	41
-101	7	42
-102	7	43
-103	3	36
-104	3	37
-105	3	38
-106	3	39
-107	3	40
-108	3	41
-109	3	42
-110	3	43
-111	45	36
-112	45	37
-113	45	38
-114	45	39
-115	45	40
-116	45	41
-117	45	42
-118	45	43
-127	43	44
-128	43	45
-129	43	46
-130	65	47
-131	65	48
-132	65	49
-133	65	50
-138	45	47
-139	45	48
-140	45	49
-141	45	50
-146	28	103
-147	49	54
-148	49	55
-153	20	56
-154	20	57
-155	20	58
-156	20	59
-185	4	60
-186	12	60
-187	24	60
-190	35	60
-191	58	60
-195	59	60
-196	68	60
-197	70	60
-204	54	60
-206	78	60
-210	3	60
-211	81	60
-216	35	61
-217	35	62
-218	35	63
-219	35	64
-220	20	65
-221	20	66
-236	49	69
-237	49	70
-242	28	231
-243	13	77
-244	13	78
-245	13	79
-246	13	80
-247	13	165
-248	13	166
-249	13	167
-250	13	168
-267	31	77
-268	31	78
-269	31	79
-270	31	80
-271	31	165
-272	31	166
-273	31	167
-274	31	168
-291	2	81
-292	66	82
-296	27	83
-297	27	84
-298	27	85
-302	63	83
-303	63	84
-304	63	85
-356	69	86
-357	69	87
-358	22	86
-359	22	87
-362	50	86
-363	50	87
-370	63	86
-371	63	87
-406	7	86
-407	7	87
-410	12	88
-415	24	88
-418	38	88
-420	5	89
-422	58	89
-426	68	89
-427	73	89
-445	5	90
-446	5	91
-447	5	92
-448	5	93
-449	5	94
-450	5	95
-457	4	90
-458	4	91
-459	4	92
-460	4	93
-461	4	94
-462	4	95
-487	10	90
-488	10	91
-489	10	92
-490	10	93
-491	10	94
-492	10	95
-505	12	90
-506	12	91
-507	12	92
-508	12	93
-509	12	94
-510	12	95
-511	58	90
-512	58	91
-513	58	92
-514	58	93
-515	58	94
-516	58	95
-535	59	90
-536	59	91
-537	59	92
-538	59	93
-539	59	94
-540	59	95
-541	66	90
-542	66	91
-543	66	92
-544	66	93
-545	66	94
-546	66	95
-565	70	90
-566	70	91
-567	70	92
-568	70	93
-569	70	94
-570	70	95
-607	73	90
-608	73	91
-609	73	92
-610	73	93
-611	73	94
-612	73	95
-715	78	90
-716	78	91
-717	78	92
-718	78	93
-719	78	94
-720	78	95
-739	3	90
-740	3	91
-741	3	92
-742	3	93
-743	3	94
-744	3	95
-745	54	90
-746	54	91
-747	54	92
-748	54	93
-749	54	94
-750	54	95
-757	81	90
-758	81	91
-759	81	92
-760	81	93
-761	81	94
-762	81	95
-787	69	104
-788	69	105
-789	22	104
-790	22	105
-793	20	96
-801	47	3
-802	47	17
-803	67	3
-804	67	17
-805	33	100
-806	33	101
-823	66	259
-824	66	260
-831	71	102
-854	12	135
-855	12	290
-866	58	135
-867	58	290
-874	28	120
-875	28	121
-876	39	120
-877	39	121
-892	30	157
-893	30	158
-894	30	159
-895	30	160
-900	40	122
-902	8	125
-903	8	126
-904	32	125
-905	32	126
-918	58	125
-919	58	126
-926	68	125
-927	68	126
-928	77	127
-929	77	128
-930	77	129
-934	77	130
-936	69	232
-937	22	232
-939	77	232
-941	18	4
-942	18	5
-943	18	6
-944	23	106
-945	23	107
-956	68	138
-957	68	139
-958	28	141
-959	65	142
-960	65	143
-963	10	144
-964	10	145
-969	12	144
-970	12	145
-981	38	144
-982	38	145
-985	66	144
-986	66	145
-993	33	147
-1002	54	148
-1003	54	149
-1004	54	150
-1008	78	148
-1009	78	149
-1010	78	150
-1020	20	151
-1021	20	152
-1036	13	73
-1039	31	73
-1042	3	153
-1045	4	153
-1051	45	153
-1053	35	154
-1054	47	7
-1055	47	18
-1056	13	163
-1057	13	164
-1074	31	163
-1075	31	164
-1116	35	161
-1117	35	162
-1118	33	170
-1119	33	171
-1136	30	170
-1137	30	171
-1140	23	74
-1141	23	75
-1142	23	76
-1158	20	173
-1159	20	174
-1174	10	175
-1177	12	175
-1182	38	175
-1184	32	10
-1185	32	11
-1198	57	10
-1199	57	11
-1204	67	10
-1205	67	11
-1216	49	185
-1219	25	186
-1220	25	187
-1221	5	188
-1222	5	189
-1223	5	190
-1224	5	191
-1225	5	192
-1226	5	193
-1227	5	194
-1228	5	195
-1229	5	196
-1230	5	197
-1231	5	198
-1232	5	199
-1233	5	200
-1234	5	201
-1249	59	188
-1250	59	189
-1251	59	190
-1252	59	191
-1253	59	192
-1254	59	193
-1255	59	194
-1256	59	195
-1257	59	196
-1258	59	197
-1259	59	198
-1260	59	199
-1261	59	200
-1262	59	201
-1263	68	188
-1264	68	189
-1265	68	190
-1266	68	191
-1267	68	192
-1268	68	193
-1269	68	194
-1270	68	195
-1271	68	196
-1272	68	197
-1273	68	198
-1274	68	199
-1275	68	200
-1276	68	201
-1277	54	188
-1278	54	189
-1279	54	190
-1280	54	191
-1281	54	192
-1282	54	193
-1283	54	194
-1284	54	195
-1285	54	196
-1286	54	197
-1287	54	198
-1288	54	199
-1289	54	200
-1290	54	201
-1305	12	202
-1311	10	202
-1314	24	202
-1317	38	202
-1319	19	204
-1329	1	205
-1330	1	206
-1335	65	207
-1336	65	208
-1347	33	209
-1348	33	210
-1349	33	211
-1374	2	12
-1375	2	13
-1376	2	14
-1377	60	212
-1378	10	214
-1381	12	214
-1387	57	15
-1388	57	16
-1393	67	15
-1394	67	16
-1395	32	15
-1396	32	16
-1409	33	215
-1410	33	216
-1411	33	217
-1436	23	222
-1442	24	223
-1443	24	224
-1444	24	225
-1445	24	226
-1446	24	227
-1447	24	228
-1448	24	229
-1449	24	230
-1466	70	223
-1467	70	224
-1468	70	225
-1469	70	226
-1470	70	227
-1471	70	228
-1472	70	229
-1473	70	230
-1522	30	109
-1523	30	110
-1524	30	111
-1528	24	234
-1531	78	234
-1534	54	234
-1536	3	234
-1537	81	234
-1542	10	235
-1543	10	236
-1548	12	235
-1549	12	236
-1560	24	235
-1561	24	236
-1566	38	235
-1567	38	236
-1570	58	235
-1571	58	236
-1578	66	235
-1579	66	236
-1586	78	237
-1590	54	237
-1592	78	238
-1593	78	239
-1600	54	238
-1601	54	239
-1604	25	240
-1605	30	291
-1606	30	292
-1607	30	293
-1608	30	294
-1609	30	295
-1610	30	296
-1611	30	297
-1619	10	241
-1620	10	242
-1625	12	241
-1626	12	242
-1637	38	241
-1638	38	242
-1641	35	243
-1642	2	19
-1643	2	20
-1644	2	21
-1645	2	245
-1646	39	246
-1647	39	247
-1648	39	248
-1670	63	249
-1688	41	250
-1689	41	251
-1690	42	250
-1691	42	251
-1692	69	252
-1693	22	252
-1695	29	253
-1696	59	72
-1697	28	132
-1698	28	133
-1699	28	134
-1700	20	254
-1701	20	255
-1702	20	256
-1724	33	257
-1725	33	258
-1742	39	176
-1743	39	177
-1744	39	178
-1745	39	179
-1774	63	113
-1792	28	233
-1793	45	261
-1795	34	262
-1796	63	263
-1797	63	264
-1832	14	265
-1833	14	266
-1834	14	267
-1835	14	268
-1852	39	265
-1853	39	266
-1854	39	267
-1855	39	268
-1884	12	269
-1889	23	270
-1890	23	271
-1891	23	272
-1892	23	273
-1893	23	274
-1894	23	275
-1895	23	276
-1931	22	277
-1932	7	277
-1933	10	278
-1936	38	278
-1938	66	278
-1942	28	114
-1943	28	115
-1944	49	97
-1945	49	98
-1946	49	99
-1953	54	279
-1954	54	280
-1957	78	279
-1958	78	280
-1961	45	281
-1963	15	282
-1964	15	283
-1965	15	284
-1966	15	285
-1967	15	286
-1968	15	287
-1969	15	288
-1970	10	289
-1973	70	289
-1980	12	289
-1986	24	289
-1989	38	289
-1991	64	301
-1992	73	298
-1993	73	299
-2010	78	298
-2011	78	299
-2018	54	298
-2019	54	299
-2022	65	169
-2024	35	300
-2025	12	303
-2031	12	304
-2036	33	306
-2037	33	307
-2038	33	308
-2063	28	117
-2064	57	313
-2065	57	314
-2070	67	313
-2071	67	314
-2072	32	313
-2073	32	314
-2086	33	316
-2095	39	118
-2096	39	119
 \.
 
 
@@ -2553,7 +1362,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 16, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 34, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 29, true);
 
 
 --
@@ -2588,14 +1397,14 @@ SELECT pg_catalog.setval('public.pacientes_paciente_usuarios_id_seq', 1, false);
 -- Name: processos_doenca_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_doenca_id_seq', 235, true);
+SELECT pg_catalog.setval('public.processos_doenca_id_seq', 1, false);
 
 
 --
 -- Name: processos_medicamento_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_medicamento_id_seq', 318, true);
+SELECT pg_catalog.setval('public.processos_medicamento_id_seq', 1, false);
 
 
 --
@@ -2616,14 +1425,14 @@ SELECT pg_catalog.setval('public.processos_processo_medicamentos_id_seq', 1, fal
 -- Name: processos_protocolo_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_protocolo_id_seq', 81, true);
+SELECT pg_catalog.setval('public.processos_protocolo_id_seq', 1, false);
 
 
 --
 -- Name: processos_protocolo_medicamentos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_protocolo_medicamentos_id_seq', 2108, true);
+SELECT pg_catalog.setval('public.processos_protocolo_medicamentos_id_seq', 1, false);
 
 
 --
@@ -3300,11 +2109,11 @@ ALTER TABLE ONLY public.pacientes_paciente_usuarios
 
 
 --
--- Name: processos_doenca processos_doenca_protocolo_id_93a29296_fk_processos; Type: FK CONSTRAINT; Schema: public; Owner: lucas
+-- Name: processos_doenca processos_doenca_protocolo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: lucas
 --
 
 ALTER TABLE ONLY public.processos_doenca
-    ADD CONSTRAINT processos_doenca_protocolo_id_93a29296_fk_processos FOREIGN KEY (protocolo_id) REFERENCES public.processos_protocolo(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT processos_doenca_protocolo_id_fkey FOREIGN KEY (protocolo_id) REFERENCES public.processos_protocolo(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 --
