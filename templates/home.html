@@ -10,7 +10,7 @@
             <div class="card bg-light mb-3" style="max-width: 45%;">
                 <div class="card-header">Adicionar processo</div>
                 <div class="card-body">
-                    <form method="POST" autocomplete="off">
+                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes'%}">
                         {% csrf_token %}
                         <div class="form-row">
                             <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>

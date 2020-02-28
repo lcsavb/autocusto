@@ -1,13 +1,14 @@
 (() => {
 const campoBusca = $('#id_cid');
 let listaResultados = $('#resultados');
+const form = $('#js-form');
 
 campoBusca.keyup(function (event) {
     event.preventDefault();
 
     let palavraChave = $(this).val();
 
-    let url = `http://127.0.0.1:8000/processos/ajax/doencas?b=${palavraChave}`;
+    let url = form.attr('data-busca-doencas');
 
 $.ajax({
     url: url,

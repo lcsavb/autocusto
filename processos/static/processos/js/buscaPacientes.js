@@ -2,10 +2,11 @@
 
 const campoBusca = $('#id_cpf_paciente');
 const listaPacientes = $('#pacientes');
+const form = $('#js-form')
 
 campoBusca.keyup(function(event) {
     let palavraChave = $(this).val();
-    let url = `http://127.0.0.1:8000/pacientes/ajax/busca`;
+    let url = form.attr('data-busca-pacientes');
 
     $.ajax({
         url: url,
