@@ -216,6 +216,11 @@ class NovoProcesso(forms.Form):
         input_formats=['%d/%m/%Y', ]
     )
 
+    relatorio = forms.CharField(
+        label='Relatório',
+        required=False, widget=forms.Textarea(attrs={'class':'relatorio'})
+    )
+
     @transaction.atomic
     def save(self, usuario, medico, meds_ids):
         dados = self.cleaned_data

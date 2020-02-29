@@ -35,7 +35,7 @@ def seletor_campos(protocolo):
                             ],
                     widget=forms.Select(attrs={'class':'custom-select'}))
                     }
-        elif protocolo.nome == 'dor':
+        elif protocolo.nome == 'dor_cronica':
             campos = {'opt_eva': forms.ChoiceField(label='EVA', initial=10,
                                 choices=gerador_escolhas_numericas(4,10),
                                 widget=forms.Select(attrs={'class':'custom-select'})),

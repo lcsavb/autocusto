@@ -134,14 +134,16 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'autocusto/static'),
-    os.path.join(BASE_DIR, 'processos/static')
+    os.path.join(BASE_DIR, 'processos/static'),
+    os.path.join(BASE_DIR, 'static')
 ]
 
-if SERVER == 'dev':
-    STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
-else:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# if SERVER == 'dev':
+#     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
+# else:
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+# print(STATICFILES_DIRS, 'AQUI')
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -153,4 +155,5 @@ LOGIN_URL = 'login'
 # PDFs
 
 PATH_LME_BASE = os.path.join(BASE_DIR, 'processos/static/processos', 'lme_base_modelo.pdf')
+PATH_RELATORIO = os.path.join(BASE_DIR, 'processos/static/processos', 'relatorio_modelo.pdf')
 PATH_PDF_DIR = os.path.join(BASE_DIR, 'processos/static/protocolos')

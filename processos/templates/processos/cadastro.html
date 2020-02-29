@@ -48,8 +48,7 @@
 
     <div class="form-row">
         <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
-        <div class="col-8"> {{ formulario.clinicas|as_crispy_field }} </div>
-        <div class="col-2"> {{ formulario.consentimento|as_crispy_field }}</div>
+        <div class="col-10"> {{ formulario.clinicas|as_crispy_field }} </div>
     </div>
 
     <div class="form-row">
@@ -84,6 +83,8 @@
     {% include 'processos/campos_condicionais.html' %}
     {% endif %}
 
+    {% include 'processos/campos1vez.html' %}
+
     <div class="form-row">
             <button class="btn btn-outline-info" type="submit">Cadastrar</button>
         </div>
@@ -101,4 +102,5 @@
 <script src="{% static 'processos/js/processo.js' %}"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
 <script src="{% static 'processos/js/med.js' %}"></script>
+<script src="{% static 'processos/js/verificar1Vez.js' %}"></script>
 {% endblock %}
