@@ -11,8 +11,6 @@ def busca_doencas(request):
     for r in b:
         nova_doenca = {'cid': r.cid, 'nome': r.nome}
         doencas.append(nova_doenca)
-    print(doencas)
-
 
     return JsonResponse(doencas, safe=False)
 

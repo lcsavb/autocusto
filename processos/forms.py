@@ -174,7 +174,7 @@ class NovoProcesso(forms.Form):
                                                label='Repetir posologia?',
                                                widget=forms.Select(attrs={'class':'custom-select'}))
 
-    consentimento=forms.ChoiceField(initial={False}, label='Protocolo primeira vez',
+    consentimento=forms.ChoiceField(initial={False}, label='Protocolo 1ª vez: ',
                                        choices=[(False, 'Não'),
                                                 (True, 'Sim')],
                                                 widget=forms.Select(attrs={'class':'custom-select'}))
@@ -218,7 +218,17 @@ class NovoProcesso(forms.Form):
 
     relatorio = forms.CharField(
         label='Relatório',
-        required=False, widget=forms.Textarea(attrs={'class':'relatorio'})
+        required=False, widget=forms.Textarea(attrs={'class':'relatorio', 'rows': '6', 'width': '100%'})
+    )
+
+    emitir_exames = forms.ChoiceField(initial={False}, label='Emissão de exames: ',
+                                       choices=[(False, 'Não'),
+                                                (True, 'Sim')],
+                                                widget=forms.Select(attrs={'class':'custom-select'}))
+
+    exames = forms.CharField(
+        label='Exames',
+        required=False, widget=forms.Textarea(attrs={'class':'exames', 'rows': '6'})
     )
 
     @transaction.atomic

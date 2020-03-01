@@ -137,6 +137,7 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
     end_clinica = clinica.logradouro + ', ' + clinica.logradouro_num
     dados_adicionais = {'nome_medico': medico.nome_medico,
                         'cns_medico': medico.cns_medico,
+                        'crm_medico': medico.crm_medico,
                         'nome_clinica': clinica.nome_clinica,
                         'cns_clinica': clinica.cns_clinica,
                         'end_clinica': end_clinica,

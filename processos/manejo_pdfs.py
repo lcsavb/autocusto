@@ -100,6 +100,7 @@ class GeradorPDF():
         nome_final_pdf = f'pdf_final_{cpf_paciente}_{cid}.pdf'
         primeira_vez = dados_lme_base['consentimento']
         relatorio = dados_lme_base['relatorio']
+        exames = dados_lme_base['exames']
 
         data1 = dados_lme_base['data_1']
         datas = formatacao_data(data1)
@@ -130,6 +131,10 @@ class GeradorPDF():
         if relatorio:
             arquivos_base.append(settings.PATH_RELATORIO)
 
+        if exames:
+            arquivos_base.append(settings.PATH_EXAMES)
+
+
         ## Remove o cpf do campo 18 se preenchimento não foi pelo médico
         ajustar_campo_18(dados_lme_base)
 
@@ -138,6 +143,8 @@ class GeradorPDF():
         pdfs_intermediarios_preenchidos = preencher_formularios(arquivos_base,dados_lme_base)
         pdf = gerar_pdf_final(pdfs_intermediarios_preenchidos,output_pdf_final)
         remover_pdfs_intermediarios(pdfs_intermediarios_preenchidos)
+
+        print(dados_lme_base)
 
         return pdf, path_pdf_final
 
