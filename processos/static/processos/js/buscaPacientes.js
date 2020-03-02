@@ -3,6 +3,7 @@
 const campoBusca = $('#id_cpf_paciente');
 const listaPacientes = $('#pacientes');
 const form = $('#js-form')
+const nenhumResultado = '<li class="list-group-item link-class">Nenhum resultado encontrado. Prossiga com o cadastro.</span></li>'
 
 campoBusca.keyup(function(event) {
     let palavraChave = $(this).val();
@@ -15,7 +16,7 @@ campoBusca.keyup(function(event) {
         success: function(data) {
             listaPacientes.empty();
             if (data.length == 0) {
-                listaPacientes.append('<li class="list-group-item link-class">Nenhum resultado encontrado</span></li>');
+                listaPacientes.append(nenhumResultado);
             } else {
                 $.each(data, function(key, value) {
                     if (palavraChave.length > 2) {
@@ -31,10 +32,20 @@ campoBusca.keyup(function(event) {
     });
 
     $('#pacientes').on('click', 'li', function() {
-        var click_text = $(this).text().split('|');
-        $('#id_cpf_paciente').val($.trim(click_text[0]));
-        $("#pacientes").html('');
+
+        if ($(this).text() == "Nenhum resultado encontrado. Prossiga com o cadastro.") {
+            $("#pacientes").html('');
+        }
+        else {
+            var item_clicado = $(this).text().split('|');
+            $('#id_cpf_paciente').val($.trim(item_clicado[0]));
+            $("#pacientes").html('');
+        }
         
+
     });
 
 })();
+
+
+

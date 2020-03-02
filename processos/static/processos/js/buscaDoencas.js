@@ -5,10 +5,9 @@ const form = $('#js-form');
 
 campoBusca.keyup(function (event) {
     event.preventDefault();
-
     let palavraChave = $(this).val();
-
     let url = form.attr('data-busca-doencas');
+    $('#pacientes').empty();
 
 $.ajax({
     url: url,

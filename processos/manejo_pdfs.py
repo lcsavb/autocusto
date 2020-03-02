@@ -15,8 +15,9 @@ def preencher_formularios(lista_pdfs,dados_finais):
     '''Preenche os pdfs individualmente e gera os arquivos
     intermediários com nomes aleatórios '''
     arquivos = []
+    print(dados_finais)
     for arquivo in lista_pdfs:
-        aleatorio = random.randint(0,10000000000)
+        aleatorio = str(random.randint(0,10000000000)) + dados_finais['cns_medico']
         output_pdf = os.path.join(settings.BASE_DIR, 'static/tmp', '{}.pdf'.format(aleatorio))
         arquivos.append(pypdftk.fill_form(arquivo,dados_finais,output_pdf))
     return arquivos

@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import JSONField
 from medicos.models import Medico
 from pacientes.models import Paciente
 from clinicas.models import Clinica, Emissor
@@ -12,7 +12,7 @@ class Medicamento(models.Model):
     apres = models.CharField(max_length=600, blank=True)
 
     def __str__(self):
-        return f'{self.nome}'
+        return f'{self.nome} {self.dosagem} - {self.apres}'
 
 class Protocolo(models.Model):
     nome = models.CharField(max_length=600)
