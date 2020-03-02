@@ -1,3 +1,4 @@
+import os
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django import forms
@@ -282,6 +283,13 @@ def checar_paciente_existe(cpf_paciente):
     except:
         paciente_existe = False
     return paciente_existe
+
+
+def gerar_link_protocolo(cid):
+    protocolo = Protocolo.objects.get(doenca__cid=cid)
+    arquivo = protocolo.arquivo
+    link = os.path.join(settings.STATIC_URL, 'protocolos', arquivo)
+    return link
 
 
 # ############################### Path pdf_final

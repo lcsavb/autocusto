@@ -22,7 +22,8 @@ from .dados import (cria_dict_renovação,
                     transfere_dados_gerador,
                     listar_med, gera_med_dosagem,
                     resgatar_prescricao,
-                    gerar_lista_meds_ids)
+                    gerar_lista_meds_ids,
+                    gerar_link_protocolo)
 
 @login_required
 def busca_processos(request):
@@ -93,8 +94,12 @@ def edicao(request):
         dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
         formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
         campos_condicionais = extrair_campos_condicionais(formulario)
+        link_protocolo = gerar_link_protocolo(cid)
 
-    contexto = {'formulario': formulario, 'processo': processo, 'campos_condicionais': campos_condicionais}
+    contexto = {'formulario': formulario,
+                'processo': processo,
+                'campos_condicionais': campos_condicionais,
+                'link_protocolo': link_protocolo}
     contexto.update(mostrar_med(True,processo))
 
     return render(request, 'processos/edicao.html', contexto)
@@ -171,13 +176,16 @@ def cadastro(request):
             campos_ajustados, dados_paciente = ajustar_campos_condicionais(dados_paciente)
             formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_paciente)
             campos_condicionais = extrair_campos_condicionais(formulario)
+            link_protocolo = gerar_link_protocolo(cid)
             contexto = {'formulario': formulario, 
                         'paciente_existe': paciente_existe,
                         'paciente': paciente,
-                        'campos_condicionais': campos_condicionais
+                        'campos_condicionais': campos_condicionais,
+                        'link_protocolo': link_protocolo
                         }
             contexto.update(campos_ajustados)
         else:
+            link_protocolo = gerar_link_protocolo(cid)
             dados_iniciais = {'cpf_paciente': request.session['cpf_paciente'],
                               'data_1': primeira_data,
                               'cid': cid,
@@ -190,7 +198,9 @@ def cadastro(request):
 
             contexto = {'formulario': formulario,
                         'paciente_existe': paciente_existe,
-                        'campos_condicionais': campos_condicionais}
+                        'campos_condicionais': campos_condicionais,
+                        'link_protocolo': link_protocolo
+                        }
         
         contexto.update(mostrar_med(False))
 

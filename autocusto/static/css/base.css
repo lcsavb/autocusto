@@ -25,3 +25,6 @@ table.standard {
 .link-class:hover{
  background-color:#f1f1f1;
 }
+.consulta-protocolo {
+  bottom: 10px;
+}

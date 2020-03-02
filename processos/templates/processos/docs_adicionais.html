@@ -4,9 +4,12 @@
 <div class="form-row">
 
         <div class="col-2" id="div_url_1_vez" data-1-vez-url="{% url 'verificar_1_vez' %}"> {{ formulario.consentimento|as_crispy_field }}</div>
-        <div class="col-2" id="div_url_1_vez" data-exames-url="#"> {{ formulario.emitir_exames|as_crispy_field }}</div>
+        <div class="col-2" id="div_exames_1_vez" data-exames-url="#"> {{ formulario.emitir_exames|as_crispy_field }}</div>
+        <div class="col-2"> {{ formulario.emitir_relatorio|as_crispy_field }}</div>
+        
+</div>
 
-
+<div class="form-row">
     <div id="div-relatorio" class="d-none col-4">
         <div>{{ formulario.relatorio|as_crispy_field }}</div>  
     </div>
@@ -14,5 +17,5 @@
     <div id="div-exames" class="d-none col-4">
         <div>{{ formulario.exames|as_crispy_field }}</div>  
     </div>
-
 </div>
+

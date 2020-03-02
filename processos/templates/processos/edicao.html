@@ -18,7 +18,7 @@
           <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
       </div>
 
-      {% include 'processos/campos1vez.html' %}
+      {% include 'processos/docs_adicionais.html' %}
 
             <!-- Medicamentos -->
       {% include 'processos/form_med.html' %}
@@ -109,6 +109,6 @@
 <script src="{% static 'processos/js/processo.js' %}"></script>
 <script src="{% static 'processos/js/med.js' %}"></script>
 <script src="{% static 'processos/js/processoEdit.js' %}"></script>
-<script src="{% static 'processos/js/verificar1Vez.js' %}"></script>
+<script src="{% static 'processos/js/documentosAdicionais.js' %}"></script>
 <script src="{% static 'processos/js/emitirExames.js' %}"></script>
 {% endblock %}

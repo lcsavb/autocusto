@@ -221,6 +221,11 @@ class NovoProcesso(forms.Form):
         required=False, widget=forms.Textarea(attrs={'class':'relatorio', 'rows': '6', 'width': '100%'})
     )
 
+    emitir_relatorio = forms.ChoiceField(initial={False}, label='Emissão de relatório: ',
+                                       choices=[(False, 'Não'),
+                                                (True, 'Sim')],
+                                                widget=forms.Select(attrs={'class':'custom-select emitir-relatorio'}))
+
     emitir_exames = forms.ChoiceField(initial={False}, label='Emissão de exames: ',
                                        choices=[(False, 'Não'),
                                                 (True, 'Sim')],
