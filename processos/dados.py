@@ -235,6 +235,8 @@ def gerar_dados_processo(dados,meds_ids,doenca,emissor,paciente,usuario):
 
 
 def registrar_db(dados,meds_ids,doenca,emissor,usuario,**kwargs):
+        '''Reúne todos os dados, salva no banco de dados e retorna
+        o id do processo salvo '''
         paciente_existe = kwargs.pop('paciente_existe')
         dados_paciente = gerar_dados_paciente(dados)
         cpf_paciente = dados['cpf_paciente']
@@ -275,6 +277,8 @@ def registrar_db(dados,meds_ids,doenca,emissor,usuario,**kwargs):
             associar_med(processo, meds_ids)
             usuario.pacientes.add(paciente)
             emissor.pacientes.add(paciente)
+        
+        return processo.pk
 
 
 def checar_paciente_existe(cpf_paciente):

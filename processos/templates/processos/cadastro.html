@@ -8,7 +8,7 @@
 <div class="container-fluid">
 
 
-  <form method="POST" target="_blank"> {% csrf_token %}
+  <form method="POST"> {% csrf_token %}
 
     
     <div class="card rounded" style="padding: 1.5rem;">   
@@ -94,9 +94,9 @@
     </div>    
 
   </form>
-      <!-- Consulta de protocolo -->
-{% include 'processos/consulta_protocolo.html' %}
 </div>
+<!-- Consulta de protocolo -->
+{% include 'processos/consulta_protocolo.html' %}
 
 {% endblock %}
 
@@ -107,4 +107,5 @@
 <script src="{% static 'processos/js/med.js' %}"></script>
 <script src="{% static 'processos/js/documentosAdicionais.js' %}"></script>
 <script src="{% static 'processos/js/emitirExames.js' %}"></script>
+<script src="{% static 'processos/js/mostrarProtocolo.js' %}"></script>
 {% endblock %}

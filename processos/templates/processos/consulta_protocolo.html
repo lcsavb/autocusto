@@ -2,8 +2,12 @@
 
 <div class="fixed-bottom consulta-protocolo">
       <div class="d-flex flex-row-reverse">
-        <div class="p-2 bg-light rounded-left text-white">
-          <a href="{{ link_protocolo }}" target="_blank">Consultar protocolo</a>
+        <div id="mostrar-protocolo" class="p-2 bg-light rounded-left text-white">
+          <a  href="{{ link_protocolo }}" target="iframe_protocolo">Consultar protocolo</a>
           </div>
       </div>
+</div>
+
+<div id="overlay">
+  <iframe src="#" name="iframe_protocolo" id="iframe-overlay"></iframe> 
 </div>

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid">
+    <div class="row">
+      <div class="col-9">
+        <iframe src="{{ link_pdf }}" class="embed-responsive embed-responsive-4by3" style="min-height: 88vh;"></iframe>
+      </div>
+      <div class="col">
+        <a href="{% url 'processos-edicao' %}">Editar processo</a>
+      </div>
+  </div>
+
+
+
+
+
+
+{% endblock content %}

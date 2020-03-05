@@ -141,7 +141,8 @@ STATICFILES_DIRS = [
 # if SERVER == 'dev':
 #     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
 # else:
-#     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # print(STATICFILES_DIRS, 'AQUI')
 
