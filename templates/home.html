@@ -6,9 +6,8 @@
 
 
 {% if user.is_authenticated %}
-<div class="container bg-primary" style="height: 87vh;">
-    <div class="col my-auto bg-secondary" style="min-height: 55vh;">
-        <div class="card bg-light mb-3" style="max-width: 55vw;">
+<div class="container d-flex justify-content-center" style="height: 10vh;">
+        <div class="card bg-light mb-3 my-auto" style="max-width: 55vw;">
             <div class="card-header">Adicionar processo</div>
             <div class="card-body">
                     <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes'%}">
@@ -20,11 +19,10 @@
                     </form>
             </div>
             <div>
-                <ul class="list-group" id="resultados"></ul>
-                <ul class="list-group" id="pacientes"></ul>
+                <ul class="list-group resultados" id="resultados"></ul>
+                <ul class="list-group resultados" id="pacientes"></ul>
             </div>
         </div>     
-    </div>
 </div>
     
     {% else %}

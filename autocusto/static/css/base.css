@@ -12,10 +12,10 @@ table.standard {
   vertical-align: middle;
 }
 
-#resultados {
+.resultados {
  position: inline;
  width: 100%;
- max-width:500px;
+ max-width:600px;
  cursor: pointer;
  overflow-y: auto;
  max-height: 250px;
