@@ -1,20 +1,18 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
    
 {% block content %}
 
-<div class="container" style="max-width:500px">
-    <form method="POST">
-        {% csrf_token %}
-        <fieldset class="form-group">
-            <legend class="border-bottom mb-4">Cadastro Clínica <span class="oi oi-medical-cross"></span></legend>
-            {{ f_clinica|crispy }}
-        </fieldset>
-        <div class="form-group">
-            <button class="btn btn-outline-info" type="submit">Cadastrar</button>
-        </div>
-    </form>
+<div class="container card card-rounded" style="max-width: 75vw;">
+    <div><h3>Cadastro de Clínica</h3></div><hr>
+    {% crispy f_clinica %}
     </div>
 </div>
-        
 {% endblock content %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
+<script src="{% static 'processos/js/mascaras.js' %}"></script>
+
+{% endblock scripts %}
