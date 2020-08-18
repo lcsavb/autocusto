@@ -9,8 +9,7 @@
                         <a class="nav-link {{ med2_mostrar }}" id="medicamento-2-tab" data-toggle="pill" href="#medicamento-2">Medicamento #2</a>
                         <a class="nav-link {{ med3_mostrar }}" id="medicamento-3-tab" data-toggle="pill" href="#medicamento-3">Medicamento #3</a>
                         <a class="nav-link {{ med4_mostrar }}" id="medicamento-4-tab" data-toggle="pill" href="#medicamento-4">Medicamento #4</a>
-                        <a class="nav-link {{ med5_mostrar }}" id="medicamento-5-tab" data-toggle="pill" href="#medicamento-5">Medicamento #5</a>
-                        
+                       
                     <a class="nav-link" href="" id="add-med"><span class="oi oi-plus text-top" title="Adicionar medicamento" aria-hidden="true"></span>
                       Adicionar </a>
                   </div>
@@ -48,7 +47,26 @@
                             <div class="col-md-2 bg-dark border-dark text-white">3º mês</div>
                             <div class="col-md-8">{{ formulario.med1_posologia_mes3|as_crispy_field }}</div>
                             <div class="col-md-2">{{ formulario.qtd_med1_mes3|as_crispy_field }}</div>
+                          </div><br>
+
+                          <div class="form-row bg-light rounded border border-dark" id="med1-mes4">
+                            <div class="col-md-2 bg-dark border-dark text-white">4º mês</div>
+                            <div class="col-md-8">{{ formulario.med1_posologia_mes4|as_crispy_field }}</div>
+                            <div class="col-md-2">{{ formulario.qtd_med1_mes4|as_crispy_field }}</div>
+                          </div><br>
+
+                          <div class="form-row bg-light rounded border border-dark" id="med1-mes5">
+                            <div class="col-md-2 bg-dark border-dark text-white">5º mês</div>
+                            <div class="col-md-8">{{ formulario.med1_posologia_mes5|as_crispy_field }}</div>
+                            <div class="col-md-2">{{ formulario.qtd_med1_mes5|as_crispy_field }}</div>
+                          </div><br>
+
+                          <div class="form-row bg-light rounded border border-dark" id="med1-mes6">
+                            <div class="col-md-2 bg-dark border-dark text-white">6º mês</div>
+                            <div class="col-md-8">{{ formulario.med1_posologia_mes6|as_crispy_field }}</div>
+                            <div class="col-md-2">{{ formulario.qtd_med1_mes6|as_crispy_field }}</div>
                           </div>
+
                     <!-- Fim div posologias opcionais  -->
                     </div>
           
@@ -85,6 +103,24 @@
                         <div class="col-md-2 bg-dark border-dark text-white">3º mês</div>
                         <div class="col-md-8">{{ formulario.med2_posologia_mes3|as_crispy_field }}</div>
                         <div class="col-md-2">{{ formulario.qtd_med2_mes3|as_crispy_field }}</div>
+                      </div><br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med2-mes4">
+                        <div class="col-md-2 bg-dark border-dark text-white">4º mês</div>
+                        <div class="col-md-8">{{ formulario.med2_posologia_mes4|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med2_mes4|as_crispy_field }}</div>
+                      </div><br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med2-mes5">
+                        <div class="col-md-2 bg-dark border-dark text-white">5º mês</div>
+                        <div class="col-md-8">{{ formulario.med2_posologia_mes5|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med2_mes5|as_crispy_field }}</div>
+                      </div><br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med2-mes6">
+                        <div class="col-md-2 bg-dark border-dark text-white">6º mês</div>
+                        <div class="col-md-8">{{ formulario.med2_posologia_mes6|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med2_mes6|as_crispy_field }}</div>
                       </div>
           
                     </div>
@@ -121,6 +157,24 @@
                         <div class="col-md-8">{{ formulario.med3_posologia_mes3|as_crispy_field }}</div>
                         <div class="col-md-2">{{ formulario.qtd_med3_mes3|as_crispy_field }}</div>
                       </div>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med3-mes4">
+                        <div class="col-md-2 bg-dark border-dark text-white">4º mês</div>
+                        <div class="col-md-8">{{ formulario.med3_posologia_mes4|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med3_mes4|as_crispy_field }}</div>
+                      </div><br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med3-mes5">
+                        <div class="col-md-2 bg-dark border-dark text-white">5º mês</div>
+                        <div class="col-md-8">{{ formulario.med3_posologia_mes5|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med3_mes5|as_crispy_field }}</div>
+                      </div><br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med3-mes6">
+                        <div class="col-md-2 bg-dark border-dark text-white">6º mês</div>
+                        <div class="col-md-8">{{ formulario.med3_posologia_mes6|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med3_mes6|as_crispy_field }}</div>
+                      </div>
           
                     </div>
                     <!-- Fim div posologias opcionais  -->
@@ -154,42 +208,24 @@
                         <div class="col-md-2 bg-dark border-dark text-white">3º mês</div>
                         <div class="col-md-8">{{ formulario.med4_posologia_mes3|as_crispy_field }}</div>
                         <div class="col-md-2">{{ formulario.qtd_med4_mes3|as_crispy_field }}</div>
-                      </div>
-          
-                    </div>
-                    <!-- Fim div posologias opcionais  -->
-                    </div> 
-          
-                    </div>
-          
-                    <div class="tab-pane fade card border-info" id="medicamento-5">
-          
-                      <div class="card-header bg-primary text-white">Medicamento #5</div>
-                              <div class="card-body">
-                                  <div class="form-row">
-                                      <div class="col-md-9">{{ formulario.id_med5|as_crispy_field }}</div>
-                                      <div class="col-md-3">{{ formulario.med5_repetir_posologia|as_crispy_field }}</div>
-                                  </div>
-          
-                                      <div class="form-row bg-light rounded border border-dark" id="med5-mes1">
-                                          <div class="col-md-2 bg-dark border-dark text-white">1º mês</div>
-                                          <div class="col-md-8">{{ formulario.med5_posologia_mes1|as_crispy_field }}</div>
-                                          <div class="col-md-2">{{ formulario.qtd_med5_mes1|as_crispy_field }}</div>
-                                      </div><br>
-          
-                      <!-- Div posologias opcionais  -->
-                      <div class="d-none" id="posologias-opcionais-med5">   
-                      <div class="form-row bg-light rounded border border-dark" id="med5-mes2">
-                        <div class="col-md-2 bg-dark border-dark text-white">2º mês</div>
-                        <div class="col-md-8">{{ formulario.med5_posologia_mes2|as_crispy_field }}</div>
-                        <div class="col-md-2">{{ formulario.qtd_med5_mes2|as_crispy_field }}</div>
+                      </div> <br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med4-mes4">
+                        <div class="col-md-2 bg-dark border-dark text-white">4º mês</div>
+                        <div class="col-md-8">{{ formulario.med4_posologia_mes4|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med4_mes4|as_crispy_field }}</div>
                       </div><br>
-          
-          
-                      <div class="form-row bg-light rounded border border-dark" id="med5-mes3">
-                        <div class="col-md-2 bg-dark border-dark text-white">3º mês</div>
-                        <div class="col-md-8">{{ formulario.med5_posologia_mes3|as_crispy_field }}</div>
-                        <div class="col-md-2">{{ formulario.qtd_med5_mes3|as_crispy_field }}</div>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med4-mes5">
+                        <div class="col-md-2 bg-dark border-dark text-white">5º mês</div>
+                        <div class="col-md-8">{{ formulario.med4_posologia_mes5|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med4_mes5|as_crispy_field }}</div>
+                      </div><br>
+
+                      <div class="form-row bg-light rounded border border-dark" id="med4-mes6">
+                        <div class="col-md-2 bg-dark border-dark text-white">6º mês</div>
+                        <div class="col-md-8">{{ formulario.med4_posologia_mes6|as_crispy_field }}</div>
+                        <div class="col-md-2">{{ formulario.qtd_med4_mes6|as_crispy_field }}</div>
                       </div>
           
                     </div>
@@ -197,7 +233,8 @@
                     </div> 
           
                     </div>
-                    
+          
+                   
                   </div>
                 </div>
               </div>

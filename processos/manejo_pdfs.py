@@ -62,8 +62,11 @@ def formatacao_data(data):
      subsequentes e formata para o padrão brasileiro'''
     data2 = (data + timedelta(days=30)).strftime('%d/%m/%Y')
     data3 = (data + timedelta(days=60)).strftime('%d/%m/%Y')
+    data4 = (data + timedelta(days=90)).strftime('%d/%m/%Y')
+    data5 = (data + timedelta(days=120)).strftime('%d/%m/%Y')
+    data6 = (data + timedelta(days=150)).strftime('%d/%m/%Y')
     data1 = data.strftime('%d/%m/%Y')
-    datas = [data1, data2, data3]
+    datas = [data1, data2, data3, data4, data5, data6]
     return datas
 
     # dados = {}
@@ -109,6 +112,9 @@ class GeradorPDF():
         dados_lme_base['data_1'] = datas[0]
         dados_lme_base['data_2'] = datas[1]
         dados_lme_base['data_3'] = datas[2]
+        dados_lme_base['data_4'] = datas[3]
+        dados_lme_base['data_5'] = datas[4]
+        dados_lme_base['data_6'] = datas[5]
 
         arquivos_base = [path_lme_base]
         protocolo = Protocolo.objects.get(doenca__cid=cid)

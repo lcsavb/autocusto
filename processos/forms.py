@@ -20,7 +20,6 @@ def mostrar_med(mostrar, *args):
     dic = {'med2_mostrar': 'd-none',
            'med3_mostrar': 'd-none',
            'med4_mostrar': 'd-none',
-           'med5_mostrar': 'd-none',
            }
     if mostrar:
         processo = args[0]
@@ -78,7 +77,6 @@ class NovoProcesso(forms.Form):
         self.fields['id_med2'].choices = medicamentos
         self.fields['id_med3'].choices = medicamentos
         self.fields['id_med4'].choices = medicamentos
-        self.fields['id_med5'].choices = medicamentos
         self.request = kwargs.pop('request', None)
 
     # Dados do paciente
@@ -114,40 +112,56 @@ class NovoProcesso(forms.Form):
         choices=[], label='Nome')
     id_med4 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
         choices=[], label='Nome')
-    id_med5 = forms.ChoiceField(widget=forms.Select(attrs={'class':'custom-select'}),
-        choices=[], label='Nome')
 
     med1_via = forms.CharField(required=True, label='Via administração')
     med1_posologia_mes1 = forms.CharField(required=True, label='Posologia')
-    med1_posologia_mes2 = forms.CharField(required=False, label='Posologia')
-    med1_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+    med1_posologia_mes2 = forms.CharField(required=True, label='Posologia')
+    med1_posologia_mes3 = forms.CharField(required=True, label='Posologia')
+    med1_posologia_mes4 = forms.CharField(required=True, label='Posologia')
+    med1_posologia_mes5 = forms.CharField(required=True, label='Posologia')
+    med1_posologia_mes6 = forms.CharField(required=True, label='Posologia')
     med2_posologia_mes1 = forms.CharField(required=False, label='Posologia')
     med2_posologia_mes2 = forms.CharField(required=False, label='Posologia')
     med2_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+    med2_posologia_mes4 = forms.CharField(required=False, label='Posologia')
+    med2_posologia_mes5 = forms.CharField(required=False, label='Posologia')
+    med2_posologia_mes6 = forms.CharField(required=False, label='Posologia')
     med3_posologia_mes1 = forms.CharField(required=False, label='Posologia')
     med3_posologia_mes2 = forms.CharField(required=False, label='Posologia')
     med3_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+    med3_posologia_mes4 = forms.CharField(required=False, label='Posologia')
+    med3_posologia_mes5 = forms.CharField(required=False, label='Posologia')
+    med3_posologia_mes6 = forms.CharField(required=False, label='Posologia')
     med4_posologia_mes1 = forms.CharField(required=False, label='Posologia')
     med4_posologia_mes2 = forms.CharField(required=False, label='Posologia')
     med4_posologia_mes3 = forms.CharField(required=False, label='Posologia')
-    med5_posologia_mes1 = forms.CharField(required=False, label='Posologia')
-    med5_posologia_mes2 = forms.CharField(required=False, label='Posologia')
-    med5_posologia_mes3 = forms.CharField(required=False, label='Posologia')
+    med4_posologia_mes4 = forms.CharField(required=False, label='Posologia')
+    med4_posologia_mes5 = forms.CharField(required=False, label='Posologia')
+    med4_posologia_mes6 = forms.CharField(required=False, label='Posologia')
     qtd_med1_mes1 = forms.CharField(required=True, label="Qtde. 1 mês")
     qtd_med1_mes2 = forms.CharField(required=True, label="Qtde. 2 mês")
     qtd_med1_mes3 = forms.CharField(required=True, label="Qtde. 3 mês")
+    qtd_med1_mes4 = forms.CharField(required=True, label="Qtde. 4 mês")
+    qtd_med1_mes5 = forms.CharField(required=True, label="Qtde. 5 mês")
+    qtd_med1_mes6 = forms.CharField(required=True, label="Qtde. 6 mês")
     qtd_med2_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
     qtd_med2_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
     qtd_med2_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
+    qtd_med2_mes4 = forms.CharField(required=False, label="Qtde. 4 mês")
+    qtd_med2_mes5 = forms.CharField(required=False, label="Qtde. 5 mês")
+    qtd_med2_mes6 = forms.CharField(required=False, label="Qtde. 6 mês")
     qtd_med3_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
     qtd_med3_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
     qtd_med3_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
+    qtd_med3_mes4 = forms.CharField(required=False, label="Qtde. 4 mês")
+    qtd_med3_mes5 = forms.CharField(required=False, label="Qtde. 5 mês")
+    qtd_med3_mes6 = forms.CharField(required=False, label="Qtde. 6 mês")
     qtd_med4_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
     qtd_med4_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
     qtd_med4_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
-    qtd_med5_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
-    qtd_med5_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
-    qtd_med5_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
+    qtd_med4_mes4 = forms.CharField(required=False, label="Qtde. 4 mês")
+    qtd_med4_mes5 = forms.CharField(required=False, label="Qtde. 5 mês")
+    qtd_med4_mes6 = forms.CharField(required=False, label="Qtde. 6 mês")
     med1_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
@@ -164,11 +178,6 @@ class NovoProcesso(forms.Form):
                                                label='Repetir posologia?',
                                                widget=forms.Select(attrs={'class':'custom-select'}))
     med4_repetir_posologia = forms.ChoiceField(required=True,
-                                               initial=True,
-                                               choices=REPETIR_ESCOLHAS,
-                                               label='Repetir posologia?',
-                                               widget=forms.Select(attrs={'class':'custom-select'}))
-    med5_repetir_posologia = forms.ChoiceField(required=True,
                                                initial=True,
                                                choices=REPETIR_ESCOLHAS,
                                                label='Repetir posologia?',
