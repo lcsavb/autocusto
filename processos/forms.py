@@ -256,8 +256,9 @@ class NovoProcesso(forms.Form):
 
         paciente_existe = checar_paciente_existe(cpf_paciente)
 
-        registrar_db(dados,meds_ids,doenca,emissor,usuario,paciente_existe=paciente_existe)
+        processo_id = registrar_db(dados,meds_ids,doenca,emissor,usuario,paciente_existe=paciente_existe)
 
+        return processo_id
 
 class RenovarProcesso(NovoProcesso):
     edicao_completa = forms.ChoiceField(required=True, initial={False},

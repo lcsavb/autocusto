@@ -1136,6 +1136,22 @@ COPY public.django_admin_log (id, action_time, object_id, object_repr, action_fl
 5	2020-02-29 02:23:37.886928+00	4	G30.0	3		4	2
 6	2020-02-29 02:24:57.089964+00	23	alzheimer	2	[{"changed": {"fields": ["Nome", "Dados condicionais"]}}]	3	2
 7	2020-02-29 02:25:17.258142+00	35	esclerose_multipla	2	[{"changed": {"fields": ["Nome", "Dados condicionais"]}}]	3	2
+8	2020-02-29 13:27:55.466126+00	30	dor_cronica	2	[{"changed": {"fields": ["Nome", "Dados condicionais"]}}]	3	2
+9	2020-02-29 14:02:26.418823+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+10	2020-02-29 14:05:02.667082+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+11	2020-02-29 14:06:46.676501+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+12	2020-02-29 14:07:45.977484+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+13	2020-02-29 14:09:03.278179+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+14	2020-02-29 14:09:49.597768+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+15	2020-02-29 14:18:02.111847+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+16	2020-02-29 14:18:39.675226+00	33	epilepsia	2	[]	3	2
+17	2020-02-29 14:18:53.55658+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+18	2020-02-29 14:21:34.871971+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+19	2020-02-29 14:22:14.734308+00	33	epilepsia	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+20	2020-03-01 13:19:05.555647+00	28	doenca_de_parkinson	2	[{"changed": {"fields": ["Dados condicionais"]}}]	3	2
+21	2020-03-02 14:16:31.245336+00	7	anemia_em_pacientes_com_insuficiencia_renal_cronica___reposicao_de_ferro	2	[{"changed": {"fields": ["Nome", "Dados condicionais"]}}]	3	2
+22	2020-03-02 14:18:10.618108+00	6	anemia_em_pacientes_com_insuficiencia_renal_cronica___alfapoetina	2	[{"changed": {"fields": ["Nome", "Medicamentos", "Dados condicionais"]}}]	3	2
+23	2020-03-02 14:20:01.160582+00	6	anemia_em_pacientes_com_insuficiencia_renal_cronica___alfapoetina	2	[{"changed": {"fields": ["Medicamentos"]}}]	3	2
 \.
 
 
@@ -1205,7 +1221,8 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 --
 
 COPY public.django_session (session_key, session_data, expire_date) FROM stdin;
-9dtpuvph2d352vgka3xrxs501rcokrdj	ZDgwNmRkNDNhYzI3ZTc5ODIyNmU1MWU1MjZmZTUxNzgyZGVkOGNkMzp7Il9hdXRoX3VzZXJfaWQiOiIxIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiIwYmViMDIzNzc0NDFkYzA0NGYwMjdhNTQxYmYzMzI0MmE4ZThjMDlhIiwicGFjaWVudGVfZXhpc3RlIjp0cnVlLCJwYWNpZW50ZV9pZCI6MSwiY2lkIjoiUjUyLjEiLCJjcGZfcGFjaWVudGUiOiIzMzMuNzc0LjE1OC00MCJ9	2020-03-14 02:30:04.146178+00
+53mwghxzmly7env4csi3dc810hnpgk4h	MzQ0MTYxOTYwNTQwZWFhYjFlOWJlMzJmNGQxNzg4OWFmMmE4YTE5Yzp7Il9hdXRoX3VzZXJfaWQiOiIxIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiIwYmViMDIzNzc0NDFkYzA0NGYwMjdhNTQxYmYzMzI0MmE4ZThjMDlhIiwicGFjaWVudGVfZXhpc3RlIjp0cnVlLCJwYWNpZW50ZV9pZCI6MSwiY2lkIjoiRTc4LjAiLCJjcGZfcGFjaWVudGUiOiIzMzMuNzc0LjE1OC00MCJ9	2020-03-16 20:02:25.519419+00
+kx7iw40pds8olqgq8w3zouqxl588iaw0	ODFkZmNiNmU5ZmRiODc4NTBkZTQ5ODUyNTFiYjljYzFlMmYxYmI5NTp7Il9hdXRoX3VzZXJfaWQiOiIxIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiIwYmViMDIzNzc0NDFkYzA0NGYwMjdhNTQxYmYzMzI0MmE4ZThjMDlhIiwicGFjaWVudGVfZXhpc3RlIjp0cnVlLCJwYWNpZW50ZV9pZCI6MSwiY2lkIjoiTTA3LjAiLCJjcGZfcGFjaWVudGUiOiIzMzMuNzc0LjE1OC00MCIsInBhdGhfcGRmX2ZpbmFsIjoiL3N0YXRpYy90bXAvcGRmX2ZpbmFsXzMzMy43NzQuMTU4LTQwX00wNy4wLnBkZiIsInByb2Nlc3NvX2lkIjoiMzIifQ==	2020-03-19 13:04:35.557381+00
 \.
 
 
@@ -1232,8 +1249,9 @@ COPY public.medicos_medicousuario (id, medico_id, usuario_id) FROM stdin;
 --
 
 COPY public.pacientes_paciente (id, nome_paciente, idade, sexo, nome_mae, incapaz, nome_responsavel, rg, peso, altura, escolha_etnia, cpf_paciente, cns_paciente, email_paciente, cidade_paciente, end_paciente, cep_paciente, telefone1_paciente, telefone2_paciente, etnia) FROM stdin;
-1	5644			564	t	asdfasdf		456	564		333.774.158-40		lcsavb@gmail.com		564		asdfasd	asdf	etnia_branca
 2	654			654	f			56	654		972.839.531-08				34654				etnia_branca
+3	654			654	t	654		645	645		944.392.085-92				645				etnia_branca
+1	5644			564	t	asdfasdf		456	564		333.774.158-40		lcsavb@gmail.com		564		asdfasd	asdf	etnia_branca
 \.
 
 
@@ -1244,6 +1262,7 @@ COPY public.pacientes_paciente (id, nome_paciente, idade, sexo, nome_mae, incapa
 COPY public.pacientes_paciente_usuarios (id, paciente_id, usuario_id) FROM stdin;
 1	1	1
 6	2	1
+24	3	1
 \.
 
 
@@ -1822,6 +1841,34 @@ COPY public.processos_medicamento (id, nome, dosagem, apres) FROM stdin;
 
 COPY public.processos_processo (id, anamnese, prescricao, tratou, tratamentos_previos, data1, preenchido_por, dados_condicionais, clinica_id, doenca_id, emissor_id, medico_id, paciente_id, usuario_id) FROM stdin;
 6	654	{"1": {"id_med1": "64", "med1_via": "654", "qtd_med1_mes1": "654", "qtd_med1_mes2": "654", "qtd_med1_mes3": "654", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	paciente	{"opt_edss": "7,5"}	1	54	1	1	2	1
+7	654	{"1": {"id_med1": "110", "med1_via": "564", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "465564", "med1_posologia_mes2": "465564", "med1_posologia_mes3": "465564"}}	f		\N	medico	{"opt_eva": "10", "opt_lanns": "24"}	1	116	1	1	1	1
+9	654	{"1": {"id_med1": "110", "med1_via": "564", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "465564", "med1_posologia_mes2": "465564", "med1_posologia_mes3": "465564"}}	f		\N	medico	{"opt_eva": "10", "opt_lanns": "24"}	1	116	1	1	1	1
+10	564	{"1": {"id_med1": "157", "med1_via": "645", "qtd_med1_mes1": "456", "qtd_med1_mes2": "456", "qtd_med1_mes3": "456", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{"opt_eva": "10", "opt_lanns": "24"}	1	117	1	1	1	1
+26	654	{"1": {"id_med1": "115", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	paciente	{}	1	49	1	1	3	1
+11	645	{"1": {"id_med1": "101", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "456", "med1_posologia_mes2": "456", "med1_posologia_mes3": "456"}}	t	654654	2020-02-29	medico	{}	1	72	1	1	1	1
+12	654654	{"1": {"id_med1": "103", "med1_via": "654", "qtd_med1_mes1": "654", "qtd_med1_mes2": "654", "qtd_med1_mes3": "654", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{}	1	49	1	1	1	1
+13	654654	{"1": {"id_med1": "103", "med1_via": "654", "qtd_med1_mes1": "654", "qtd_med1_mes2": "654", "qtd_med1_mes3": "654", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{}	1	49	1	1	1	1
+14	654654	{"1": {"id_med1": "103", "med1_via": "654", "qtd_med1_mes1": "654", "qtd_med1_mes2": "654", "qtd_med1_mes3": "654", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{}	1	49	1	1	1	1
+16	654654	{"1": {"id_med1": "103", "med1_via": "654", "qtd_med1_mes1": "654", "qtd_med1_mes2": "654", "qtd_med1_mes3": "654", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{}	1	49	1	1	1	1
+17	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+18	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+19	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+20	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+21	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+22	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+23	65465	{"1": {"id_med1": "120", "med1_via": "654", "qtd_med1_mes1": "564", "qtd_med1_mes2": "564", "qtd_med1_mes3": "564", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	49	1	1	1	1
+24	654	{"1": {"id_med1": "115", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	paciente	{}	1	49	1	1	3	1
+25	654	{"1": {"id_med1": "115", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	paciente	{}	1	49	1	1	3	1
+27	654	{"1": {"id_med1": "115", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	paciente	{}	1	49	1	1	3	1
+15	654654	{"1": {"id_med1": "103", "med1_via": "654", "qtd_med1_mes1": "654", "qtd_med1_mes2": "654", "qtd_med1_mes3": "654", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		2020-03-02	medico	{}	1	49	1	1	1	1
+28	654	{"1": {"id_med1": "56", "med1_via": "645", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "564", "med1_posologia_mes2": "564", "med1_posologia_mes3": "564"}}	f		\N	medico	{}	1	7	1	1	1	1
+29	654	{"1": {"id_med1": "56", "med1_via": "645", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "564", "med1_posologia_mes2": "564", "med1_posologia_mes3": "564"}}	f		\N	medico	{}	1	7	1	1	1	1
+30	564	{"1": {"id_med1": "88", "med1_via": "645", "qtd_med1_mes1": "456", "qtd_med1_mes2": "456", "qtd_med1_mes3": "456", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	22	1	1	1	1
+31	564	{"1": {"id_med1": "60", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{}	1	25	1	1	1	1
+33	654	{"1": {"id_med1": "94", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		\N	medico	{}	1	131	1	1	1	1
+34	654	{"1": {"id_med1": "91", "med1_via": "654", "qtd_med1_mes1": "456", "qtd_med1_mes2": "456", "qtd_med1_mes3": "456", "med1_posologia_mes1": "654", "med1_posologia_mes2": "654", "med1_posologia_mes3": "654"}}	f		\N	medico	{}	1	131	1	1	1	1
+8	654	{"1": {"id_med1": "170", "med1_via": "564", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "465564", "med1_posologia_mes2": "465564", "med1_posologia_mes3": "465564"}}	f		2020-03-05	medico	{"opt_eva": "10", "opt_lanns": "24"}	1	116	1	1	1	1
+32	654	{"1": {"id_med1": "94", "med1_via": "654", "qtd_med1_mes1": "645", "qtd_med1_mes2": "645", "qtd_med1_mes3": "645", "med1_posologia_mes1": "645", "med1_posologia_mes2": "645", "med1_posologia_mes3": "645"}}	f		2020-03-05	medico	{}	1	131	1	1	1	1
 \.
 
 
@@ -1831,6 +1878,34 @@ COPY public.processos_processo (id, anamnese, prescricao, tratou, tratamentos_pr
 
 COPY public.processos_processo_medicamentos (id, processo_id, medicamento_id) FROM stdin;
 1	6	64
+2	7	110
+4	9	110
+5	10	157
+6	11	101
+9	12	103
+10	13	103
+11	14	103
+12	15	103
+13	16	103
+14	17	120
+15	18	120
+16	19	120
+17	20	120
+18	21	120
+19	22	120
+20	23	120
+21	24	115
+22	25	115
+23	26	115
+24	27	115
+26	28	56
+27	29	56
+28	30	88
+29	31	60
+30	32	94
+31	33	94
+32	34	91
+35	8	170
 \.
 
 
@@ -1839,87 +1914,87 @@ COPY public.processos_processo_medicamentos (id, processo_id, medicamento_id) FR
 --
 
 COPY public.processos_protocolo (id, nome, arquivo, dados_condicionais) FROM stdin;
-1	Acne Grave	1_acnegrave_v8_2.pdf	\N
-2	Acromegalia	2_acromegalia_v5.pdf	\N
-3	Anemia Aplástica, Mielodisplasia e Neutropenias Constitucionais	4_anaplasticamielodneutconst_v6.pdf	\N
-4	Anemia Aplástica Adquirida	3_anemia_aplastica_adquirida_v3.pdf	\N
-5	Anemia Hemolítica Auto-Imune	7_anemiahemoliticaautoimune_v6.pdf	\N
-6	Anemia em pacientes com Insuficiência Renal Crônica - Alfapoetina	5_anemiapacientesinsrencr-alfaepoetina_v4.pdf	\N
-7	Anemia em pacientes com Insuficiência Renal Crônica - reposição de ferro	6_anemiapacientesinsrencr_-_repferro_v5.pdf	\N
-8	Angioedema	8_angioedema_v8.pdf	\N
-9	Aplasia pura adquirida da série vermelha	9_aplasiapura_v5.pdf	\N
-10	Artrite Psoríaca	10_artritepsoriacav15.pdf	\N
-11	Artrite Reativa - Doença de Reiter	11_artritereativa_v5.pdf	\N
-12	Artrite Reumatóide	12_artritereumatoide_v21.pdf	\N
-13	Asma	13_asmav8.pdf	\N
-14	Comportamento Agressivo no Transtorno do Espectro do Autismo	76_comport_agressivo_transt_espectro_autismo_v3.pdf	\N
-15	Deficiência de hormônio do crescimento - hipopituitarismo	14_defhormcresc__hipopituitarismo_v9.pdf	\N
-16	Deficiência de Biotinidase	274_deficienciabiotinidase_v1.pdf	\N
-17	Dermatomiosite e Polimiosite	15_dermatomiositepolimiosite_v3.pdf	\N
-18	Diabetes Insípido	16_diabetesinsipido_v4.pdf	\N
-19	Diabetes Mellitus Tipo I	200_diabetesmellitus_tipoi__v2.pdf	\N
-20	Dislipidemia	17_dislipidemiav12.pdf	\N
-21	Distonia e Espasmo Hemifacial	18_distoniasespasmohemifacial_v3.pdf	\N
-22	Distúrbio mineral ósseo na doença renal	79_disturbio_mineral_osseo_doenca_renal_v2.pdf	\N
-24	Doença de Chron	20_doencadecrohnv9.pdf	\N
-25	Doença de Gaucher	21_doencadegaucherv11.pdf	\N
-26	Doença Falciforme	25_doencafalciformev8.pdf	\N
-27	Doença de Paget	22_doencapaget_v3.pdf	\N
-28	Doença de Parkinson	23_doencaparkinson_v7.pdf	\N
-29	Doença de Wilson	24_doencawilson_v3.pdf	\N
-30	Dor crônica	26_dorcronica_v5.pdf	\N
-31	DPOC	27_dpoc_v3.pdf	\N
-32	Endometriose	28_endometriose_v5.pdf	\N
-33	Epilepsia	29_epilepsia_v5.pdf	\N
-34	Esclerose Lateral Amiotrófica	30_escleroselateralamiotrofica_v6.pdf	\N
-36	Esclerose Sistêmica	32_esclerosesistemica_v4.pdf	\N
-37	Espasticidade	33_espasticidade_v2.pdf	\N
-38	Espondilite Ancilosante	34_espondiliteancilosante_v16.pdf	\N
-39	Esquizofrenia	35_esquizofreniav7.pdf	\N
-40	Fenilcetonúria	36_fenilcetonuria_v4.pdf	\N
-41	Fibrose Cística - Insuficiência Pancreática	37_fibrose_cistica-insuficienciapancreatica_v4.pdf	\N
-42	Fibrose Cística - Manifestações Pulmonares	38_fibrose_cistica-manifestacoespulmonares_v2.pdf	\N
-43	Hemangioma Infantil	40_hemangiomainfantil_v3_2.pdf	\N
-44	Hepatite Viral B e Coinfecções	42_hepatite_viral_b_coinfeccoes_v7_2.pdf	\N
-45	Hepatite Viral C e Coinfecções	43_hepatite_viral_c_coinfeccoes_v21.pdf	\N
-46	Hepatite Autoimune	41_hepatiteautoimune_v4.pdf	\N
-47	Hiperplasia Adrenal Congênita	45_hiperpadrecong_v3_3.pdf	\N
-48	Hiperprolactinemia	46_hiperprolactinemia_v5.pdf	\N
-49	Hipertensão Arterial Pulmonar	47_hipertensaoarterialpulmonar_v3.pdf	\N
-50	Hipoparatiroidismo	48_hipoparatireoidismo_v3.pdf	\N
-51	Ictioses Hereditárias	49_ictioseshereditarias_v6.pdf	\N
-52	Imunodeficiência primária com predominância de defeitos de anticorpos	50_imunodprimpreddefant_v1_2.pdf	\N
-53	Imunosupressão no transplante hepático em pediatria	51_imuntransphepped_v6_2.pdf	\N
-54	Imunossupressão no transplante renal	52_imuntransprrenal_v3.pdf	\N
-55	Insuficiência Adrenal Primária - Doença de Addison	53_insadrenprimaria_v3.pdf	\N
-56	Insuficiência Pancreática Exócrina	54_inspacexoc_v4.pdf	\N
-57	Leiomioma de Útero	55_leiomiomautero_v4.pdf	\N
-58	Lúpus Eritematoso Sistêmico	56_lupuseritsist_v4.pdf	\N
-59	Miastenia Gravis	57_miasteniagravis_v5_2.pdf	\N
-60	Mucopolissacaridose tipo I	80_mucopolissacaridose_tipoi_v1.pdf	\N
-61	Mucopolissacaridose tipo II	272_mucopolissacaridose_tipoii_v2.pdf	\N
-62	Colangite Biliar Primária	277-colangitebiliarprimaria-v1.pdf	\N
-63	Osteoporose	59_osteoporose_v4.pdf	\N
-64	Polineuropatia Amiloidótica Familiar	273_polineuropatiaamfam_v3.pdf	\N
-65	Profilaxia da Reinfeção do Vírus da Hepatite B Pós-transplante hepático	60_profilaxiavirushepbptransphep_v1_2.pdf	\N
-66	Psoríase	61_psoriase_v9.pdf	\N
-67	Puberdade Precoce	62_puberdade_precoce_central_v7.pdf	\N
-68	Púrpura Trombocitopênica Idiopática	63_purpuratrombidiop_v6.pdf	\N
-69	Raquitismo e Osteomalácia	64_raquitismoosteomalacia_v4_2.pdf	\N
-70	Retocolite Ulcerativa	65_retocoliteulcerativa_v2.pdf	\N
-71	Síndrome Coronariana Aguda	66_sindcoronaguda_v1_2.pdf	\N
-72	Síndrome Nefrótica Primária em Adultos	70_sindnefprimaadultos_v2.pdf	\N
-73	Síndrome Nefrótica Primária em crianças e adolescentes	71_sindnefprimacrianadol_v3.pdf	\N
-74	Síndrome de ovários policísticos e hirsutismo/acne	68_sindovpolichirs_v3.pdf	\N
-75	Síndrome de Guillain-Barré	67_sindromeguillain-barre_v4_2.pdf	\N
-76	Síndrome de Turner	69_sindrometurner_v5.pdf	\N
-77	Sobrecarga de Ferro	72_sobrecarga_ferro_v3_2.pdf	\N
-78	Imunossupressão no Transplante Hepático em Adultos	78_transplante_hep_adultos_2.pdf	\N
-79	Transtorno Afetivo Bipolar	75_transtornoafetivobipolar_v2.pdf	\N
-80	Transtorno Esquizoafetivo	73_transtornoesquizoafetivov6.pdf	\N
-81	Uveítes não-infecciosas	74_uveitesnaoinfecciosas_v6.pdf	\N
-23	alzheimer	19_doencadealzheimerv10.pdf	{"null": "null"}
+1	acne_grave	1_acnegrave_v8_2.pdf	\N
 35	esclerose_multipla	31_esclerosemultipla_v17.pdf	{"null": "null"}
+2	acromegalia	2_acromegalia_v5.pdf	\N
+3	anemia_aplastica__mielodisplasia_e_neutropenias_constitucionais	4_anaplasticamielodneutconst_v6.pdf	\N
+4	anemia_aplastica_adquirida	3_anemia_aplastica_adquirida_v3.pdf	\N
+5	anemia_hemolitica_auto_imune	7_anemiahemoliticaautoimune_v6.pdf	\N
+6	anemia_em_pacientes_com_insuficiencia_renal_cronica___alfapoetina	5_anemiapacientesinsrencr-alfaepoetina_v4.pdf	{"null": "null"}
+8	angioedema	8_angioedema_v8.pdf	\N
+9	aplasia_pura_adquirida_da_serie_vermelha	9_aplasiapura_v5.pdf	\N
+10	artrite_psoriaca	10_artritepsoriacav15.pdf	\N
+11	artrite_reativa___doenca_de_reiter	11_artritereativa_v5.pdf	\N
+12	artrite_reumatoide	12_artritereumatoide_v21.pdf	\N
+13	asma	13_asmav8.pdf	\N
+14	comportamento_agressivo_no_transtorno_do_espectro_do_autismo	76_comport_agressivo_transt_espectro_autismo_v3.pdf	\N
+15	deficiencia_de_hormônio_do_crescimento___hipopituitarismo	14_defhormcresc__hipopituitarismo_v9.pdf	\N
+16	deficiencia_de_biotinidase	274_deficienciabiotinidase_v1.pdf	\N
+17	dermatomiosite_e_polimiosite	15_dermatomiositepolimiosite_v3.pdf	\N
+18	diabetes_insipido	16_diabetesinsipido_v4.pdf	\N
+19	diabetes_mellitus_tipo_i	200_diabetesmellitus_tipoi__v2.pdf	\N
+20	dislipidemia	17_dislipidemiav12.pdf	\N
+21	distonia_e_espasmo_hemifacial	18_distoniasespasmohemifacial_v3.pdf	\N
+22	disturbio_mineral_osseo_na_doenca_renal	79_disturbio_mineral_osseo_doenca_renal_v2.pdf	\N
+24	doenca_de_chron	20_doencadecrohnv9.pdf	\N
+25	doenca_de_gaucher	21_doencadegaucherv11.pdf	\N
+26	doenca_falciforme	25_doencafalciformev8.pdf	\N
+27	doenca_de_paget	22_doencapaget_v3.pdf	\N
+29	doenca_de_wilson	24_doencawilson_v3.pdf	\N
+31	dpoc	27_dpoc_v3.pdf	\N
+32	endometriose	28_endometriose_v5.pdf	\N
+34	esclerose_lateral_amiotrofica	30_escleroselateralamiotrofica_v6.pdf	\N
+36	esclerose_sistemica	32_esclerosesistemica_v4.pdf	\N
+37	espasticidade	33_espasticidade_v2.pdf	\N
+38	espondilite_ancilosante	34_espondiliteancilosante_v16.pdf	\N
+39	esquizofrenia	35_esquizofreniav7.pdf	\N
+40	fenilcetonuria	36_fenilcetonuria_v4.pdf	\N
+41	fibrose_cistica___insuficiencia_pancreatica	37_fibrose_cistica-insuficienciapancreatica_v4.pdf	\N
+42	fibrose_cistica___manifestacões_pulmonares	38_fibrose_cistica-manifestacoespulmonares_v2.pdf	\N
+43	hemangioma_infantil	40_hemangiomainfantil_v3_2.pdf	\N
+44	hepatite_viral_b_e_coinfeccões	42_hepatite_viral_b_coinfeccoes_v7_2.pdf	\N
+45	hepatite_viral_c_e_coinfeccões	43_hepatite_viral_c_coinfeccoes_v21.pdf	\N
+46	hepatite_autoimune	41_hepatiteautoimune_v4.pdf	\N
+47	hiperplasia_adrenal_congenita	45_hiperpadrecong_v3_3.pdf	\N
+48	hiperprolactinemia	46_hiperprolactinemia_v5.pdf	\N
+49	hipertensao_arterial_pulmonar	47_hipertensaoarterialpulmonar_v3.pdf	\N
+50	hipoparatiroidismo	48_hipoparatireoidismo_v3.pdf	\N
+51	ictioses_hereditarias	49_ictioseshereditarias_v6.pdf	\N
+52	imunodeficiencia_primaria_com_predominância_de_defeitos_de_anticorpos	50_imunodprimpreddefant_v1_2.pdf	\N
+53	imunosupressao_no_transplante_hepatico_em_pediatria	51_imuntransphepped_v6_2.pdf	\N
+54	imunossupressao_no_transplante_renal	52_imuntransprrenal_v3.pdf	\N
+55	insuficiencia_adrenal_primaria___doenca_de_addison	53_insadrenprimaria_v3.pdf	\N
+56	insuficiencia_pancreatica_exocrina	54_inspacexoc_v4.pdf	\N
+57	leiomioma_de_útero	55_leiomiomautero_v4.pdf	\N
+58	lupus_eritematoso_sistemico	56_lupuseritsist_v4.pdf	\N
+59	miastenia_gravis	57_miasteniagravis_v5_2.pdf	\N
+60	mucopolissacaridose_tipo_i	80_mucopolissacaridose_tipoi_v1.pdf	\N
+61	mucopolissacaridose_tipo_ii	272_mucopolissacaridose_tipoii_v2.pdf	\N
+62	colangite_biliar_primaria	277-colangitebiliarprimaria-v1.pdf	\N
+63	osteoporose	59_osteoporose_v4.pdf	\N
+64	polineuropatia_amiloidotica_familiar	273_polineuropatiaamfam_v3.pdf	\N
+65	profilaxia_da_reinfecao_do_virus_da_hepatite_b_pos_transplante_hepatico	60_profilaxiavirushepbptransphep_v1_2.pdf	\N
+66	psoriase	61_psoriase_v9.pdf	\N
+67	puberdade_precoce	62_puberdade_precoce_central_v7.pdf	\N
+68	purpura_trombocitopenica_idiopatica	63_purpuratrombidiop_v6.pdf	\N
+69	raquitismo_e_osteomalacia	64_raquitismoosteomalacia_v4_2.pdf	\N
+70	retocolite_ulcerativa	65_retocoliteulcerativa_v2.pdf	\N
+71	sindrome_coronariana_aguda	66_sindcoronaguda_v1_2.pdf	\N
+72	sindrome_nefrotica_primaria_em_adultos	70_sindnefprimaadultos_v2.pdf	\N
+73	sindrome_nefrotica_primaria_em_criancas_e_adolescentes	71_sindnefprimacrianadol_v3.pdf	\N
+74	sindrome_de_ovarios_policisticos_e_hirsutismo/acne	68_sindovpolichirs_v3.pdf	\N
+75	sindrome_de_guillain_barre	67_sindromeguillain-barre_v4_2.pdf	\N
+76	sindrome_de_turner	69_sindrometurner_v5.pdf	\N
+77	sobrecarga_de_ferro	72_sobrecarga_ferro_v3_2.pdf	\N
+78	imunossupressao_no_transplante_hepatico_em_adultos	78_transplante_hep_adultos_2.pdf	\N
+79	transtorno_afetivo_bipolar	75_transtornoafetivobipolar_v2.pdf	\N
+80	transtorno_esquizoafetivo	73_transtornoesquizoafetivov6.pdf	\N
+81	uveites_nao_infecciosas	74_uveitesnaoinfecciosas_v6.pdf	\N
+23	alzheimer	19_doencadealzheimerv10.pdf	{"null": "null"}
+30	dor_cronica	26_dorcronica_v5.pdf	{"null": "null"}
+33	epilepsia	29_epilepsia_v5.pdf	{"1_vez": {"relatorio": "O paciente apresenta epilepsia caracterizada por crises tônico-clônico generalizadas com risco de recorrência superior a 60%. Eletroencefalograma demonstra grafoelementos patológicos."}}
+28	doenca_de_parkinson	23_doencaparkinson_v7.pdf	{"1_vez": {"relatorio": "O paciente apresenta anosmia, bradicinesia, rigidez plástica e comprometimento da destreza progressivo em membro superior direito que dificulta a realização de atividades cotidianas. Estes sintomas e sinais definem o diagnóstico clínico de Doença de Parkinson (CID 10 G20)."}}
+7	anemia_em_pacientes_com_insuficiencia_renal_cronica___reposicao_de_ferro	6_anemiapacientesinsrencr_-_repferro_v5.pdf	{"null": "null"}
 \.
 
 
@@ -2480,6 +2555,14 @@ COPY public.processos_protocolo_medicamentos (id, protocolo_id, medicamento_id) 
 2086	33	316
 2095	39	118
 2102	39	119
+2109	6	36
+2110	6	37
+2111	6	38
+2112	6	39
+2113	6	40
+2114	6	41
+2115	6	42
+2116	6	43
 \.
 
 
@@ -2488,8 +2571,8 @@ COPY public.processos_protocolo_medicamentos (id, protocolo_id, medicamento_id) 
 --
 
 COPY public.usuarios_usuario (id, password, last_login, is_superuser, email, is_staff, is_active, date_joined, is_medico, is_clinica) FROM stdin;
-2	pbkdf2_sha256$180000$scT6fp64hJCM$BtlkubHC0/35FYW++cfb+z4JATyGizq2rnRCOEUPBKw=	2020-02-29 02:23:09.992618+00	t	admin@autocusto.com.br	t	t	2020-02-29 02:22:57.163542+00	f	f
-1	pbkdf2_sha256$180000$eKm5J9yolztg$9msGvNKAc4F/rzORQ6SMmx7ER9xnG1F+a+itRsazxHI=	2020-02-29 02:29:42.621013+00	f	lcsavb@gmail.com	f	t	2020-02-29 00:23:49.942238+00	t	f
+2	pbkdf2_sha256$180000$scT6fp64hJCM$BtlkubHC0/35FYW++cfb+z4JATyGizq2rnRCOEUPBKw=	2020-02-29 13:27:30.164191+00	t	admin@autocusto.com.br	t	t	2020-02-29 02:22:57.163542+00	f	f
+1	pbkdf2_sha256$180000$eKm5J9yolztg$9msGvNKAc4F/rzORQ6SMmx7ER9xnG1F+a+itRsazxHI=	2020-03-02 18:54:57.209475+00	f	lcsavb@gmail.com	f	t	2020-02-29 00:23:49.942238+00	t	f
 \.
 
 
@@ -2555,7 +2638,7 @@ SELECT pg_catalog.setval('public.clinicas_emissor_id_seq', 1, true);
 -- Name: django_admin_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.django_admin_log_id_seq', 7, true);
+SELECT pg_catalog.setval('public.django_admin_log_id_seq', 23, true);
 
 
 --
@@ -2590,14 +2673,14 @@ SELECT pg_catalog.setval('public.medicos_medicousuario_id_seq', 1, true);
 -- Name: pacientes_paciente_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.pacientes_paciente_id_seq', 2, true);
+SELECT pg_catalog.setval('public.pacientes_paciente_id_seq', 3, true);
 
 
 --
 -- Name: pacientes_paciente_usuarios_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.pacientes_paciente_usuarios_id_seq', 6, true);
+SELECT pg_catalog.setval('public.pacientes_paciente_usuarios_id_seq', 34, true);
 
 
 --
@@ -2618,14 +2701,14 @@ SELECT pg_catalog.setval('public.processos_medicamento_id_seq', 318, true);
 -- Name: processos_processo_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_processo_id_seq', 6, true);
+SELECT pg_catalog.setval('public.processos_processo_id_seq', 34, true);
 
 
 --
 -- Name: processos_processo_medicamentos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_processo_medicamentos_id_seq', 1, true);
+SELECT pg_catalog.setval('public.processos_processo_medicamentos_id_seq', 39, true);
 
 
 --
@@ -2639,7 +2722,7 @@ SELECT pg_catalog.setval('public.processos_protocolo_id_seq', 81, true);
 -- Name: processos_protocolo_medicamentos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lucas
 --
 
-SELECT pg_catalog.setval('public.processos_protocolo_medicamentos_id_seq', 2108, true);
+SELECT pg_catalog.setval('public.processos_protocolo_medicamentos_id_seq', 2116, true);
 
 
 --

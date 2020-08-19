@@ -85,7 +85,11 @@ def edicao(request):
             formulario.save(usuario, medico, processo_id, meds_ids)
 
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
-            return redirect(path_pdf_final)
+
+            request.session['path_pdf_final'] = path_pdf_final
+            request.session['processo_id'] = processo_id
+            
+            return redirect('processos-pdf')
 
     else:
         dados_iniciais = cria_dict_renovação(processo)
@@ -163,10 +167,13 @@ def cadastro(request):
             dados_formulario, meds_ids = gera_med_dosagem(dados_formulario,ids_med_cadastrados)
             dados = vincula_dados_emissor(usuario,medico,clinica,dados_formulario)
             dados_condicionais = {}
-            formulario.save(usuario, medico, meds_ids)
+            processo_id = formulario.save(usuario, medico, meds_ids)
             path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
 
-            return redirect(path_pdf_final)
+            request.session['path_pdf_final'] = path_pdf_final
+            request.session['processo_id'] = processo_id
+            
+            return redirect('processos-pdf')
     else:
         if not usuario.clinicas.exists():
             return redirect('clinicas-cadastro')
@@ -210,4 +217,9 @@ def cadastro(request):
 
         return render(request, 'processos/cadastro.html', contexto)  
 
-
+@login_required
+def pdf(request):
+    if request.method == 'GET':
+        link_pdf = request.session['path_pdf_final']
+        contexto = {'link_pdf': link_pdf}
+        return render(request,'processos/pdf.html', contexto)

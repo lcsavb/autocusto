@@ -6,23 +6,25 @@
 
 
 {% if user.is_authenticated %}
-<div class="container col-md-12">
-            <div class="card bg-light mb-3" style="max-width: 45%;">
-                <div class="card-header">Adicionar processo</div>
-                <div class="card-body">
+<div class="container d-flex justify-content-center" style="height: 10vh;">
+        <div class="card bg-light mb-3 my-auto" style="max-width: 55vw;">
+            <div class="card-header">Adicionar processo</div>
+            <div class="card-body">
                     <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes'%}">
                         {% csrf_token %}
-                        <div class="form-row">
+                        <div class="form-row ">
                             <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
                             <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
                             <div class="col-sm-3"><br><button class="btn btn-dark" type="submit">Cadastrar</button></div>
-                        </div>
                     </form>
-                    <ul class="list-group" id="resultados"></ul>
-                    <ul class="list-group" id="pacientes"></ul>
-                </div>
             </div>
+            <div>
+                <ul class="list-group resultados" id="resultados"></ul>
+                <ul class="list-group resultados" id="pacientes"></ul>
+            </div>
+        </div>     
 </div>
+    
     {% else %}
     <div class="container card-rounded" style="max-width:500px">
         <h2>Código de convite</h2>
