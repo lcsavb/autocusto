@@ -152,7 +152,7 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
     return dados_formulario
 
 
-def ore_dados_gerador(dados, dados_condicionais):
+def transfere_dados_gerador(dados, dados_condicionais):
     ''' Coleta os dados finais do processo, transfere ao gerador de PDF
     e retorna o PATH final do arquivo gerado '''
     pdf = GeradorPDF(dados,dados_condicionais,settings.PATH_LME_BASE)
