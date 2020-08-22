@@ -153,13 +153,9 @@ def cadastro(request):
     
     if request.method == 'POST':
         formulario = ModeloFormulario(escolhas, medicamentos, request.POST)    
-        print('aqui')
-
-        print(formulario.is_valid())
             
         if formulario.is_valid():   
             dados_formulario = formulario.cleaned_data
-            print(dados_formulario)
             id_clin = dados_formulario['clinicas']
             clinica = medico.clinicas.get(id=id_clin)
 

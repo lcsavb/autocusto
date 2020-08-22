@@ -81,7 +81,7 @@ def formatacao_data(data):
 def ajustar_campo_18(dados_lme):
     if dados_lme['preenchido_por'] != 'medico':
         del dados_lme['cpf_paciente']
-        del dados_lme['etnia']
+        dados_lme['etnia'] = ''
         del dados_lme['telefone1_paciente']
         del dados_lme['telefone2_paciente']
         del dados_lme['email_paciente']

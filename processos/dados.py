@@ -57,6 +57,7 @@ def gera_med_dosagem(dados_formulario,ids_med_formulario):
             meds_ids.append(id_med)
             med = Medicamento.objects.get(id=id_med)
             dados_formulario[f'med{n}'] = f'{med.nome} {med.dosagem} ({med.apres})'
+            print(med.nome)
     return dados_formulario, meds_ids
 
 def listar_med(cid):
@@ -163,7 +164,7 @@ def transfere_dados_gerador(dados, dados_condicionais):
 def gerar_lista_meds_ids(dados):
     n = 1
     lista = []
-    while n <=5:
+    while n <=4:
         try:
             if dados[f'id_med{n}'] != 'nenhum':
                 lista.append(dados[f'id_med{n}'])

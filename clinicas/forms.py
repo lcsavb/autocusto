@@ -12,8 +12,8 @@ class ClinicaFormulario(ModelForm):
         self.helper = FormHelper()
         self.helper.form_id = 'clinica-cadastro'
         self.helper.form_class = 'blueForms'
-        self.helper.form_method = 'post'
-        self.helper.form_action = 'cadastrar_clinica'
+        self.helper.form_method = 'POST'
+        self.helper.form_action = ''
         self.helper.add_input(Submit('submit', 'Cadastrar'))
         self.helper.layout=Layout(
             Row(
