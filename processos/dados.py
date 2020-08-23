@@ -30,20 +30,20 @@ def resgatar_prescricao(dados, processo):
 
 def gerar_prescricao(meds_ids, dados_formulario):
         prescricao = {}
-        n = 0
+        med_prescricao = {}
+        n = 1
         for id in meds_ids:
-            n += 1
-            med_prescricao = {f'id_med{n}': id, 
-                            f'med{n}_posologia_mes1': dados_formulario[f'med{n}_posologia_mes1'],
-                            f'med{n}_posologia_mes2': dados_formulario[f'med{n}_posologia_mes2'],
-                            f'med{n}_posologia_mes3': dados_formulario[f'med{n}_posologia_mes3'],
-                            f'qtd_med{n}_mes1': dados_formulario[f'qtd_med{n}_mes1'],
-                            f'qtd_med{n}_mes2': dados_formulario[f'qtd_med{n}_mes2'],
-                            f'qtd_med{n}_mes3': dados_formulario[f'qtd_med{n}_mes3']
-                            }
+            m = 1
+            med_prescricao[f'id_med{n}'] = id
+            while m <= 6:
+                med_prescricao[f'med{n}_posologia_mes{m}'] = dados_formulario[f'med{n}_posologia_mes{m}']
+                med_prescricao[f'qtd_med{n}_mes{m}'] = dados_formulario[f'qtd_med{n}_mes{m}']
+                m += 1
             if n == 1:
                 med_prescricao['med1_via'] = dados_formulario['med1_via']
             prescricao[n] = med_prescricao
+            med_prescricao = {}
+            n += 1
         return prescricao
 
 def gera_med_dosagem(dados_formulario,ids_med_formulario):
@@ -57,7 +57,6 @@ def gera_med_dosagem(dados_formulario,ids_med_formulario):
             meds_ids.append(id_med)
             med = Medicamento.objects.get(id=id_med)
             dados_formulario[f'med{n}'] = f'{med.nome} {med.dosagem} ({med.apres})'
-            print(med.nome)
     return dados_formulario, meds_ids
 
 def listar_med(cid):
@@ -128,6 +127,9 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     dados['data_1'] = datetime.strptime(primeira_data, '%d/%m/%Y')
     dados['cid'] = processo.doenca.cid
     dados['diagnostico'] = processo.doenca.nome
+    dados['consentimento'] = False
+    dados['relatorio'] = False
+    dados['exames'] = False
     resgatar_prescricao(dados,processo)
     meds_ids = gerar_lista_meds_ids(dados)
     dados = gera_med_dosagem(dados,meds_ids)[0]
@@ -153,10 +155,10 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
     return dados_formulario
 
 
-def transfere_dados_gerador(dados, dados_condicionais):
+def transfere_dados_gerador(dados):
     ''' Coleta os dados finais do processo, transfere ao gerador de PDF
     e retorna o PATH final do arquivo gerado '''
-    pdf = GeradorPDF(dados,dados_condicionais,settings.PATH_LME_BASE)
+    pdf = GeradorPDF(dados,settings.PATH_LME_BASE)
     dados_pdf = pdf.generico(dados,settings.PATH_LME_BASE)
     path_pdf_final = dados_pdf[1] # a segunda variável que a função retorna é o path
     return path_pdf_final
@@ -408,5 +410,3 @@ def gerar_link_protocolo(cid):
 #     'eva': '5', ## de 4 a 10
 #     'lanns_escore': '24' ## depois completar com as categorias individuais
 # }
-
-

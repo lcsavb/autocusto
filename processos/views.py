@@ -79,12 +79,9 @@ def edicao(request):
             # Registra os dados do médico logado e da clínica associada
             dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
 
-            # Jeitinho, ainda não existem dados condicionais
-            dados_condicionais = {}
-
             formulario.save(usuario, medico, processo_id, meds_ids)
 
-            path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
+            path_pdf_final = transfere_dados_gerador(dados)
 
             request.session['path_pdf_final'] = path_pdf_final
             request.session['processo_id'] = processo_id
@@ -129,13 +126,13 @@ def renovacao_rapida(request):
 
         try:
             if request.POST['edicao'] == 'on':
-                request.session['processo_id'] = processo_id
-                request.session['data1'] = nova_data
-                return redirect('processos-edicao')
-        except:        
+                    request.session['processo_id'] = processo_id
+                    request.session['cid'] = Processo.objects.get(id=processo_id).doenca.cid
+                    request.session['data1'] = nova_data
+                    return redirect('processos-edicao')
+        except:      
             dados = gerar_dados_renovacao(nova_data,processo_id)
-            dados_condicionais = {}
-            path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
+            path_pdf_final = transfere_dados_gerador(dados)
             return redirect(path_pdf_final)
         
 
@@ -162,9 +159,8 @@ def cadastro(request):
             ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
             dados_formulario, meds_ids = gera_med_dosagem(dados_formulario,ids_med_cadastrados)
             dados = vincula_dados_emissor(usuario,medico,clinica,dados_formulario)
-            dados_condicionais = {}
             processo_id = formulario.save(usuario, medico, meds_ids)
-            path_pdf_final = transfere_dados_gerador(dados,dados_condicionais)
+            path_pdf_final = transfere_dados_gerador(dados)
 
             request.session['path_pdf_final'] = path_pdf_final
             request.session['processo_id'] = processo_id

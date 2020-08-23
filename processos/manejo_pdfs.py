@@ -8,14 +8,13 @@ from django.forms.models import model_to_dict
 from datetime import datetime, timedelta
 from pacientes.models import Paciente
 from medicos.models import Medico
-from processos.models import Processo, Protocolo
+from processos.models import Processo, Protocolo, Medicamento
 
 
 def preencher_formularios(lista_pdfs,dados_finais):
     '''Preenche os pdfs individualmente e gera os arquivos
     intermediários com nomes aleatórios '''
     arquivos = []
-    print(dados_finais)
     for arquivo in lista_pdfs:
         aleatorio = str(random.randint(0,10000000000)) + dados_finais['cns_medico']
         output_pdf = os.path.join(settings.BASE_DIR, 'static/tmp', '{}.pdf'.format(aleatorio))
@@ -37,13 +36,13 @@ def gerar_pdf_final(arquivos,path_pdf_final):
     return pdf_final
 
 
-def selecionar_med_consentimento(medicamento_1):
-    '''Responsável por definir o medicamento prescrito no
-    check-list do termo de consentimento - isola o nome 
-    do fármaco da dosagem '''
-    med = medicamento_1.split((' '))
-    nome_med = med[0]
-    return nome_med
+# def selecionar_med_consentimento(medicamento_1):
+#     '''Responsável por definir o medicamento prescrito no
+#     check-list do termo de consentimento - isola o nome 
+#     do fármaco da dosagem '''
+#     med = medicamento_1.split((' '))
+#     nome_med = med[0]
+#     return nome_med
 
 
 def adicionar_exames(arquivos_base,dados_finais):
@@ -57,25 +56,16 @@ def adicionar_exames(arquivos_base,dados_finais):
     return arquivos
 
 
-def formatacao_data(data):
+def formatacao_data(dados):
     '''Recebe a data inicial do processo, cria as datas
      subsequentes e formata para o padrão brasileiro'''
-    data2 = (data + timedelta(days=30)).strftime('%d/%m/%Y')
-    data3 = (data + timedelta(days=60)).strftime('%d/%m/%Y')
-    data4 = (data + timedelta(days=90)).strftime('%d/%m/%Y')
-    data5 = (data + timedelta(days=120)).strftime('%d/%m/%Y')
-    data6 = (data + timedelta(days=150)).strftime('%d/%m/%Y')
-    data1 = data.strftime('%d/%m/%Y')
-    datas = [data1, data2, data3, data4, data5, data6]
-    return datas
-
-    # dados = {}
-    # dados.update(dados_medico)
-    # dados.update(dados_paciente)
-    # dados.update(dados_processo)
-    # dados.update(dados_clinica)
-    # dados['data_1'] = datetime.strptime(primeira_data, '%Y-%m-%d')
-    # return dados
+    mes = 2
+    dias = 30
+    while mes <= 6:
+        dados[f'data_{mes}'] = (dados['data_1'] + timedelta(days=dias)).strftime('%d/%m/%Y')
+        dias += 30
+        mes += 1
+    dados['data_1'] = dados['data_1'].strftime('%d/%m/%Y') 
 
 
 def ajustar_campo_18(dados_lme):
@@ -86,15 +76,11 @@ def ajustar_campo_18(dados_lme):
         del dados_lme['telefone2_paciente']
         del dados_lme['email_paciente']
         dados_lme['escolha_documento'] = ''
-    else:
-        pass
-
 
 class GeradorPDF():
 
-    def __init__(self,dados_lme_base,dados_condicionais, path_lme_base):
+    def __init__(self,dados_lme_base, path_lme_base):
         self.dados_lme_base = dados_lme_base
-        self.dados_condicionais = dados_condicionais
         self.path_lme_base = path_lme_base
 
     
@@ -105,16 +91,7 @@ class GeradorPDF():
         primeira_vez = dados_lme_base['consentimento']
         relatorio = dados_lme_base['relatorio']
         exames = dados_lme_base['exames']
-
-        data1 = dados_lme_base['data_1']
-        datas = formatacao_data(data1)
-
-        dados_lme_base['data_1'] = datas[0]
-        dados_lme_base['data_2'] = datas[1]
-        dados_lme_base['data_3'] = datas[2]
-        dados_lme_base['data_4'] = datas[3]
-        dados_lme_base['data_5'] = datas[4]
-        dados_lme_base['data_6'] = datas[5]
+        formatacao_data(dados_lme_base)
 
         arquivos_base = [path_lme_base]
         protocolo = Protocolo.objects.get(doenca__cid=cid)
@@ -129,8 +106,9 @@ class GeradorPDF():
 
         if primeira_vez == 'True':
             try:
+                id_med = dados_lme_base['id_med1']
                 consentimento_pdf = os.path.join(settings.PATH_PDF_DIR, protocolo.nome, 'consentimento.pdf')
-                dados_lme_base['consentimento_medicamento'] = selecionar_med_consentimento(dados_lme_base['med1'])
+                dados_lme_base['consentimento_medicamento'] = Medicamento.objects.get(id=id_med).nome
                 arquivos_base.append(consentimento_pdf)
             except:
                 pass
@@ -151,17 +129,7 @@ class GeradorPDF():
         pdf = gerar_pdf_final(pdfs_intermediarios_preenchidos,output_pdf_final)
         remover_pdfs_intermediarios(pdfs_intermediarios_preenchidos)
 
-        print(dados_lme_base)
-
         return pdf, path_pdf_final
-
-    
-    def emitir_exames(self,dados_lme_base):
-        #Redundância
-        if dados_lme_base['emitir_exames'] == 'sim':
-            return True
-        return False
-
 
 
 

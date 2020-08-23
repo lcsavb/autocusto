@@ -49,7 +49,7 @@ def seletor_campos(protocolo):
                                         ('21','21'),
                                         ('24', '24')])
                     }
-        elif protocolo.nome == 'alzheimer':
+        elif protocolo.nome == 'doenca_de_alzheimer':
             campos = {'opt_ot1': forms.ChoiceField(label='Hora', initial=1,
                                 choices=gerador_escolhas_numericas(0,1)),
                     'opt_ot2': forms.ChoiceField(label='Dia da semana', initial=0,
