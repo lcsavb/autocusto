@@ -1,29 +1,32 @@
 {% extends "base.html" %}
    
 {% block content %}
-<div class="card rounded" style="max-width: 95%; margin: auto; padding: 1rem;">
+<div class="card rounded" style="min-width:700px; max-width: 850px; margin: auto; padding: 0;">
 <h3>Renovação de Processos</h3>
 
-<table class="table table-striped standard">
+<table class="table table-striped standard table-sm">
         <thead>
-            <th scope="col">#</th>
             <th scope="col">Paciente</th>
             <th scope="col">Processos</th>
-            <th scope="col">Renovar com edição?</th>
+            <th scope="col">Editar?</th>
             <th scope="col">Primeira Data</th>
         </thead>
         <tbody>
             {% for paciente in busca_pacientes %}
             
             <tr>
-                <form name="form" method="POST">
+                
+                <td>
+                    <form name="form" method="POST">
                         {% csrf_token %}
-                <th scope="row"></th>
-                <td class="col-md-4">{{ paciente.nome_paciente }}
-                        <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                    <div class="col-12">
+
+                        {{ paciente.nome_paciente }}
+                            <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                    </div>
                 </td>
                 
-                <td class ="col-md-3 align-middle">
+                <td class ="align-middle">
                     <div class="form-group align-middle">
                         <select class="custom-select" name="processo_id">
                             <!-- if processo é do request.user -->
@@ -34,29 +37,27 @@
                             {% endfor %}
                             </select>
                         
-                    </div>
-                    
-                        
+                    </div>   
                 </td>
-                <td class="col-md-2 align-middle"><label class="checkbox-inline"><input type="checkbox" name="edicao"></label></td>
+                
+                <td class="align-middle"><label class="checkbox-inline"><input type="checkbox" name="edicao"></label></td>
 
-                <td class="col-md-3 align-middle"> 
+                <td class="align-middle"> 
                     <div class="input-group mb-3">
-                        
-                        <input type="text" class="form-control datas" name="data_1" placeholder="DD/MM/AAAA">
+                            <input type="text" class="form-control datas" name="data_1" placeholder="DD/MM/AAAA" style="max-width: 130px;">
                         <div class="input-group-append">
-    
                             <button class="btn btn-outline-secondary" type="submit">Renovar <span class="oi oi-reload"></span></button>
                         </div>
                     </div>  
-                </td>
                 </form>
+                </td>
             
                 
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
 </div>
 
 {% endblock content %}
