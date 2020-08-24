@@ -23,7 +23,8 @@ from .dados import (cria_dict_renovação,
                     listar_med, gera_med_dosagem,
                     resgatar_prescricao,
                     gerar_lista_meds_ids,
-                    gerar_link_protocolo)
+                    gerar_link_protocolo
+                    )
 
 @login_required
 def busca_processos(request):
@@ -113,6 +114,7 @@ def renovacao_rapida(request):
     if request.method == 'GET':
         busca = request.GET.get('b')
         usuario = request.user
+        request.session['busca'] = busca
         pacientes_usuario = usuario.pacientes.all()
         busca_pacientes = pacientes_usuario.filter(
             (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca)))
@@ -123,9 +125,9 @@ def renovacao_rapida(request):
     else:
         processo_id = request.POST.get('processo_id')
         nova_data = request.POST.get('data_1')
-
+            
         try:
-            if request.POST['edicao'] == 'on':
+            if request.POST['edicao']:
                     request.session['processo_id'] = processo_id
                     request.session['cid'] = Processo.objects.get(id=processo_id).doenca.cid
                     request.session['data1'] = nova_data

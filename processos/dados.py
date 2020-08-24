@@ -1,7 +1,9 @@
 import os
-from django.conf import settings
-from django.forms.models import model_to_dict
 from django import forms
+from django.conf import settings
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.forms.models import model_to_dict
 from datetime import datetime
 from .manejo_pdfs import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
@@ -297,6 +299,7 @@ def gerar_link_protocolo(cid):
     arquivo = protocolo.arquivo
     link = os.path.join(settings.STATIC_URL, 'protocolos', arquivo)
     return link
+
 
 
 # ############################### Path pdf_final

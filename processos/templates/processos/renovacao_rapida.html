@@ -16,7 +16,7 @@
             {% for paciente in busca_pacientes %}
             
             <tr>
-                <form method="POST">
+                <form name="form" method="POST">
                         {% csrf_token %}
                 <th scope="row"></th>
                 <td class="col-md-4">{{ paciente.nome_paciente }}
@@ -43,7 +43,7 @@
                 <td class="col-md-3 align-middle"> 
                     <div class="input-group mb-3">
                         
-                        <input type="text" class="form-control datas" name="data_1" placeholder="DD/MM/AA">
+                        <input type="text" class="form-control datas" name="data_1" placeholder="DD/MM/AAAA">
                         <div class="input-group-append">
     
                             <button class="btn btn-outline-secondary" type="submit">Renovar <span class="oi oi-reload"></span></button>
@@ -65,6 +65,26 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script>
 $('.datas').mask('00/00/0000');
+</script>
+
+<script>
+(() => {
+    const button = $('.btn');
+    button.click(function(){
+    const dateField = $(event.target).closest('.input-group').find('.datas');
+    let dateFieldVal = dateField.val();
+    let day = dateFieldVal.slice(0,2)
+    let month = dateFieldVal.slice(3,5);
+    let year = dateFieldVal.slice(6,10);
+    const date = new Date(year, (+month-1), day);
+    const isValidDate = (Boolean(+date) && date.getDate() == day && date.getMonth() == month -1 && date.getFullYear() == year);  
+    if (!isValidDate) {
+        event.preventDefault();
+        alert('Data inválida!')
+    };
+    });
+})();
+
 </script>
 {% endblock scripts%}
 
