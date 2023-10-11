@@ -16,17 +16,19 @@ A nationwide directive regulates prescription dispensing, requiring:
     - "Laudo de medicamento especializado da farmácia de alto custo" (LME - Specialized Medication Report from High-Cost Pharmacy) plus six prescriptions.
     - A consent form for new prescriptions.
   
-- Additional documents, depending on the diagnosis, may include:
+- Conditional documents, depending on the diagnosis, may include:
     - Scales (such as Mini-mental and CDR for Alzheimer's, Pain score for Chronic Pain, etc.)
     - A Medical Report
     - A series of serologic or radiologic tests.
+ 
 
 ## Challenges
 
 - Some processes necessitate over 15 manually filled paper sheets.
 - Public system doctors often treat more than four patients per hour, frequently without access to a printer in the room.
 - Minor errors, like misrecording an ICD number (e.g., G40 instead of G40.0), often result in medication release refusal. Consequently, patients must schedule a new appointment, and all forms must be completed anew.
+- A great deal of these conditional forms has no clinical significance at all and constitutes more 'opportunities' for silly mistakes to be made.
 
 ## The Project
 
-AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was conceived to address these issues. It aims to minimize mistakes, rework, and patient inconvenience. A doctor's primary focus should be patient care, not navigating through unnecessary bureaucracy. I have personally utilized this software for the past three years with over 400 unique patients, with a current specialization in Neurologic Diseases.
+AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was conceived to address these issues. It aims to minimize mistakes, rework, and patient inconvenience. A doctor's primary focus should be patient care, not navigating through unnecessary bureaucracy. I have personally utilized this software for the past three years with over 400 unique patients. At the moment, the algorithm if fine-grained to Neurologic Disorders.
