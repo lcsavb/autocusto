@@ -33,7 +33,7 @@ A nationwide directive regulates prescription dispensing, requiring the followin
 
 AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was conceived to address these issues. It aims to minimize mistakes, rework, and patient inconvenience. A doctor's primary focus should be patient care, not navigating through unnecessary bureaucracy. I have personally utilized this software for the past three years with over 400 unique patients. At the moment, the algorithm is fine-grained to Neurologic Disorders.
 
-## How to
+## How to start the development server
 
 1. Clone the repository
 2. Build the containers
