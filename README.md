@@ -33,4 +33,19 @@ A nationwide directive regulates prescription dispensing, requiring the followin
 
 AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was conceived to address these issues. It aims to minimize mistakes, rework, and patient inconvenience. A doctor's primary focus should be patient care, not navigating through unnecessary bureaucracy. I have personally utilized this software for the past three years with over 400 unique patients. At the moment, the algorithm is fine-grained to Neurologic Disorders.
 
+## How to
+
+1. Clone the repository
+2. Build the containers
+    ``` sudo docker-compose up ```
+3. Access the web-dev container shell
+   ``` sudo docker exec -it [container] /bin/bash ```
+4. Inside the container shell run
+   ``` python3 manage.py migrate ```
+5. Access the Django shell
+   ``` python3 manage.py shell ```
+6. Inside the django shell, run the following orders of commands to populate the database
+    ``` from processos.db import doencas, medicamentos, protocolos, normatizacao, med_protocolos ```
+7. Access via web-browser the address 0.0.0.0:8000. The initial password ("código de convite") is cgrlmeplus
+   
 [^1] https://www.gov.br/saude/pt-br/assuntos/noticias/2021/setembro/maior-sistema-publico-de-saude-do-mundo-sus-completa-31-anos
