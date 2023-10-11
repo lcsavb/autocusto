@@ -10,7 +10,7 @@ As of October 2023, the Brazilian minimum wage is R$ 1,320 (~250 euros). Thus, c
 
 ## Bureaucracy
 
-A nationwide directive regulates prescription dispensing, requiring:
+A nationwide directive regulates prescription dispensing, requiring the following *printed* documents:
 
 - For each medication:
     - "Laudo de medicamento especializado da farmácia de alto custo" (LME - Specialized Medication Report from High-Cost Pharmacy) plus six dated prescriptions;
