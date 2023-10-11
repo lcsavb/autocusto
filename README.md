@@ -2,7 +2,7 @@
 
 ## Background
 
-The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a public, universal health insurance initiative established by the 1988 constitution. It is the only public health care system in the world which offers care for more than 190 million people[^1].
+The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a universal health insurance established by the Brazilian 1988 Constitution. It is the only public health care system in the world which offers insurance for more than 190 million people[^1].
 
 Among its programs is the "High Cost Pharmacies," a service providing specialized medications for a wide range of chronic diseases. This service is utilized even by patients with private health insurance, as many of the substances provided are not covered by private policies.
 
