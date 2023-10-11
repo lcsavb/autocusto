@@ -45,7 +45,7 @@ AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was 
    ``` python3 manage.py migrate ```
 6. Access the Django shell
    ``` python3 manage.py shell ```
-7. Inside the django shell, run the following orders of commands to populate the database
+7. Inside the django shell, run the following command to populate the database
     ``` from processos.db import doencas, medicamentos, protocolos, normatizacao, med_protocolos ```
 8. Access via web-browser the address 0.0.0.0:8000. The initial password ("código de convite") is cgrlmeplus
    
