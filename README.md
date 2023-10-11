@@ -27,7 +27,7 @@ A nationwide directive regulates prescription dispensing, requiring the followin
 - Some processes necessitate over 15 manually filled paper sheets;
 - Public system doctors often treat more than four patients per hour, frequently without access to a printer;
 - Minor errors, like misrecording an ICD number (e.g., G40 instead of G40.0), often result in medication release refusal. Consequently, patients must schedule a new appointment, and all forms must be completed anew;
-- A great deal of these conditional forms has no clinical significance at all and constitutes more 'opportunities' for silly mistakes to be made;
+- A great deal of these conditional forms has no clinical significance at all and constitutes more 'opportunities' for silly mistakes to be made.
 
 ## The Project
 
