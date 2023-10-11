@@ -19,7 +19,7 @@ A nationwide directive regulates prescription dispensing, requiring the followin
 - Conditional documents, depending on the diagnosis, may include:
     - Scales (such as Mini-mental and CDR for Alzheimer's, Pain score for Chronic Pain, etc.);
     - A Medical Report;
-    - A series of serologic or radiologic tests.
+    - Serologic and/or radiologic tests requests.
  
 
 ## Challenges
