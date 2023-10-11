@@ -39,13 +39,14 @@ AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was 
 2. Build the containers
     ``` sudo docker-compose up ```
 3. Access the web-dev container shell
-   ``` sudo docker exec -it [container] /bin/bash ```
-4. Inside the container shell run
+   ``` sudo docker exec -it [web-dev container id*] /bin/bash ```
+   * ```sudo docker ps``` to find the container id
+5. Inside the container shell run
    ``` python3 manage.py migrate ```
-5. Access the Django shell
+6. Access the Django shell
    ``` python3 manage.py shell ```
-6. Inside the django shell, run the following orders of commands to populate the database
+7. Inside the django shell, run the following orders of commands to populate the database
     ``` from processos.db import doencas, medicamentos, protocolos, normatizacao, med_protocolos ```
-7. Access via web-browser the address 0.0.0.0:8000. The initial password ("código de convite") is cgrlmeplus
+8. Access via web-browser the address 0.0.0.0:8000. The initial password ("código de convite") is cgrlmeplus
    
 [^1] https://www.gov.br/saude/pt-br/assuntos/noticias/2021/setembro/maior-sistema-publico-de-saude-do-mundo-sus-completa-31-anos
