@@ -2,7 +2,7 @@
 
 ## Background
 
-The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a public, universal health insurance initiative established by the 1988 constitution. It offers direct medical care to over 100 million people within the Brazilian population.
+The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a public, universal health insurance initiative established by the 1988 constitution. It is the only public health care system in the world which offers care for more than 190 million people[^1].
 
 Among its programs is the "High Cost Pharmacies," a service providing specialized medications for a wide range of chronic diseases. This service is utilized even by patients with private health insurance, as many of the substances provided are not covered by private policies.
 
@@ -32,3 +32,5 @@ A nationwide directive regulates prescription dispensing, requiring the followin
 ## The Project
 
 AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was conceived to address these issues. It aims to minimize mistakes, rework, and patient inconvenience. A doctor's primary focus should be patient care, not navigating through unnecessary bureaucracy. I have personally utilized this software for the past three years with over 400 unique patients. At the moment, the algorithm if fine-grained to Neurologic Disorders.
+
+[^1] https://www.gov.br/saude/pt-br/assuntos/noticias/2021/setembro/maior-sistema-publico-de-saude-do-mundo-sus-completa-31-anos
