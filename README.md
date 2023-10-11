@@ -6,7 +6,7 @@ The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a unive
 
 Among its programs is the "High Cost Pharmacies," a service providing specialized medications for a wide range of chronic diseases. This service is utilized even by patients with private health insurance, as many of the substances provided are not covered by private policies.
 
-As of October 2023, the Brazilian minimum wage is R$ 1,320 (~250 euros). Thus, commonly used medications for prevalent conditions like Diabetes or Dyslipidemia can consume over 15% of a person's monthly income, rendering the treatment unaffordable without this assistance. Moreover, the program is also responsible for the dispensation of immunobiologics, oncological treatments, and drugs for rare diseases, which can cost thousands of dollars per month.
+As of October 2023, the Brazilian minimum wage is R$ 1,320 (~ € 250). Thus, commonly used medications for prevalent conditions like Diabetes or Dyslipidemia can consume over 15% of a person's monthly income, rendering the treatment unaffordable without this assistance. Moreover, the program is also responsible for the dispensation of immunobiologics, oncological treatments, and drugs for rare diseases, which can cost thousands of euros per month.
 
 ## Bureaucracy
 
