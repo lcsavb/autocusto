@@ -1,32 +1,33 @@
 # AutoCusto
 
-## Backdrop
+## Background
 
-The Unified Health System (Sistema Único de Saúde) is the public and universal Brazilian health insurance created by the 1988 constitution. It provides direct medical care for over 100 million people of the Brazilian population.
+The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a public, universal Brazilian health insurance initiative established by the 1988 constitution. It offers direct medical care to over 100 million people within the Brazilian population.
 
-One of its programs is the "High Cost Pharmacies," which provide specialized medications to a multitude of chronic diseases. Even patients with private health insurance utilize this service, as many of the substances provided aren't covered by their private counterparts.
+Among its programs is the "High Cost Pharmacies," a service providing specialized medications for a wide range of chronic diseases. This service is utilized even by patients with private health insurance, as many of the substances provided are not covered by private policies.
 
-As of this writing (October 2023), the Brazilian minimum wage is R$ 1,320 (~250 euros). Commonly used medications for Diabetes or Dyslipidemia (both of which have a high prevalence rate amongst the population), for example, can be over 15% of a person's monthly income, making the payment for the treatment otherwise impossible.
+As of October 2023, the Brazilian minimum wage is R$ 1,320 (~250 euros). Thus, commonly used medications for prevalent conditions like Diabetes or Dyslipidemia can consume over 15% of a person's monthly income, rendering the treatment unaffordable without this assistance.
 
 ## Bureaucracy
 
-There is a nationwide directive, which regulates the dispensing of the prescription.
+A nationwide directive regulates prescription dispensing, requiring:
 
-- For every medication, the following is required:
-    - Laudo de medicamento especializado da farmácia de alto custo (LME) + six prescriptions.
-    - If it is a new prescription, the consent form is also needed.
+- For each medication:
+    - "Laudo de medicamento especializado da farmácia de alto custo" (LME - Specialized Medication Report from High-Cost Pharmacy) plus six prescriptions.
+    - A consent form for new prescriptions.
   
-- Conditional documents depending on the diagnosis:
-    - Scales (Mini-mental and CDR for Alzheimer's, Pain score for Chronic Pain, and so on...)
-    - Medical Report
-    - A battery of serologic or radiologic tests.
+- Additional documents, depending on the diagnosis, may include:
+    - Scales (such as Mini-mental and CDR for Alzheimer's, Pain score for Chronic Pain, etc.)
+    - A Medical Report
+    - A series of serologic or radiologic tests.
 
-## Problems
+## Challenges
 
-- Some processes require more than 15 sheets of paper to be filled manually.
-- Doctors in the public health system usually care for more than 4 patients an hour, and it's rare for the room to have a printer.
-- Even small mistakes, like forgetting an ICD number (G40 instead of G40.0), commonly lead to the refusal of the liberation of the medication, necessitating the patient to make a new appointment and all the forms have to be filled out all over again from scratch.
+- Some processes necessitate over 15 manually filled paper sheets.
+- Public system doctors often treat more than four patients per hour, frequently without access to a printer in the room.
+- Minor errors, like misrecording an ICD number (e.g., G40 instead of G40.0), often result in medication release refusal. Consequently, patients must schedule a new appointment, and all forms must be completed anew.
 
 ## The Project
 
-AutoCusto, a pun in Portuguese between "Alto" (High) and "Auto" (Automatic), was born to solve this issue. With the aim of diminishing silly mistakes, rework, and hassles for the patient. The main concern of a doctor should be caring for patients, not being drowned in needless bureaucracy. I've personally used this software for the past 3 years with over 400 unique patients. Currently, it is fine-tuned to Neurologic Diseases, as that is my specialty.
+AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was conceived to address these issues. It aims to minimize mistakes, rework, and patient inconvenience. A doctor's primary focus should be patient care, not navigating through unnecessary bureaucracy. I have personally utilized this software for the past three years with over 400 unique patients, with a current specialization in Neurologic Diseases.
+
