@@ -22,7 +22,7 @@ SECRET_KEY = '4(=4rbnajm+=ce3)99i9r8t3jqucv@hc(a&pum25qnc)ff@51x'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'autocusto.com.br', 'www.autocusto.com.br']
+ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'autocusto.com.br', 'www.autocusto.com.br']
 
 # SERVER CHOICE
 
