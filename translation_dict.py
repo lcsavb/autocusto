@@ -1,3 +1,5 @@
+''' Translation dictionary '''
+
 translation_dict = {
     'acne': 'acne',
     'aleatorio': 'random',
