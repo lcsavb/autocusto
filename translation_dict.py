@@ -1,7 +1,11 @@
-''' Translation dictionary '''
+import os
 
-translation_dict = {
-    'acne': 'acne',
+
+# Dictionary with the translations.
+# format: {"current_name": "new_name"}
+
+translations = {
+       'acne': 'acne',
     'aleatorio': 'random',
     'altura': 'height',
     'alzheimer_medicamentos': 'alzheimer_medications',
@@ -13,7 +17,6 @@ translation_dict = {
     'anemia_mielodisplasia': 'displasic_anemia',
     'angioedema': 'angioedema',
     'aplasia': 'aplasia',
-    'APPLICATION': 'application',
     'apres': 'drug_formulation',
     'arquivo_exame': 'exam_solicitation_file',
     'arquivo': 'file',
@@ -257,5 +260,28 @@ translation_dict = {
     'tratou': 'treated',
     'url_base': 'base_url',
     'user': 'user',
-    'usuarios': 'users',
-} 
+    'usuarios': 'users'
+}
+
+# Path to your project folder
+project_path = "/home/dev/autocusto"
+
+# File extensions to be modified
+extensions = [".py", ".html"]
+
+# Iterate over the project folder and its subfolders
+for subdir, _, files in os.walk(project_path):
+    for file in files:
+        # Check if the file has the desired extension
+        if any(file.endswith(ext) for ext in extensions):
+            file_path = os.path.join(subdir, file)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Replace variables in the content
+            for portuguese, english in translations.items():
+                content = content.replace(portuguese, english)
+            
+            # Overwrite the file with the new content
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
