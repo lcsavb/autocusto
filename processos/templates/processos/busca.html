@@ -3,16 +3,16 @@
 {% block content %}
 
 <ul>
-    {% for paciente in pacientes_usuario %}
+    {% for patient in patients_usuario %}
         <li> 
-            {{ paciente }} 
+            {{ patient }} 
             <ul>
-                {% for processo in paciente.processos.all %}
-                {% if processo.usuario == usuario %}
-                <li>{{ processo }}
+                {% for process in patient.processs.all %}
+                {% if process.usuario == usuario %}
+                <li>{{ process }}
                 <form method="POST" class="form-inline my-2 my-lg-0">
                     {% csrf_token %}
-                    <input type="hidden" name="processo_id" class="form-control mr-sm-2" type="text" value="{{ processo.id }}">
+                    <input type="hidden" name="process_id" class="form-control mr-sm-2" type="text" value="{{ process.id }}">
                     <button class="btn btn-outline-success" type="submit">Editar</button>
                 </form>
                 </li>

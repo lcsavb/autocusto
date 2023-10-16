@@ -12,7 +12,7 @@
             <th scope="col">Primeira Data</th>
         </thead>
         <tbody>
-            {% for paciente in busca_pacientes %}
+            {% for patient in search_patients %}
             
             <tr>
                 
@@ -21,18 +21,18 @@
                         {% csrf_token %}
                     <div class="col-12">
 
-                        {{ paciente.nome_paciente }}
-                            <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                        {{ patient.patient_name }}
+                            <input type="hidden" name="patient_id" value="{{ patient.id }}">
                     </div>
                 </td>
                 
                 <td class ="align-middle">
                     <div class="form-group align-middle">
-                        <select class="custom-select" name="processo_id">
-                            <!-- if processo é do request.user -->
-                            {% for processo in paciente.processos.all %}
-                            {% if processo.usuario == usuario %}
-                            <option value="{{ processo.id }}">{{ processo }}</option>
+                        <select class="custom-select" name="process_id">
+                            <!-- if process é do request.user -->
+                            {% for process in patient.processs.all %}
+                            {% if process.usuario == usuario %}
+                            <option value="{{ process.id }}">{{ process }}</option>
                             {% endif %}
                             {% endfor %}
                             </select>

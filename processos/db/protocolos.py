@@ -1,30 +1,29 @@
+
 from django.db import transaction
 from django.conf import settings
 import json
 import glob
 from processos.models import Protocolo, Doenca
 import os
-
 base_dir = os.path.join(settings.BASE_DIR, 'processos/db')
 
 @transaction.atomic
 def salvar_protocolos():
     os.chdir(base_dir)
-    with open('protocolos.json', 'r') as protocolos:
-        dados = json.load(protocolos)
-        for chave in dados.keys():
-            nome_protocolo = chave
-            cids_protocolo = dados[chave]['cids']
-            arquivo = dados[chave]['arquivo']
-            protocolo = Protocolo(nome=nome_protocolo,arquivo=arquivo)
-            print(protocolo)
-            protocolo.save()
+    with open('protocolos.json', 'r') as protocols:
+        data = json.load(protocols)
+        for chave in data.keys():
+            protocol_name = chave
+            icds_protocol = data[chave]['cids']
+            file = data[chave]['arquivo']
+            protocol = Protocolo(nome=protocol_name, arquivo=file)
+            print(protocol)
+            protocol.save()
             print('salvou')
-            for cid in cids_protocolo:
-                doencas = Doenca.objects.filter(cid=cid)
-                if doencas:
-                    for doenca in doencas:
-                        doenca.protocolo = protocolo
-                        doenca.save()
-
+            for icd in icds_protocol:
+                diseases = Doenca.objects.filter(cid=icd)
+                if diseases:
+                    for disease in diseases:
+                        disease.protocolo = protocol
+                        disease.save()
 salvar_protocolos()

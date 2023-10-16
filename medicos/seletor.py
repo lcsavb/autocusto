@@ -1,3 +1,4 @@
+
 from usuarios.models import Usuario
 
 def medico(usuario_ativo):
@@ -6,4 +7,3 @@ def medico(usuario_ativo):
         return medico
     else:
         pass
-

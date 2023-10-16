@@ -1,56 +1,42 @@
+
 import os
-
 import pypdftk
-
 from paths import PATH_LME_BASE, PATH_EXAMES, PATH_DOR_CONSENTIMENTO, PATH_DOR_ESCALA
 from dados import PATH_PDF_FINAL, dados_dor
 from manejo_pdfs import GeradorPDF, remover_pdfs_intermediarios, preencher_formularios, gerar_pdf_final, selecionar_med_consentimento, adicionar_exames
-
-path_lme_base = PATH_LME_BASE
+lme_base_path = LME_BASE_PATH
 
 class Dor(GeradorPDF):
-    def __init__(self, dados_lme_base,dados_condicionais,path_lme_base):
-        GeradorPDF.__init__(self,dados_lme_base,dados_condicionais,path_lme_base)
-        self.dados_condicionais = dados_condicionais
 
-                 
-    def renovar(self,dados_lme_base,dados_condicionais,path_lme_base):
-        dados_lme_base.update(dados_condicionais)
-        dados_finais = dados_lme_base
-        arquivos_base = [path_lme_base]
-        emitir_exames = dados_finais['exames']
+    def __init__(self, dados_lme_base, dados_condicionais, path_lme_base):
+        GeradorPDF.__init__(self, lme_base_data, conditional_data, lme_base_path)
+        self.dados_condicionais = conditional_data
 
-        arquivos_base = [path_lme_base, PATH_DOR_ESCALA]
-        
-        if emitir_exames:
-            arquivos = adicionar_exames(arquivos_base,dados_finais)
+    def renovar(self, dados_lme_base, dados_condicionais, path_lme_base):
+        lme_base_data.update(conditional_data)
+        final_data = lme_base_data
+        base_files = [lme_base_path]
+        issue_exams = final_data['exames']
+        base_files = [lme_base_path, PAIN_SCALE_PATH]
+        if issue_exams:
+            files = adicionar_exames(base_files, final_data)
         else:
-            arquivos = preencher_formularios(arquivos_base, dados_finais)
-
-        
-        pdf = gerar_pdf_final(arquivos,PATH_PDF_FINAL)          
-
-
-        remover_pdfs_intermediarios(*arquivos)
+            files = preencher_formularios(base_files, final_data)
+        pdf = gerar_pdf_final(files, PATH_PDF_FINAL)
+        remover_pdfs_intermediarios(*files)
         return pdf
 
-
-    def primeira_vez(self,dados_lme_base,dados_condicionais,path_lme_base):
-        dados_lme_base.update(dados_condicionais)
-        dados_finais = dados_lme_base
-        medicamento = dados_finais['med1'].lower()
-        emitir_exames = dados_finais['exames']
-        
-        arquivos_base = [path_lme_base, PATH_DOR_CONSENTIMENTO, PATH_DOR_ESCALA]
-
-        selecionar_med_consentimento(medicamento,dados_finais)
-
-        if emitir_exames:
-            arquivos = adicionar_exames(arquivos_base,dados_finais)
+    def primeira_vez(self, dados_lme_base, dados_condicionais, path_lme_base):
+        lme_base_data.update(conditional_data)
+        final_data = lme_base_data
+        medication = final_data['med1'].lower()
+        issue_exams = final_data['exames']
+        base_files = [lme_base_path, PATH_DOR_CONSENTIMENTO, PAIN_SCALE_PATH]
+        selecionar_med_consentimento(medication, final_data)
+        if issue_exams:
+            files = adicionar_exames(base_files, final_data)
         else:
-            arquivos = preencher_formularios(arquivos_base, dados_finais)
-
-        pdf = gerar_pdf_final(arquivos,PATH_PDF_FINAL)
-        
-        remover_pdfs_intermediarios(*arquivos)
+            files = preencher_formularios(base_files, final_data)
+        pdf = gerar_pdf_final(files, PATH_PDF_FINAL)
+        remover_pdfs_intermediarios(*files)
         return pdf

@@ -8,30 +8,30 @@
 {% if user.is_authenticated %}
 <div class="container d-flex justify-content-center" style="height: 10vh;">
         <div class="card bg-light mb-3 my-auto" style="max-width: 55vw;">
-            <div class="card-header">Adicionar processo</div>
+            <div class="card-header">Adicionar process</div>
             <div class="card-body">
-                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes'%}">
+                    <form method="POST" autocomplete="off" id="js-form" data-search-diseases="{% url 'search-diseases' %}" data-search-patients="{% url 'search-patients'%}">
                         {% csrf_token %}
                         <div class="form-row ">
-                            <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
-                            <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
+                            <div class="col-sm-6"> CPF patient<br>{{ form.patient_cpf|as_crispy_field }} </div>
+                            <div class="col-sm-3"> Doença<br>{{ form.icd|as_crispy_field }} </div>
                             <div class="col-sm-3"><br><button class="btn btn-dark" type="submit">Cadastrar</button></div>
                     </form>
             </div>
             <div>
                 <ul class="list-group resultados" id="resultados"></ul>
-                <ul class="list-group resultados" id="pacientes"></ul>
+                <ul class="list-group resultados" id="patients"></ul>
             </div>
         </div>     
 </div>
     
     {% else %}
     <div class="container card-rounded" style="max-width:500px">
-        <h2>Código de convite</h2>
+        <h2>Código de invitation</h2>
         <hr>
         <form method="POST">
             {% csrf_token %}
-            <input type="text" name="convite">
+            <input type="text" name="invitation">
             <button class="btn btn-outline-secondary" type="submit">Cadastrar</button>
         </form>
     </div>
@@ -42,9 +42,9 @@
 
 {% block scripts %}
 {% if user.is_authenticated %}
-<script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
-<script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
+<script src="{% static 'processs/js/searchDoencas.js' %}"></script>
+<script src="{% static 'processs/js/searchPacientes.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
-<script src="{% static 'processos/js/mascaras.js' %}"></script>
+<script src="{% static 'processs/js/mascaras.js' %}"></script>
 {% endif %}
 {% endblock %}

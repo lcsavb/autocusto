@@ -1,21 +1,20 @@
+
 from processos.models import Protocolo
-
-protocolos = Protocolo.objects.all()
-
-for protocolo in protocolos:
-    nome = protocolo.nome
-    print(nome)
-    nome_ajustado = nome.replace(' ', '_')
-    nome_ajustado_2 = nome_ajustado.replace('-','_')
-    nome_ajustado_3 = nome_ajustado_2.replace(',','_')
-    nome_ajustado_4 = nome_ajustado_3.replace('á','a')
-    nome_ajustado_5 = nome_ajustado_4.replace('é','e')
-    nome_ajustado_6 = nome_ajustado_5.replace('í','i')
-    nome_ajustado_7 = nome_ajustado_6.replace('ç','c')
-    nome_ajustado_8 = nome_ajustado_7.replace('ã','a')
-    nome_ajustado_9 = nome_ajustado_8.replace('ú','u')
-    nome_ajustado_10 = nome_ajustado_9.replace('ê','e')
-    nome_ajustado_11 = nome_ajustado_10.replace('ó','o')
-    print(nome_ajustado_11.lower())
-    protocolo.nome = nome_ajustado_11.lower()
-    protocolo.save()
+protocols = Protocolo.objects.all()
+for protocol in protocols:
+    name = protocol.nome
+    print(name)
+    adjusted_name = name.replace(' ', '_')
+    adjusted_name_2 = adjusted_name.replace('-', '_')
+    adjusted_name_3 = adjusted_name_2.replace(',', '_')
+    adjusted_name_4 = adjusted_name_3.replace('á', 'a')
+    adjusted_name_5 = adjusted_name_4.replace('é', 'e')
+    adjusted_name_6 = adjusted_name_5.replace('í', 'i')
+    adjusted_name_7 = adjusted_name_6.replace('ç', 'c')
+    adjusted_name_8 = adjusted_name_7.replace('ã', 'a')
+    adjusted_name_9 = adjusted_name_8.replace('ú', 'u')
+    adjusted_name_10 = adjusted_name_9.replace('ê', 'e')
+    adjusted_name_11 = adjusted_name_10.replace('ó', 'o')
+    print(adjusted_name_11.lower())
+    protocol.nome = adjusted_name_11.lower()
+    protocol.save()

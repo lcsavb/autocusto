@@ -11,85 +11,85 @@
     
     <div class="card rounded" style="padding: 1.5rem;">
 
-      <div><h3>{{ processo.paciente.nome_paciente }} - {{ processo.doenca.cid }}</h3></div><hr>
+      <div><h3>{{ process.patient.patient_name }} - {{ process.disease.icd }}</h3></div><hr>
 
       <div class="form-row">
-        <div class="col-sm-2"> {{ formulario.edicao_completa|as_crispy_field }} </div>
-          <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
+        <div class="col-sm-2"> {{ form.complete_edition|as_crispy_field }} </div>
+          <div class="col-sm-2"> {{ form.data_1|as_crispy_field }} </div>
       </div>
 
-      {% include 'processos/docs_adicionais.html' %}
+      {% include 'processs/docs_adicionais.html' %}
 
             <!-- Medicamentos -->
-      {% include 'processos/form_med.html' %}
+      {% include 'processs/form_med.html' %}
 
       <!-- Dados que são geralmente repetidos -->
-      <div class="d-none" id="dados-repetidos">
+      <div class="d-none" id="data-repetidos">
             <div class="form-row">
-              <div class="col-10"> {{ formulario.clinicas|as_crispy_field }} </div>
+              <div class="col-10"> {{ form.clinics|as_crispy_field }} </div>
             </div>
       
   
       <div class="form-row">
-          <div class="col-2">{{ formulario.cid|as_crispy_field }}</div>
-          <div class="col-10">{{ formulario.diagnostico|as_crispy_field }}</div>
+          <div class="col-2">{{ form.icd|as_crispy_field }}</div>
+          <div class="col-10">{{ form.diagnosis|as_crispy_field }}</div>
       </div>
   
       <div class="form-row">
-              <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
+              <div class="col-12">{{ form.anamnesis|as_crispy_field }}</div>
       </div>
   
   
       <div class="form-row">
-              <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
-              <div class="col-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+              <div class="col-3">{{ form.treated|as_crispy_field }}</div>
+              <div class="col-9 d-none" id="trat-escondido">{{ form.previous_treatments|as_crispy_field }}</div>
       </div>
   
       <div class="form-row">
-          <div class="col-md-2"> {{ formulario.preenchido_por|as_crispy_field }}</div>
+          <div class="col-md-2"> {{ form.filled_by|as_crispy_field }}</div>
           
-          <div class="col-md-2 campo-18 d-none"> {{ formulario.etnia|as_crispy_field }}</div>
-          <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone1_paciente|as_crispy_field }}</div>
-          <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone2_paciente|as_crispy_field }}</div>
-          <div class="col-md-4 campo-18 d-none"> {{ formulario.email_paciente|as_crispy_field }}</div>
+          <div class="col-md-2 campo-18 d-none"> {{ form.ethnicity|as_crispy_field }}</div>
+          <div class="col-md-2 campo-18 d-none"> {{ form.telefone1_patient|as_crispy_field }}</div>
+          <div class="col-md-2 campo-18 d-none"> {{ form.telefone2_patient|as_crispy_field }}</div>
+          <div class="col-md-4 campo-18 d-none"> {{ form.patient_email|as_crispy_field }}</div>
       </div>
 
     <div class="form-row">
-        <div class="col-sm-2"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
+        <div class="col-sm-2"> {{ form.patient_cpf|as_crispy_field }} </div>
     </div>
 
      <div class="form-row">
                  
-        <div class="col-10"> {{ formulario.nome_paciente|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.altura|as_crispy_field }}</div>
+        <div class="col-10"> {{ form.patient_name|as_crispy_field }}</div>
+        <div class="col-2"> {{ form.height|as_crispy_field }}</div>
         
     </div>
 
     <div class="form-row">
-        <div class="col-10"> {{ formulario.nome_mae|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.peso|as_crispy_field }}</div>
+        <div class="col-10"> {{ form.mother_name|as_crispy_field }}</div>
+        <div class="col-2"> {{ form.weight|as_crispy_field }}</div>
     </div>
 
     <div class="form-row">
-        <div class="col-12"> {{ formulario.end_paciente|as_crispy_field }}</div>
+        <div class="col-12"> {{ form.patient_address|as_crispy_field }}</div>
     </div>
 
 
     <div class="form-row">
-            <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
-            <div class="col-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
+            <div class="col-3">{{ form.incapable|as_crispy_field }}</div>
+            <div class="col-9 d-none" id="resp-escondido">{{ form.responsible_name|as_crispy_field }}</div>
     </div>
 
 
           <!-- Campos condicionais -->
 
-          {% if campos_condicionais %}
-          {% include 'processos/campos_condicionais.html' %}
+          {% if conditional_fields %}
+          {% include 'processs/conditional_fields.html' %}
           {% endif %}
 
-          <!-- Fim dos campos condicionais -->
+          <!-- Fim dos fields condicionais -->
 
-    <!-- Fim dos dados geralmente repetidos -->
+    <!-- Fim dos data geralmente repetidos -->
   </div>
 
 
@@ -102,17 +102,17 @@
   </form>
 </div>
 
-      <!-- Consulta de protocolo -->
-      {% include 'processos/consulta_protocolo.html' %}
+      <!-- Consulta de protocol -->
+      {% include 'processs/consulta_protocol.html' %}
 
 
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'processos/js/processo.js' %}"></script>
-<script src="{% static 'processos/js/med.js' %}"></script>
-<script src="{% static 'processos/js/processoEdit.js' %}"></script>
-<script src="{% static 'processos/js/documentosAdicionais.js' %}"></script>
-<script src="{% static 'processos/js/emitirExames.js' %}"></script>
-<script src="{% static 'processos/js/mostrarProtocolo.js' %}"></script>
+<script src="{% static 'processs/js/process.js' %}"></script>
+<script src="{% static 'processs/js/med.js' %}"></script>
+<script src="{% static 'processs/js/processEdit.js' %}"></script>
+<script src="{% static 'processs/js/documentosAdicionais.js' %}"></script>
+<script src="{% static 'processs/js/emitirExamonth.js' %}"></script>
+<script src="{% static 'processs/js/mostrarProtocolo.js' %}"></script>
 {% endblock %}

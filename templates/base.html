@@ -35,7 +35,7 @@
     <ul class="navbar-nav mr-auto">
       {% if not user.is_authenticated %}
       <li class="nav-item active">
-        <a class="nav-link" href="{% url 'medicos-cadastro' %}">Cadastro <span class="oi oi-task text-top"></span></a>
+        <a class="nav-link" href="{% url 'doctors-cadastro' %}">Cadastro <span class="oi oi-task text-top"></span></a>
       </li>
       {% endif %}
 
@@ -46,15 +46,15 @@
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Processos</a>
         <div class="dropdown-menu" aria-labelledby="dropdown01">
-          <!-- <a class="dropdown-item" href="{% url 'processos-cadastro' %}">Novo</a> -->
-          <a class="dropdown-item" href="{% url 'processos-busca' %}">Renovação</a>
+          <!-- <a class="dropdown-item" href="{% url 'processs-cadastro' %}">Novo</a> -->
+          <a class="dropdown-item" href="{% url 'processs-search' %}">Renovação</a>
         </div>
       </li>
 
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Clínicas</a>
         <div class="dropdown-menu" aria-labelledby="dropdown01">
-          <a class="dropdown-item" href="{% url 'clinicas-cadastro' %}">Cadastrar</a>
+          <a class="dropdown-item" href="{% url 'clinics-cadastro' %}">Cadastrar</a>
           <a class="dropdown-item" href="#">Editar</a>
         </div>
       </li>
@@ -78,18 +78,18 @@
 
     </ul>
     {% if user.is_authenticated %}
-    <form action="{% url 'processos-renovacao-rapida' %}" method="GET" class="form-inline my-2 my-lg-0">
-      <input name="b" class="form-control mr-sm-2" type="text" placeholder="Paciente por nome ou CPF" aria-label="Search">
+    <form action="{% url 'processs-renewal-rapida' %}" method="GET" class="form-inline my-2 my-lg-0">
+      <input name="b" class="form-control mr-sm-2" type="text" placeholder="Paciente por name ou CPF" aria-label="Search">
       <button class="btn btn-outline-success" type="submit">Buscar</button>
     </form>
     {% endif %}
   </div>
 </nav>
 
-  {% if messages %}
-  {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      {{ message }}
+  {% if monthsages %}
+  {% for monthsage in monthsages %}
+    <div class="alert alert-{{ monthsage.tags }}">
+      {{ monthsage }}
     </div>
   {% endfor %}
   {% endif %}

@@ -1,3 +1,4 @@
+
 import ast
 import os
 
@@ -21,15 +22,10 @@ def list_variables_in_file(filename):
 
 def list_variables_in_directory(directory_path):
     all_variables = set()
-
-    # Percorre todos os arquivos no diretório
-    for root, _, files in os.walk(directory_path):
+    for (root, _, files) in os.walk(directory_path):
         for filename in files:
-            if filename.endswith(".py"):
+            if filename.endswith('.py'):
                 file_path = os.path.join(root, filename)
                 all_variables.update(list_variables_in_file(file_path))
-
     return all_variables
-
-
 print(list_variables_in_directory('.'))
