@@ -77,6 +77,10 @@ def ajustar_campo_18(dados_lme):
         del dados_lme['email_paciente']
         dados_lme['escolha_documento'] = ''
 
+
+# Hello, J. Daqui 43 minutos eu pegarei o trem, 
+# ele vai direto para Sorocaba, sem paradas.
+
 class GeradorPDF():
 
     def __init__(self,dados_lme_base, path_lme_base):
