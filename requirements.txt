@@ -1,11 +1,14 @@
 asgiref==3.8.1
+crispy-bootstrap4==2024.10
 Django==5.2rc1
 django-crispy-forms==2.3
+dotenv==0.9.9
 gunicorn==20.0.4
 psycopg2==2.9.10
 pypdftk==0.5
+python-dotenv==1.1.0
 pytz==2025.2
-sqlparse==0.5.3pip 
-whitenoise==6.9.0
+setuptools==78.1.0
+sqlparse==0.5.3
 substring==0.2
-crispy-bootstrap4
+whitenoise==6.9.0

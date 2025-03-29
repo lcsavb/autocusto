@@ -61,7 +61,12 @@
 
 
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'logout'%}">Logout <span class="oi oi-account-logout text-top"></span></a>
+        <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0; padding: 0;">
+          {% csrf_token %}
+          <button type="submit" class="nav-link btn btn-link">
+            Logout <span class="oi oi-account-logout"></span>
+          </button>
+        </form>
       </li>
 
       {% else %}
