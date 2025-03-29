@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from medicos.models import Medico
 from pacientes.models import Paciente
 from clinicas.models import Clinica, Emissor

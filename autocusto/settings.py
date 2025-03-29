@@ -22,7 +22,7 @@ SECRET_KEY = '4(=4rbnajm+=ce3)99i9r8t3jqucv@hc(a&pum25qnc)ff@51x'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '0.0.0.0', 'autocusto.com.br', 'www.autocusto.com.br']
+ALLOWED_HOSTS = ['localhost', '0.0.0.0', '127.0.0.1', 'autocusto.com.br', 'www.autocusto.com.br']
 
 # SERVER CHOICE
 
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'pacientes.apps.PacientesConfig',
     'usuarios.apps.UsuariosConfig',
     'crispy_forms',
+    'crispy_bootstrap4',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -79,12 +80,14 @@ WSGI_APPLICATION = 'autocusto.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+print(os.environ.get("SQL_HOST"))
+
 DATABASES = {
     "default": {
-        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.environ.get("SQL_DATABASE", os.path.join(BASE_DIR, "db.sqlite3")),
-        "USER": os.environ.get("SQL_USER", "user"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("SQL_DATABASE", "your_db_name"),
+        "USER": os.environ.get("SQL_USER", "your_db_user"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "your_db_password"),
         "HOST": os.environ.get("SQL_HOST", "localhost"),
         "PORT": os.environ.get("SQL_PORT", "5432"),
     }
@@ -159,3 +162,5 @@ PATH_LME_BASE = os.path.join(BASE_DIR, 'processos/static/processos', 'lme_base_m
 PATH_RELATORIO = os.path.join(BASE_DIR, 'processos/static/processos', 'relatorio_modelo.pdf')
 PATH_EXAMES = os.path.join(BASE_DIR, 'processos/static/processos', 'sadt.pdf')
 PATH_PDF_DIR = os.path.join(BASE_DIR, 'processos/static/protocolos')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

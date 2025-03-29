@@ -24,14 +24,14 @@ def home(request):
                     request.session['paciente_id'] = paciente.id
                     request.session['cid'] = cid
                     request.session['cpf_paciente'] = cpf_paciente
-                except:
+                except Paciente.DoesNotExist:
                     request.session['paciente_existe'] = False
                     request.session['cid'] = cid
                     request.session['cpf_paciente'] = cpf_paciente
                     return redirect('processos-cadastro')
-    
+
                 busca_processos = paciente.processos.filter(doenca__cid=cid)
-                
+
                 if busca_processos.exists():
                     processo_cadastrado_pelo_usuario = busca_processos.filter(usuario__id=usuario.id).exists()
                     if processo_cadastrado_pelo_usuario:
@@ -42,17 +42,8 @@ def home(request):
                 else:
                     return redirect('processos-cadastro')
             else:
-                formulario = PreProcesso(request.POST)
                 contexto = {'formulario': formulario}
                 return render(request, 'home.html', contexto)
         else:
-            convite = request.POST.get('convite')
-            print(convite)
-            if convite.lower() == 'cgrlmeplus':
-                request.session['convite_aceito'] = True
-                return redirect('medicos-cadastro')
-            else:
-                messages.success(request, f'Código inválido')
-                return redirect('home')
-
-            return render(request, 'home.html', contexto)
+            messages.warning(request, 'Você precisa estar logado para acessar esta página.')
+            return redirect('home')
