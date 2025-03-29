@@ -1,35 +1,41 @@
-# pull official base image
-FROM debian:buster
+# Builder stage
+FROM python:3.11-slim-bookworm AS builder
 
-# set work directory
-WORKDIR /usr/src/autocusto
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
 
-# install dependencies
-RUN apt-get update -y
-RUN apt-get upgrade -y
-RUN apt-get install python3 -y
-RUN apt-get install python3-pip -y
-RUN apt-get install postgresql -y
-RUN apt-get install postgresql-server-dev-all -y
-RUN apt-get install libpq-dev -y
-RUN pip3 install --upgrade pip
-COPY ./requirements.txt /usr/src/autocusto/requirements.txt
-RUN pip3 install -r requirements.txt
+# Set work directory
+WORKDIR /app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Install Python dependencies
+COPY requirements.txt .
+RUN python -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt
 
-# install pdftk
-RUN apt-get install -y pdftk
+# Copy your Django app source code
+COPY . /app
 
+# Final runtime image (minimal)
+FROM python:3.11-slim-bookworm
 
-# copy project
-COPY . /usr/src/autocusto
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PATH="/opt/venv/bin:$PATH"
 
-# create database
-RUN python3 manage.py makemigrations
-RUN python3 manage.py migrate
+# Install only required runtime packages (pdftk, Java for pdftk)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pdftk \
+    default-jre-headless \
+    && rm -rf /var/lib/apt/lists/*
 
-# prepare static files for deployment
-RUN  python3 manage.py collectstatic --no-input --clear
+WORKDIR /app
+
+# Copy the virtualenv and your app from builder
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app /app
+
+# Run Django
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

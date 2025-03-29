@@ -2,13 +2,33 @@ services:
   db:
     image: postgres:17.4-alpine
     volumes:
-    - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=lucas
       - POSTGRES_PASSWORD=rraptnor
       - POSTGRES_DB=autocusto
     ports:
       - "5432:5432"
-volumes:
-  postgres_data: 
+  
+  web:
+    build: .
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - SECRET_KEY=jklahjkldfakjhKLJHADJKFHASDKHFJKLhadsfhjkladhOIUYHQ6516AS5DFASD65F48A6S1652asd1f3as2d
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=autocusto        # ← MISSING BEFORE
+      - SQL_USER=lucas                # ← MISSING BEFORE
+      - SQL_PASSWORD=rraptnor         # ← MISSING BEFORE
+      - SQL_HOST=db                   # Correctly set already
+      - SQL_PORT=5432
+      - DATABASE=postgres
 
+volumes:
+  postgres_data:
