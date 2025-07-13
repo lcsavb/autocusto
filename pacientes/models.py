@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 class Paciente(models.Model):
     nome_paciente = models.CharField(max_length=100)
     idade = models.CharField(max_length=100)
@@ -10,7 +11,7 @@ class Paciente(models.Model):
     nome_responsavel = models.CharField(max_length=100)
     rg = models.CharField(max_length=100)
     peso = models.CharField(max_length=100)
-    altura = models.CharField(max_length=100, default='1,70m')
+    altura = models.CharField(max_length=100, default="1,70m")
     escolha_etnia = models.CharField(max_length=100)
     cpf_paciente = models.CharField(unique=True, max_length=14)
     cns_paciente = models.CharField(max_length=100)
@@ -20,11 +21,10 @@ class Paciente(models.Model):
     cep_paciente = models.CharField(max_length=100)
     telefone1_paciente = models.CharField(max_length=100)
     telefone2_paciente = models.CharField(max_length=100)
-    etnia=models.CharField(max_length=100)
-    usuarios = models.ManyToManyField(settings.AUTH_USER_MODEL,
-                                    related_name='pacientes')
-                                    
-
+    etnia = models.CharField(max_length=100)
+    usuarios = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="pacientes"
+    )
 
     def __str__(self):
-        return f'{self.nome_paciente}'
+        return f"{self.nome_paciente}"

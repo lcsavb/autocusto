@@ -10,56 +10,140 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clinicas', '0002_emissor_medico'),
-        ('medicos', '0001_initial'),
-        ('pacientes', '0001_initial'),
+        ("clinicas", "0002_emissor_medico"),
+        ("medicos", "0001_initial"),
+        ("pacientes", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Doenca',
+            name="Doenca",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cid', models.CharField(max_length=6, unique=True)),
-                ('nome', models.CharField(max_length=500)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("cid", models.CharField(max_length=6, unique=True)),
+                ("nome", models.CharField(max_length=500)),
             ],
         ),
         migrations.CreateModel(
-            name='Medicamento',
+            name="Medicamento",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=600)),
-                ('dosagem', models.CharField(blank=True, max_length=100)),
-                ('apres', models.CharField(blank=True, max_length=600)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=600)),
+                ("dosagem", models.CharField(blank=True, max_length=100)),
+                ("apres", models.CharField(blank=True, max_length=600)),
             ],
         ),
         migrations.CreateModel(
-            name='Protocolo',
+            name="Protocolo",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=600)),
-                ('arquivo', models.CharField(max_length=600)),
-                ('dados_condicionais', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
-                ('medicamentos', models.ManyToManyField(to='processos.Medicamento')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=600)),
+                ("arquivo", models.CharField(max_length=600)),
+                (
+                    "dados_condicionais",
+                    django.contrib.postgres.fields.jsonb.JSONField(null=True),
+                ),
+                ("medicamentos", models.ManyToManyField(to="processos.Medicamento")),
             ],
         ),
         migrations.CreateModel(
-            name='Processo',
+            name="Processo",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('anamnese', models.TextField(max_length=600)),
-                ('prescricao', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('tratou', models.BooleanField(default=False)),
-                ('tratamentos_previos', models.TextField(max_length=600)),
-                ('data1', models.DateField(null=True)),
-                ('preenchido_por', models.CharField(choices=[('P', 'Paciente'), ('M', 'Mãe'), ('R', 'Responsável'), ('M', 'Médico')], max_length=128)),
-                ('dados_condicionais', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('clinica', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='processos', to='clinicas.Clinica')),
-                ('doenca', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processos.Doenca')),
-                ('emissor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='processos', to='clinicas.Emissor')),
-                ('medicamentos', models.ManyToManyField(to='processos.Medicamento')),
-                ('medico', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='processos', to='medicos.Medico')),
-                ('paciente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='processos', to='pacientes.Paciente')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("anamnese", models.TextField(max_length=600)),
+                ("prescricao", django.contrib.postgres.fields.jsonb.JSONField()),
+                ("tratou", models.BooleanField(default=False)),
+                ("tratamentos_previos", models.TextField(max_length=600)),
+                ("data1", models.DateField(null=True)),
+                (
+                    "preenchido_por",
+                    models.CharField(
+                        choices=[
+                            ("P", "Paciente"),
+                            ("M", "Mãe"),
+                            ("R", "Responsável"),
+                            ("M", "Médico"),
+                        ],
+                        max_length=128,
+                    ),
+                ),
+                (
+                    "dados_condicionais",
+                    django.contrib.postgres.fields.jsonb.JSONField(),
+                ),
+                (
+                    "clinica",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="processos",
+                        to="clinicas.Clinica",
+                    ),
+                ),
+                (
+                    "doenca",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="processos.Doenca",
+                    ),
+                ),
+                (
+                    "emissor",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="processos",
+                        to="clinicas.Emissor",
+                    ),
+                ),
+                ("medicamentos", models.ManyToManyField(to="processos.Medicamento")),
+                (
+                    "medico",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="processos",
+                        to="medicos.Medico",
+                    ),
+                ),
+                (
+                    "paciente",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="processos",
+                        to="pacientes.Paciente",
+                    ),
+                ),
             ],
         ),
     ]

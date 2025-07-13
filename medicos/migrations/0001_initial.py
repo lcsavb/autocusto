@@ -8,24 +8,46 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Medico',
+            name="Medico",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome_medico', models.CharField(max_length=200)),
-                ('crm_medico', models.CharField(max_length=10, unique=True)),
-                ('cns_medico', models.CharField(max_length=15, unique=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome_medico", models.CharField(max_length=200)),
+                ("crm_medico", models.CharField(max_length=10, unique=True)),
+                ("cns_medico", models.CharField(max_length=15, unique=True)),
             ],
         ),
         migrations.CreateModel(
-            name='MedicoUsuario',
+            name="MedicoUsuario",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('medico', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='medicos.Medico')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "medico",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="medicos.Medico",
+                    ),
+                ),
             ],
         ),
     ]

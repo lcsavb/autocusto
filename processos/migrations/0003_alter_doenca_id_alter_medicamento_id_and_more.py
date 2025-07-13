@@ -6,43 +6,51 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processos', '0002_auto_20200228_1704'),
+        ("processos", "0002_auto_20200228_1704"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='doenca',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="doenca",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='medicamento',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="medicamento",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='processo',
-            name='dados_condicionais',
+            model_name="processo",
+            name="dados_condicionais",
             field=models.JSONField(),
         ),
         migrations.AlterField(
-            model_name='processo',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="processo",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='processo',
-            name='prescricao',
+            model_name="processo",
+            name="prescricao",
             field=models.JSONField(),
         ),
         migrations.AlterField(
-            model_name='protocolo',
-            name='dados_condicionais',
+            model_name="protocolo",
+            name="dados_condicionais",
             field=models.JSONField(null=True),
         ),
         migrations.AlterField(
-            model_name='protocolo',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="protocolo",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
     ]

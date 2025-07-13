@@ -17,64 +17,70 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4(=4rbnajm+=ce3)99i9r8t3jqucv@hc(a&pum25qnc)ff@51x'
+SECRET_KEY = "4(=4rbnajm+=ce3)99i9r8t3jqucv@hc(a&pum25qnc)ff@51x"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '0.0.0.0', '127.0.0.1', 'autocusto.com.br', 'www.autocusto.com.br']
+ALLOWED_HOSTS = [
+    "localhost",
+    "0.0.0.0",
+    "127.0.0.1",
+    "autocusto.com.br",
+    "www.autocusto.com.br",
+]
 
 # SERVER CHOICE
 
-SERVER = os.environ.get('SERVER')
+SERVER = os.environ.get("SERVER")
 
 # Application definition
 
 INSTALLED_APPS = [
-    'processos.apps.ProcessosConfig',
-    'medicos.apps.MedicosConfig',
-    'clinicas.apps.ClinicasConfig',
-    'pacientes.apps.PacientesConfig',
-    'usuarios.apps.UsuariosConfig',
-    'crispy_forms',
-    'crispy_bootstrap4',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "processos.apps.ProcessosConfig",
+    "medicos.apps.MedicosConfig",
+    "clinicas.apps.ClinicasConfig",
+    "pacientes.apps.PacientesConfig",
+    "usuarios.apps.UsuariosConfig",
+    "crispy_forms",
+    "crispy_bootstrap4",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'autocusto.urls'
+ROOT_URLCONF = "autocusto.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'autocusto.wsgi.application'
+WSGI_APPLICATION = "autocusto.wsgi.application"
 
 
 # Database
@@ -96,20 +102,20 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = 'usuarios.Usuario'
+AUTH_USER_MODEL = "usuarios.Usuario"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -117,9 +123,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'pt-br'
+LANGUAGE_CODE = "pt-br"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -128,17 +134,16 @@ USE_L10N = True
 USE_TZ = True
 
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'autocusto/static'),
-    os.path.join(BASE_DIR, 'processos/static'),
-    os.path.join(BASE_DIR, 'static')
+    os.path.join(BASE_DIR, "autocusto/static"),
+    os.path.join(BASE_DIR, "processos/static"),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 # if SERVER == 'dev':
@@ -150,17 +155,21 @@ STATICFILES_DIRS = [
 # print(STATICFILES_DIRS, 'AQUI')
 
 # Configurações do Crispy
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Login
-LOGIN_REDIRECT_URL = 'home'
-LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = "home"
+LOGIN_URL = "login"
 
 # PDFs
 
-PATH_LME_BASE = os.path.join(BASE_DIR, 'processos/static/processos', 'lme_base_modelo.pdf')
-PATH_RELATORIO = os.path.join(BASE_DIR, 'processos/static/processos', 'relatorio_modelo.pdf')
-PATH_EXAMES = os.path.join(BASE_DIR, 'processos/static/processos', 'sadt.pdf')
-PATH_PDF_DIR = os.path.join(BASE_DIR, 'processos/static/protocolos')
+PATH_LME_BASE = os.path.join(
+    BASE_DIR, "processos/static/processos", "lme_base_modelo.pdf"
+)
+PATH_RELATORIO = os.path.join(
+    BASE_DIR, "processos/static/processos", "relatorio_modelo.pdf"
+)
+PATH_EXAMES = os.path.join(BASE_DIR, "processos/static/processos", "sadt.pdf")
+PATH_PDF_DIR = os.path.join(BASE_DIR, "processos/static/protocolos")
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

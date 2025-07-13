@@ -1,21 +1,38 @@
-import os
 
-import pypdftk
 
-from cids import alzheimer, esclerose_multipla, epilepsia, dislipidemia_cids, dor, artrite_reumatoide
-from dados import dados_clinica, dados_medico, dados_paciente, dados_ar, dados_epilepsia, dados_processo, dados_condicionais, dados_alzheimer,dados_esclerose_multipla, dados_dislipidemia, dados_dor
-from paths import PATH_LME_BASE, PATH_EDSS, PATH_EM_CONSENTIMENTO
+from cids import (
+    alzheimer,
+    esclerose_multipla,
+    epilepsia,
+    dislipidemia_cids,
+    dor,
+    artrite_reumatoide,
+)
+from dados import (
+    dados_clinica,
+    dados_medico,
+    dados_paciente,
+    dados_ar,
+    dados_epilepsia,
+    dados_processo,
+    dados_condicionais,
+    dados_alzheimer,
+    dados_esclerose_multipla,
+    dados_dislipidemia,
+    dados_dor,
+)
+from paths import PATH_LME_BASE
 
 from manejo_pdfs import GeradorPDF
 from artrite_reumatoide import Artrite_Reumatoide
 from esclerose_multipla import EscleroseMultipla
 from epilepsia import Epilepsia
 from alzheimer import Alzheimer
-from dislipidemia import Dislipidemia 
+from dislipidemia import Dislipidemia
 from dor import Dor
 
 
-def mesclar(dados_clinica,dados_medico,dados_paciente,dados_processo):
+def mesclar(dados_clinica, dados_medico, dados_paciente, dados_processo):
     dados_lme_base = {}
     dados_lme_base.update(dados_clinica)
     dados_lme_base.update(dados_paciente)
@@ -25,8 +42,8 @@ def mesclar(dados_clinica,dados_medico,dados_paciente,dados_processo):
 
 
 def gerar_pdf(dados_lme_base, dados_condicionais):
-    cid = dados_lme_base['cid']
-    renovacao = dados_lme_base['renovacao']
+    cid = dados_lme_base["cid"]
+    renovacao = dados_lme_base["renovacao"]
     args = [dados_lme_base, dados_condicionais, PATH_LME_BASE]
     pdf = GeradorPDF(*args)
     if cid in dislipidemia_cids.keys():
@@ -42,7 +59,7 @@ def gerar_pdf(dados_lme_base, dados_condicionais):
         if renovacao:
             pdf.renovar(*args)
         else:
-            pdf.primeira_vez(*args)    
+            pdf.primeira_vez(*args)
     elif cid in epilepsia.keys():
         dados_condicionais.update(dados_epilepsia)
         pdf = Epilepsia(*args)
@@ -67,35 +84,14 @@ def gerar_pdf(dados_lme_base, dados_condicionais):
     elif cid in alzheimer.keys():
         dados_condicionais.update(dados_alzheimer)
         pdf = Alzheimer(*args)
-        if renovacao:            
+        if renovacao:
             pdf.renovar(*args)
         else:
             pdf.primeira_vez(*args)
     else:
         pdf = GeradorPDF(*args)
-        pdf.generico(dados_lme_base,PATH_LME_BASE)
+        pdf.generico(dados_lme_base, PATH_LME_BASE)
 
 
-dados_lme_base = mesclar(dados_clinica,dados_medico,dados_paciente,dados_processo)
+dados_lme_base = mesclar(dados_clinica, dados_medico, dados_paciente, dados_processo)
 gerar_pdf(dados_lme_base, dados_condicionais)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

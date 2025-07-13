@@ -1,15 +1,15 @@
 import json
 import os
 from django.conf import settings
-from processos.models import Protocolo, Doenca, Medicamento
+from processos.models import Protocolo, Medicamento
 
-dir_base = os.path.join(settings.BASE_DIR, 'processos/db' )
+dir_base = os.path.join(settings.BASE_DIR, "processos/db")
 
 os.chdir(dir_base)
 
 orfaos = {}
 n = 0
-with open('med_links_cids.json', 'r') as a:
+with open("med_links_cids.json", "r") as a:
     lista = json.load(a)
     for med in lista:
         cids = lista[med][1]
@@ -21,8 +21,5 @@ with open('med_links_cids.json', 'r') as a:
                     if protocolo.exists():
                         p = protocolo[0]
                         p.medicamentos.add(medicamento)
-        except:
-            print(med)
-
-
-
+        except Exception as e:
+            print(f"{med}: {e}")

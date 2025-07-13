@@ -11,18 +11,27 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('processos', '0001_initial'),
+        ("processos", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='processo',
-            name='usuario',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='processos', to=settings.AUTH_USER_MODEL),
+            model_name="processo",
+            name="usuario",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="processos",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='doenca',
-            name='protocolo',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='doenca', to='processos.Protocolo'),
+            model_name="doenca",
+            name="protocolo",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="doenca",
+                to="processos.Protocolo",
+            ),
         ),
     ]

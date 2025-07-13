@@ -11,18 +11,26 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('medicos', '0001_initial'),
+        ("medicos", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='medicousuario',
-            name='usuario',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            model_name="medicousuario",
+            name="usuario",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='medico',
-            name='usuarios',
-            field=models.ManyToManyField(related_name='medicos', through='medicos.MedicoUsuario', to=settings.AUTH_USER_MODEL),
+            model_name="medico",
+            name="usuarios",
+            field=models.ManyToManyField(
+                related_name="medicos",
+                through="medicos.MedicoUsuario",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]
