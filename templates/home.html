@@ -26,17 +26,57 @@
 </div>
     
     {% else %}
-    <div class="container card-rounded" style="max-width:500px">
-        <h2>Código de convite</h2>
-        <hr>
-        <form method="POST">
-            {% csrf_token %}
-            <input type="text" name="convite">
-            <button class="btn btn-outline-secondary" type="submit">Cadastrar</button>
-        </form>
+    <div class="container text-center my-5">
+        <div class="jumbotron bg-white shadow-sm rounded-lg p-5">
+            <h1 class="display-4 text-primary-color">Simplifique Prescrições de Alto Custo</h1>
+            <p class="lead text-secondary">Agilidade e precisão para médicos e clínicas na emissão de receitas de medicamentos especiais.</p>
+            <hr class="my-4">
+            <p>Otimize seu tempo e garanta a conformidade com a legislação, focando no que realmente importa: o cuidado com o paciente.</p>
+            <a class="btn btn-primary btn-lg mt-3" href="#solicitar-convite" role="button">Solicite seu Convite Agora</a>
+        </div>
+
+        <div class="row my-5">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-primary-color">Rapidez Incomparável</h3>
+                        <p class="card-text">Emita prescrições complexas em minutos, não horas. Nosso sistema automatiza o preenchimento e a validação.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-primary-color">Precisão e Conformidade</h3>
+                        <p class="card-text">Reduza erros com validação automática e mantenha-se atualizado com as regulamentações de medicamentos de alto custo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-primary-color">Gestão Simplificada</h3>
+                        <p class="card-text">Gerencie pacientes e históricos de prescrições de forma eficiente, com acesso rápido a todas as informações.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="solicitar-convite" class="card p-4 my-5 shadow-sm">
+            <h2 class="text-primary-color mb-4">Já possui um Código de Convite?</h2>
+            <p class="lead">Insira seu código abaixo para acessar a plataforma e começar a otimizar suas prescrições.</p>
+            <form method="POST" class="form-inline justify-content-center">
+                {% csrf_token %}
+                <div class="form-group mx-sm-3 mb-2">
+                    <label for="convite" class="sr-only">Código de Convite</label>
+                    <input type="text" class="form-control" id="convite" name="convite" placeholder="Seu Código de Convite">
+                </div>
+                <button type="submit" class="btn btn-primary mb-2">Acessar</button>
+            </form>
+            <p class="mt-3">Ainda não tem um código? <a href="#">Entre em contato para solicitar acesso.</a></p>
+        </div>
     </div>
-</div>
-{% endif %}
+    {% endif %}
 
 {% endblock content %}
 

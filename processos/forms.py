@@ -40,9 +40,22 @@ def ajustar_campos_condicionais(dados_paciente):
     return dic, dados_paciente
 
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit, Layout, Field
+
+
 class PreProcesso(forms.Form):
     cpf_paciente = forms.CharField(required=True, label="", max_length=14)
     cid = forms.CharField(required=True, label="")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field('cpf_paciente', css_class='form-control'),
+            Field('cid', css_class='form-control'),
+            Submit('submit', 'Buscar', css_class='btn btn-primary')
+        )
 
     def clean_cid(self):
         cid = self.cleaned_data["cid"].upper()
@@ -64,6 +77,15 @@ class PreProcesso(forms.Form):
 class NovoProcesso(forms.Form):
     def __init__(self, escolhas, medicamentos, *args, **kwargs):
         super(NovoProcesso, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.add_input(Submit("submit", "Salvar Processo", css_class="btn btn-primary"))
+
+        # Apply form-control to all fields by default
+        for field_name, field in self.fields.items():
+            if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect, forms.ClearableFileInput)):
+                field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+
         self.fields["clinicas"].choices = escolhas
         self.fields["id_med1"].choices = medicamentos
         self.fields["id_med2"].choices = medicamentos
