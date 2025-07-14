@@ -1,0 +1,288 @@
+/* === HOME PAGE LAYOUT FIXES === */
+
+/* Remove the test red background */
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+  overflow-x: hidden !important;
+}
+
+/* Fix authenticated user container */
+.authenticated-container {
+  min-height: calc(100vh - 80px) !important;
+  padding-top: 1rem !important;
+}
+
+.process-card {
+  max-width: 600px !important;
+  width: 100% !important;
+}
+
+/* MAIN CONTENT CARD - SIMPLIFIED */
+.main-content-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  max-width: 1200px !important;
+  margin: 1rem auto !important;
+  overflow: hidden !important;
+}
+
+/* SIMPLIFIED HERO SECTION */
+.hero-section {
+  padding-top: 1rem !important;
+  overflow-x: hidden !important;
+}
+
+.hero-content,
+.registration-column {
+  overflow-x: hidden !important;
+}
+
+.registration-card {
+  max-width: 460px !important;
+  width: 100% !important;
+}
+
+/* SUBTLE MAIN HEADING */
+.hero-content h1.display-4,
+.hero-content .main-heading {
+  font-size: 3.2rem !important;
+  font-weight: 700 !important;
+  color: #2d3748 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.2 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* SUBTLE DEVELOPER SECTION */
+.developer-info {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin-bottom: 2rem !important;
+}
+
+.developer-info .developer-title {
+  color: #4a5568 !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  margin-bottom: 1rem !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.developer-info p {
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.developer-info a {
+  color: var(--primary-color) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+.developer-info a:hover {
+  text-decoration: underline !important;
+}
+
+/* SUBTLE FEATURE CARDS */
+.features-grid {
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.6) !important;
+  padding: 0.75rem !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+  transition: all 0.3s ease !important;
+  height: 100% !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+.feature-icon {
+  font-size: 1.5rem !important;
+  display: block !important;
+  transition: all 0.3s ease !important;
+}
+
+.feature-card h6 {
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  margin: 0.5rem 0 0.25rem 0 !important;
+}
+
+.feature-card p {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  opacity: 0.7 !important;
+}
+
+/* PROMINENT REGISTRATION FORM */
+.registration-card .card-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+  border: none !important;
+}
+
+.registration-card .card-header h4 {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+}
+
+.registration-card {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+}
+
+/* SUBTLE GITHUB BUTTON */
+.developer-info .btn-outline-secondary {
+  border: 1px solid #6c757d !important;
+  color: #6c757d !important;
+  background: transparent !important;
+  font-size: 0.8rem !important;
+  padding: 0.4rem 0.8rem !important;
+}
+
+.developer-info .btn-outline-secondary:hover {
+  background: #6c757d !important;
+  color: white !important;
+}
+
+/* RESPONSIVE FIXES */
+@media (max-width: 991.98px) {
+  .main-content-card {
+    margin: 0.75rem auto !important;
+  }
+  
+  .hero-content h1.display-4,
+  .hero-content .main-heading {
+    font-size: 2.5rem !important;
+    text-align: center !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .hero-section {
+    padding-top: 0.75rem !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .main-content-card {
+    margin: 0.5rem auto !important;
+    border-radius: 15px !important;
+  }
+  
+  .hero-content,
+  .registration-column {
+    padding: 1.5rem !important;
+  }
+  
+  .hero-section {
+    padding-top: 0.5rem !important;
+  }
+  
+  .authenticated-container {
+    padding-top: 0.5rem !important;
+  }
+  
+  .hero-content h1.display-4,
+  .hero-content .main-heading {
+    font-size: 2rem !important;
+    text-align: center !important;
+  }
+  
+  .feature-card {
+    padding: 0.6rem !important;
+  }
+  
+  .feature-icon {
+    font-size: 1.25rem !important;
+  }
+  
+  .feature-card h6 {
+    font-size: 0.8rem !important;
+  }
+  
+  .process-card {
+    max-width: 98% !important;
+  }
+  
+  .registration-card {
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .container-fluid {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  .main-content-card {
+    margin: 0.25rem auto !important;
+  }
+  
+  .hero-content,
+  .registration-column {
+    padding: 1rem !important;
+  }
+  
+  .hero-section {
+    padding-top: 0.25rem !important;
+  }
+  
+  .authenticated-container {
+    padding-top: 0.25rem !important;
+  }
+}
+
+/* UTILITY IMPROVEMENTS */
+.lead {
+  font-size: 1.1rem !important;
+  font-weight: 400 !important;
+  color: #718096 !important;
+  line-height: 1.5 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* OVERFLOW PREVENTION */
+* {
+  box-sizing: border-box !important;
+}
+
+.container-fluid {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+.container,
+.row,
+[class*="col-"] {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Ensure no elements can cause horizontal scroll */
+.hero-section,
+.main-content-card,
+.hero-content,
+.registration-column {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}

@@ -25,6 +25,12 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         self.helper.form_method = "POST"
         self.helper.add_input(Submit("submit", "Cadastrar Médico", css_class="btn btn-primary"))
 
+        # Remove password help texts
+        if 'password1' in self.fields:
+            self.fields['password1'].help_text = ''
+        if 'password2' in self.fields:
+            self.fields['password2'].help_text = ''
+
         # Apply form-control to all fields by default
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect, forms.ClearableFileInput)):
