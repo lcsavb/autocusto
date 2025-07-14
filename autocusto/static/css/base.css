@@ -1,6 +1,327 @@
-body {
-  padding-top: 5rem;
+/* AutoCusto Modern Design - Enhanced Bootstrap */
+
+/* === MEDICAL PROFESSIONAL DESIGN === */
+:root {
+  --primary-color: #1e40af;        /* Professional medical blue */
+  --secondary-color: #1e3a8a;      /* Darker blue */
+  --accent-color: #3b82f6;         /* Light blue accent */
+  --success-color: #059669;        /* Medical green */
+  --warning-color: #d97706;        /* Medical orange */
+  --danger-color: #dc2626;         /* Medical red */
+  --text-primary: #1f2937;         /* Dark gray text */
+  --text-secondary: #6b7280;       /* Medium gray */
+  --bg-light: #f8fafc;            /* Very light gray */
+  --bg-white: #ffffff;             /* Pure white */
+  --medical-border: #e5e7eb;       /* Light border */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.08);
+  --border-radius: 8px;            /* Subtle rounded corners */
+  --transition: all 0.2s ease;     /* Quick, professional transitions */
 }
+
+/* Professional medical typography */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  color: var(--text-primary) !important;
+  line-height: 1.5 !important;
+  background: var(--bg-light) !important;
+  min-height: 100vh !important;
+  padding-top: 5rem; /* Keep original padding */
+  font-size: 14px;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-weight: 600 !important;
+  color: var(--text-primary);
+}
+
+/* === PROFESSIONAL MEDICAL NAVBAR === */
+.navbar {
+  background: var(--primary-color) !important;
+  box-shadow: var(--shadow-md);
+  border-bottom: 3px solid var(--accent-color);
+  transition: var(--transition);
+  padding: 0.75rem 0;
+}
+
+.navbar-brand {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white !important;
+  text-decoration: none;
+  transition: var(--transition);
+  letter-spacing: 0.5px;
+}
+
+.navbar-brand:hover {
+  color: #e0e7ff !important;
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255,255,255,0.95) !important;
+  font-weight: 500;
+  margin: 0 0.25rem;
+  padding: 0.6rem 1rem !important;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  font-size: 14px;
+}
+
+.navbar-nav .nav-link:hover {
+  background: rgba(255,255,255,0.15);
+  color: white !important;
+}
+
+.navbar-toggler {
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+
+/* === MEDICAL DROPDOWN MENUS === */
+.dropdown-menu {
+  border: 1px solid var(--medical-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  margin-top: 0.25rem;
+  background: var(--bg-white);
+}
+
+.dropdown-item {
+  padding: 0.7rem 1.2rem;
+  transition: var(--transition);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+  background: var(--bg-light);
+  color: var(--primary-color);
+}
+
+/* === MEDICAL LOGOUT BUTTON === */
+.navbar .btn-link {
+  background: rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  color: white !important;
+  padding: 0.5rem 0.8rem !important;
+  border-radius: var(--border-radius) !important;
+  font-weight: 500 !important;
+  transition: var(--transition) !important;
+  font-size: 13px !important;
+}
+
+.navbar .btn-link:hover {
+  background: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+}
+
+/* === MEDICAL CARDS AND CONTAINERS === */
+.card {
+  border: 1px solid var(--medical-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  background: var(--bg-white);
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-color);
+}
+
+.card-header {
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  border-bottom: none;
+  padding: 1rem 1.5rem;
+  font-size: 15px;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Forms handled by Crispy Forms + Bootstrap 4 */
+
+/* === MEDICAL BUTTON STYLING === */
+.btn {
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  padding: 0.6rem 1.2rem;
+  transition: var(--transition);
+  text-transform: none;
+  font-size: 14px;
+}
+
+.btn-primary, .btn-dark {
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover, .btn-dark:hover {
+  background: var(--secondary-color);
+  border-color: var(--secondary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-outline-info {
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  background: transparent;
+}
+
+.btn-outline-info:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.btn-outline-success {
+  border: 1px solid var(--success-color);
+  color: var(--success-color);
+  background: transparent;
+}
+
+.btn-outline-success:hover {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  color: white;
+}
+
+/* === HOME PAGE ENHANCEMENTS === */
+.container {
+  margin-top: 80px; /* Account for fixed navbar */
+}
+
+/* Search form styling handled by Bootstrap + Crispy Forms */
+
+/* === MEDICAL LISTS AND TABLES === */
+.list-group-item {
+  border: 1px solid var(--medical-border);
+  border-bottom: 1px solid var(--medical-border);
+  padding: 0.8rem 1.2rem;
+  transition: var(--transition);
+  background: var(--bg-white);
+  font-size: 14px;
+}
+
+.list-group-item:hover {
+  background: var(--bg-light);
+  border-left: 3px solid var(--primary-color);
+}
+
+.list-group-item:first-child {
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+}
+
+.list-group-item:last-child {
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+}
+
+/* === MEDICAL ALERTS === */
+.alert {
+  border: 1px solid;
+  border-radius: var(--border-radius);
+  padding: 0.9rem 1.2rem;
+  margin: 1rem 0;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border-color: var(--success-color);
+  color: #15803d;
+}
+
+.alert-danger {
+  background: #fef2f2;
+  border-color: var(--danger-color);
+  color: #b91c1c;
+}
+
+.alert-warning {
+  background: #fefce8;
+  border-color: var(--warning-color);
+  color: #a16207;
+}
+
+/* === SUBTLE MEDICAL ANIMATIONS === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card, .alert, .list-group {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* === RESPONSIVE IMPROVEMENTS === */
+@media (max-width: 768px) {
+  .container {
+    margin-top: 70px;
+    padding: 0 1rem;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+  
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* === MEDICAL UTILITY CLASSES === */
+.bg-medical-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.text-medical-primary {
+  color: var(--primary-color);
+}
+
+.shadow-custom {
+  box-shadow: var(--shadow-lg);
+}
+
+.border-radius-custom {
+  border-radius: var(--border-radius);
+}
+
+/* === PROFESSIONAL INTERACTIONS === */
+.btn:active {
+  transform: scale(0.99);
+}
+
+/* === FOCUS STATES FOR ACCESSIBILITY === */
+.btn:focus,
+.nav-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Form focus states handled by Bootstrap + Crispy Forms */
+
+/* === ORIGINAL STYLES (PRESERVED) === */
 .starter-template {
   padding: 3rem 1.5rem;
   text-align: center;
@@ -21,9 +342,11 @@ table.standard {
  box-sizing: border-box;
  z-index: 1001;
 }
+
 .link-class:hover{
  background-color:#f1f1f1;
 }
+
 .consulta-protocolo {
   bottom: 10px;
 }

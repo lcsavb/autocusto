@@ -71,14 +71,14 @@ def listar_med(cid):
     protocolo = Protocolo.objects.get(doenca__cid=cid)
     medicamentos = protocolo.medicamentos.all()
     for medicamento in medicamentos:
-        item = [
+        item = (
             medicamento.id,
             f"{medicamento.nome}"
             + " "
             + f"{medicamento.dosagem}"
             + " - "
             + f"{medicamento.apres}",
-        ]
+        )
         lista_med.append(item)
     return tuple(lista_med)
 
@@ -188,11 +188,9 @@ def gerar_lista_meds_ids(dados):
         try:
             if dados[f"id_med{n}"] != "nenhum":
                 lista.append(dados[f"id_med{n}"])
-                n = n + 1
-            else:
-                break
         except KeyError:
-            break
+            pass # Continue if key is missing, as it means no more meds are selected
+        n += 1
     return lista
 
 

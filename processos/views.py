@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Q
 from django.forms.models import model_to_dict
 from datetime import date
@@ -35,10 +36,15 @@ def busca_processos(request):
         return render(request, "processos/busca.html", contexto)
     else:
         processo_id = request.POST.get("processo_id")
-        request.session["processo_id"] = processo_id
-        processo = Processo.objects.get(id=processo_id)
-        request.session["cid"] = processo.doenca.cid
-        return redirect("processos-edicao")
+        # Verify user owns this process
+        try:
+            processo = Processo.objects.get(id=processo_id, usuario=request.user)
+            request.session["processo_id"] = processo_id
+            request.session["cid"] = processo.doenca.cid
+            return redirect("processos-edicao")
+        except Processo.DoesNotExist:
+            messages.error(request, "Processo não encontrado ou você não tem permissão para acessá-lo.")
+            return redirect("processos-busca")
 
 
 @login_required
@@ -53,9 +59,11 @@ def edicao(request):
 
     try:
         processo_id = request.session["processo_id"]
-        processo = Processo.objects.get(id=processo_id)
+        # Verify user owns this process
+        processo = Processo.objects.get(id=processo_id, usuario=usuario)
     except (KeyError, Processo.DoesNotExist):
-        raise ValueError
+        messages.error(request, "Processo não encontrado ou você não tem permissão para acessá-lo.")
+        return redirect("processos-busca")
 
     try:
         primeira_data = request.session["data1"]

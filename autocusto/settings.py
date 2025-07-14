@@ -8,6 +8,9 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,11 +94,11 @@ print(os.environ.get("SQL_HOST"))
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("SQL_DATABASE", "your_db_name"),
-        "USER": os.environ.get("SQL_USER", "your_db_user"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "your_db_password"),
-        "HOST": os.environ.get("SQL_HOST", "localhost"),
-        "PORT": os.environ.get("SQL_PORT", "5432"),
+        "NAME": "autocusto",
+        "USER": "lucas",
+        "PASSWORD": "rraptnor",
+        "HOST": "db",
+        "PORT": "5432",
     }
 }
 

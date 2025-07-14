@@ -1,0 +1,356 @@
+/* AutoCusto Modern Design - Enhanced Bootstrap */
+
+/* VERY VISIBLE TEST - This should make the background bright red if CSS is loading */
+body {
+  background: red !important;
+}
+
+/* === TYPOGRAPHY === */
+:root {
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --accent-color: #f093fb;
+  --success-color: #4facfe;
+  --warning-color: #43e97b;
+  --danger-color: #fa709a;
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --bg-light: #f7fafc;
+  --bg-white: #ffffff;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --border-radius: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Apply modern fonts */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  color: var(--text-primary) !important;
+  line-height: 1.6 !important;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+  min-height: 100vh !important;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+/* === ENHANCED NAVBAR === */
+.navbar {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  transition: var(--transition);
+  padding: 1rem 0;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white !important;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.navbar-brand:hover {
+  transform: translateY(-1px);
+  color: var(--accent-color) !important;
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255,255,255,0.9) !important;
+  font-weight: 500;
+  margin: 0 0.5rem;
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.navbar-nav .nav-link:hover {
+  background: rgba(255,255,255,0.1);
+  color: white !important;
+  transform: translateY(-2px);
+}
+
+.navbar-toggler {
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+
+/* === DROPDOWN MENUS === */
+.dropdown-menu {
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  margin-top: 0.5rem;
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.95);
+}
+
+.dropdown-item {
+  padding: 0.75rem 1.5rem;
+  transition: var(--transition);
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  transform: translateX(5px);
+}
+
+/* === LOGOUT BUTTON ENHANCEMENT === */
+.navbar .btn-link {
+  background: rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--border-radius) !important;
+  font-weight: 500 !important;
+  transition: var(--transition) !important;
+}
+
+.navbar .btn-link:hover {
+  background: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* === CARDS AND CONTAINERS === */
+.card {
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  background: var(--bg-white);
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  font-weight: 600;
+  border-bottom: none;
+  padding: 1.25rem 1.5rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+/* === FORM ENHANCEMENTS === */
+.form-control {
+  border: 2px solid #e2e8f0;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: var(--transition);
+  background: var(--bg-white);
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* === BUTTON ENHANCEMENTS === */
+.btn {
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: var(--transition);
+  text-transform: none;
+  letter-spacing: 0.025em;
+}
+
+.btn-primary, .btn-dark {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border: none;
+  color: white;
+}
+
+.btn-primary:hover, .btn-dark:hover {
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-outline-info {
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  background: transparent;
+}
+
+.btn-outline-info:hover {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-outline-success {
+  border: 2px solid var(--success-color);
+  color: var(--success-color);
+  background: transparent;
+}
+
+.btn-outline-success:hover {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* === HOME PAGE ENHANCEMENTS === */
+.container {
+  margin-top: 80px; /* Account for fixed navbar */
+}
+
+/* === SEARCH FORM ENHANCEMENT === */
+.form-inline .form-control {
+  border-radius: 25px 0 0 25px;
+  border-right: none;
+  background: rgba(255,255,255,0.95);
+}
+
+.form-inline .btn {
+  border-radius: 0 25px 25px 0;
+  border-left: none;
+}
+
+/* === LISTS AND TABLES === */
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem 1.5rem;
+  transition: var(--transition);
+  background: var(--bg-white);
+}
+
+.list-group-item:hover {
+  background: var(--bg-light);
+  transform: translateX(5px);
+  border-left: 4px solid var(--primary-color);
+}
+
+.list-group-item:first-child {
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+}
+
+.list-group-item:last-child {
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+  border-bottom: none;
+}
+
+/* === ALERTS === */
+.alert {
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card, .alert, .list-group {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* === RESPONSIVE IMPROVEMENTS === */
+@media (max-width: 768px) {
+  .container {
+    margin-top: 70px;
+    padding: 0 1rem;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+  
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* === UTILITY CLASSES === */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-custom {
+  box-shadow: var(--shadow-lg);
+}
+
+.border-radius-custom {
+  border-radius: var(--border-radius);
+}
+
+/* === LOADING ANIMATIONS === */
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* === FOCUS STATES FOR ACCESSIBILITY === */
+.btn:focus,
+.form-control:focus,
+.nav-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

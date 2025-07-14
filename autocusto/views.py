@@ -18,7 +18,11 @@ def home(request):
                 cid = formulario.cleaned_data["cid"]
 
                 try:
-                    paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+                    # Only allow access to patients associated with the current user
+                    paciente = Paciente.objects.get(
+                        cpf_paciente=cpf_paciente,
+                        usuarios=usuario
+                    )
                     request.session["paciente_existe"] = True
                     request.session["paciente_id"] = paciente.id
                     request.session["cid"] = cid

@@ -1,53 +1,110 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import Medico, MedicoUsuario
+from .models import Medico
+from .forms import MedicoCadastroFormulario
 
-
-class MedicoModelTests(TestCase):
-    def setUp(self):
-        self.user1 = get_user_model().objects.create_user(
-            username="user1", password="pass"
-        )
-        self.user2 = get_user_model().objects.create_user(
-            username="user2", password="pass"
-        )
+class MedicoModelTest(TestCase):
 
     def test_create_medico(self):
         medico = Medico.objects.create(
-            nome_medico="Dr. House", crm_medico="123456", cns_medico="9876543210"
+            nome_medico="Dr. Carlos Andrade",
+            crm_medico="123456",
+            cns_medico="123456789012345"
         )
-        self.assertEqual(medico.nome_medico, "Dr. House")
-        self.assertEqual(str(medico), "123456")
+        self.assertEqual(medico.nome_medico, "Dr. Carlos Andrade")
 
-    def test_crm_medico_uniqueness(self):
-        Medico.objects.create(nome_medico="Dr. A", crm_medico="111", cns_medico="222")
-        with self.assertRaises(Exception):
-            Medico.objects.create(
-                nome_medico="Dr. B", crm_medico="111", cns_medico="333"
-            )
 
-    def test_cns_medico_uniqueness(self):
-        Medico.objects.create(nome_medico="Dr. A", crm_medico="111", cns_medico="222")
-        with self.assertRaises(Exception):
-            Medico.objects.create(
-                nome_medico="Dr. B", crm_medico="112", cns_medico="222"
-            )
+class MedicoCadastroFormularioTest(TestCase):
+    def setUp(self):
+        self.User = get_user_model()
 
-    def test_medico_usuario_relationship(self):
-        medico = Medico.objects.create(
-            nome_medico="Dr. C", crm_medico="222", cns_medico="333"
-        )
-        mu = MedicoUsuario.objects.create(usuario=self.user1, medico=medico)
-        self.assertEqual(str(mu), f"Médico: {medico} e Usuário {self.user1}")
-        self.assertIn(medico, self.user1.medicos.all())
+    def test_valid_form_submission(self):
+        data = {
+            'nome': 'Dr. Teste',
+            'crm': '12345',
+            'cns': '987654321012345',
+            'email': 'teste@example.com',
+            'password1': 'testpassword',
+            'password2': 'testpassword',
+        }
+        form = MedicoCadastroFormulario(data=data)
+        self.assertTrue(form.is_valid(), form.errors)
+        user = form.save()
 
-    def test_medico_usuario_set_null(self):
-        medico = Medico.objects.create(
-            nome_medico="Dr. D", crm_medico="333", cns_medico="444"
-        )
-        mu = MedicoUsuario.objects.create(usuario=self.user2, medico=medico)
-        mu.usuario = None
-        mu.medico = None
-        mu.save()
-        self.assertIsNone(mu.usuario)
-        self.assertIsNone(mu.medico)
+        self.assertIsNotNone(user)
+        self.assertTrue(user.is_medico)
+        self.assertEqual(user.email, 'teste@example.com')
+
+        medico = Medico.objects.get(crm_medico='12345')
+        self.assertIsNotNone(medico)
+        self.assertEqual(medico.nome_medico, 'Dr. Teste')
+        self.assertEqual(medico.cns_medico, '987654321012345')
+        self.assertIn(medico, user.medicos.all())
+
+    def test_invalid_form_missing_data(self):
+        data = {
+            'nome': '',
+            'crm': '12345',
+            'cns': '987654321012345',
+            'email': 'teste@example.com',
+            'password1': 'testpassword',
+            'password2': 'testpassword',
+        }
+        form = MedicoCadastroFormulario(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('nome', form.errors)
+
+    def test_invalid_form_mismatched_passwords(self):
+        data = {
+            'nome': 'Dr. Teste',
+            'crm': '12345',
+            'cns': '987654321012345',
+            'email': 'teste@example.com',
+            'password1': 'testpassword',
+            'password2': 'wrongpassword',
+        }
+        form = MedicoCadastroFormulario(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('password2', form.errors)
+
+    def test_invalid_form_duplicate_crm(self):
+        Medico.objects.create(nome_medico='Existing Doc', crm_medico='12345', cns_medico='111111111111111')
+        data = {
+            'nome': 'Dr. Teste',
+            'crm': '12345',
+            'cns': '987654321012345',
+            'email': 'teste@example.com',
+            'password1': 'testpassword',
+            'password2': 'testpassword',
+        }
+        form = MedicoCadastroFormulario(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('crm', form.errors)
+
+    def test_invalid_form_duplicate_cns(self):
+        Medico.objects.create(nome_medico='Existing Doc', crm_medico='54321', cns_medico='987654321012345')
+        data = {
+            'nome': 'Dr. Teste',
+            'crm': '12345',
+            'cns': '987654321012345',
+            'email': 'teste@example.com',
+            'password1': 'testpassword',
+            'password2': 'testpassword',
+        }
+        form = MedicoCadastroFormulario(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('cns', form.errors)
+
+    def test_invalid_form_duplicate_email(self):
+        self.User.objects.create_user(email='existing@example.com', password='password123')
+        data = {
+            'nome': 'Dr. Teste',
+            'crm': '12345',
+            'cns': '987654321012345',
+            'email': 'existing@example.com',
+            'password1': 'testpassword',
+            'password2': 'testpassword',
+        }
+        form = MedicoCadastroFormulario(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
