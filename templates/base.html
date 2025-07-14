@@ -25,7 +25,9 @@
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-  <a class="navbar-brand" href="{% url 'home' %}">AutoCusto</a>
+  <a class="navbar-brand" href="{% url 'home' %}">
+    <img src="{% static 'img/logo.png' %}" alt="AutoCusto Logo" style="height: 52px; vertical-align: middle; margin-right: 8px;">
+  </a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
