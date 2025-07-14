@@ -2,13 +2,19 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from processos.forms import PreProcesso
 from pacientes.models import Paciente
+from medicos.forms import MedicoCadastroFormulario
 
 
 def home(request):
     usuario = request.user
     if request.method == "GET":
         formulario = PreProcesso()
-        contexto = {"formulario": formulario}
+        # Include registration form for non-authenticated users
+        if not usuario.is_authenticated:
+            registro_form = MedicoCadastroFormulario()
+            contexto = {"formulario": formulario, "registro_form": registro_form}
+        else:
+            contexto = {"formulario": formulario}
         return render(request, "home.html", contexto)
     else:
         if usuario.is_authenticated:
@@ -56,3 +62,8 @@ def home(request):
                 request, "Você precisa estar logado para acessar esta página."
             )
             return redirect("home")
+
+
+def privacy_policy(request):
+    """Privacy policy page view"""
+    return render(request, "privacy.html")

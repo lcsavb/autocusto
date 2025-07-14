@@ -22,6 +22,7 @@ from django.conf import settings
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("privacidade/", views.privacy_policy, name="privacy-policy"),
     path("admin/", admin.site.urls),
     path("medicos/", include("medicos.urls")),
     path("pacientes/", include("pacientes.urls")),

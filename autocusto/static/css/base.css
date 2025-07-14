@@ -239,17 +239,83 @@ h6 { font-size: 1rem; }
   border-color: rgba(255,255,255,0.5) !important; /* Lighter HR */
 }
 
+/* Topbar Login Form Styling - Non-invasive to Crispy Forms */
+.navbar .form-inline .form-control {
+  border: 1px solid rgba(255,255,255,0.3);
+  background-color: rgba(255,255,255,0.1);
+  color: white;
+  transition: var(--transition);
+}
+
+.navbar .form-inline .form-control::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
+.navbar .form-inline .form-control:focus {
+  border-color: rgba(255,255,255,0.6);
+  background-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+  color: white;
+}
+
+/* Home page layout improvements */
+.hero-section {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+}
+
+.hero-feature {
+  padding: 0.5rem 0;
+}
+
+.hero-feature .oi {
+  font-size: 1.2rem;
+  margin-right: 0.75rem;
+  color: var(--secondary-color);
+}
+
+/* Registration card specific styling */
+.registration-card .card-header {
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+  border: none;
+}
+
+/* Fix registration form header text visibility */
+.card-header h3 {
+  color: white !important;
+}
+
+/* Topbar login form spacing fixes */
+.navbar .form-inline {
+  margin-right: 1rem;
+}
+
+/* Increase login form field widths - much larger for long emails and secure passwords */
+.navbar .form-inline .form-control {
+  min-width: 250px;
+}
+
+.navbar .form-inline .form-control[placeholder="Email"] {
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.navbar .form-inline .form-control[placeholder="Senha"] {
+  min-width: 280px;
+  max-width: 350px;
+}
+
+/* Add margin to navbar brand */
+.navbar-brand {
+  margin-left: 1rem;
+}
+
 /* Responsive Adjustments */
-@media (max-width: 768px) {
-  body {
-    padding-top: 4rem;
-  }
-  .container {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-  }
-  .card-body {
-    padding: 1rem;
+@media (max-width: 992px) {
+  .hero-section .col-lg-6:first-child {
+    text-align: center;
+    margin-bottom: 2rem;
   }
 }
 
@@ -257,11 +323,32 @@ h6 { font-size: 1rem; }
   body {
     padding-top: 4rem;
   }
+  
   .container {
     margin-top: 1rem;
     margin-bottom: 1rem;
   }
+  
   .card-body {
     padding: 1rem;
+  }
+  
+  .hero-section {
+    min-height: auto;
+    padding: 2rem 0;
+  }
+  
+  .navbar .form-inline {
+    flex-direction: column;
+    margin-top: 1rem;
+  }
+  
+  .navbar .form-inline .form-control {
+    margin-bottom: 0.5rem;
+    max-width: 100% !important;
+  }
+  
+  .navbar .form-inline .btn {
+    width: 100%;
   }
 }

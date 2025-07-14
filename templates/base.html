@@ -33,13 +33,6 @@
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
 
     <ul class="navbar-nav mr-auto">
-      {% if not user.is_authenticated %}
-      <li class="nav-item active">
-        <a class="nav-link" href="{% url 'medicos-cadastro' %}">Cadastro <span class="oi oi-task text-top"></span></a>
-      </li>
-      {% endif %}
-
-
       {% if user.is_authenticated %}
 
 
@@ -69,10 +62,6 @@
         </form>
       </li>
 
-      {% else %}
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'login'%}">Login <span class="oi oi-account-login text-top"></span></a>
-      </li>
       {% endif %}
 
       {% if user.is_staff %}
@@ -82,10 +71,22 @@
       {% endif %}
 
     </ul>
+    
     {% if user.is_authenticated %}
+    <!-- Quick patient search for authenticated users -->
     <form action="{% url 'processos-renovacao-rapida' %}" method="GET" class="form-inline my-2 my-lg-0">
       <input name="b" class="form-control mr-sm-2" type="text" placeholder="Paciente por nome ou CPF" aria-label="Search">
       <button class="btn btn-outline-success" type="submit">Buscar</button>
+    </form>
+    {% else %}
+    <!-- Compact login form for non-authenticated users -->
+    <form method="POST" action="{% url 'login' %}" class="form-inline my-2 my-lg-0">
+      {% csrf_token %}
+      <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" required style="max-width: 150px;">
+      <input name="password" type="password" class="form-control mr-sm-2" placeholder="Senha" aria-label="Password" required style="max-width: 120px;">
+      <button class="btn btn-outline-light" type="submit">
+        <span class="oi oi-account-login"></span> Login
+      </button>
     </form>
     {% endif %}
   </div>
@@ -100,7 +101,6 @@
   {% endif %}
 
     {%block content %}{% endblock %}
-
 
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   
