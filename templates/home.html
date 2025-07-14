@@ -5,13 +5,13 @@
 {% block content %}
 
 {% if user.is_authenticated %}
-<div class="container d-flex justify-content-center" style="min-height: calc(100vh - 56px); padding-top: 70px;">
-    <div class="card bg-light mb-3 my-auto" style="max-width: 55vw;">
+<div class="container d-flex justify-content-center authenticated-container">
+    <div class="card bg-light mb-3 my-auto process-card">
         <div class="card-header">Adicionar processo</div>
         <div class="card-body">
             <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes'%}">
                 {% csrf_token %}
-                <div class="form-row ">
+                <div class="form-row">
                     <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
                     <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
                     <div class="col-sm-3"><br><button class="btn btn-dark" type="submit">Cadastrar</button></div>
@@ -27,117 +27,119 @@
 
 {% else %}
 <!-- Hero Section with Registration Form -->
-<div class="container my-5" style="padding-top: 70px;">
-    <div class="row align-items-center min-vh-100">
-        <!-- Left Column: Hero Content -->
-        <div class="col-lg-6">
-            <div class="py-5">
-                <h1 class="display-4 text-primary mb-4">LME em 2 cliques!</h1>
-                <p class="lead text-secondary mb-4">Emita receitas especiais em segundos, sem complicação.</p>
-                
-                <div class="mb-4 p-3 bg-light rounded">
-                    <p class="mb-2"><strong>Sobre o desenvolvedor:</strong></p>
-                    <p class="mb-2 text-muted text-justify">Olá, me chamo Lucas. Sou neurologista formado pela UNIFESP e estudo Informática da Saúde na <a href="https://www.th-deg.de">Technische Hochschule Deggendorf</a>. Minha missão é não te deixar perder tempo com burocracia.</p>
-                    <p class="mb-3 text-muted text-justify">Sempre amei tecnologia — especialmente software livre. Por isso, desenvolvi este sistema de forma aberta, com código licenciado por Creative Commons e auditável. É uma ferramenta feita por quem vive o dia a dia da saúde e sabe onde a tecnologia pode realmente ajudar.</p>
-                    <div class="d-flex flex-wrap align-items-center justify-content-between">
-                        <a href="https://github.com/lcsavb/autocusto" target="_blank" class="btn btn-outline-dark btn-sm mb-2 mb-md-0">
-                            <span class="oi oi-code mr-2"></span>
-                            Ver código no GitHub
-                        </a>
-                        <div class="text-muted small">
-                            <a href="{% url 'privacy-policy' %}" class="text-muted mr-3">
-                                <span class="oi oi-shield mr-1"></span>
-                                Privacidade
+<div class="hero-section">
+    <div class="container-fluid">
+        <div class="main-content-card mx-3">
+            <div class="row align-items-center no-gutters">
+                <!-- Left Column: Hero Content -->
+                <div class="col-lg-6 hero-content p-4">
+                    <h1 class="display-4 main-heading mb-3">LME em 2 cliques!</h1>
+                    <p class="lead text-secondary mb-4">Emita receitas especiais em segundos, sem complicação.</p>
+                    
+                    <div class="developer-info mb-4">
+                        <h6 class="developer-title mb-3">Sobre o desenvolvedor</h6>
+                        <p class="mb-2 text-muted">Olá, me chamo Lucas. Sou neurologista formado pela UNIFESP e estudo Informática da Saúde na <a href="https://www.th-deg.de">Technische Hochschule Deggendorf</a>. Minha missão é não te deixar perder tempo com burocracia.</p>
+                        <p class="mb-3 text-muted">Sempre amei tecnologia — especialmente software livre. Por isso, desenvolvi este sistema de forma aberta, com código licenciado por Creative Commons e auditável.</p>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between">
+                            <a href="https://github.com/lcsavb/autocusto" target="_blank" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
+                                <span class="oi oi-code mr-2"></span>
+                                Ver código no GitHub
                             </a>
-                            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" class="text-muted">
-                                <img src="https://licensebuttons.net/l/by-nc-sa/4.0/80x15.png" alt="CC License" style="height: 15px;">
-                            </a>
+                            <div class="text-muted small">
+                                <a href="{% url 'privacy-policy' %}" class="text-muted mr-3">
+                                    <span class="oi oi-shield mr-1"></span>
+                                    Privacidade
+                                </a>
+                                <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" class="text-muted">
+                                    <img src="https://licensebuttons.net/l/by-nc-sa/4.0/80x15.png" alt="CC License" style="height: 15px;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Grid -->
+                    <div class="features-grid">
+                        <div class="row no-gutters">
+                            <div class="col-6 col-md-4 p-2">
+                                <div class="feature-card text-center">
+                                    <span class="oi oi-clock feature-icon text-info mb-2"></span>
+                                    <h6 class="text-dark">Rapidez</h6>
+                                    <p class="text-muted small">Prescrições em segundos</p>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 p-2">
+                                <div class="feature-card text-center">
+                                    <span class="oi oi-check feature-icon text-success mb-2"></span>
+                                    <h6 class="text-dark">Precisão</h6>
+                                    <p class="text-muted small">Validação automática</p>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 p-2">
+                                <div class="feature-card text-center">
+                                    <span class="oi oi-shield feature-icon text-warning mb-2"></span>
+                                    <h6 class="text-dark">Segurança</h6>
+                                    <p class="text-muted small">Proteção de dados</p>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 p-2">
+                                <div class="feature-card text-center">
+                                    <span class="oi oi-code feature-icon text-secondary mb-2"></span>
+                                    <h6 class="text-dark">Open Source</h6>
+                                    <p class="text-muted small">Código auditável</p>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 p-2">
+                                <div class="feature-card text-center">
+                                    <span class="oi oi-aperture feature-icon text-primary mb-2"></span>
+                                    <h6 class="text-dark">Facilidade</h6>
+                                    <p class="text-muted small">Interface intuitiva</p>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 p-2">
+                                <div class="feature-card text-center">
+                                    <span class="oi oi-graph feature-icon text-info mb-2"></span>
+                                    <h6 class="text-dark">Gestão</h6>
+                                    <p class="text-muted small">Controle simplificado</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Static Feature Grid -->
-                <div class="row mt-4">
-                    <div class="col-6 col-lg-4 mb-3">
-                        <div class="feature-card text-center">
-                            <span class="oi oi-clock text-info mb-2" style="font-size: 2rem;"></span>
-                            <h6 class="text-dark">Rapidez</h6>
-                            <p class="text-muted small">Prescrições em segundos</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-lg-4 mb-3">
-                        <div class="feature-card text-center">
-                            <span class="oi oi-check text-success mb-2" style="font-size: 2rem;"></span>
-                            <h6 class="text-dark">Precisão</h6>
-                            <p class="text-muted small">Validação automática</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-lg-4 mb-3">
-                        <div class="feature-card text-center">
-                            <span class="oi oi-shield text-warning mb-2" style="font-size: 2rem;"></span>
-                            <h6 class="text-dark">Segurança</h6>
-                            <p class="text-muted small">Proteção de dados</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-lg-4 mb-3">
-                        <div class="feature-card text-center">
-                            <span class="oi oi-code text-secondary mb-2" style="font-size: 2rem;"></span>
-                            <h6 class="text-dark">Open Source</h6>
-                            <p class="text-muted small">Código auditável</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-lg-4 mb-3">
-                        <div class="feature-card text-center">
-                            <span class="oi oi-aperture text-primary mb-2" style="font-size: 2rem;"></span>
-                            <h6 class="text-dark">Facilidade</h6>
-                            <p class="text-muted small">Interface intuitiva</p>
-                        </div>
-                    </div>
-                    <div class="col-6 col-lg-4 mb-3">
-                        <div class="feature-card text-center">
-                            <span class="oi oi-graph text-info mb-2" style="font-size: 2rem;"></span>
-                            <h6 class="text-dark">Gestão</h6>
-                            <p class="text-muted small">Controle simplificado</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column: Registration Form -->
-        <div class="col-lg-6 d-flex align-items-center">
-            <div class="w-100">
-                <div class="card shadow-lg border-0">
-                    <div class="card-header bg-dark text-white">
-                        <h3 class="card-title mb-0">
-                            <span class="oi oi-task mr-2"></span>
-                            Cadastro Médico
-                        </h3>
-                    </div>
-                    <div class="card-body p-4">
-                        <p class="text-muted mb-4">Preencha os dados abaixo para criar sua conta e prescreva agora mesmo.</p>
-
-                        {% if registro_form %}
-                        <form method="POST" action="{% url 'medicos-cadastro' %}">
-                            {% csrf_token %}
-                            {{ registro_form|crispy }}
-                            <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
+                <!-- Right Column: Registration Form -->
+                <div class="col-lg-6 registration-column p-4">
+                    <div class="card shadow-lg border-0 registration-card mx-auto">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="card-title mb-0">
                                 <span class="oi oi-task mr-2"></span>
-                                Criar Conta e Começar
-                            </button>
-                            <p class="text-center text-muted small mt-3 mb-1">
-                                🔒 Dados protegidos.
+                                Cadastro Médico
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted mb-4">Preencha os dados abaixo para criar sua conta e prescreva agora mesmo.</p>
+
+                            {% if registro_form %}
+                            <form method="POST" action="{% url 'medicos-cadastro' %}">
+                                {% csrf_token %}
+                                {{ registro_form|crispy }}
+                                <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
+                                    <span class="oi oi-task mr-2"></span>
+                                    Criar Conta e Começar
+                                </button>
+                                <p class="text-center text-muted small mt-3 mb-1">
+                                    🔒 Dados protegidos.
+                                </p>
+                            </form>
+                            {% else %}
+                            <!-- Fallback simple registration form -->
+                            <p class="text-center">
+                                <a href="{% url 'medicos-cadastro' %}" class="btn btn-primary btn-lg">
+                                    <span class="oi oi-task mr-2"></span>
+                                    Ir para Cadastro Completo
+                                </a>
                             </p>
-                        </form>
-                        {% else %}
-                        <!-- Fallback simple registration form -->
-                        <p class="text-center">
-                            <a href="{% url 'medicos-cadastro' %}" class="btn btn-primary btn-lg">
-                                <span class="oi oi-task mr-2"></span>
-                                Ir para Cadastro Completo
-                            </a>
-                        </p>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,75 +151,11 @@
 {% endblock content %}
 
 {% block scripts %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
 {% if user.is_authenticated %}
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
 <script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
 {% endif %}
-<style>
-/* Fix for fixed navbar */
-.min-vh-100 {
-    min-height: calc(100vh - 56px);
-}
-
-.feature-card {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-    transition: all 0.2s ease-in-out;
-    height: 100%;
-    border: 1px solid #dee2e6;
-}
-.feature-card:hover {
-    box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.15);
-    border: 1px solid #6c757d;
-    cursor: pointer;
-    transform: translateY(-1px);
-}
-
-/* Prevent overflow and improve responsive behavior */
-.container {
-    max-width: 100%;
-    overflow-x: hidden;
-}
-
-.row {
-    margin-left: -15px;
-    margin-right: -15px;
-}
-
-/* Responsive improvements */
-@media (max-width: 991.98px) {
-    .display-4 {
-        font-size: 2.5rem;
-    }
-}
-
-@media (max-width: 767.98px) {
-    .container {
-        padding-top: 60px !important;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    
-    .display-4 {
-        font-size: 2rem;
-    }
-    
-    .feature-card {
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .feature-card span {
-        font-size: 1.5rem !important;
-    }
-    
-    .feature-card h6 {
-        font-size: 0.9rem;
-    }
-}
-</style>
 {% endblock %}
