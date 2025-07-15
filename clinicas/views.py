@@ -42,6 +42,11 @@ def cadastro(request):
                     request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!'
                 )
                 return redirect("home")
+        else:
+            # Form validation failed - add errors as Django messages for toast display
+            for field, errors in f_clinica.errors.items():
+                for error in errors:
+                    messages.error(request, error)
     else:
         f_clinica = ClinicaFormulario()
 

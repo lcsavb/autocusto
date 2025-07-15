@@ -41,6 +41,7 @@ def busca_processos(request):
             processo = Processo.objects.get(id=processo_id, usuario=request.user)
             request.session["processo_id"] = processo_id
             request.session["cid"] = processo.doenca.cid
+            messages.success(request, f"Processo selecionado: {processo.doenca.nome}")
             return redirect("processos-edicao")
         except Processo.DoesNotExist:
             messages.error(request, "Processo não encontrado ou você não tem permissão para acessá-lo.")
@@ -94,10 +95,16 @@ def edicao(request):
             if path_pdf_final:
                 request.session["path_pdf_final"] = path_pdf_final
                 request.session["processo_id"] = processo_id
+                messages.success(request, "Processo atualizado com sucesso! PDF gerado.")
                 return redirect("processos-pdf")
             else:
                 messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
                 return redirect("processos-cadastro")
+        else:
+            # Form validation failed - add errors as Django messages for toast display
+            for field, errors in formulario.errors.items():
+                for error in errors:
+                    messages.error(request, error)
 
     else:
         dados_iniciais = cria_dict_renovação(processo)
@@ -150,6 +157,7 @@ def renovacao_rapida(request):
             path_pdf_final = transfere_dados_gerador(dados)
             
             if path_pdf_final:
+                messages.success(request, "Renovação processada com sucesso! PDF gerado.")
                 return redirect(path_pdf_final)
             else:
                 print("ERROR: Failed to generate PDF for renewal")
@@ -200,10 +208,16 @@ def cadastro(request):
             if path_pdf_final:
                 request.session["path_pdf_final"] = path_pdf_final
                 request.session["processo_id"] = processo_id
+                messages.success(request, "Processo criado com sucesso! PDF gerado.")
                 return redirect("processos-pdf")
             else:
                 messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
                 # Don't redirect, fall through to render the form again with error message
+        else:
+            # Form validation failed - add errors as Django messages for toast display
+            for field, errors in formulario.errors.items():
+                for error in errors:
+                    messages.error(request, error)
     else:
         if not usuario.clinicas.exists():
             return redirect("clinicas-cadastro")

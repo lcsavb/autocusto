@@ -51,10 +51,20 @@ def home(request):
                         ).id
                         return redirect("processos-edicao")
                     else:
+                        messages.success(request, f"Processo iniciado para paciente {cpf_paciente}!")
                         return redirect("processos-cadastro")
                 else:
+                    messages.success(request, f"Processo iniciado para paciente {cpf_paciente}!")
                     return redirect("processos-cadastro")
             else:
+                # Form validation failed - add errors as Django messages for toast display
+                for field, errors in formulario.errors.items():
+                    for error in errors:
+                        messages.error(request, error)
+                
+                # Clear form errors to prevent inline display (errors will show as toasts)
+                formulario._errors.clear()
+                
                 contexto = {"formulario": formulario}
                 return render(request, "home.html", contexto)
         else:

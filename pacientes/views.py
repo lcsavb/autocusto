@@ -6,6 +6,7 @@ from django.views.generic import ListView
 from pacientes.models import Paciente
 from django.urls import reverse
 from urllib.parse import urlencode
+from django.contrib import messages
 
 
 @login_required
@@ -24,9 +25,14 @@ def cadastro(request):
             string_busca = urlencode({"paciente": instance.paciente})
             url = f"{url_base}?{string_busca}"
 
-            # nome = formulario.cleaned_data.get('nome')
-            # messages.success(request, f'Paciente {nome} adicionado! Agora preencha o processo:')
+            nome = formulario.cleaned_data.get('nome')
+            messages.success(request, f'Paciente {nome} adicionado com sucesso! Agora preencha o processo.')
             return redirect(url)
+        else:
+            # Form validation failed - add errors as Django messages for toast display
+            for field, errors in formulario.errors.items():
+                for error in errors:
+                    messages.error(request, error)
     else:
         formulario = PacienteCadastroFormulario()
 

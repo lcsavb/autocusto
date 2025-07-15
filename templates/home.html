@@ -7,7 +7,7 @@
 {% if user.is_authenticated %}
 
     <div class="auth-viewport">
-        <div class="auth-content-wrapper">
+        <div class="auth-content-wrapper toast-enabled">
             <div class="auth-process-card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0 text-white">
@@ -16,7 +16,16 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
-                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}">
+                    <!-- DEBUG: Messages handled by JavaScript toast system -->
+                    <script>
+                      if (window.djangoMessages) {
+                        console.log('[DEBUG] home.html authenticated: window.djangoMessages:', window.djangoMessages);
+                      } else {
+                        console.log('[DEBUG] home.html authenticated: No window.djangoMessages found');
+                      }
+                    </script>
+                    
+                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}">"
                         {% csrf_token %}
                         <div class="form-row align-items-end">
                             <div class="col-sm-6"> 
@@ -129,6 +138,8 @@
                 <!-- Right Column: Registration Form -->
                 <div class="col-lg-6 registration-column p-4">
                     <div class="card shadow-lg border-0 registration-card toast-enabled mx-auto">
+                        <!-- DEBUG: Registration card rendered -->
+                        <script>console.log('[DEBUG] Registration card rendered');</script>
                         <div class="card-header bg-primary text-white">
                             <h4 class="card-title mb-0">
                                 <span class="oi oi-task mr-2 text-white"></span>
@@ -136,7 +147,14 @@
                             </h4>
                         </div>
                         <div class="card-body p-4">
-                            <!-- Messages handled by JavaScript toast system -->
+                            <!-- DEBUG: Messages handled by JavaScript toast system -->
+                            <script>
+                              if (window.djangoMessages) {
+                                console.log('[DEBUG] home.html: window.djangoMessages:', window.djangoMessages);
+                              } else {
+                                console.log('[DEBUG] home.html: No window.djangoMessages found');
+                              }
+                            </script>
 
                             {% if registro_form %}
                             <form method="POST" action="{% url 'home' %}" novalidate>
@@ -173,7 +191,14 @@
 {% block scripts %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
 
-<!-- Django messages will be automatically converted to toasts by django-messages-toast.js -->
+<!-- DEBUG: Django messages will be automatically converted to toasts by django-messages-toast.js -->
+<script>
+  if (window.djangoMessages) {
+    console.log('[DEBUG] home.html: Django messages for toast:', window.djangoMessages);
+  } else {
+    console.log('[DEBUG] home.html: No Django messages for toast');
+  }
+</script>
 
 {% if user.is_authenticated %}
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
