@@ -176,8 +176,15 @@ def renovacao_rapida(request):
         
         # Generate PDF for renewal
         try:
+            print(f"\n=== RENOVACAO_RAPIDA PDF GENERATION START ===")
+            print(f"DEBUG: processo_id: {processo_id}")
+            print(f"DEBUG: nova_data: {nova_data}")
+            
             dados = gerar_dados_renovacao(nova_data, processo_id)
+            print(f"DEBUG: Generated renovation data successfully")
+            
             path_pdf_final = transfere_dados_gerador(dados)
+            print(f"DEBUG: transfere_dados_gerador returned: {path_pdf_final}")
             
             if path_pdf_final:
                 # Check if this is an AJAX request
@@ -225,95 +232,131 @@ def renovacao_rapida(request):
 
 @login_required
 def cadastro(request):
-    usuario = request.user
-    medico = seletor_medico(usuario)
-    clinicas = medico.clinicas.all()
-    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
-    paciente_existe = request.session["paciente_existe"]
-    primeira_data = date.today().strftime("%d/%m/%Y")
-    cid = request.session["cid"]
-    medicamentos = listar_med(cid)
-    ModeloFormulario = fabricar_formulario(cid, False)
+    try:
+        usuario = request.user
+        medico = seletor_medico(usuario)
+        clinicas = medico.clinicas.all()
+        escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+        
+        # Check for required session variables
+        if "paciente_existe" not in request.session:
+            messages.error(request, "Sessão expirada. Por favor, inicie o cadastro novamente.")
+            return redirect("processos-home")
+        
+        if "cid" not in request.session:
+            messages.error(request, "CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.")
+            return redirect("processos-home")
+            
+        paciente_existe = request.session["paciente_existe"]
+        primeira_data = date.today().strftime("%d/%m/%Y")
+        cid = request.session["cid"]
+        medicamentos = listar_med(cid)
+        ModeloFormulario = fabricar_formulario(cid, False)
+    except Exception as e:
+        messages.error(request, f"Erro ao carregar dados do cadastro: {e}")
+        return redirect("processos-home")
 
     if request.method == "POST":
-        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
+        try:
+            formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
 
-        if formulario.is_valid():
-            dados_formulario = formulario.cleaned_data
-            id_clin = dados_formulario["clinicas"]
-            clinica = medico.clinicas.get(id=id_clin)
+            if formulario.is_valid():
+                try:
+                    dados_formulario = formulario.cleaned_data
+                    id_clin = dados_formulario["clinicas"]
+                    clinica = medico.clinicas.get(id=id_clin)
 
-            ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
-            dados_formulario, meds_ids = gera_med_dosagem(
-                dados_formulario, ids_med_cadastrados
-            )
-            dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
-            processo_id = formulario.save(usuario, medico, meds_ids)
-            path_pdf_final = transfere_dados_gerador(dados)
+                    ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+                    dados_formulario, meds_ids = gera_med_dosagem(
+                        dados_formulario, ids_med_cadastrados
+                    )
+                    dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
+                    processo_id = formulario.save(usuario, medico, meds_ids)
+                    path_pdf_final = transfere_dados_gerador(dados)
 
-            if path_pdf_final:
-                request.session["path_pdf_final"] = path_pdf_final
-                request.session["processo_id"] = processo_id
-                messages.success(request, "Processo criado com sucesso! PDF gerado.")
-                return redirect("processos-pdf")
+                    if path_pdf_final:
+                        request.session["path_pdf_final"] = path_pdf_final
+                        request.session["processo_id"] = processo_id
+                        messages.success(request, "Processo criado com sucesso! PDF gerado.")
+                        return redirect("processos-pdf")
+                    else:
+                        messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                        # Don't redirect, fall through to render the form again with error message
+                except Exception as e:
+                    messages.error(request, f"Erro ao processar dados do formulário: {e}")
+                    # Fall through to render form again
             else:
-                messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
-                # Don't redirect, fall through to render the form again with error message
-        else:
-            # Form validation failed - add errors as Django messages for toast display
-            for field, errors in formulario.errors.items():
-                for error in errors:
-                    messages.error(request, error)
+                # Form validation failed - add errors as Django messages for toast display
+                for field, errors in formulario.errors.items():
+                    for error in errors:
+                        messages.error(request, error)
+                # Redirect to avoid POST-redirect-GET issue
+                return redirect("processos-cadastro")
+        except Exception as e:
+            messages.error(request, f"Erro ao processar formulário: {e}")
+            return redirect("processos-cadastro")
     else:
-        if not usuario.clinicas.exists():
-            return redirect("clinicas-cadastro")
-        if paciente_existe:
-            paciente_id = request.session["paciente_id"]
-            paciente = Paciente.objects.get(id=paciente_id)
-            dados_paciente = model_to_dict(paciente)
-            dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
-            dados_paciente["cid"] = request.session["cid"]
-            dados_paciente["data_1"] = primeira_data
-            campos_ajustados, dados_paciente = ajustar_campos_condicionais(
-                dados_paciente
-            )
-            formulario = ModeloFormulario(
-                escolhas, medicamentos, initial=dados_paciente
-            )
-            campos_condicionais = extrair_campos_condicionais(formulario)
-            link_protocolo = gerar_link_protocolo(cid)
-            contexto = {
-                "formulario": formulario,
-                "paciente_existe": paciente_existe,
-                "paciente": paciente,
-                "campos_condicionais": campos_condicionais,
-                "link_protocolo": link_protocolo,
-            }
-            contexto.update(campos_ajustados)
-        else:
-            link_protocolo = gerar_link_protocolo(cid)
-            dados_iniciais = {
-                "cpf_paciente": request.session["cpf_paciente"],
-                "data_1": primeira_data,
-                "cid": cid,
-                "diagnostico": Doenca.objects.get(cid=cid).nome,
-            }
+        try:
+            if not usuario.clinicas.exists():
+                return redirect("clinicas-cadastro")
+            if paciente_existe:
+                if "paciente_id" not in request.session:
+                    messages.error(request, "ID do paciente não encontrado na sessão.")
+                    return redirect("processos-home")
+                    
+                paciente_id = request.session["paciente_id"]
+                paciente = Paciente.objects.get(id=paciente_id)
+                dados_paciente = model_to_dict(paciente)
+                dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+                dados_paciente["cid"] = request.session["cid"]
+                dados_paciente["data_1"] = primeira_data
+                campos_ajustados, dados_paciente = ajustar_campos_condicionais(
+                    dados_paciente
+                )
+                formulario = ModeloFormulario(
+                    escolhas, medicamentos, initial=dados_paciente
+                )
+                campos_condicionais = extrair_campos_condicionais(formulario)
+                link_protocolo = gerar_link_protocolo(cid)
+                contexto = {
+                    "formulario": formulario,
+                    "paciente_existe": paciente_existe,
+                    "paciente": paciente,
+                    "campos_condicionais": campos_condicionais,
+                    "link_protocolo": link_protocolo,
+                }
+                contexto.update(campos_ajustados)
+            else:
+                if "cpf_paciente" not in request.session:
+                    messages.error(request, "CPF do paciente não encontrado na sessão.")
+                    return redirect("processos-home")
+                    
+                link_protocolo = gerar_link_protocolo(cid)
+                dados_iniciais = {
+                    "cpf_paciente": request.session["cpf_paciente"],
+                    "data_1": primeira_data,
+                    "cid": cid,
+                    "diagnostico": Doenca.objects.get(cid=cid).nome,
+                }
 
-            formulario = ModeloFormulario(
-                escolhas, medicamentos, initial=dados_iniciais
-            )
-            campos_condicionais = extrair_campos_condicionais(formulario)
+                formulario = ModeloFormulario(
+                    escolhas, medicamentos, initial=dados_iniciais
+                )
+                campos_condicionais = extrair_campos_condicionais(formulario)
 
-            contexto = {
-                "formulario": formulario,
-                "paciente_existe": paciente_existe,
-                "campos_condicionais": campos_condicionais,
-                "link_protocolo": link_protocolo,
-            }
+                contexto = {
+                    "formulario": formulario,
+                    "paciente_existe": paciente_existe,
+                    "campos_condicionais": campos_condicionais,
+                    "link_protocolo": link_protocolo,
+                }
 
-        contexto.update(mostrar_med(False))
+            contexto.update(mostrar_med(False))
 
-        return render(request, "processos/cadastro.html", contexto)
+            return render(request, "processos/cadastro.html", contexto)
+        except Exception as e:
+            messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
+            return redirect("processos-home")
 
 
 @login_required

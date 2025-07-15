@@ -207,6 +207,7 @@ document.addEventListener('alpine:init', () => {
       
       const formData = new FormData(event.target);
       const dateValue = formData.get('data_1');
+      const isEditing = formData.get('edicao'); // Check if edit checkbox is checked
       
       // Validate date
       if (!this.isValidDate(dateValue)) {
@@ -218,6 +219,14 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       
+      // If editing is enabled, submit form normally to allow redirect
+      if (isEditing) {
+        console.log('Edit mode enabled - submitting form normally for redirect');
+        event.target.submit(); // Submit form normally, allowing backend redirect
+        return;
+      }
+      
+      // Otherwise, use AJAX for PDF generation
       this.isSubmitting = true;
       
       try {

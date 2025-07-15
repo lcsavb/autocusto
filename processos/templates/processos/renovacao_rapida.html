@@ -16,74 +16,105 @@
                 </h5>
             </div>
             <div class="card-body p-4 toast-enabled" style="overflow-y: auto; max-height: calc(100vh - 25rem);">
-                <div class="row">
-                    {% for paciente in busca_pacientes %}
-                    <div class="col-lg-6 col-xl-4 mb-4">
-                        <div class="card border-light shadow-sm h-100" style="overflow: visible;">
-                            <div class="card-body d-flex flex-column" style="overflow: visible;">
-                                <div class="renovacao-form-wrapper flex-grow-1" style="overflow: visible;">
-                                    <h6 class="card-title font-weight-bold text-primary mb-4" style="word-wrap: break-word; overflow-wrap: break-word; hyphens: auto;">
-                                        <i class="oi oi-person mr-2"></i>
-                                        {{ paciente.nome_paciente }}
-                                    </h6>
-                                    
-                                    <form method="POST" novalidate style="overflow: visible;" x-data="renovacaoForm()" @submit="submitForm">
+                <!-- Patient Count -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-muted">
+                                <i class="oi oi-people mr-1"></i>
+                                {{ busca_pacientes|length }} paciente{{ busca_pacientes|length|pluralize:"s" }} encontrado{{ busca_pacientes|length|pluralize:"s" }}
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                {% if busca_pacientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="patientsTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th style="width: 25%;">
+                                    <i class="oi oi-person mr-1"></i>
+                                    Paciente
+                                </th>
+                                <th style="width: 20%;">
+                                    <i class="oi oi-document mr-1"></i>
+                                    Processo
+                                </th>
+                                <th style="width: 20%;">
+                                    <i class="oi oi-calendar mr-1"></i>
+                                    Data
+                                </th>
+                                <th style="width: 15%;">
+                                    <i class="oi oi-cog mr-1"></i>
+                                    Opções
+                                </th>
+                                <th style="width: 20%;">
+                                    <i class="oi oi-reload mr-1"></i>
+                                    Ação
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paciente in busca_pacientes %}
+                            <tr class="patient-row">
+                                <td class="align-middle">
+                                    <div class="d-flex flex-column">
+                                        <span class="font-weight-bold text-primary">{{ paciente.nome_paciente }}</span>
+                                        <small class="text-muted">{{ paciente.cpf_paciente }}</small>
+                                    </div>
+                                </td>
+                                <td class="align-middle">
+                                    <form method="POST" novalidate style="overflow: visible;" x-data="renovacaoForm()" @submit="submitForm" class="renovation-form">
                                         {% csrf_token %}
                                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                                         
-                                        <div class="form-group mb-4" style="border: 1px solid transparent; padding: 10px; margin: 10px 0; position: relative; z-index: 1000;">
-                                            <label for="processo_{{ paciente.id }}" class="font-weight-bold mb-2 d-block">Processo</label>
-                                            <select class="form-control" name="processo_id" id="processo_{{ paciente.id }}" style="position: relative; z-index: 1001; line-height: 1.5; padding: 8px 12px; height: auto; min-height: 40px;">
-                                                {% for processo in paciente.processos.all %}
-                                                {% if processo.usuario == usuario %}
-                                                <option value="{{ processo.id }}">{{ processo }}</option>
-                                                {% endif %}
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="form-group mb-4" style="border: 1px solid transparent; padding: 10px; margin: 10px 0;">
-                                            <label for="data_{{ paciente.id }}" class="font-weight-bold mb-2 d-block">Primeira Data</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary btn-sm today-btn" type="button" data-target="data_{{ paciente.id }}">
-                                                        <i class="oi oi-calendar"></i> Hoje
-                                                    </button>
-                                                </div>
+                                        <select class="form-control form-control-sm font-weight-bold" name="processo_id" id="processo_{{ paciente.id }}" style="background-color: #fff; color: #333; border: 2px solid #dee2e6;">
+                                            {% for processo in paciente.processos.all %}
+                                            {% if processo.usuario == usuario %}
+                                            <option value="{{ processo.id }}"> {{ processo.doenca.cid }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                </td>
+                                <td class="align-middle">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary btn-sm today-btn" type="button" data-target="data_{{ paciente.id }}">
+                                                    <i class="oi oi-calendar"></i>
+                                                </button>
                                             </div>
                                         </div>
-                                        
-                                        <div class="form-group mb-4" style="border: 1px solid transparent; padding: 10px; margin: 10px 0;">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="edicao" id="edicao_{{ paciente.id }}">
-                                                <label class="form-check-label font-weight-bold" for="edicao_{{ paciente.id }}">
-                                                    Permitir edição
-                                                </label>
-                                            </div>
+                                </td>
+                                <td class="align-middle">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="edicao" id="edicao_{{ paciente.id }}">
+                                            <label class="form-check-label" for="edicao_{{ paciente.id }}">
+                                                Permitir edição
+                                            </label>
                                         </div>
-                                        
-                                        <div class="form-group" style="border: 1px solid transparent; padding: 10px; margin: 10px 0;">
-                                            <button type="submit" class="btn btn-primary btn-block">
-                                                <i class="oi oi-reload mr-1"></i>
-                                                Renovar Processo
-                                            </button>
-                                        </div>
+                                </td>
+                                <td class="align-middle">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="oi oi-reload mr-1"></i>
+                                            Renovar
+                                        </button>
                                     </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="col-12">
-                        <div class="text-center text-muted py-5">
-                            <i class="oi oi-info" style="font-size: 3rem;"></i>
-                            <h5 class="mt-3 mb-2">Nenhum paciente encontrado</h5>
-                            <p class="text-muted">Use a busca na barra superior para encontrar pacientes</p>
-                        </div>
-                    </div>
-                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="oi oi-info" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 mb-2">Nenhum paciente encontrado</h5>
+                    <p class="text-muted">Use a busca na barra superior para encontrar pacientes</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

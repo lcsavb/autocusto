@@ -29,10 +29,11 @@
                                         name="cpf_paciente" 
                                         class="form-control" 
                                         x-model="cpf" 
-                                        @input="searchPatients(); activeSearch = 'patients'"
+                                        @input="handleCPFInput($event)"
                                         @focus="activeSearch = 'patients'"
                                         autocomplete="off" 
-                                        placeholder="CPF do Paciente">
+                                        :placeholder="AlpineMasks.cpf.placeholder"
+                                        :maxlength="AlpineMasks.cpf.maxLength">
                                 </div>
                                 
                                 <!-- Disease/CID Field -->
@@ -43,10 +44,11 @@
                                         name="cid" 
                                         class="form-control" 
                                         x-model="cid" 
-                                        @input="searchDiseases(); activeSearch = 'diseases'"
+                                        @input="handleCIDInput($event)"
                                         @focus="activeSearch = 'diseases'"
                                         autocomplete="off" 
-                                        placeholder="Doença ou CID">
+                                        :placeholder="AlpineMasks.cid.placeholder"
+                                        :maxlength="AlpineMasks.cid.maxLength">
                                 </div>
                                 
                                 <div class="col-sm-3">
@@ -71,10 +73,11 @@
                             </h6>
                         </div>
                         <div class="results-list">
-                            <template x-for="patient in patients" :key="patient.id">
+                            <template x-for="patient in patients" :key="patient.cpf_paciente">
                                 <div class="result-row" @click="selectPatient(patient)">
                                     <div class="result-content">
-                                        <span x-text="patient.text"></span>
+                                        <div class="patient-name" x-text="patient.nome_paciente"></div>
+                                        <div class="patient-cpf" x-text="'CPF: ' + patient.cpf_paciente"></div>
                                     </div>
                                     <button type="button" class="btn btn-primary btn-sm">
                                         <i class="oi oi-check mr-1"></i>
@@ -222,7 +225,7 @@
                                 {{ registro_form|crispy }}
                                 <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
                                     <span class="oi oi-task mr-2"></span>
-                                    Criar Conta e Começar
+                                    Criar conta gratuita
                                 </button>
                                 <p class="text-center text-muted small mt-3 mb-1">
                                     🔒 Dados protegidos de acordo com a LGPD
@@ -262,23 +265,13 @@
 
 
 {% if user.is_authenticated %}
+<!-- Alpine.js Masks Utilities -->
+<script src="{% static 'js/alpine-masks.js' %}"></script>
+
 <style>
-/* DEBUG: Container borders */
+/* Clean professional styling */
 .auth-process-card {
-  border: 3px solid #00ff00 !important; /* DEBUG: Green border for main card */
   overflow: visible !important;
-}
-
-.card-body {
-  border: 2px solid #0000ff !important; /* DEBUG: Blue border for card body */
-}
-
-.form-row {
-  border: 2px dashed #ff6600 !important; /* DEBUG: Orange border for form row */
-}
-
-.form-row > div {
-  border: 1px dotted #aa00ff !important; /* DEBUG: Purple border for columns */
 }
 
 /* Results Container - Absolutely positioned to float below card */
@@ -293,19 +286,19 @@
   max-width: 55vw; /* Match the card width */
 }
 
-/* External Results - Professional styling */
+/* External Results - Muted professional styling */
 .external-results {
   background: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 2px solid #007bff; /* Professional blue border instead of pathetic red */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #d1d5db; /* Muted gray border */
   overflow: hidden;
   margin-bottom: 1rem;
 }
 
-/* Results Header */
+/* Results Header - Muted colors */
 .results-header {
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: linear-gradient(135deg, #6b7280, #4b5563); /* Muted gray gradient */
   color: white;
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -337,7 +330,7 @@
 
 .result-row:hover {
   background: #f8f9fa;
-  border-left: 4px solid #007bff;
+  border-left: 4px solid #6b7280; /* Muted gray hover accent */
   padding-left: calc(1.5rem - 4px);
 }
 
@@ -372,10 +365,22 @@
 }
 
 /* Patient styling */
-.result-content span {
-  font-weight: 500;
+.patient-name {
+  font-weight: 600;
   color: #2d3748;
   font-size: 1rem;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.patient-cpf {
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 /* Action buttons */
@@ -388,7 +393,7 @@
 
 .result-row .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3); /* Muted gray shadow */
 }
 
 /* Responsive */
@@ -423,6 +428,19 @@ document.addEventListener('alpine:init', () => {
     
     // UI state
     activeSearch: '',
+    
+    // Mask handlers using external utility
+    handleCPFInput: AlpineMasks.createHandler('cpf', function(event, masked) {
+      this.cpf = masked;
+      this.searchPatients();
+      this.activeSearch = 'patients';
+    }),
+    
+    handleCIDInput: AlpineMasks.createHandler('cid', function(event, masked) {
+      this.cid = masked;
+      this.searchDiseases();
+      this.activeSearch = 'diseases';
+    }),
     
     // Search diseases
     async searchDiseases() {
@@ -462,14 +480,14 @@ document.addEventListener('alpine:init', () => {
       
       try {
         const url = document.getElementById('js-form').dataset.buscaPacientes;
-        const response = await fetch(`${url}?q=${encodeURIComponent(this.cpf)}`);
+        const response = await fetch(`${url}?palavraChave=${encodeURIComponent(this.cpf)}`);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
         
         const data = await response.json();
-        this.patients = data.pacientes || [];
+        this.patients = data || []; // Direct array, no .pacientes wrapper
         console.log('[DEBUG] Found patients:', this.patients.length);
         
       } catch (error) {
@@ -486,9 +504,9 @@ document.addEventListener('alpine:init', () => {
       console.log('[DEBUG] Selected disease:', disease);
     },
     
-    // Select patient
+    // Select patient  
     selectPatient(patient) {
-      this.cpf = patient.text;
+      this.cpf = patient.cpf_paciente; // Store just the CPF for form submission
       this.patients = [];
       this.activeSearch = '';
       console.log('[DEBUG] Selected patient:', patient);
@@ -496,7 +514,6 @@ document.addEventListener('alpine:init', () => {
   }))
 });
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
-<script src="{% static 'processos/js/mascaras.js' %}"></script>
+<!-- jQuery masks removed - using Alpine.js masks instead -->
 {% endif %}
 {% endblock %}

@@ -6,6 +6,26 @@ from .manejo_pdfs import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
 
+# DEBUG: Print all PDF-related settings at module load
+print(f"\n=== PDF SETTINGS DEBUG ===")
+print(f"DEBUG: PATH_LME_BASE: {getattr(settings, 'PATH_LME_BASE', 'NOT_SET')}")
+print(f"DEBUG: PATH_LME_BASE exists: {os.path.exists(getattr(settings, 'PATH_LME_BASE', '')) if hasattr(settings, 'PATH_LME_BASE') else 'NOT_SET'}")
+print(f"DEBUG: PATH_RELATORIO: {getattr(settings, 'PATH_RELATORIO', 'NOT_SET')}")
+print(f"DEBUG: PATH_RELATORIO exists: {os.path.exists(getattr(settings, 'PATH_RELATORIO', '')) if hasattr(settings, 'PATH_RELATORIO') else 'NOT_SET'}")
+print(f"DEBUG: PATH_EXAMES: {getattr(settings, 'PATH_EXAMES', 'NOT_SET')}")
+print(f"DEBUG: PATH_EXAMES exists: {os.path.exists(getattr(settings, 'PATH_EXAMES', '')) if hasattr(settings, 'PATH_EXAMES') else 'NOT_SET'}")
+print(f"DEBUG: PATH_PDF_DIR: {getattr(settings, 'PATH_PDF_DIR', 'NOT_SET')}")
+print(f"DEBUG: PATH_PDF_DIR exists: {os.path.exists(getattr(settings, 'PATH_PDF_DIR', '')) if hasattr(settings, 'PATH_PDF_DIR') else 'NOT_SET'}")
+print(f"DEBUG: STATIC_ROOT: {getattr(settings, 'STATIC_ROOT', 'NOT_SET')}")
+print(f"DEBUG: STATIC_URL: {getattr(settings, 'STATIC_URL', 'NOT_SET')}")
+if hasattr(settings, 'PATH_PDF_DIR') and os.path.exists(settings.PATH_PDF_DIR):
+    try:
+        protocols_list = os.listdir(settings.PATH_PDF_DIR)
+        print(f"DEBUG: Available protocols: {protocols_list}")
+    except Exception as e:
+        print(f"DEBUG: Error listing protocols: {e}")
+print(f"=== PDF SETTINGS DEBUG END ===\n")
+
 
 def preparar_modelo(modelo, **kwargs):
     """Recebe o nome do model e os parâmetros a serem salvos,
@@ -124,7 +144,15 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     """Usado na renovação rápida para gerar novo processo,
     mudando somente a data inicial. Retorna dados do processo
     completos"""
+    print(f"\n=== GERAR_DADOS_RENOVACAO START ===")
+    print(f"DEBUG: primeira_data: {primeira_data}")
+    print(f"DEBUG: processo_id: {processo_id}")
+    
     processo = Processo.objects.get(id=processo_id)
+    print(f"DEBUG: Found process: {processo.id} for patient {processo.paciente.nome_paciente}")
+    print(f"DEBUG: Process CID: {processo.doenca.cid}")
+    print(f"DEBUG: Process diagnosis: {processo.doenca.nome}")
+    
     dados = {}
     lista_dados = [
         model_to_dict(processo),
@@ -134,12 +162,16 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     ]
     for d in lista_dados:
         dados.update(d)
+    
+    print(f"DEBUG: Combined data keys: {list(dados.keys())}")
+    
     # pdftk falha se input não for string!
     dados["medicos"] = ""
     dados["usuarios"] = ""
     dados["medicamentos"] = ""
     end_clinica = dados["logradouro"] + ", " + dados["logradouro_num"]
     dados["end_clinica"] = end_clinica
+    
     # Validate and parse date
     if not primeira_data or primeira_data.strip() == "":
         print(f"ERROR: Empty date provided for renewal")
@@ -151,14 +183,52 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     except ValueError as e:
         print(f"ERROR: Invalid date format '{primeira_data}': {e}")
         raise ValueError(f"Formato de data inválido: {primeira_data}. Use DD/MM/AAAA")
+    
     dados["cid"] = processo.doenca.cid
     dados["diagnostico"] = processo.doenca.nome
-    dados["consentimento"] = False
-    dados["relatorio"] = False
-    dados["exames"] = False
+    
+    # CRITICAL: Setting conditional PDF flags for renovation
+    dados["consentimento"] = False  # No consent for renewals
+    dados["relatorio"] = False      # No report for renewals 
+    dados["exames"] = False         # No exams for renewals
+    
+    # CHRONIC PAIN SPECIAL LOGIC: Include LANNS/EVA form for chronic pain renewals
+    try:
+        protocolo = processo.doenca.protocolo
+        print(f"DEBUG: Protocol name: {protocolo.nome}")
+        
+        if protocolo.nome == "dor_crônica":
+            print(f"DEBUG: Chronic pain protocol detected")
+            print(f"DEBUG: Original dados_condicionais: {processo.dados_condicionais}")
+            
+            # For chronic pain, we need to include the LANNS/EVA assessment form
+            # This will be picked up by the conditional PDFs glob pattern
+            dados["include_lanns_eva"] = True
+            
+            # Preserve any conditional data from original process
+            if processo.dados_condicionais:
+                for key, value in processo.dados_condicionais.items():
+                    dados[key] = value
+                    print(f"DEBUG: Preserved conditional data: {key} = {value}")
+            
+            print(f"DEBUG: Set include_lanns_eva flag for chronic pain renewal")
+            
+    except Exception as e:
+        print(f"ERROR: Failed to check protocol for conditional requirements: {e}")
+    
+    print(f"DEBUG: Set conditional flags - consent: {dados['consentimento']}, report: {dados['relatorio']}, exams: {dados['exames']}")
+    
     resgatar_prescricao(dados, processo)
+    print(f"DEBUG: Retrieved prescription data")
+    
     meds_ids = gerar_lista_meds_ids(dados)
+    print(f"DEBUG: Generated medication IDs: {meds_ids}")
+    
     dados = gera_med_dosagem(dados, meds_ids)[0]
+    print(f"DEBUG: Generated medication dosage data")
+    
+    print(f"DEBUG: Final data keys before return: {list(dados.keys())}")
+    print(f"=== GERAR_DADOS_RENOVACAO END ===\n")
     return dados
 
 
@@ -186,19 +256,38 @@ def transfere_dados_gerador(dados):
     """Coleta os dados finais do processo, transfere ao gerador de PDF
     e retorna o PATH final do arquivo gerado"""
     try:
-        print(f"DEBUG: transfere_dados_gerador called")
+        print(f"\n=== TRANSFERE_DADOS_GERADOR START ===")
+        print(f"DEBUG: Input data keys: {list(dados.keys())}")
+        print(f"DEBUG: Patient CPF: {dados.get('cpf_paciente', 'NOT_FOUND')}")
+        print(f"DEBUG: CID: {dados.get('cid', 'NOT_FOUND')}")
+        print(f"DEBUG: Consent flag: {dados.get('consentimento', 'NOT_FOUND')}")
+        print(f"DEBUG: Report flag: {dados.get('relatorio', 'NOT_FOUND')}")
+        print(f"DEBUG: Exams flag: {dados.get('exames', 'NOT_FOUND')}")
+        print(f"DEBUG: Data_1: {dados.get('data_1', 'NOT_FOUND')}")
+        print(f"DEBUG: Medication ID 1: {dados.get('id_med1', 'NOT_FOUND')}")
+        print(f"DEBUG: PATH_LME_BASE: {settings.PATH_LME_BASE}")
+        print(f"DEBUG: PATH_LME_BASE exists: {os.path.exists(settings.PATH_LME_BASE)}")
+        
         pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
+        print(f"DEBUG: GeradorPDF instance created")
+        
         dados_pdf = pdf.generico(dados, settings.PATH_LME_BASE)
+        print(f"DEBUG: generico method returned: {dados_pdf}")
         
         if dados_pdf is None or dados_pdf[0] is None or dados_pdf[1] is None:
             print(f"ERROR: PDF generation failed in transfere_dados_gerador")
+            print(f"ERROR: dados_pdf result: {dados_pdf}")
             return None
         
         path_pdf_final = dados_pdf[1]  # a segunda variável que a função retorna é o path
         print(f"DEBUG: PDF generated successfully: {path_pdf_final}")
+        print(f"DEBUG: Final PDF file exists: {os.path.exists(dados_pdf[0]) if dados_pdf[0] else 'No file path'}")
+        print(f"=== TRANSFERE_DADOS_GERADOR END ===\n")
         return path_pdf_final
     except Exception as e:
         print(f"ERROR: Exception in transfere_dados_gerador: {e}")
+        import traceback
+        print(f"ERROR: Traceback: {traceback.format_exc()}")
         return None
 
 
