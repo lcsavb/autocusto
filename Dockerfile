@@ -1,41 +1,42 @@
-# Builder stage
-FROM python:3.11-slim-bookworm AS builder
+# Stage 1: Builder
+FROM python:3.11-slim AS builder
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
+# Install dependencies
 COPY requirements.txt .
-RUN python -m venv /opt/venv && \
-    . /opt/venv/bin/activate && \
-    pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y build-essential
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
-# Copy your Django app source code
-COPY . /app
 
-# Final runtime image (minimal)
-FROM python:3.11-slim-bookworm
+# Stage 2: Final
+FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    PATH="/opt/venv/bin:$PATH"
+# Create a non-root user
+RUN useradd -m -d /home/appuser -s /bin/bash appuser
+USER appuser
 
-# Install only required runtime packages (pdftk, Java for pdftk)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    pdftk \
-    default-jre-headless \
-    && rm -rf /var/lib/apt/lists/*
+# Set work directory
+WORKDIR /home/appuser/app
 
-WORKDIR /app
+# Add the local bin to the path
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 
-# Copy the virtualenv and your app from builder
-COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder /app /app
+# Copy installed packages from builder stage
+COPY --from=builder /app/wheels /wheels
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache /wheels/*
 
-# Run Django
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 8001
+
+# Run the application
+CMD ["uwsgi", "--ini", "uwsgi.ini"]

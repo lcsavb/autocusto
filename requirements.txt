@@ -11,7 +11,8 @@ pytz==2025.2
 setuptools==78.1.0
 sqlparse==0.5.3
 substring==0.2
-whitenoise==6.9.0
+whitenoise==5.0.1
+uwsgi==2.0.26
 
 # Testing dependencies
 selenium==4.18.1

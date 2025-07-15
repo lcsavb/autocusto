@@ -20,18 +20,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "4(=4rbnajm+=ce3)99i9r8t3jqucv@hc(a&pum25qnc)ff@51x"
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "0.0.0.0",
-    "127.0.0.1",
-    "autocusto.com.br",
-    "www.autocusto.com.br",
-]
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1 [::1]').split()
+
 
 # SERVER CHOICE
 
@@ -90,16 +85,14 @@ WSGI_APPLICATION = "autocusto.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-print(os.environ.get("SQL_HOST"))
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "autocusto",
-        "USER": "lucas",
-        "PASSWORD": "rraptnor",
-        "HOST": "db",
-        "PORT": "5432",
+        "ENGINE": os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
+        "NAME": os.environ.get('SQL_DATABASE', 'autocusto'),
+        "USER": os.environ.get('SQL_USER', 'lucas'),
+        "PASSWORD": os.environ.get('SQL_PASSWORD', 'rraptnor'),
+        "HOST": os.environ.get('SQL_HOST', 'db'),
+        "PORT": os.environ.get('SQL_PORT', '5432'),
     }
 }
 
@@ -144,17 +137,11 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
-
-# if SERVER == 'dev':
-#     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'static'))
-# else:
-
-# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-# print(STATICFILES_DIRS, 'AQUI')
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = "bootstrap4"

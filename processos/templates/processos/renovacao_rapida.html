@@ -1,63 +1,79 @@
 {% extends "base.html" %}
    
 {% block content %}
-<div class="card rounded" style="min-width:700px; max-width: 850px; margin: auto; padding: 0;">
-<h3>Renovação de Processos</h3>
 
-<table class="table table-striped standard table-sm">
-        <thead>
-            <th scope="col">Paciente</th>
-            <th scope="col">Processos</th>
-            <th scope="col">Editar?</th>
-            <th scope="col">Primeira Data</th>
-        </thead>
-        <tbody>
-            {% for paciente in busca_pacientes %}
-            
-            <tr>
-                
-                <td>
-                    <form name="form" method="POST">
-                        {% csrf_token %}
-                    <div class="col-12">
-
-                        {{ paciente.nome_paciente }}
-                            <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
-                    </div>
-                </td>
-                
-                <td class ="align-middle">
-                    <div class="form-group align-middle">
-                        <select class="custom-select" name="processo_id">
-                            <!-- if processo é do request.user -->
-                            {% for processo in paciente.processos.all %}
-                            {% if processo.usuario == usuario %}
-                            <option value="{{ processo.id }}">{{ processo }}</option>
-                            {% endif %}
-                            {% endfor %}
-                            </select>
-                        
-                    </div>   
-                </td>
-                
-                <td class="align-middle"><label class="checkbox-inline"><input type="checkbox" name="edicao"></label></td>
-
-                <td class="align-middle"> 
-                    <div class="input-group mb-3">
-                            <input type="text" class="form-control datas" name="data_1" placeholder="DD/MM/AAAA" style="max-width: 130px;">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="submit">Renovar <span class="oi oi-reload"></span></button>
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem);">
+    <div class="col-lg-10 col-md-12">
+        <div class="auth-process-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 text-white">
+                    <i class="oi oi-reload mr-2"></i>
+                    Renovação de Processos
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    {% for paciente in busca_pacientes %}
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="card border-light shadow-sm">
+                            <div class="card-body">
+                                <div class="renovacao-form-wrapper">
+                                    <h6 class="card-title font-weight-bold text-primary mb-4" style="word-wrap: break-word; overflow-wrap: break-word; hyphens: auto;">
+                                        <i class="oi oi-person mr-2"></i>
+                                        {{ paciente.nome_paciente }}
+                                    </h6>
+                                    
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                                        
+                                        <div class="form-group" style="margin-bottom: 3rem;">
+                                            <label for="processo_{{ paciente.id }}" class="font-weight-bold" style="margin-bottom: 1rem; display: block;">Processo</label>
+                                            <select class="form-control" name="processo_id" id="processo_{{ paciente.id }}">
+                                                {% for processo in paciente.processos.all %}
+                                                {% if processo.usuario == usuario %}
+                                                <option value="{{ processo.id }}">{{ processo }}</option>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group" style="margin-bottom: 3rem;">
+                                            <label for="data_{{ paciente.id }}" class="font-weight-bold" style="margin-bottom: 1rem; display: block;">Primeira Data</label>
+                                            <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                                        </div>
+                                        
+                                        <div class="form-group" style="margin-bottom: 3rem;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="edicao" id="edicao_{{ paciente.id }}">
+                                                <label class="form-check-label font-weight-bold" for="edicao_{{ paciente.id }}">
+                                                    Permitir edição
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary btn-block">
+                                            <i class="oi oi-reload mr-1"></i>
+                                            Renovar Processo
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
-                    </div>  
-                </form>
-                </td>
-            
-                
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="text-center text-muted py-5">
+                            <i class="oi oi-info" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3 mb-2">Nenhum paciente encontrado</h5>
+                            <p class="text-muted">Use a busca na barra superior para encontrar pacientes</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock content %}
