@@ -12,28 +12,27 @@ class ClinicaFormulario(ModelForm):
         self.helper.form_id = "clinica-cadastro"
         self.helper.form_method = "POST"
         self.helper.form_action = ""
-        self.helper.add_input(Submit("submit", "Cadastrar", css_class="btn btn-primary"))
+        self.helper.add_input(Submit("submit", "Cadastrar", css_class="btn btn-primary float-right"))
         self.helper.layout = Layout(
             Row(
-                Column(Field("nome_clinica", css_class="form-control"), css_class="form-group col-6 mb-0"),
-                Column(Field("cns_clinica", css_class="form-control"), css_class="form-group col-2 mb-0"),
+                Column(Field("nome_clinica", css_class="form-control"), css_class="form-group col-6 mb-4"),
+                Column(Field("cns_clinica", css_class="form-control"), css_class="form-group col-2 mb-4"),
                 Column(
                     Field("telefone_clinica", id="telefone", css_class="form-control"),
-                    css_class="form-group col-4 mb-0",
+                    css_class="form-group col-4 mb-4",
                 ),
-                css_class="form-row",
+                css_class="form-row mb-3",
             ),
-            Fieldset(
-                "Localização",
-                Row(
-                    Column(Field("cidade", css_class="form-control"), css_class="form-group col-6 mb-0"),
-                    Column(Field("bairro", css_class="form-control"), css_class="form-group col-6 mb-0"),
-                ),
-                Row(
-                    Column(Field("cep", id="cep", css_class="form-control"), css_class="form-group col-2 mb-0"),
-                    Column(Field("logradouro", css_class="form-control"), css_class="form-group col-8 mb-0"),
-                    Column(Field("logradouro_num", css_class="form-control"), css_class="form-group col-2 mb-0"),
-                ),
+            Row(
+                Column(Field("cep", id="cep", css_class="form-control"), css_class="form-group col-3 mb-4"),
+                Column(Field("cidade", css_class="form-control"), css_class="form-group col-4 mb-4"),
+                Column(Field("bairro", css_class="form-control"), css_class="form-group col-5 mb-4"),
+                css_class="form-row mb-3",
+            ),
+            Row(
+                Column(Field("logradouro", css_class="form-control"), css_class="form-group col-8 mb-4"),
+                Column(Field("logradouro_num", css_class="form-control"), css_class="form-group col-4 mb-4"),
+                css_class="form-row mb-3",
             ),
         )
 

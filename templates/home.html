@@ -5,25 +5,45 @@
 {% block content %}
 
 {% if user.is_authenticated %}
-<div class="container d-flex justify-content-center authenticated-container">
-    <div class="card bg-light mb-3 my-auto process-card">
-        <div class="card-header">Adicionar processo</div>
-        <div class="card-body">
-            <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes'%}">
-                {% csrf_token %}
-                <div class="form-row">
-                    <div class="col-sm-6"> CPF paciente<br>{{ formulario.cpf_paciente|as_crispy_field }} </div>
-                    <div class="col-sm-3"> Doença<br>{{ formulario.cid|as_crispy_field }} </div>
-                    <div class="col-sm-3"><br><button class="btn btn-dark" type="submit">Cadastrar</button></div>
+
+    <div class="auth-viewport">
+        <div class="auth-content-wrapper">
+            <div class="auth-process-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 text-white">
+                        <i class="oi oi-plus mr-2"></i>
+                        Adicionar Processo
+                    </h5>
                 </div>
-            </form>
+                <div class="card-body p-4">
+                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}">
+                        {% csrf_token %}
+                        <div class="form-row align-items-end">
+                            <div class="col-sm-6"> 
+                                <label class="font-weight-bold">CPF do Paciente</label>
+                                {{ formulario.cpf_paciente|as_crispy_field }} 
+                            </div>
+                            <div class="col-sm-3"> 
+                                <label class="font-weight-bold">Doença/CID</label>
+                                {{ formulario.cid|as_crispy_field }} 
+                            </div>
+                            <div class="col-sm-3">
+                                <button class="btn btn-primary btn-block" type="submit" style="height: 40px;">
+                                    <i class="oi oi-check mr-2"></i>
+                                    Cadastrar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="border-top">
+                    <ul class="list-group list-group-flush resultados" id="resultados"></ul>
+                    <ul class="list-group list-group-flush resultados" id="pacientes"></ul>
+                </div>
+            </div>
         </div>
-        <div>
-            <ul class="list-group resultados" id="resultados"></ul>
-            <ul class="list-group resultados" id="pacientes"></ul>
-        </div>
-    </div>     
-</div>
+    </div>
+
 
 {% else %}
 <!-- Hero Section with Registration Form -->

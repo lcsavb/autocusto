@@ -20,6 +20,7 @@
     <!-- Custom styles for this template -->
     
     <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}?v=1.1">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
     <link href="{% static '/iconic/font/css/open-iconic-bootstrap.css' %}" rel="stylesheet">
 
   </head>
@@ -78,7 +79,7 @@
     <!-- Quick patient search for authenticated users -->
     <form action="{% url 'processos-renovacao-rapida' %}" method="GET" class="form-inline my-2 my-lg-0">
       <input name="b" class="form-control mr-sm-2" type="text" placeholder="Paciente por nome ou CPF" aria-label="Search">
-      <button class="btn btn-outline-success" type="submit">Buscar</button>
+      <button class="btn btn-outline-light" type="submit">Buscar</button>
     </form>
     {% else %}
     <!-- Compact login form for non-authenticated users -->

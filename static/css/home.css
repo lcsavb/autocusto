@@ -29,12 +29,6 @@ body {
     radial-gradient(circle at 40% 40%, rgba(120, 150, 180, 0.05) 0%, transparent 50%);
 }
 
-/* Content wrapper with controlled width */
-.auth-content-wrapper {
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-}
 
 /* Process form card - consistent with general layout */
 .auth-process-card {
@@ -63,6 +57,10 @@ body {
 }
 
 /* Enhanced form styling within auth card */
+.auth-process-card .form-group {
+  margin-bottom: 0 !important;
+}
+
 .auth-process-card .form-control {
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -82,6 +80,19 @@ body {
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-process-card input[type="submit"].btn-primary {
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)) !important;
+  border: none !important;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+  color: white !important;
+  text-align: center;
 }
 
 .auth-process-card .btn-primary:hover {
@@ -89,6 +100,13 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
 }
+
+.auth-process-card input[type="submit"].btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3) !important;
+}
+
 
 /* Hover effects for result lists */
 .auth-process-card .resultados .list-group-item {
@@ -115,9 +133,6 @@ body {
     padding: 0 0.5rem; /* Only horizontal padding */
   }
   
-  .auth-content-wrapper {
-    max-width: 100%;
-  }
   
   .auth-process-card {
     border-radius: 8px;

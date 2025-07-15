@@ -66,6 +66,7 @@ h6 { font-size: 1rem; }
 .navbar-nav .nav-link {
   color: rgba(255,255,255,0.9) !important;
   font-weight: 500;
+  font-size: 1rem;
   padding: 0.6rem 1rem !important;
   border-radius: var(--border-radius);
   transition: var(--transition);
@@ -80,21 +81,26 @@ h6 { font-size: 1rem; }
 .dropdown-menu {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   margin-top: 0.25rem;
   background-color: var(--bg-white);
+  min-width: 160px;
 }
 
 .dropdown-item {
-  padding: 0.7rem 1.2rem;
+  padding: 0.8rem 1.2rem;
   transition: var(--transition);
   font-weight: 400;
+  font-size: 1rem;
   color: var(--text-primary);
 }
 
 .dropdown-item:hover {
-  background-color: var(--bg-light);
+  background: linear-gradient(135deg, var(--bg-light), rgba(52, 152, 219, 0.1));
   color: var(--primary-color);
+  transform: translateX(4px);
+  border-left: 3px solid var(--primary-color);
+  padding-left: 1.5rem;
 }
 
 /* Card Styling */

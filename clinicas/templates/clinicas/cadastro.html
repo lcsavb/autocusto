@@ -4,9 +4,21 @@
    
 {% block content %}
 
-<div class="container card card-rounded" style="max-width: 75vw;">
-    <div><h3>Cadastro de Clínica</h3></div><hr>
-    {% crispy f_clinica %}
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem);">
+    <div class="col-lg-8 col-md-10">
+        <div class="auth-process-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 text-white">
+                    <i class="oi oi-plus mr-2"></i>
+                    Cadastro de Clínica
+                </h5>
+            </div>
+            <div class="card-body p-4" x-data="cepHandler()">
+                {% crispy f_clinica %}
+                <div class="clearfix"></div>
+                <div style="height: 0.5rem;"></div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock content %}
@@ -14,5 +26,6 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
+<script src="{% static 'js/cep-handler.js' %}"></script>
 
 {% endblock scripts %}
