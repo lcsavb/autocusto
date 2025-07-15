@@ -125,15 +125,7 @@ h6 { font-size: 1rem; }
   padding: 1.5rem;
 }
 
-/* Container Spacing */
-.container {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  background-color: var(--bg-white);
-  padding: 1.5rem;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-}
+/* Removed old authenticated-container - now using clean auth-viewport system */
 
 /* Alerts */
 .alert {
@@ -324,10 +316,7 @@ h6 { font-size: 1rem; }
     padding-top: 4rem;
   }
   
-  .container {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-  }
+  /* Removed old authenticated-container media query */
   
   .card-body {
     padding: 1rem;
@@ -352,3 +341,4 @@ h6 { font-size: 1rem; }
     width: 100%;
   }
 }
+
