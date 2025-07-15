@@ -1,6 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
    
 {% block content %}
+
+<!-- Include PDF Modal -->
+{% include 'components/pdf_modal.html' %}
 
 <div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem); max-height: calc(100vh - 20rem);">
     <div class="col-lg-10 col-md-12">
@@ -23,7 +27,7 @@
                                         {{ paciente.nome_paciente }}
                                     </h6>
                                     
-                                    <form method="POST" novalidate style="overflow: visible;">
+                                    <form method="POST" novalidate style="overflow: visible;" x-data="renovacaoForm()" @submit="submitForm">
                                         {% csrf_token %}
                                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                                         
@@ -89,6 +93,7 @@
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
+<script src="{% static 'js/pdf-modal.js' %}"></script>
 <script>
 $('.datas').mask('00/00/0000');
 </script>

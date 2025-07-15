@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.http import JsonResponse
 from django.forms.models import model_to_dict
 from datetime import date
 from medicos.seletor import medico as seletor_medico
@@ -129,16 +130,38 @@ def edicao(request):
 @login_required
 def renovacao_rapida(request):
     if request.method == "GET":
-        busca = request.GET.get("b")
-        usuario = request.user
-        request.session["busca"] = busca
-        pacientes_usuario = usuario.pacientes.all()
-        busca_pacientes = pacientes_usuario.filter(
-            (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
-        )
+        try:
+            print(f"DEBUG: GET request to renovacao_rapida")
+            busca = request.GET.get("b")
+            print(f"DEBUG: busca parameter = '{busca}'")
+            
+            usuario = request.user
+            print(f"DEBUG: usuario = {usuario}")
+            
+            request.session["busca"] = busca
+            
+            pacientes_usuario = usuario.pacientes.all()
+            print(f"DEBUG: pacientes_usuario count = {pacientes_usuario.count()}")
+            
+            if busca:
+                busca_pacientes = pacientes_usuario.filter(
+                    (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
+                )
+            else:
+                busca_pacientes = pacientes_usuario.none()  # Empty queryset if no search
+            
+            print(f"DEBUG: busca_pacientes count = {busca_pacientes.count()}")
 
-        contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
-        return render(request, "processos/renovacao_rapida.html", contexto)
+            contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
+            print(f"DEBUG: About to render template")
+            return render(request, "processos/renovacao_rapida.html", contexto)
+            
+        except Exception as e:
+            print(f"ERROR: Exception in renovacao_rapida GET: {e}")
+            print(f"ERROR: Exception type: {type(e)}")
+            import traceback
+            print(f"ERROR: Traceback: {traceback.format_exc()}")
+            raise
 
     else:
         processo_id = request.POST.get("processo_id")
@@ -157,16 +180,39 @@ def renovacao_rapida(request):
             path_pdf_final = transfere_dados_gerador(dados)
             
             if path_pdf_final:
-                messages.success(request, "Renovação processada com sucesso! PDF gerado.")
-                return redirect(path_pdf_final)
+                # Check if this is an AJAX request
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    # Return JSON response for AJAX
+                    return JsonResponse({
+                        'success': True,
+                        'pdf_url': path_pdf_final,
+                        'message': 'Renovação processada com sucesso! PDF gerado.',
+                        'filename': 'renovacao_processo.pdf'
+                    })
+                else:
+                    # Traditional redirect for non-AJAX requests
+                    messages.success(request, "Renovação processada com sucesso! PDF gerado.")
+                    return redirect(path_pdf_final)
             else:
                 print("ERROR: Failed to generate PDF for renewal")
-                messages.error(request, "Falha ao gerar PDF. Verifique os logs do sistema.")
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Falha ao gerar PDF. Verifique os logs do sistema.'
+                    })
+                else:
+                    messages.error(request, "Falha ao gerar PDF. Verifique os logs do sistema.")
         except Exception as e:
             print(f"ERROR: Exception in renovacao_rapida: {e}")
-            messages.error(request, f"Erro interno: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Erro interno: {str(e)}'
+                })
+            else:
+                messages.error(request, f"Erro interno: {str(e)}")
         
-        # On error, recreate the GET context and render the form again
+        # On error, recreate the GET context and render the form again (non-AJAX only)
         busca = request.session.get("busca", "")
         usuario = request.user
         pacientes_usuario = usuario.pacientes.all()
