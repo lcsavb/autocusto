@@ -1,648 +1,354 @@
-/* AutoCusto Modern Design - Enhanced Bootstrap */
+/* AutoCusto Professional Medical Design */
 
-/* Background removed - using gradient from home.css instead */
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
 
-/* === TYPOGRAPHY === */
+/* CSS Variables for Professional Medical Palette */
 :root {
-  --primary-color: #667eea;
-  --secondary-color: #764ba2;
-  --accent-color: #f093fb;
-  --success-color: #4facfe;
-  --warning-color: #43e97b;
-  --danger-color: #fa709a;
-  --text-primary: #2d3748;
-  --text-secondary: #718096;
-  --bg-light: #f7fafc;
-  --bg-white: #ffffff;
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --primary-color: #2C3E50; /* Dark Slate Blue - Professional, calming */
+  --secondary-color: #3498DB; /* Bright Blue - Complementary, clean */
+  --accent-color: #2ECC71; /* Emerald Green - Subtle accent, success */
+  --text-primary: #333333; /* Dark Gray - Main text */
+  --text-secondary: #666666; /* Medium Gray - Secondary text */
+  --bg-light: #F8F9FA; /* Very Light Gray - Background */
+  --bg-white: #FFFFFF; /* Pure White */
+  --border-color: #E0E0E0; /* Light Gray - Borders */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-  --border-radius: 12px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --border-radius: 8px;
+  --transition: all 0.3s ease-in-out;
 }
 
-/* Apply modern fonts */
+/* General Body Styles */
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  color: var(--text-primary) !important;
-  line-height: 1.6 !important;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
-  min-height: 100vh !important;
+  font-family: 'Open Sans', sans-serif;
+  color: var(--text-primary);
+  line-height: 1.6;
+  background-color: var(--bg-light);
+  min-height: 100vh; /* Ensure body takes full viewport height */
+  padding-top: 5rem; /* Adjust based on your navbar height */
+  font-size: 1rem; /* Base font size */
 }
 
+/* Headings and Navbar Brand */
 h1, h2, h3, h4, h5, h6, .navbar-brand {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  font-weight: 600 !important;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
-/* === ENHANCED NAVBAR === */
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+/* Navbar Styling */
 .navbar {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
-  backdrop-filter: blur(10px);
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
   box-shadow: var(--shadow-md);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 0.75rem 0;
   transition: var(--transition);
-  padding: 1rem 0;
 }
 
 .navbar-brand {
-  font-size: 1.5rem;
+  color: var(--bg-white) !important;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: white !important;
-  text-decoration: none;
   transition: var(--transition);
 }
 
 .navbar-brand:hover {
-  transform: translateY(-1px);
-  color: var(--accent-color) !important;
+  opacity: 0.9;
 }
 
 .navbar-nav .nav-link {
   color: rgba(255,255,255,0.9) !important;
   font-weight: 500;
-  margin: 0 0.5rem;
-  padding: 0.5rem 1rem !important;
+  padding: 0.6rem 1rem !important;
   border-radius: var(--border-radius);
   transition: var(--transition);
 }
 
 .navbar-nav .nav-link:hover {
-  background: rgba(255,255,255,0.1);
-  color: white !important;
-  transform: translateY(-2px);
+  background-color: rgba(255,255,255,0.25); /* Slightly more opaque for better hover feedback */
+  color: var(--bg-white) !important;
 }
 
-.navbar-toggler {
-  border: none;
-  padding: 0.25rem 0.5rem;
-}
-
-/* === DROPDOWN MENUS === */
+/* Dropdown Menus */
 .dropdown-menu {
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
-  margin-top: 0.5rem;
-  backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.95);
+  box-shadow: var(--shadow-sm);
+  margin-top: 0.25rem;
+  background-color: var(--bg-white);
 }
 
 .dropdown-item {
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1.2rem;
   transition: var(--transition);
-  font-weight: 500;
+  font-weight: 400;
+  color: var(--text-primary);
 }
 
 .dropdown-item:hover {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: white;
-  transform: translateX(5px);
+  background-color: var(--bg-light);
+  color: var(--primary-color);
 }
 
-/* === LOGOUT BUTTON ENHANCEMENT === */
-.navbar .btn-link {
-  background: rgba(255,255,255,0.1) !important;
-  border: 1px solid rgba(255,255,255,0.2) !important;
-  color: white !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: var(--border-radius) !important;
-  font-weight: 500 !important;
-  transition: var(--transition) !important;
-}
-
-.navbar .btn-link:hover {
-  background: var(--danger-color) !important;
-  border-color: var(--danger-color) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow-md) !important;
-}
-
-/* === CARDS AND CONTAINERS === */
+/* Card Styling */
 .card {
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md); /* Default shadow is now medium */
   transition: var(--transition);
-  background: var(--bg-white);
+  background-color: var(--bg-white);
   overflow: hidden;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15); /* Stronger shadow on hover */
 }
 
 .card-header {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--bg-white);
   font-weight: 600;
   border-bottom: none;
-  padding: 1.25rem 1.5rem;
-}
-
-.card-body {
-  padding: 2rem;
-}
-
-/* === FORM ENHANCEMENTS === */
-.form-control {
-  border: 2px solid #e2e8f0;
-  border-radius: var(--border-radius);
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  transition: var(--transition);
-  background: var(--bg-white);
-}
-
-.form-control:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  transform: translateY(-1px);
-}
-
-.form-group label {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-/* === BUTTON ENHANCEMENTS === */
-.btn {
-  border-radius: var(--border-radius);
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  transition: var(--transition);
-  text-transform: none;
-  letter-spacing: 0.025em;
-}
-
-.btn-primary, .btn-dark {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border: none;
-  color: white;
-}
-
-.btn-primary:hover, .btn-dark:hover {
-  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-outline-info {
-  border: 2px solid var(--primary-color);
-  color: var(--primary-color);
-  background: transparent;
-}
-
-.btn-outline-info:hover {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-outline-success {
-  border: 2px solid var(--success-color);
-  color: var(--success-color);
-  background: transparent;
-}
-
-.btn-outline-success:hover {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-/* === HOME PAGE ENHANCEMENTS === */
-.container {
-  margin-top: 80px; /* Account for fixed navbar */
-}
-
-/* === SEARCH FORM ENHANCEMENT === */
-.form-inline .form-control {
-  border-radius: 25px 0 0 25px;
-  border-right: none;
-  background: rgba(255,255,255,0.95);
-}
-
-.form-inline .btn {
-  border-radius: 0 25px 25px 0;
-  border-left: none;
-}
-
-/* === LISTS AND TABLES === */
-.list-group-item {
-  border: none;
-  border-bottom: 1px solid #e2e8f0;
   padding: 1rem 1.5rem;
-  transition: var(--transition);
-  background: var(--bg-white);
-}
-
-.list-group-item:hover {
-  background: var(--bg-light);
-  transform: translateX(5px);
-  border-left: 4px solid var(--primary-color);
-}
-
-.list-group-item:first-child {
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
 }
 
-.list-group-item:last-child {
-  border-bottom-left-radius: var(--border-radius);
-  border-bottom-right-radius: var(--border-radius);
-  border-bottom: none;
+.card-body {
+  padding: 1.5rem;
 }
 
-/* === ENHANCED ALERTS AND ERROR MESSAGES === */
-.alert {
-  border: none;
+/* Container Spacing */
+.container {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  background-color: var(--bg-white);
+  padding: 1.5rem;
   border-radius: var(--border-radius);
-  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Alerts */
+.alert {
+  border: 1px solid;
+  border-radius: var(--border-radius);
+  padding: 0.9rem 1.2rem;
   margin: 1rem 0;
   font-weight: 500;
-  box-shadow: var(--shadow-sm);
-  animation: fadeInUp 0.4s ease-out;
 }
 
 .alert-success {
-  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  background-color: #D4EDDA;
+  border-color: #C3E6CB;
   color: #155724;
-  border-left: 4px solid #28a745;
 }
 
-.alert-danger, .alert-error {
-  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-  color: #721c24;
-  border-left: 4px solid #dc3545;
+.alert-danger {
+  background-color: #F8D7DA;
+  border-color: #F5C6CB;
+  color: #721C24;
 }
 
 .alert-warning {
-  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  background-color: #FFF3CD;
+  border-color: #FFECB5;
   color: #856404;
-  border-left: 4px solid #ffc107;
 }
 
-.alert-info {
-  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
-  color: #0c5460;
-  border-left: 4px solid #17a2b8;
+/* Utility Classes (examples) */
+.text-primary-color {
+  color: var(--primary-color);
 }
 
-.alert-dismissible .close {
-  padding: 1rem 1.5rem;
-  margin: -1rem -1.5rem -1rem auto;
-  color: inherit;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
-
-.alert-dismissible .close:hover {
-  opacity: 1;
-}
-
-/* === FORM VALIDATION STYLING === */
-.form-control.is-invalid {
-  border-color: var(--danger-color);
-  background-color: #fff5f5;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-.form-control.is-valid {
-  border-color: #28a745;
-  background-color: #f0fff4;
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-.invalid-feedback {
-  color: var(--danger-color);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  display: block;
-}
-
-.valid-feedback {
-  color: #28a745;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  display: block;
-}
-
-/* === CRISPY FORMS ERROR STYLING === */
-.form-group .help-block {
-  color: var(--danger-color);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  font-weight: 500;
-}
-
-.form-group .errorlist {
-  color: var(--danger-color);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  list-style: none;
-  padding-left: 0;
-  margin-bottom: 0;
-}
-
-.form-group .errorlist li {
-  margin-bottom: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: rgba(220, 53, 69, 0.1);
-  border-radius: 4px;
-  border-left: 3px solid var(--danger-color);
-}
-
-/* === ENHANCED FORM FIELD STYLING === */
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group.has-error .form-control {
-  border-color: var(--danger-color);
-  background-color: #fff5f5;
-}
-
-.form-group.has-success .form-control {
-  border-color: #28a745;
-  background-color: #f0fff4;
-}
-
-/* === FIELD LABELS === */
-.form-group label {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.form-group label.required:after {
-  content: " *";
-  color: var(--danger-color);
-  font-weight: bold;
-}
-
-/* === CRISPY FORMS COMPATIBILITY === */
-.asteriskField {
-  color: var(--danger-color);
-  font-weight: bold;
-  margin-left: 0.25rem;
-}
-
-.requiredField {
-  font-weight: 600;
-}
-
-/* === ANIMATIONS === */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.card, .alert, .list-group {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-/* === RESPONSIVE IMPROVEMENTS === */
-@media (max-width: 768px) {
-  .container {
-    margin-top: 70px;
-    padding: 0 1rem;
-  }
-  
-  .card-body {
-    padding: 1.5rem;
-  }
-  
-  .navbar-brand {
-    font-size: 1.25rem;
-  }
-  
-  .btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* === UTILITY CLASSES === */
-.bg-gradient-primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-}
-
-.text-gradient {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.bg-primary-color {
+  background-color: var(--primary-color);
+  color: var(--bg-white);
 }
 
 .shadow-custom {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .border-radius-custom {
   border-radius: var(--border-radius);
 }
 
-/* === LOADING ANIMATIONS === */
-.btn:active {
-  transform: scale(0.98);
+/* Hamburger Menu Animation */
+.navbar-toggler {
+  border: none;
+  padding: 0.25rem 0.5rem;
 }
 
-/* === FOCUS STATES FOR ACCESSIBILITY === */
-.btn:focus,
-.form-control:focus,
-.nav-link:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
+.navbar-toggler-icon {
+  background-image: none;
+  position: relative;
+  width: 1.5em;
+  height: 2px;
+  background-color: white;
+  transition: background-color .1s .2s ease-out;
 }
 
-/* === ALPINE.JS TOAST SYSTEM === */
-.toast-container {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+.navbar-toggler-icon::before,
+.navbar-toggler-icon::after {
+  content: '';
+  display: block;
+  position: absolute;
+  width: inherit;
+  height: inherit;
+  background-color: white;
+  transition: transform .3s ease-out, top .3s ease-out, opacity .1s ease-out;
 }
 
-.toast {
-  display: block !important;
-  opacity: 1 !important;
-  border-radius: var(--border-radius) !important;
-  box-shadow: var(--shadow-lg) !important;
-  backdrop-filter: blur(10px);
-  border: none !important;
-  overflow: hidden;
-  max-width: 420px;
-  min-width: 350px;
-  margin-bottom: 1rem;
-  animation: slideInRight 0.4s ease-out;
+.navbar-toggler-icon::before {
+  top: -6px;
 }
 
-.toast.show {
-  opacity: 1 !important;
-  display: block !important;
+.navbar-toggler-icon::after {
+  top: 6px;
 }
 
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+  background-color: transparent;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
+  transform: rotate(45deg);
+  top: 0;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
+  transform: rotate(-45deg);
+  top: 0;
+}
+
+/* Hero Jumbotron Styling */
+.hero-jumbotron {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white; /* Ensure text is readable */
+}
+
+.hero-jumbotron h1, .hero-jumbotron p, .hero-jumbotron hr {
+  color: white !important; /* Force text and HR to be white */
+  border-color: rgba(255,255,255,0.5) !important; /* Lighter HR */
+}
+
+/* Topbar Login Form Styling - Non-invasive to Crispy Forms */
+.navbar .form-inline .form-control {
+  border: 1px solid rgba(255,255,255,0.3);
+  background-color: rgba(255,255,255,0.1);
+  color: white;
+  transition: var(--transition);
+}
+
+.navbar .form-inline .form-control::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
+.navbar .form-inline .form-control:focus {
+  border-color: rgba(255,255,255,0.6);
+  background-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+  color: white;
+}
+
+/* Home page layout improvements */
+.hero-section {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+}
+
+.hero-feature {
+  padding: 0.5rem 0;
+}
+
+.hero-feature .oi {
+  font-size: 1.2rem;
+  margin-right: 0.75rem;
+  color: var(--secondary-color);
+}
+
+/* Registration card specific styling */
+.registration-card .card-header {
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+  border: none;
+}
+
+/* Fix registration form header text visibility */
+.card-header h3 {
+  color: white !important;
+}
+
+/* Topbar login form spacing fixes */
+.navbar .form-inline {
+  margin-right: 1rem;
+}
+
+/* Increase login form field widths - much larger for long emails and secure passwords */
+.navbar .form-inline .form-control {
+  min-width: 250px;
+}
+
+.navbar .form-inline .form-control[placeholder="Email"] {
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.navbar .form-inline .form-control[placeholder="Senha"] {
+  min-width: 280px;
+  max-width: 350px;
+}
+
+/* Add margin to navbar brand */
+.navbar-brand {
+  margin-left: 1rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .hero-section .col-lg-6:first-child {
+    text-align: center;
+    margin-bottom: 2rem;
   }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
 }
 
-/* Toast header styling for Alpine.js */
-.toast .toast-header {
-  border-bottom: none !important;
-  padding: 1.25rem 1.5rem 1rem !important;
-  font-weight: 700 !important;
-  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-  font-size: 1rem;
-}
-
-.toast.bg-danger .toast-header {
-  background: linear-gradient(135deg, var(--danger-color), #ff6b9d) !important;
-}
-
-.toast.bg-success .toast-header {
-  background: linear-gradient(135deg, var(--success-color), #00d4ff) !important;
-}
-
-.toast.bg-warning .toast-header {
-  background: linear-gradient(135deg, var(--warning-color), #38f9d7) !important;
-}
-
-.toast.bg-info .toast-header {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
-}
-
-/* Toast body styling */
-.toast .toast-body {
-  background: rgba(255, 255, 255, 0.98) !important;
-  color: var(--text-primary) !important;
-  padding: 1.25rem 1.5rem !important;
-  line-height: 1.6 !important;
-  backdrop-filter: blur(10px);
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.toast .toast-body ul {
-  margin: 0 !important;
-  padding-left: 1.25rem !important;
-}
-
-.toast .toast-body li {
-  margin-bottom: 0.5rem !important;
-  font-weight: 500 !important;
-  color: var(--text-primary) !important;
-}
-
-.toast .toast-body li:last-child {
-  margin-bottom: 0 !important;
-}
-
-/* Close button styling */
-.toast .close {
-  color: rgba(255, 255, 255, 0.9) !important;
-  opacity: 0.8 !important;
-  font-size: 1.4rem !important;
-  transition: var(--transition) !important;
-  padding: 0.5rem !important;
-  margin: -0.5rem -0.75rem -0.5rem auto !important;
-}
-
-.toast .close:hover {
-  opacity: 1 !important;
-  transform: scale(1.15) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-radius: 50% !important;
-}
-
-/* Icon styling */
-.toast .toast-header i {
-  font-size: 1.1rem !important;
-  opacity: 0.9 !important;
-}
-
-/* Alpine.js handles transitions with classes - simplified animations */
-.toast {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Toast container responsive */
-@media (max-width: 576px) {
-  .toast-container {
-    left: 10px !important;
-    right: 10px !important;
-    max-width: calc(100vw - 20px) !important;
+@media (max-width: 768px) {
+  body {
+    padding-top: 4rem;
   }
   
-  .toast {
-    min-width: auto !important;
+  .container {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .hero-section {
+    min-height: auto;
+    padding: 2rem 0;
+  }
+  
+  .navbar .form-inline {
+    flex-direction: column;
+    margin-top: 1rem;
+  }
+  
+  .navbar .form-inline .form-control {
+    margin-bottom: 0.5rem;
     max-width: 100% !important;
   }
   
-  .toast .toast-header,
-  .toast .toast-body {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+  .navbar .form-inline .btn {
+    width: 100%;
   }
-}
-
-/* Hide ALL inline errors when using toast system */
-.toast-enabled .invalid-feedback,
-.toast-enabled .errorlist,
-.toast-enabled .help-block,
-.toast-enabled .text-danger,
-.toast-enabled .form-text.text-danger,
-.toast-enabled .error,
-.toast-enabled .field-error,
-.toast-enabled .form-errors,
-.toast-enabled .form-group .text-danger,
-.toast-enabled .form-control + .text-danger,
-.toast-enabled .alert-danger,
-.toast-enabled [class*="error"]:not(.toast):not(.toast-container),
-.toast-enabled .is-invalid + *,
-.toast-enabled .was-validated .form-control:invalid ~ .invalid-feedback,
-.toast-enabled .was-validated .form-control:invalid ~ .invalid-tooltip {
-  display: none !important;
-}
-
-/* Remove red border/styling from invalid fields when using toasts */
-.toast-enabled .form-control.is-invalid,
-.toast-enabled .was-validated .form-control:invalid {
-  border-color: #ced4da !important;
-  background-color: #fff !important;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-}
-
-.toast-enabled .form-control.is-invalid:focus,
-.toast-enabled .was-validated .form-control:invalid:focus {
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
-}
-
-/* Hide ONLY Django message alerts (not toasts) immediately */
-nav ~ .alert.alert-danger,
-nav ~ .alert.alert-success, 
-nav ~ .alert.alert-warning,
-nav ~ .alert.alert-info {
-  display: none !important;
-}
-
-/* Ensure toasts are always visible */
-.toast-container .toast {
-  display: block !important;
 }

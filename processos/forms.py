@@ -45,8 +45,17 @@ from crispy_forms.layout import Submit, Layout, Field
 
 
 class PreProcesso(forms.Form):
-    cpf_paciente = forms.CharField(required=True, label="", max_length=14)
-    cid = forms.CharField(required=True, label="")
+    cpf_paciente = forms.CharField(
+        required=True, 
+        label="", 
+        max_length=14,
+        error_messages={'required': 'Por favor, insira o CPF do paciente.'}
+    )
+    cid = forms.CharField(
+        required=True, 
+        label="",
+        error_messages={'required': 'Por favor, insira o CID da doença.'}
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

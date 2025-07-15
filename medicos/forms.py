@@ -60,12 +60,18 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         self.helper.error_text_inline = False
         self.helper.help_text_inline = True
 
-        # Customize error messages for password fields - these override Django's defaults
+        # Customize error messages for password fields
         if 'password1' in self.fields:
             self.fields['password1'].help_text = ''
+            self.fields['password1'].error_messages = {
+                'required': 'Por favor, insira uma senha.'
+            }
             
         if 'password2' in self.fields:
             self.fields['password2'].help_text = ''
+            self.fields['password2'].error_messages = {
+                'required': 'Por favor, confirme a senha.'
+            }
 
         # Customize email field
         if 'email' in self.fields:
@@ -91,35 +97,6 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("As senhas não coincidem.")
         return password2
-
-    def clean_password1(self):
-        """Validate password1 with custom Portuguese messages."""
-        password1 = self.cleaned_data.get("password1")
-        if password1:
-            # Run Django's password validators but catch and translate errors
-            from django.contrib.auth.password_validation import validate_password
-            try:
-                validate_password(password1, self.instance)
-            except forms.ValidationError as e:
-                # Translate common Django password validation errors to Portuguese
-                error_messages = []
-                for error in e.messages:
-                    error_lower = error.lower()
-                    if "too short" in error_lower or "at least" in error_lower or "minimum" in error_lower:
-                        error_messages.append("A senha deve ter pelo menos 8 caracteres.")
-                    elif "too common" in error_lower or "common" in error_lower:
-                        error_messages.append("Esta senha é muito comum. Escolha uma senha mais segura.")
-                    elif "entirely numeric" in error_lower or "numeric" in error_lower:
-                        error_messages.append("A senha não pode conter apenas números.")
-                    elif "similar" in error_lower or "personal" in error_lower:
-                        error_messages.append("A senha é muito similar aos seus dados pessoais.")
-                    else:
-                        # Keep original message if we don't have a translation
-                        error_messages.append(error)
-                
-                if error_messages:
-                    raise forms.ValidationError(error_messages)
-        return password1
 
     def clean_email2(self):
         """Validate that the two email entries match."""
