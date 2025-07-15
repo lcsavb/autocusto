@@ -1,0 +1,103 @@
+<!-- PDF Modal Component - Only for authenticated users -->
+{% if user.is_authenticated %}
+<div x-data="pdfModal()" 
+     x-show="isOpen" 
+     x-cloak 
+     @keydown.escape="closePdf()" 
+     @open-pdf.window="openPdf($event.detail.url, $event.detail.title, $event.detail.allowDownload)"
+     class="pdf-modal-overlay">
+  <div class="pdf-modal-container" @click.away="closePdf()">
+    <div class="pdf-modal-header">
+      <h4 x-text="title" class="pdf-modal-title"></h4>
+      <div class="pdf-modal-controls">
+        <button @click="downloadPdf()" class="btn btn-outline-primary btn-sm mr-2" x-show="showDownload">
+          <i class="oi oi-data-transfer-download mr-1"></i>
+          Download
+        </button>
+        <button @click="printPdf()" class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="oi oi-print mr-1"></i>
+          Imprimir
+        </button>
+        <button @click="closePdf()" class="btn btn-outline-danger btn-sm">
+          <i class="oi oi-x mr-1"></i>
+          Fechar
+        </button>
+      </div>
+    </div>
+    <div class="pdf-modal-body">
+      <iframe x-bind:src="pdfUrl" class="pdf-viewer" frameborder="0"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- PDF Modal Styles -->
+<style>
+  .pdf-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .pdf-modal-container {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1200px;
+    height: 90%;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+  .pdf-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 12px 12px 0 0;
+    background: #f8f9fa;
+  }
+  .pdf-modal-title {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+  }
+  .pdf-modal-controls {
+    display: flex;
+    align-items: center;
+  }
+  .pdf-modal-body {
+    flex: 1;
+    padding: 0;
+    display: flex;
+  }
+  .pdf-viewer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0 0 12px 12px;
+  }
+  @media (max-width: 768px) {
+    .pdf-modal-container {
+      width: 95%;
+      height: 95%;
+    }
+    .pdf-modal-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .pdf-modal-controls {
+      justify-content: center;
+    }
+  }
+</style>
+{% endif %}

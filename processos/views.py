@@ -91,10 +91,13 @@ def edicao(request):
 
             path_pdf_final = transfere_dados_gerador(dados)
 
-            request.session["path_pdf_final"] = path_pdf_final
-            request.session["processo_id"] = processo_id
-
-            return redirect("processos-pdf")
+            if path_pdf_final:
+                request.session["path_pdf_final"] = path_pdf_final
+                request.session["processo_id"] = processo_id
+                return redirect("processos-pdf")
+            else:
+                messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                return redirect("processos-cadastro")
 
     else:
         dados_iniciais = cria_dict_renovação(processo)
@@ -134,16 +137,36 @@ def renovacao_rapida(request):
         processo_id = request.POST.get("processo_id")
         nova_data = request.POST.get("data_1")
 
+        # Check if user wants to edit the process
+        if request.POST.get("edicao"):
+            request.session["processo_id"] = processo_id
+            request.session["cid"] = Processo.objects.get(id=processo_id).doenca.cid
+            request.session["data1"] = nova_data
+            return redirect("processos-edicao")
+        
+        # Generate PDF for renewal
         try:
-            if request.POST["edicao"]:
-                request.session["processo_id"] = processo_id
-                request.session["cid"] = Processo.objects.get(id=processo_id).doenca.cid
-                request.session["data1"] = nova_data
-                return redirect("processos-edicao")
-        except KeyError:
             dados = gerar_dados_renovacao(nova_data, processo_id)
             path_pdf_final = transfere_dados_gerador(dados)
-            return redirect(path_pdf_final)
+            
+            if path_pdf_final:
+                return redirect(path_pdf_final)
+            else:
+                print("ERROR: Failed to generate PDF for renewal")
+                messages.error(request, "Falha ao gerar PDF. Verifique os logs do sistema.")
+        except Exception as e:
+            print(f"ERROR: Exception in renovacao_rapida: {e}")
+            messages.error(request, f"Erro interno: {str(e)}")
+        
+        # On error, recreate the GET context and render the form again
+        busca = request.session.get("busca", "")
+        usuario = request.user
+        pacientes_usuario = usuario.pacientes.all()
+        busca_pacientes = pacientes_usuario.filter(
+            (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
+        )
+        contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
+        return render(request, "processos/renovacao_rapida.html", contexto)
 
 
 @login_required
@@ -174,10 +197,13 @@ def cadastro(request):
             processo_id = formulario.save(usuario, medico, meds_ids)
             path_pdf_final = transfere_dados_gerador(dados)
 
-            request.session["path_pdf_final"] = path_pdf_final
-            request.session["processo_id"] = processo_id
-
-            return redirect("processos-pdf")
+            if path_pdf_final:
+                request.session["path_pdf_final"] = path_pdf_final
+                request.session["processo_id"] = processo_id
+                return redirect("processos-pdf")
+            else:
+                messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                # Don't redirect, fall through to render the form again with error message
     else:
         if not usuario.clinicas.exists():
             return redirect("clinicas-cadastro")

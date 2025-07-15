@@ -65,6 +65,12 @@
         </div>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="{% url 'reportar-erros' %}">Reportar Erros</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'solicitar-funcionalidade' %}">Solicitar Funcionalidade</a>
+      </li>
+      <li class="nav-item">
         <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0; padding: 0;">
           {% csrf_token %}
           <button type="submit" class="nav-link btn btn-link">

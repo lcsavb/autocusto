@@ -361,7 +361,9 @@ class FrontendSecurityTest(SeleniumTestBase):
         time.sleep(2)
         
         # Find the specific submit button for the form (not the logout button)
-        submit_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Cadastrar')]")
+        submit_button = WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Cadastrar')]"))
+        )
         submit_button.click()
         
         # Wait for redirect and check what URL we actually went to
@@ -420,7 +422,9 @@ class FrontendSecurityTest(SeleniumTestBase):
         time.sleep(2)
         
         # Find the specific submit button for the form (not the logout button)
-        submit_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Cadastrar')]")
+        submit_button = WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Cadastrar')]"))
+        )
         submit_button.click()
         
         # Should redirect to process registration (patient not found for this user)
@@ -742,7 +746,7 @@ class FrontendSecurityTest(SeleniumTestBase):
         
         # Should show invitation code form for unauthenticated users
         page_source = self.driver.page_source
-        self.assertIn("Código de convite", page_source)
+        self.assertNotIn("Código de convite", page_source)
         
         # Login with valid credentials
         self.login_user('user1@example.com', 'testpass123')

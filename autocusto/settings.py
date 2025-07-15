@@ -139,9 +139,7 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+STATICFILES_DIRS = []  # All static files should be collected into STATIC_ROOT
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -160,12 +158,12 @@ LOGIN_URL = "login"
 # PDFs
 
 PATH_LME_BASE = os.path.join(
-    BASE_DIR, "processos/static/processos", "lme_base_modelo.pdf"
+    STATIC_ROOT, "processos", "lme_base_modelo.pdf"
 )
 PATH_RELATORIO = os.path.join(
-    BASE_DIR, "processos/static/processos", "relatorio_modelo.pdf"
+    STATIC_ROOT, "processos", "relatorio_modelo.pdf"
 )
-PATH_EXAMES = os.path.join(BASE_DIR, "processos/static/processos", "sadt.pdf")
-PATH_PDF_DIR = os.path.join(BASE_DIR, "processos/static/protocolos")
+PATH_EXAMES = os.path.join(STATIC_ROOT, "processos", "sadt.pdf")
+PATH_PDF_DIR = os.path.join(STATIC_ROOT, "protocolos")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

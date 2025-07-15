@@ -106,3 +106,11 @@ def home(request):
 def privacy_policy(request):
     """Privacy policy page view"""
     return render(request, "privacy.html")
+
+def reportar_erros(request):
+    """View for reporting errors"""
+    return render(request, "reportar_erros.html")
+
+def solicitar_funcionalidade(request):
+    """View for requesting features"""
+    return render(request, "solicitar_funcionalidade.html")

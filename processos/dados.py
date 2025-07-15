@@ -140,7 +140,17 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     dados["medicamentos"] = ""
     end_clinica = dados["logradouro"] + ", " + dados["logradouro_num"]
     dados["end_clinica"] = end_clinica
-    dados["data_1"] = datetime.strptime(primeira_data, "%d/%m/%Y")
+    # Validate and parse date
+    if not primeira_data or primeira_data.strip() == "":
+        print(f"ERROR: Empty date provided for renewal")
+        raise ValueError("Data de renovação não pode estar vazia")
+    
+    try:
+        dados["data_1"] = datetime.strptime(primeira_data, "%d/%m/%Y")
+        print(f"DEBUG: Parsed renewal date: {dados['data_1']}")
+    except ValueError as e:
+        print(f"ERROR: Invalid date format '{primeira_data}': {e}")
+        raise ValueError(f"Formato de data inválido: {primeira_data}. Use DD/MM/AAAA")
     dados["cid"] = processo.doenca.cid
     dados["diagnostico"] = processo.doenca.nome
     dados["consentimento"] = False
@@ -175,10 +185,21 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
 def transfere_dados_gerador(dados):
     """Coleta os dados finais do processo, transfere ao gerador de PDF
     e retorna o PATH final do arquivo gerado"""
-    pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
-    dados_pdf = pdf.generico(dados, settings.PATH_LME_BASE)
-    path_pdf_final = dados_pdf[1]  # a segunda variável que a função retorna é o path
-    return path_pdf_final
+    try:
+        print(f"DEBUG: transfere_dados_gerador called")
+        pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
+        dados_pdf = pdf.generico(dados, settings.PATH_LME_BASE)
+        
+        if dados_pdf is None or dados_pdf[0] is None or dados_pdf[1] is None:
+            print(f"ERROR: PDF generation failed in transfere_dados_gerador")
+            return None
+        
+        path_pdf_final = dados_pdf[1]  # a segunda variável que a função retorna é o path
+        print(f"DEBUG: PDF generated successfully: {path_pdf_final}")
+        return path_pdf_final
+    except Exception as e:
+        print(f"ERROR: Exception in transfere_dados_gerador: {e}")
+        return None
 
 
 def gerar_lista_meds_ids(dados):

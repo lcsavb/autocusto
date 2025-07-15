@@ -15,7 +15,6 @@ services:
     command: uwsgi --ini uwsgi.ini
     volumes:
       - .:/home/appuser/app
-      - static_volume:/home/appuser/app/static
     depends_on:
       - db
     environment:
@@ -34,10 +33,9 @@ services:
       - "8000:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - static_volume:/home/appuser/app/static
+      - ./static_root:/home/appuser/app/static_root
     depends_on:
       - web
 
 volumes:
   postgres_data:
-  static_volume:
