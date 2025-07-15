@@ -7,7 +7,7 @@ urlpatterns = [
     path("perfil/", views.perfil, name="medicos-perfil"),
     path(
         "login/",
-        auth_views.LoginView.as_view(template_name="medicos/login.html"),
+        views.custom_login,
         name="login",
     ),
     path(

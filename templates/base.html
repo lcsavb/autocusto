@@ -85,14 +85,16 @@
 
     {% else %}
     <!-- Compact login form for non-authenticated users -->
-    <form method="POST" action="{% url 'login' %}" class="form-inline my-2 my-lg-0">
+    <div class="toast-enabled">
+      <form method="POST" action="{% url 'login' %}" class="form-inline my-2 my-lg-0" novalidate>
       {% csrf_token %}
-      <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" required style="max-width: 150px;">
-      <input name="password" type="password" class="form-control mr-sm-2" placeholder="Senha" aria-label="Password" required style="max-width: 120px;">
+      <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" style="max-width: 150px;">
+      <input name="password" type="password" class="form-control mr-sm-2" placeholder="Senha" aria-label="Password" style="max-width: 120px;">
       <button class="btn btn-outline-light" type="submit">
         <span class="oi oi-account-login"></span> Login
       </button>
-    </form>
+      </form>
+    </div>
     {% endif %}
   </div>
 </nav>
