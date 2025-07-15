@@ -39,7 +39,7 @@
                     <div class="developer-info mb-4">
                         <h6 class="developer-title mb-3">Sobre o desenvolvedor</h6>
                         <p class="mb-2 text-muted text-justify">Olá, me chamo Lucas. Sou neurologista formado pela UNIFESP e estudo Informática da Saúde na <a href="https://www.th-deg.de">Technische Hochschule Deggendorf</a>. Minha missão é não te deixar perder tempo com burocracia.</p>
-                        <p class="mb-3 text-muted text-justify">Sempre amei tecnologia — especialmente software livre. Por isso, desenvolvi este sistema de forma aberta, de código auditável e licenciado por Creative Commons, feito por quem entende o dia a dia.</p>
+                        <p class="mb-3 text-muted text-justify">Sempre amei tecnologia e software livre; por isso, desenvolvi este app de código aberto, baseado nas dificuldades que encontrava no dia a dia.</p>
                         <div class="d-flex flex-wrap align-items-center justify-content-between">
                             <a href="https://github.com/lcsavb/autocusto" target="_blank" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
                                 <span class="oi oi-code mr-2"></span>
@@ -108,7 +108,7 @@
 
                 <!-- Right Column: Registration Form -->
                 <div class="col-lg-6 registration-column p-4">
-                    <div class="card shadow-lg border-0 registration-card mx-auto">
+                    <div class="card shadow-lg border-0 registration-card toast-enabled mx-auto">
                         <div class="card-header bg-primary text-white">
                             <h4 class="card-title mb-0">
                                 <span class="oi oi-task mr-2 text-white"></span>
@@ -116,10 +116,10 @@
                             </h4>
                         </div>
                         <div class="card-body p-4">
-                            <p class="text-muted mb-4">Preencha os dados abaixo para criar sua conta e prescreva agora mesmo.</p>
+                            <!-- Messages handled by JavaScript toast system -->
 
                             {% if registro_form %}
-                            <form method="POST" action="{% url 'medicos-cadastro' %}">
+                            <form method="POST" action="{% url 'home' %}" novalidate>
                                 {% csrf_token %}
                                 {{ registro_form|crispy }}
                                 <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
@@ -152,6 +152,9 @@
 
 {% block scripts %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
+
+<!-- Django messages will be automatically converted to toasts by django-messages-toast.js -->
+
 {% if user.is_authenticated %}
 <script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
 <script src="{% static 'processos/js/buscaPacientes.js' %}"></script>

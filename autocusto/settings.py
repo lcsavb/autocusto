@@ -58,6 +58,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -159,6 +160,13 @@ STATICFILES_DIRS = [
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+# Django Messages - Map message tags to Bootstrap classes
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',  # Maps 'error' to 'danger' for Bootstrap
+    messages.DEBUG: 'info',
+}
 
 # Login
 LOGIN_REDIRECT_URL = "home"

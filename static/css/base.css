@@ -1,9 +1,6 @@
 /* AutoCusto Modern Design - Enhanced Bootstrap */
 
-/* VERY VISIBLE TEST - This should make the background bright red if CSS is loading */
-body {
-  background: red !important;
-}
+/* Background removed - using gradient from home.css instead */
 
 /* === TYPOGRAPHY === */
 :root {
@@ -261,28 +258,143 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   border-bottom: none;
 }
 
-/* === ALERTS === */
+/* === ENHANCED ALERTS AND ERROR MESSAGES === */
 .alert {
   border: none;
   border-radius: var(--border-radius);
   padding: 1rem 1.5rem;
   margin: 1rem 0;
   font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 0.4s ease-out;
 }
 
 .alert-success {
   background: linear-gradient(135deg, #d4edda, #c3e6cb);
   color: #155724;
+  border-left: 4px solid #28a745;
 }
 
-.alert-danger {
+.alert-danger, .alert-error {
   background: linear-gradient(135deg, #f8d7da, #f5c6cb);
   color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
 .alert-warning {
   background: linear-gradient(135deg, #fff3cd, #ffeaa7);
   color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.alert-dismissible .close {
+  padding: 1rem 1.5rem;
+  margin: -1rem -1.5rem -1rem auto;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.alert-dismissible .close:hover {
+  opacity: 1;
+}
+
+/* === FORM VALIDATION STYLING === */
+.form-control.is-invalid {
+  border-color: var(--danger-color);
+  background-color: #fff5f5;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid {
+  border-color: #28a745;
+  background-color: #f0fff4;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.invalid-feedback {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.valid-feedback {
+  color: #28a745;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* === CRISPY FORMS ERROR STYLING === */
+.form-group .help-block {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.form-group .errorlist {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.form-group .errorlist li {
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid var(--danger-color);
+}
+
+/* === ENHANCED FORM FIELD STYLING === */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group.has-error .form-control {
+  border-color: var(--danger-color);
+  background-color: #fff5f5;
+}
+
+.form-group.has-success .form-control {
+  border-color: #28a745;
+  background-color: #f0fff4;
+}
+
+/* === FIELD LABELS === */
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-group label.required:after {
+  content: " *";
+  color: var(--danger-color);
+  font-weight: bold;
+}
+
+/* === CRISPY FORMS COMPATIBILITY === */
+.asteriskField {
+  color: var(--danger-color);
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
+.requiredField {
+  font-weight: 600;
 }
 
 /* === ANIMATIONS === */
@@ -353,4 +465,184 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 .nav-link:focus {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
+}
+
+/* === ALPINE.JS TOAST SYSTEM === */
+.toast-container {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.toast {
+  display: block !important;
+  opacity: 1 !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  backdrop-filter: blur(10px);
+  border: none !important;
+  overflow: hidden;
+  max-width: 420px;
+  min-width: 350px;
+  margin-bottom: 1rem;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.toast.show {
+  opacity: 1 !important;
+  display: block !important;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Toast header styling for Alpine.js */
+.toast .toast-header {
+  border-bottom: none !important;
+  padding: 1.25rem 1.5rem 1rem !important;
+  font-weight: 700 !important;
+  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+  font-size: 1rem;
+}
+
+.toast.bg-danger .toast-header {
+  background: linear-gradient(135deg, var(--danger-color), #ff6b9d) !important;
+}
+
+.toast.bg-success .toast-header {
+  background: linear-gradient(135deg, var(--success-color), #00d4ff) !important;
+}
+
+.toast.bg-warning .toast-header {
+  background: linear-gradient(135deg, var(--warning-color), #38f9d7) !important;
+}
+
+.toast.bg-info .toast-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+/* Toast body styling */
+.toast .toast-body {
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: var(--text-primary) !important;
+  padding: 1.25rem 1.5rem !important;
+  line-height: 1.6 !important;
+  backdrop-filter: blur(10px);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.toast .toast-body ul {
+  margin: 0 !important;
+  padding-left: 1.25rem !important;
+}
+
+.toast .toast-body li {
+  margin-bottom: 0.5rem !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+}
+
+.toast .toast-body li:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Close button styling */
+.toast .close {
+  color: rgba(255, 255, 255, 0.9) !important;
+  opacity: 0.8 !important;
+  font-size: 1.4rem !important;
+  transition: var(--transition) !important;
+  padding: 0.5rem !important;
+  margin: -0.5rem -0.75rem -0.5rem auto !important;
+}
+
+.toast .close:hover {
+  opacity: 1 !important;
+  transform: scale(1.15) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 50% !important;
+}
+
+/* Icon styling */
+.toast .toast-header i {
+  font-size: 1.1rem !important;
+  opacity: 0.9 !important;
+}
+
+/* Alpine.js handles transitions with classes - simplified animations */
+.toast {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Toast container responsive */
+@media (max-width: 576px) {
+  .toast-container {
+    left: 10px !important;
+    right: 10px !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  
+  .toast {
+    min-width: auto !important;
+    max-width: 100% !important;
+  }
+  
+  .toast .toast-header,
+  .toast .toast-body {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Hide ALL inline errors when using toast system */
+.toast-enabled .invalid-feedback,
+.toast-enabled .errorlist,
+.toast-enabled .help-block,
+.toast-enabled .text-danger,
+.toast-enabled .form-text.text-danger,
+.toast-enabled .error,
+.toast-enabled .field-error,
+.toast-enabled .form-errors,
+.toast-enabled .form-group .text-danger,
+.toast-enabled .form-control + .text-danger,
+.toast-enabled .alert-danger,
+.toast-enabled [class*="error"]:not(.toast):not(.toast-container),
+.toast-enabled .is-invalid + *,
+.toast-enabled .was-validated .form-control:invalid ~ .invalid-feedback,
+.toast-enabled .was-validated .form-control:invalid ~ .invalid-tooltip {
+  display: none !important;
+}
+
+/* Remove red border/styling from invalid fields when using toasts */
+.toast-enabled .form-control.is-invalid,
+.toast-enabled .was-validated .form-control:invalid {
+  border-color: #ced4da !important;
+  background-color: #fff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+.toast-enabled .form-control.is-invalid:focus,
+.toast-enabled .was-validated .form-control:invalid:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+/* Hide ONLY Django message alerts (not toasts) immediately */
+nav ~ .alert.alert-danger,
+nav ~ .alert.alert-success, 
+nav ~ .alert.alert-warning,
+nav ~ .alert.alert-info {
+  display: none !important;
+}
+
+/* Ensure toasts are always visible */
+.toast-container .toast {
+  display: block !important;
 }

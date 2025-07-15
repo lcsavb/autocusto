@@ -550,6 +550,30 @@ body {
   margin-bottom: 1.5rem !important;
 }
 
+/* REGISTRATION FORM SPECIFIC STYLING */
+.registration-card .form-group {
+  margin-bottom: 1.2rem !important;
+}
+
+.registration-card .form-control {
+  border-radius: 6px !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.9rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.registration-card .form-control:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+.registration-card label {
+  font-weight: 600 !important;
+  color: #495057 !important;
+  margin-bottom: 0.5rem !important;
+  font-size: 0.9rem !important;
+}
+
 /* OVERFLOW PREVENTION */
 * {
   box-sizing: border-box !important;
