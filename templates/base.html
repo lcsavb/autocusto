@@ -39,7 +39,7 @@
       {% if user.is_authenticated %}
       <li class="nav-item">
           <!-- Quick patient search for authenticated users -->
-        <form action="{% url 'processos-renovacao-rapida' %}" method="GET" class="form-inline my-2 my-lg-0">
+        <form action="{% url 'processos-renovacao-rapida' %}" method="GET" class="form-inline my-2 my-lg-0" novalidate>
           <input name="b" class="form-control mr-sm-2" type="text" placeholder="Paciente por nome ou CPF" aria-label="Search">
           <button class="btn btn-outline-light" type="submit"><span class="oi oi-magnifying-glass"></span>Buscar</button>
         </form>
@@ -71,7 +71,7 @@
         <a class="nav-link" href="{% url 'solicitar-funcionalidade' %}">Solicitar Funcionalidade</a>
       </li>
       <li class="nav-item">
-        <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0; padding: 0;">
+        <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0; padding: 0;" novalidate>
           {% csrf_token %}
           <button type="submit" class="nav-link btn btn-link">
             Logout <span class="oi oi-account-logout"></span>

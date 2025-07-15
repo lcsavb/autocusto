@@ -23,7 +23,7 @@
                                         {{ paciente.nome_paciente }}
                                     </h6>
                                     
-                                    <form method="POST">
+                                    <form method="POST" novalidate>
                                         {% csrf_token %}
                                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                                         

@@ -12,6 +12,7 @@ class ClinicaFormulario(ModelForm):
         self.helper.form_id = "clinica-cadastro"
         self.helper.form_method = "POST"
         self.helper.form_action = ""
+        self.helper.attrs = {'novalidate': True}
         self.helper.add_input(Submit("submit", "Cadastrar", css_class="btn btn-primary float-right"))
         self.helper.layout = Layout(
             Row(

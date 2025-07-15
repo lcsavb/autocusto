@@ -11,12 +11,12 @@
       </h4>
     </div>
     
-    <form method="POST" action="{% url 'solicitar-funcionalidade' %}">{% csrf_token %}
+    <form method="POST" action="{% url 'solicitar-funcionalidade' %}" novalidate>{% csrf_token %}
       <div class="form-row">
         <div class="col-12">
           <div class="form-group">
             <label for="featureSubject">Assunto:</label>
-            <input type="text" class="form-control" id="featureSubject" name="subject" placeholder="Breve descrição da funcionalidade" required>
+            <input type="text" class="form-control" id="featureSubject" name="subject" placeholder="Breve descrição da funcionalidade">
           </div>
         </div>
       </div>
@@ -25,7 +25,7 @@
         <div class="col-12">
           <div class="form-group">
             <label for="featureDescription">Descrição Detalhada:</label>
-            <textarea class="form-control" id="featureDescription" name="description" rows="6" placeholder="Descreva a funcionalidade desejada em detalhes, incluindo o problema que ela resolveria." required></textarea>
+            <textarea class="form-control" id="featureDescription" name="description" rows="6" placeholder="Descreva a funcionalidade desejada em detalhes, incluindo o problema que ela resolveria."></textarea>
           </div>
         </div>
       </div>

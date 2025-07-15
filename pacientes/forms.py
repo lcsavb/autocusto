@@ -13,6 +13,7 @@ class PacienteCadastroFormulario(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = "POST"
+        self.helper.attrs = {'novalidate': True}
         self.helper.add_input(Submit("submit", "Cadastrar Paciente", css_class="btn btn-primary"))
 
         # Apply form-control to all fields by default

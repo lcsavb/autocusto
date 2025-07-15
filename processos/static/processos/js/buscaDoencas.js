@@ -31,8 +31,6 @@ $.ajax({
 
 });
 
-
-    
 $('#resultados').on('click', 'li', function() {
     var click_text = $(this).text().split('|');
     $('#id_cid').val($.trim(click_text[0]));

@@ -8,7 +8,7 @@
 
     <div class="auth-viewport">
         <div class="auth-content-wrapper toast-enabled">
-            <div class="auth-process-card">
+            <div class="auth-process-card" style="max-width: 55vw;">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0 text-white">
                         <i class="oi oi-plus mr-2"></i>
@@ -16,16 +16,8 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
-                    <!-- DEBUG: Messages handled by JavaScript toast system -->
-                    <script>
-                      if (window.djangoMessages) {
-                        console.log('[DEBUG] home.html authenticated: window.djangoMessages:', window.djangoMessages);
-                      } else {
-                        console.log('[DEBUG] home.html authenticated: No window.djangoMessages found');
-                      }
-                    </script>
                     
-                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}">"
+                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}" novalidate>
                         {% csrf_token %}
                         <div class="form-row align-items-end">
                             <div class="col-sm-6"> 
@@ -45,9 +37,9 @@
                         </div>
                     </form>
                 </div>
-                <div class="border-top">
-                    <ul class="list-group list-group-flush resultados" id="resultados"></ul>
-                    <ul class="list-group list-group-flush resultados" id="pacientes"></ul>
+                <div class="border-top" style="overflow: hidden;">
+                    <ul class="list-group list-group-flush resultados" id="resultados" style="word-wrap: break-word; overflow-wrap: break-word;"></ul>
+                    <ul class="list-group list-group-flush resultados" id="pacientes" style="word-wrap: break-word; overflow-wrap: break-word;"></ul>
                 </div>
             </div>
         </div>

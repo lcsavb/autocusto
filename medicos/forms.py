@@ -53,6 +53,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         # Configure Crispy Forms helper
         self.helper = FormHelper()
         self.helper.form_method = "POST"
+        self.helper.attrs = {'novalidate': True}
         # Don't add submit button here - using custom button in template
         
         # Configure crispy to NOT show inline errors (we'll show them as toasts)

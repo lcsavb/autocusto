@@ -60,6 +60,7 @@ class PreProcesso(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.attrs = {'novalidate': True}
         self.helper.layout = Layout(
             Field('cpf_paciente', css_class='form-control'),
             Field('cid', css_class='form-control'),
@@ -88,6 +89,7 @@ class NovoProcesso(forms.Form):
         super(NovoProcesso, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = "POST"
+        self.helper.attrs = {'novalidate': True}
         self.helper.add_input(Submit("submit", "Salvar Processo", css_class="btn btn-primary"))
 
         # Apply form-control to all fields by default
