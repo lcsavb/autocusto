@@ -2,7 +2,7 @@
    
 {% block content %}
 
-<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem);">
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem); max-height: calc(100vh - 20rem);">
     <div class="col-lg-10 col-md-12">
         <div class="auth-process-card">
             <div class="card-header bg-primary text-white">
@@ -11,25 +11,25 @@
                     Renovação de Processos
                 </h5>
             </div>
-            <div class="card-body p-4 toast-enabled">
+            <div class="card-body p-4 toast-enabled" style="overflow-y: auto; max-height: calc(100vh - 25rem);">
                 <div class="row">
                     {% for paciente in busca_pacientes %}
                     <div class="col-lg-6 col-xl-4 mb-4">
-                        <div class="card border-light shadow-sm">
-                            <div class="card-body">
-                                <div class="renovacao-form-wrapper">
+                        <div class="card border-light shadow-sm h-100" style="overflow: visible;">
+                            <div class="card-body d-flex flex-column" style="overflow: visible;">
+                                <div class="renovacao-form-wrapper flex-grow-1" style="overflow: visible;">
                                     <h6 class="card-title font-weight-bold text-primary mb-4" style="word-wrap: break-word; overflow-wrap: break-word; hyphens: auto;">
                                         <i class="oi oi-person mr-2"></i>
                                         {{ paciente.nome_paciente }}
                                     </h6>
                                     
-                                    <form method="POST" novalidate>
+                                    <form method="POST" novalidate style="overflow: visible;">
                                         {% csrf_token %}
                                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                                         
-                                        <div class="form-group" style="margin-bottom: 3rem;">
-                                            <label for="processo_{{ paciente.id }}" class="font-weight-bold" style="margin-bottom: 1rem; display: block;">Processo</label>
-                                            <select class="form-control" name="processo_id" id="processo_{{ paciente.id }}">
+                                        <div class="form-group mb-4" style="border: 1px solid transparent; padding: 10px; margin: 10px 0; position: relative; z-index: 1000;">
+                                            <label for="processo_{{ paciente.id }}" class="font-weight-bold mb-2 d-block">Processo</label>
+                                            <select class="form-control" name="processo_id" id="processo_{{ paciente.id }}" style="position: relative; z-index: 1001; line-height: 1.5; padding: 8px 12px; height: auto; min-height: 40px;">
                                                 {% for processo in paciente.processos.all %}
                                                 {% if processo.usuario == usuario %}
                                                 <option value="{{ processo.id }}">{{ processo }}</option>
@@ -38,12 +38,19 @@
                                             </select>
                                         </div>
                                         
-                                        <div class="form-group" style="margin-bottom: 3rem;">
-                                            <label for="data_{{ paciente.id }}" class="font-weight-bold" style="margin-bottom: 1rem; display: block;">Primeira Data</label>
-                                            <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                                        <div class="form-group mb-4" style="border: 1px solid transparent; padding: 10px; margin: 10px 0;">
+                                            <label for="data_{{ paciente.id }}" class="font-weight-bold mb-2 d-block">Primeira Data</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-outline-secondary btn-sm today-btn" type="button" data-target="data_{{ paciente.id }}">
+                                                        <i class="oi oi-calendar"></i> Hoje
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                         
-                                        <div class="form-group" style="margin-bottom: 3rem;">
+                                        <div class="form-group mb-4" style="border: 1px solid transparent; padding: 10px; margin: 10px 0;">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="edicao" id="edicao_{{ paciente.id }}">
                                                 <label class="form-check-label font-weight-bold" for="edicao_{{ paciente.id }}">
@@ -52,10 +59,12 @@
                                             </div>
                                         </div>
                                         
-                                        <button type="submit" class="btn btn-primary btn-block">
-                                            <i class="oi oi-reload mr-1"></i>
-                                            Renovar Processo
-                                        </button>
+                                        <div class="form-group" style="border: 1px solid transparent; padding: 10px; margin: 10px 0;">
+                                            <button type="submit" class="btn btn-primary btn-block">
+                                                <i class="oi oi-reload mr-1"></i>
+                                                Renovar Processo
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -86,9 +95,9 @@ $('.datas').mask('00/00/0000');
 
 <script>
 (() => {
-    const button = $('.btn');
+    const button = $('.btn-primary');
     button.click(function(){
-    const dateField = $(event.target).closest('.input-group').find('.datas');
+    const dateField = $(event.target).closest('form').find('.datas');
     let dateFieldVal = dateField.val();
     let day = dateFieldVal.slice(0,2)
     let month = dateFieldVal.slice(3,5);
@@ -101,6 +110,18 @@ $('.datas').mask('00/00/0000');
     };
     });
 })();
+
+// Today button functionality
+$('.today-btn').on('click', function() {
+    const targetId = $(this).data('target');
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const todayFormatted = dd + '/' + mm + '/' + yyyy;
+    
+    $('#' + targetId).val(todayFormatted);
+});
 
 </script>
 {% endblock scripts%}
