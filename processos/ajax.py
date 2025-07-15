@@ -3,8 +3,6 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import Doenca, Protocolo
 
-
-@login_required
 def busca_doencas(request):
     doenca = request.GET.get("palavraChave", None)
     b = Doenca.objects.filter(Q(cid__icontains=doenca) | Q(nome__icontains=doenca))

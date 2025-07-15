@@ -6,40 +6,108 @@
 
 {% if user.is_authenticated %}
 
-    <div class="auth-viewport">
+    <div class="auth-viewport" style="align-items: flex-start; padding-top: 15vh;">
         <div class="auth-content-wrapper toast-enabled">
-            <div class="auth-process-card" style="max-width: 55vw;">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0 text-white">
-                        <i class="oi oi-plus mr-2"></i>
-                        Adicionar Processo
-                    </h5>
+            <div x-data="searchForm()" style="position: relative; width: 100%;">
+                <!-- Main Form Card -->
+                <div class="auth-process-card" style="max-width: 55vw;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 text-white">
+                            <i class="oi oi-plus mr-2"></i>
+                            Adicionar Processo
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}" novalidate>
+                            {% csrf_token %}
+                            <div class="form-row align-items-end">
+                                <!-- CPF Field -->
+                                <div class="col-sm-6"> 
+                                    <label class="font-weight-bold">CPF do Paciente</label>
+                                    <input 
+                                        type="text" 
+                                        name="cpf_paciente" 
+                                        class="form-control" 
+                                        x-model="cpf" 
+                                        @input="searchPatients(); activeSearch = 'patients'"
+                                        @focus="activeSearch = 'patients'"
+                                        autocomplete="off" 
+                                        placeholder="CPF do Paciente">
+                                </div>
+                                
+                                <!-- Disease/CID Field -->
+                                <div class="col-sm-3"> 
+                                    <label class="font-weight-bold">Doença/CID</label>
+                                    <input 
+                                        type="text" 
+                                        name="cid" 
+                                        class="form-control" 
+                                        x-model="cid" 
+                                        @input="searchDiseases(); activeSearch = 'diseases'"
+                                        @focus="activeSearch = 'diseases'"
+                                        autocomplete="off" 
+                                        placeholder="Doença ou CID">
+                                </div>
+                                
+                                <div class="col-sm-3">
+                                    <button class="btn btn-primary btn-block" type="submit" style="height: 40px;">
+                                        <i class="oi oi-check mr-2"></i>
+                                        Cadastrar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    
-                    <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}" novalidate>
-                        {% csrf_token %}
-                        <div class="form-row align-items-end">
-                            <div class="col-sm-6"> 
-                                <label class="font-weight-bold">CPF do Paciente</label>
-                                {{ formulario.cpf_paciente|as_crispy_field }} 
-                            </div>
-                            <div class="col-sm-3"> 
-                                <label class="font-weight-bold">Doença/CID</label>
-                                {{ formulario.cid|as_crispy_field }} 
-                            </div>
-                            <div class="col-sm-3">
-                                <button class="btn btn-primary btn-block" type="submit" style="height: 40px;">
-                                    <i class="oi oi-check mr-2"></i>
-                                    Cadastrar
-                                </button>
-                            </div>
+                
+                <!-- Results List - Below the card -->
+                <div class="results-container">
+                    <!-- Patients Results -->
+                    <div x-show="activeSearch === 'patients' && patients.length > 0" class="external-results">
+                        <div class="results-header">
+                            <h6 class="mb-0">
+                                <i class="oi oi-person mr-2"></i>
+                                Pacientes encontrados (<span x-text="patients.length"></span>)
+                            </h6>
                         </div>
-                    </form>
-                </div>
-                <div class="border-top" style="overflow: hidden;">
-                    <ul class="list-group list-group-flush resultados" id="resultados" style="word-wrap: break-word; overflow-wrap: break-word;"></ul>
-                    <ul class="list-group list-group-flush resultados" id="pacientes" style="word-wrap: break-word; overflow-wrap: break-word;"></ul>
+                        <div class="results-list">
+                            <template x-for="patient in patients" :key="patient.id">
+                                <div class="result-row" @click="selectPatient(patient)">
+                                    <div class="result-content">
+                                        <span x-text="patient.text"></span>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm">
+                                        <i class="oi oi-check mr-1"></i>
+                                        Selecionar
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Diseases Results -->
+                    <div x-show="activeSearch === 'diseases' && diseases.length > 0" class="external-results">
+                        <div class="results-header">
+                            <h6 class="mb-0">
+                                <i class="oi oi-medical-cross mr-2"></i>
+                                Doenças encontradas (<span x-text="diseases.length"></span>)
+                            </h6>
+                        </div>
+                        <div class="results-list">
+                            <template x-for="disease in diseases" :key="disease.cid">
+                                <div class="result-row" @click="selectDisease(disease)">
+                                    <div class="result-content">
+                                        <div class="disease-title" x-text="disease.nome"></div>
+                                        <div class="disease-code" x-text="'CID: ' + disease.cid"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm">
+                                        <i class="oi oi-check mr-1"></i>
+                                        Selecionar
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -192,9 +260,242 @@
   }
 </script>
 
+
 {% if user.is_authenticated %}
-<script src="{% static 'processos/js/buscaDoencas.js' %}"></script>
-<script src="{% static 'processos/js/buscaPacientes.js' %}"></script>
+<style>
+/* DEBUG: Container borders */
+.auth-process-card {
+  border: 3px solid #00ff00 !important; /* DEBUG: Green border for main card */
+  overflow: visible !important;
+}
+
+.card-body {
+  border: 2px solid #0000ff !important; /* DEBUG: Blue border for card body */
+}
+
+.form-row {
+  border: 2px dashed #ff6600 !important; /* DEBUG: Orange border for form row */
+}
+
+.form-row > div {
+  border: 1px dotted #aa00ff !important; /* DEBUG: Purple border for columns */
+}
+
+/* Results Container - Absolutely positioned to float below card */
+.results-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 55vw; /* Match the card width */
+}
+
+/* External Results - Professional styling */
+.external-results {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #007bff; /* Professional blue border instead of pathetic red */
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+/* Results Header */
+.results-header {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.results-header h6 {
+  color: white;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Results List */
+.results-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Individual Result Rows */
+.result-row {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f3f4;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.result-row:hover {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding-left: calc(1.5rem - 4px);
+}
+
+.result-row:last-child {
+  border-bottom: none;
+}
+
+/* Result Content */
+.result-content {
+  flex: 1;
+  min-width: 0;
+  margin-right: 1rem;
+}
+
+/* Disease-specific styling */
+.disease-title {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1rem;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.disease-code {
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Patient styling */
+.result-content span {
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+/* Action buttons */
+.result-row .btn {
+  flex-shrink: 0;
+  font-weight: 600;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+}
+
+.result-row .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .results-container {
+    max-width: 95vw;
+  }
+  
+  .result-row {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+  
+  .result-content {
+    margin-right: 0;
+    margin-bottom: 0.75rem;
+  }
+}
+</style>
+
+<script defer>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('searchForm', () => ({
+    // Form values
+    cpf: '',
+    cid: '',
+    
+    // Search results
+    patients: [],
+    diseases: [],
+    
+    // UI state
+    activeSearch: '',
+    
+    // Search diseases
+    async searchDiseases() {
+      console.log('[DEBUG] Searching diseases for:', this.cid);
+      
+      if (this.cid.length < 2) {
+        this.diseases = [];
+        return;
+      }
+      
+      try {
+        const url = document.getElementById('js-form').dataset.buscaDoencas;
+        const response = await fetch(`${url}?palavraChave=${encodeURIComponent(this.cid)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.diseases = data || [];
+        console.log('[DEBUG] Found diseases:', this.diseases.length);
+        
+      } catch (error) {
+        console.error('[ERROR] Disease search failed:', error);
+        this.diseases = [];
+      }
+    },
+    
+    // Search patients
+    async searchPatients() {
+      console.log('[DEBUG] Searching patients for:', this.cpf);
+      
+      if (this.cpf.length < 3) {
+        this.patients = [];
+        return;
+      }
+      
+      try {
+        const url = document.getElementById('js-form').dataset.buscaPacientes;
+        const response = await fetch(`${url}?q=${encodeURIComponent(this.cpf)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.patients = data.pacientes || [];
+        console.log('[DEBUG] Found patients:', this.patients.length);
+        
+      } catch (error) {
+        console.error('[ERROR] Patient search failed:', error);
+        this.patients = [];
+      }
+    },
+    
+    // Select disease
+    selectDisease(disease) {
+      this.cid = disease.cid; // Only store the CID code for form submission
+      this.diseases = [];
+      this.activeSearch = '';
+      console.log('[DEBUG] Selected disease:', disease);
+    },
+    
+    // Select patient
+    selectPatient(patient) {
+      this.cpf = patient.text;
+      this.patients = [];
+      this.activeSearch = '';
+      console.log('[DEBUG] Selected patient:', patient);
+    }
+  }))
+});
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
 {% endif %}

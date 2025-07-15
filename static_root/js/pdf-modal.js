@@ -36,15 +36,144 @@ document.addEventListener('alpine:init', () => {
       }
     },
     
-    printPdf() {
-      if (this.pdfUrl) {
-        const printWindow = window.open(this.pdfUrl, '_blank');
-        if (printWindow) {
-          printWindow.onload = function() {
-            printWindow.print();
-          };
+    async printPdf() {
+      if (!this.pdfUrl) return;
+      
+      try {
+        // Check if we can use silent printing
+        const canSilentPrint = await this.checkSilentPrintPermission();
+        
+        if (canSilentPrint) {
+          console.log('Attempting silent print...');
+          await this.attemptSilentPrint();
+        } else {
+          console.log('Falling back to dialog print...');
+          this.dialogPrint();
         }
+      } catch (error) {
+        console.log('Print error, falling back to dialog:', error);
+        this.dialogPrint();
       }
+    },
+
+    async checkSilentPrintPermission() {
+      // Check user preference from localStorage
+      const userPreference = localStorage.getItem('preferDirectPrint');
+      if (userPreference === 'true') {
+        return true;
+      }
+      
+      if (userPreference === 'false') {
+        return false;
+      }
+
+      // Ask user for the first time
+      return await this.requestPrintPermission();
+    },
+
+    async requestPrintPermission() {
+      // Show a custom dialog to ask user
+      const userWantsDirectPrint = confirm(
+        'Deseja ativar impressão direta sem diálogo?\n\n' +
+        'Isso permitirá imprimir PDFs automaticamente sem mostrar a janela de impressão.\n\n' +
+        'Você pode alterar essa configuração a qualquer momento.'
+      );
+      
+      // Store user preference
+      localStorage.setItem('preferDirectPrint', userWantsDirectPrint ? 'true' : 'false');
+      
+      return userWantsDirectPrint;
+    },
+
+    async attemptSilentPrint() {
+      try {
+        // Create hidden iframe for silent printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.top = '-1000px';
+        iframe.style.left = '-1000px';
+        iframe.style.width = '1px';
+        iframe.style.height = '1px';
+        iframe.style.opacity = '0';
+        iframe.style.border = 'none';
+        iframe.src = this.pdfUrl;
+        
+        document.body.appendChild(iframe);
+        
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            document.body.removeChild(iframe);
+            reject(new Error('Print timeout'));
+          }, 5000);
+          
+          iframe.onload = () => {
+            clearTimeout(timeout);
+            try {
+              // Try silent print
+              iframe.contentWindow.print();
+              
+              // Show success message via Alpine.js
+              this.$dispatch('add-toast', {
+                message: 'PDF enviado para impressão!',
+                type: 'success'
+              });
+              
+              // Clean up
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+                resolve();
+              }, 1000);
+            } catch (error) {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+              reject(error);
+            }
+          };
+          
+          iframe.onerror = () => {
+            clearTimeout(timeout);
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+            reject(new Error('Failed to load PDF'));
+          };
+        });
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    dialogPrint() {
+      // Traditional print with dialog
+      const printWindow = window.open(this.pdfUrl, '_blank', 'width=800,height=600');
+      
+      if (printWindow) {
+        printWindow.onload = function() {
+          printWindow.print();
+        };
+        
+        this.$dispatch('add-toast', {
+          message: 'PDF aberto em nova janela. Use Ctrl+P para imprimir.',
+          type: 'info'
+        });
+      } else {
+        this.$dispatch('add-toast', {
+          message: 'Popup bloqueado. Permita popups e tente novamente.',
+          type: 'warning'
+        });
+      }
+    },
+
+    // Method to reset print preferences (for settings)
+    resetPrintPreferences() {
+      localStorage.removeItem('preferDirectPrint');
+      this.$dispatch('add-toast', {
+        message: 'Preferências de impressão redefinidas.',
+        type: 'info'
+      });
     }
   }));
 
