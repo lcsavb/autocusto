@@ -5,6 +5,10 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
 from datetime import date
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
 from processos.models import Processo, Doenca
@@ -51,61 +55,127 @@ def busca_processos(request):
 
 @login_required
 def edicao(request):
-    usuario = request.user
-    medico = seletor_medico(usuario)
-    clinicas = medico.clinicas.all()
-    escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
-    cid = request.session["cid"]
-    medicamentos = listar_med(cid)
-    ModeloFormulario = fabricar_formulario(cid, True)
+    try:
+        logger.info(f"Edicao view started - User: {request.user}, Method: {request.method}")
+        
+        usuario = request.user
+        logger.info(f"Usuario: {usuario}")
+        
+        medico = seletor_medico(usuario)
+        logger.info(f"Medico: {medico}")
+        
+        clinicas = medico.clinicas.all()
+        logger.info(f"Clinicas count: {clinicas.count()}")
+        
+        escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+        logger.info(f"Escolhas: {escolhas}")
+        
+        cid = request.session["cid"]
+        logger.info(f"CID from session: {cid}")
+        
+        medicamentos = listar_med(cid)
+        logger.info(f"Medicamentos count: {len(medicamentos) if medicamentos else 0}")
+        
+        ModeloFormulario = fabricar_formulario(cid, True)
+        logger.info(f"ModeloFormulario created: {ModeloFormulario}")
+        
+    except Exception as e:
+        logger.error(f"Error in edicao view initialization: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        messages.error(request, f"Erro na inicialização: {str(e)}")
+        return redirect("processos-busca")
 
     try:
         processo_id = request.session["processo_id"]
+        logger.info(f"Processo ID from session: {processo_id}")
+        
         # Verify user owns this process
         processo = Processo.objects.get(id=processo_id, usuario=usuario)
-    except (KeyError, Processo.DoesNotExist):
+        logger.info(f"Processo found: {processo}")
+        
+    except (KeyError, Processo.DoesNotExist) as e:
+        logger.error(f"Error getting processo: {str(e)}")
         messages.error(request, "Processo não encontrado ou você não tem permissão para acessá-lo.")
         return redirect("processos-busca")
 
     try:
         primeira_data = request.session["data1"]
+        logger.info(f"Primeira data from session: {primeira_data}")
     except KeyError:
         primeira_data = date.today().strftime("%d/%m/%Y")
+        logger.info(f"Using default primeira_data: {primeira_data}")
 
     if request.method == "POST":
-        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
+        logger.info("Processing POST request")
+        
+        try:
+            formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
+            logger.info(f"Formulario created successfully")
+            
+            if formulario.is_valid():
+                logger.info("Formulario is valid, processing data")
+                
+                dados_formulario = formulario.cleaned_data
+                logger.info(f"Dados formulario keys: {list(dados_formulario.keys())}")
+                
+                id_clin = dados_formulario["clinicas"]
+                logger.info(f"Clinica ID selected: {id_clin}")
+                
+                clinica = medico.clinicas.get(id=id_clin)
+                logger.info(f"Clinica found: {clinica}")
+                
+                try:
+                    ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+                    logger.info(f"Medication IDs generated: {ids_med_cadastrados}")
 
-        if formulario.is_valid():
-            dados_formulario = formulario.cleaned_data
-            id_clin = dados_formulario["clinicas"]
-            clinica = medico.clinicas.get(id=id_clin)
+                    dados_formulario, meds_ids = gera_med_dosagem(
+                        dados_formulario, ids_med_cadastrados
+                    )
+                    logger.info(f"Medication dosage generated, meds_ids: {meds_ids}")
 
-            ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+                    # Registra os dados do médico logado e da clínica associada
+                    dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
+                    logger.info(f"Emissor data linked successfully")
 
-            dados_formulario, meds_ids = gera_med_dosagem(
-                dados_formulario, ids_med_cadastrados
-            )
+                    formulario.save(usuario, medico, processo_id, meds_ids)
+                    logger.info(f"Formulario saved successfully")
 
-            # Registra os dados do médico logado e da clínica associada
-            dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
+                    path_pdf_final = transfere_dados_gerador(dados)
+                    logger.info(f"PDF path generated: {path_pdf_final}")
 
-            formulario.save(usuario, medico, processo_id, meds_ids)
-
-            path_pdf_final = transfere_dados_gerador(dados)
-
-            if path_pdf_final:
-                request.session["path_pdf_final"] = path_pdf_final
-                request.session["processo_id"] = processo_id
-                messages.success(request, "Processo atualizado com sucesso! PDF gerado.")
-                return redirect("processos-pdf")
+                    if path_pdf_final:
+                        request.session["path_pdf_final"] = path_pdf_final
+                        request.session["processo_id"] = processo_id
+                        messages.success(request, "Processo atualizado com sucesso! PDF gerado.")
+                        return redirect("processos-pdf")
+                    else:
+                        logger.error("Failed to generate PDF path")
+                        messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                        return redirect("processos-cadastro")
+                        
+                except Exception as e:
+                    logger.error(f"Error in form processing: {str(e)}")
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    messages.error(request, f"Erro no processamento dos dados: {str(e)}")
+                    return redirect("processos-busca")
+                    
             else:
-                messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
-                return redirect("processos-cadastro")
-        else:
-            # Form validation failed - add errors as Django messages for toast display
-            for field, errors in formulario.errors.items():
-                for error in errors:
-                    messages.error(request, error)
+                logger.error(f"Formulario validation failed: {formulario.errors}")
+                # Form validation failed - add errors as Django messages for toast display
+                for field, errors in formulario.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
+                        
+        except Exception as e:
+            logger.error(f"Error in POST processing: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            messages.error(request, f"Erro no processamento: {str(e)}")
+            # Create a new form instance for template rendering when there's an exception
+            dados_iniciais = cria_dict_renovação(processo)
+            dados_iniciais["data_1"] = primeira_data
+            dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
+            dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
+            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
 
     else:
         dados_iniciais = cria_dict_renovação(processo)
@@ -113,8 +183,10 @@ def edicao(request):
         dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
         dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
         formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
-        campos_condicionais = extrair_campos_condicionais(formulario)
-        link_protocolo = gerar_link_protocolo(cid)
+    
+    # Set up variables needed for template rendering (for both GET and POST with validation errors)
+    campos_condicionais = extrair_campos_condicionais(formulario)
+    link_protocolo = gerar_link_protocolo(cid)
 
     contexto = {
         "formulario": formulario,

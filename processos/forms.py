@@ -61,6 +61,8 @@ class PreProcesso(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False  # Don't show inline error messages
+        self.helper.error_text_inline = False  # Don't show error text but keep visual indicators
         self.helper.layout = Layout(
             Field('cpf_paciente', css_class='form-control'),
             Field('cid', css_class='form-control'),
@@ -90,12 +92,17 @@ class NovoProcesso(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False  # Don't show inline error messages
+        self.helper.error_text_inline = False  # Don't show error text but keep visual indicators
+        self.helper.form_tag = False  # Don't wrap in form tags since we're using individual fields
         self.helper.add_input(Submit("submit", "Salvar Processo", css_class="btn btn-primary"))
 
-        # Apply form-control to all fields by default
+        # Apply form-control to all fields by default and ensure proper error styling
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect, forms.ClearableFileInput)):
                 field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+            # Ensure field supports error styling
+            field.widget.attrs['data-crispy-field'] = 'true'
 
         self.fields["clinicas"].choices = escolhas
         self.fields["id_med1"].choices = medicamentos
@@ -110,17 +117,39 @@ class NovoProcesso(forms.Form):
         label="CPF do paciente",
         max_length=14,
         widget=forms.TextInput(attrs={"readonly": "readonly", "size": 14}),
+        error_messages={'required': 'Por favor, insira o CPF do paciente.'}
     )
     clinicas = forms.ChoiceField(
         widget=forms.Select(attrs={"class": "custom-select"}),
         choices=[],
         label="Selecione a clínica",
+        error_messages={'required': 'Por favor, selecione uma clínica.'}
     )
-    nome_paciente = forms.CharField(required=True, label="Nome do paciente")
-    nome_mae = forms.CharField(required=True, label="Nome da mãe")
-    peso = forms.IntegerField(required=True, label="Peso (kg)")
-    altura = forms.IntegerField(required=True, label="Altura (centímetros)")
-    end_paciente = forms.CharField(required=True, label="Endereço (com complemento)")
+    nome_paciente = forms.CharField(
+        required=True, 
+        label="Nome do paciente",
+        error_messages={'required': 'Por favor, insira o nome do paciente.'}
+    )
+    nome_mae = forms.CharField(
+        required=True, 
+        label="Nome da mãe",
+        error_messages={'required': 'Por favor, insira o nome da mãe.'}
+    )
+    peso = forms.IntegerField(
+        required=True, 
+        label="Peso (kg)",
+        error_messages={'required': 'Por favor, insira o peso.'}
+    )
+    altura = forms.IntegerField(
+        required=True, 
+        label="Altura (centímetros)",
+        error_messages={'required': 'Por favor, insira a altura.'}
+    )
+    end_paciente = forms.CharField(
+        required=True, 
+        label="Endereço (com complemento)",
+        error_messages={'required': 'Por favor, insira o endereço.'}
+    )
     incapaz = forms.ChoiceField(
         choices=((True, "Sim"), (False, "Não")),
         label="É incapaz?",
@@ -136,21 +165,45 @@ class NovoProcesso(forms.Form):
     REPETIR_ESCOLHAS = [(True, "Sim"), (False, "Não")]
 
     id_med1 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), choices=[], label="Nome"
+        widget=forms.Select(attrs={"class": "custom-select"}), 
+        choices=[], 
+        label="Nome",
+        error_messages={'required': 'Por favor, selecione um medicamento.'}
     )
     id_med2 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), choices=[], label="Nome"
+        widget=forms.Select(attrs={"class": "custom-select"}), 
+        choices=[], 
+        label="Nome",
+        error_messages={'required': 'Por favor, selecione um medicamento.'}
     )
     id_med3 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), choices=[], label="Nome"
+        widget=forms.Select(attrs={"class": "custom-select"}), 
+        choices=[], 
+        label="Nome",
+        error_messages={'required': 'Por favor, selecione um medicamento.'}
     )
     id_med4 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), choices=[], label="Nome"
+        widget=forms.Select(attrs={"class": "custom-select"}), 
+        choices=[], 
+        label="Nome",
+        error_messages={'required': 'Por favor, selecione um medicamento.'}
     )
 
-    med1_via = forms.CharField(required=True, label="Via administração")
-    med1_posologia_mes1 = forms.CharField(required=True, label="Posologia")
-    med1_posologia_mes2 = forms.CharField(required=True, label="Posologia")
+    med1_via = forms.CharField(
+        required=True, 
+        label="Via administração",
+        error_messages={'required': 'Por favor, insira a via de administração.'}
+    )
+    med1_posologia_mes1 = forms.CharField(
+        required=True, 
+        label="Posologia",
+        error_messages={'required': 'Por favor, insira a posologia.'}
+    )
+    med1_posologia_mes2 = forms.CharField(
+        required=True, 
+        label="Posologia",
+        error_messages={'required': 'Por favor, insira a posologia.'}
+    )
     med1_posologia_mes3 = forms.CharField(required=True, label="Posologia")
     med1_posologia_mes4 = forms.CharField(required=True, label="Posologia")
     med1_posologia_mes5 = forms.CharField(required=True, label="Posologia")

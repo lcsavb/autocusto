@@ -15,6 +15,7 @@ class ClinicaFormulario(ModelForm):
         self.helper.form_method = "POST"
         self.helper.form_action = ""
         self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False  # Don't show inline error messages
         self.helper.add_input(Submit("submit", "Cadastrar", css_class="btn btn-primary float-right"))
         self.helper.layout = Layout(
             Row(

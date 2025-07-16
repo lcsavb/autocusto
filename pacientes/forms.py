@@ -14,6 +14,8 @@ class PacienteCadastroFormulario(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False  # Don't show inline error messages
+        self.helper.error_text_inline = False  # Don't show error text but keep visual indicators
         self.helper.add_input(Submit("submit", "Cadastrar Paciente", css_class="btn btn-primary"))
 
         # Apply form-control to all fields by default

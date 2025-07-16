@@ -143,6 +143,8 @@ STATICFILES_DIRS = []  # All static files should be collected into STATIC_ROOT
 
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+CRISPY_FAIL_SILENTLY = True
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 
 # Django Messages - Map message tags to Bootstrap classes
 from django.contrib.messages import constants as messages
@@ -167,3 +169,25 @@ PATH_EXAMES = os.path.join(STATIC_ROOT, "processos", "sadt.pdf")
 PATH_PDF_DIR = os.path.join(STATIC_ROOT, "protocolos")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'processos': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
