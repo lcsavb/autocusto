@@ -43,6 +43,9 @@ def ajustar_campos_condicionais(dados_paciente):
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field
 
+# Constants for form choices
+REPETIR_ESCOLHAS = [(True, "Sim"), (False, "Não")]
+
 
 class PreProcesso(forms.Form):
     cpf_paciente = forms.CharField(
@@ -89,6 +92,10 @@ class PreProcesso(forms.Form):
 class NovoProcesso(forms.Form):
     def __init__(self, escolhas, medicamentos, *args, **kwargs):
         super(NovoProcesso, self).__init__(*args, **kwargs)
+        
+        # Dynamically create medication fields to avoid repetition
+        self._create_medication_fields()
+        
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.attrs = {'novalidate': True}
@@ -105,11 +112,53 @@ class NovoProcesso(forms.Form):
             field.widget.attrs['data-crispy-field'] = 'true'
 
         self.fields["clinicas"].choices = escolhas
-        self.fields["id_med1"].choices = medicamentos
-        self.fields["id_med2"].choices = medicamentos
-        self.fields["id_med3"].choices = medicamentos
-        self.fields["id_med4"].choices = medicamentos
+        for i in range(1, 5):
+            self.fields[f"id_med{i}"].choices = medicamentos
         self.request = kwargs.pop("request", None)
+    
+    def _create_medication_fields(self):
+        """Dynamically create medication-related fields to avoid repetition"""
+        # Create medication selection fields
+        for i in range(1, 5):
+            self.fields[f"id_med{i}"] = forms.ChoiceField(
+                widget=forms.Select(attrs={"class": "custom-select"}),
+                choices=[],
+                label="Nome",
+                error_messages={'required': 'Por favor, selecione um medicamento.'}
+            )
+            
+            # Create repetir_posologia field
+            self.fields[f"med{i}_repetir_posologia"] = forms.ChoiceField(
+                required=True,
+                initial=True,
+                choices=REPETIR_ESCOLHAS,
+                label="Repetir posologia?",
+                widget=forms.Select(attrs={"class": "custom-select"}),
+                error_messages={'required': 'Por favor, selecione uma opção.'}
+            )
+            
+            # Create posologia fields for each month
+            for month in range(1, 7):
+                is_required = (i == 1)  # Only med1 fields are required
+                self.fields[f"med{i}_posologia_mes{month}"] = forms.CharField(
+                    required=is_required,
+                    label="Posologia",
+                    error_messages={'required': 'Por favor, insira a posologia.'}
+                )
+                
+                # Create quantity fields for each month
+                self.fields[f"qtd_med{i}_mes{month}"] = forms.CharField(
+                    required=is_required,
+                    label=f"Qtde. {month} mês",
+                    error_messages={'required': 'Por favor, insira a quantidade.'}
+                )
+        
+        # Add the via field for med1
+        self.fields["med1_via"] = forms.CharField(
+            required=True,
+            label="Via administração",
+            error_messages={'required': 'Por favor, insira a via de administração.'}
+        )
 
     # Dados do paciente
     cpf_paciente = forms.CharField(
@@ -162,122 +211,6 @@ class NovoProcesso(forms.Form):
         widget=forms.TextInput(attrs={"class": "cond-incapaz"}),
     )
 
-    REPETIR_ESCOLHAS = [(True, "Sim"), (False, "Não")]
-
-    id_med1 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), 
-        choices=[], 
-        label="Nome",
-        error_messages={'required': 'Por favor, selecione um medicamento.'}
-    )
-    id_med2 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), 
-        choices=[], 
-        label="Nome",
-        error_messages={'required': 'Por favor, selecione um medicamento.'}
-    )
-    id_med3 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), 
-        choices=[], 
-        label="Nome",
-        error_messages={'required': 'Por favor, selecione um medicamento.'}
-    )
-    id_med4 = forms.ChoiceField(
-        widget=forms.Select(attrs={"class": "custom-select"}), 
-        choices=[], 
-        label="Nome",
-        error_messages={'required': 'Por favor, selecione um medicamento.'}
-    )
-
-    med1_via = forms.CharField(
-        required=True, 
-        label="Via administração",
-        error_messages={'required': 'Por favor, insira a via de administração.'}
-    )
-    med1_posologia_mes1 = forms.CharField(
-        required=True, 
-        label="Posologia",
-        error_messages={'required': 'Por favor, insira a posologia.'}
-    )
-    med1_posologia_mes2 = forms.CharField(
-        required=True, 
-        label="Posologia",
-        error_messages={'required': 'Por favor, insira a posologia.'}
-    )
-    med1_posologia_mes3 = forms.CharField(required=True, label="Posologia")
-    med1_posologia_mes4 = forms.CharField(required=True, label="Posologia")
-    med1_posologia_mes5 = forms.CharField(required=True, label="Posologia")
-    med1_posologia_mes6 = forms.CharField(required=True, label="Posologia")
-    med2_posologia_mes1 = forms.CharField(required=False, label="Posologia")
-    med2_posologia_mes2 = forms.CharField(required=False, label="Posologia")
-    med2_posologia_mes3 = forms.CharField(required=False, label="Posologia")
-    med2_posologia_mes4 = forms.CharField(required=False, label="Posologia")
-    med2_posologia_mes5 = forms.CharField(required=False, label="Posologia")
-    med2_posologia_mes6 = forms.CharField(required=False, label="Posologia")
-    med3_posologia_mes1 = forms.CharField(required=False, label="Posologia")
-    med3_posologia_mes2 = forms.CharField(required=False, label="Posologia")
-    med3_posologia_mes3 = forms.CharField(required=False, label="Posologia")
-    med3_posologia_mes4 = forms.CharField(required=False, label="Posologia")
-    med3_posologia_mes5 = forms.CharField(required=False, label="Posologia")
-    med3_posologia_mes6 = forms.CharField(required=False, label="Posologia")
-    med4_posologia_mes1 = forms.CharField(required=False, label="Posologia")
-    med4_posologia_mes2 = forms.CharField(required=False, label="Posologia")
-    med4_posologia_mes3 = forms.CharField(required=False, label="Posologia")
-    med4_posologia_mes4 = forms.CharField(required=False, label="Posologia")
-    med4_posologia_mes5 = forms.CharField(required=False, label="Posologia")
-    med4_posologia_mes6 = forms.CharField(required=False, label="Posologia")
-    qtd_med1_mes1 = forms.CharField(required=True, label="Qtde. 1 mês")
-    qtd_med1_mes2 = forms.CharField(required=True, label="Qtde. 2 mês")
-    qtd_med1_mes3 = forms.CharField(required=True, label="Qtde. 3 mês")
-    qtd_med1_mes4 = forms.CharField(required=True, label="Qtde. 4 mês")
-    qtd_med1_mes5 = forms.CharField(required=True, label="Qtde. 5 mês")
-    qtd_med1_mes6 = forms.CharField(required=True, label="Qtde. 6 mês")
-    qtd_med2_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
-    qtd_med2_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
-    qtd_med2_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
-    qtd_med2_mes4 = forms.CharField(required=False, label="Qtde. 4 mês")
-    qtd_med2_mes5 = forms.CharField(required=False, label="Qtde. 5 mês")
-    qtd_med2_mes6 = forms.CharField(required=False, label="Qtde. 6 mês")
-    qtd_med3_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
-    qtd_med3_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
-    qtd_med3_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
-    qtd_med3_mes4 = forms.CharField(required=False, label="Qtde. 4 mês")
-    qtd_med3_mes5 = forms.CharField(required=False, label="Qtde. 5 mês")
-    qtd_med3_mes6 = forms.CharField(required=False, label="Qtde. 6 mês")
-    qtd_med4_mes1 = forms.CharField(required=False, label="Qtde. 1 mês")
-    qtd_med4_mes2 = forms.CharField(required=False, label="Qtde. 2 mês")
-    qtd_med4_mes3 = forms.CharField(required=False, label="Qtde. 3 mês")
-    qtd_med4_mes4 = forms.CharField(required=False, label="Qtde. 4 mês")
-    qtd_med4_mes5 = forms.CharField(required=False, label="Qtde. 5 mês")
-    qtd_med4_mes6 = forms.CharField(required=False, label="Qtde. 6 mês")
-    med1_repetir_posologia = forms.ChoiceField(
-        required=True,
-        initial=True,
-        choices=REPETIR_ESCOLHAS,
-        label="Repetir posologia?",
-        widget=forms.Select(attrs={"class": "custom-select"}),
-    )
-    med2_repetir_posologia = forms.ChoiceField(
-        required=True,
-        initial=True,
-        choices=REPETIR_ESCOLHAS,
-        label="Repetir posologia?",
-        widget=forms.Select(attrs={"class": "custom-select"}),
-    )
-    med3_repetir_posologia = forms.ChoiceField(
-        required=True,
-        initial=True,
-        choices=REPETIR_ESCOLHAS,
-        label="Repetir posologia?",
-        widget=forms.Select(attrs={"class": "custom-select"}),
-    )
-    med4_repetir_posologia = forms.ChoiceField(
-        required=True,
-        initial=True,
-        choices=REPETIR_ESCOLHAS,
-        label="Repetir posologia?",
-        widget=forms.Select(attrs={"class": "custom-select"}),
-    )
 
     consentimento = forms.ChoiceField(
         initial={False},
@@ -290,13 +223,15 @@ class NovoProcesso(forms.Form):
         required=True,
         label="CID",
         widget=forms.TextInput(attrs={"readonly": "readonly", "size": 5}),
+        error_messages={'required': 'Por favor, insira o CID.'}
     )
     diagnostico = forms.CharField(
         required=True,
         label="Diagnóstico",
         widget=forms.TextInput(attrs={"readonly": "readonly"}),
+        error_messages={'required': 'Por favor, insira o diagnóstico.'}
     )
-    anamnese = forms.CharField(required=True, label="Anamnese")
+    anamnese = forms.CharField(required=True, label="Anamnese", error_messages={'required': 'Por favor, insira a anamnese.'})
     preenchido_por = forms.ChoiceField(
         initial={"paciente"},
         choices=[
@@ -353,6 +288,7 @@ class NovoProcesso(forms.Form):
         input_formats=[
             "%d/%m/%Y",
         ],
+        error_messages={'required': 'Por favor, insira a data.'}
     )
 
     relatorio = forms.CharField(
@@ -407,6 +343,7 @@ class RenovarProcesso(NovoProcesso):
         initial={False},
         choices=[(False, "Não"), (True, "Sim")],
         widget=forms.Select(attrs={"class": "custom-select"}),
+        error_messages={'required': 'Por favor, selecione uma opção.'}
     )
 
     @transaction.atomic

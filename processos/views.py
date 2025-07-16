@@ -31,6 +31,29 @@ from .dados import (
 )
 
 
+def _get_initial_data(request, paciente_existe, primeira_data, cid):
+    """Helper function to get initial data for form rendering"""
+    if paciente_existe:
+        if "paciente_id" not in request.session:
+            raise KeyError("ID do paciente não encontrado na sessão.")
+        paciente_id = request.session["paciente_id"]
+        paciente = Paciente.objects.get(id=paciente_id)
+        dados_paciente = model_to_dict(paciente)
+        dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+        dados_paciente["cid"] = cid
+        dados_paciente["data_1"] = primeira_data
+        return dados_paciente
+    else:
+        if "cpf_paciente" not in request.session:
+            raise KeyError("CPF do paciente não encontrado na sessão.")
+        return {
+            "cpf_paciente": request.session["cpf_paciente"],
+            "data_1": primeira_data,
+            "cid": cid,
+            "diagnostico": Doenca.objects.get(cid=cid).nome,
+        }
+
+
 @login_required
 def busca_processos(request):
     if request.method == "GET":
@@ -164,7 +187,7 @@ def edicao(request):
                 # Form validation failed - add errors as Django messages for toast display
                 for field, errors in formulario.errors.items():
                     for error in errors:
-                        messages.error(request, f"{field}: {error}")
+                        messages.error(request, f"{error}")
                         
         except Exception as e:
             logger.error(f"Error in POST processing: {str(e)}")
@@ -362,73 +385,58 @@ def cadastro(request):
                 for field, errors in formulario.errors.items():
                     for error in errors:
                         messages.error(request, error)
-                # Redirect to avoid POST-redirect-GET issue
-                return redirect("processos-cadastro")
+                # Don't redirect - fall through to render the form with errors preserved
         except Exception as e:
             messages.error(request, f"Erro ao processar formulário: {e}")
-            return redirect("processos-cadastro")
-    else:
+            # Create a new form instance for template rendering when there's an exception
+            dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
+            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+    
+    # If this is a GET request, create a fresh form
+    if request.method == "GET":
         try:
             if not usuario.clinicas.exists():
                 return redirect("clinicas-cadastro")
-            if paciente_existe:
-                if "paciente_id" not in request.session:
-                    messages.error(request, "ID do paciente não encontrado na sessão.")
-                    return redirect("processos-home")
-                    
-                paciente_id = request.session["paciente_id"]
-                paciente = Paciente.objects.get(id=paciente_id)
-                dados_paciente = model_to_dict(paciente)
-                dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
-                dados_paciente["cid"] = request.session["cid"]
-                dados_paciente["data_1"] = primeira_data
-                campos_ajustados, dados_paciente = ajustar_campos_condicionais(
-                    dados_paciente
-                )
-                formulario = ModeloFormulario(
-                    escolhas, medicamentos, initial=dados_paciente
-                )
-                campos_condicionais = extrair_campos_condicionais(formulario)
-                link_protocolo = gerar_link_protocolo(cid)
-                contexto = {
-                    "formulario": formulario,
-                    "paciente_existe": paciente_existe,
-                    "paciente": paciente,
-                    "campos_condicionais": campos_condicionais,
-                    "link_protocolo": link_protocolo,
-                }
-                contexto.update(campos_ajustados)
-            else:
-                if "cpf_paciente" not in request.session:
-                    messages.error(request, "CPF do paciente não encontrado na sessão.")
-                    return redirect("processos-home")
-                    
-                link_protocolo = gerar_link_protocolo(cid)
-                dados_iniciais = {
-                    "cpf_paciente": request.session["cpf_paciente"],
-                    "data_1": primeira_data,
-                    "cid": cid,
-                    "diagnostico": Doenca.objects.get(cid=cid).nome,
-                }
-
-                formulario = ModeloFormulario(
-                    escolhas, medicamentos, initial=dados_iniciais
-                )
-                campos_condicionais = extrair_campos_condicionais(formulario)
-
-                contexto = {
-                    "formulario": formulario,
-                    "paciente_existe": paciente_existe,
-                    "campos_condicionais": campos_condicionais,
-                    "link_protocolo": link_protocolo,
-                }
-
-            contexto.update(mostrar_med(False))
-
-            return render(request, "processos/cadastro.html", contexto)
+            dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
+            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
         except Exception as e:
             messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
             return redirect("processos-home")
+    
+    # Setup context for template rendering (works for both GET and POST with errors)
+    try:
+        campos_condicionais = extrair_campos_condicionais(formulario)
+        link_protocolo = gerar_link_protocolo(cid)
+        
+        contexto = {
+            "formulario": formulario,
+            "paciente_existe": paciente_existe,
+            "campos_condicionais": campos_condicionais,
+            "link_protocolo": link_protocolo,
+        }
+        
+        # Add patient data if exists
+        if paciente_existe:
+            if "paciente_id" not in request.session:
+                messages.error(request, "ID do paciente não encontrado na sessão.")
+                return redirect("processos-home")
+            paciente_id = request.session["paciente_id"]
+            paciente = Paciente.objects.get(id=paciente_id)
+            contexto["paciente"] = paciente
+            
+            # Add conditional fields for existing patient
+            dados_paciente = model_to_dict(paciente)
+            dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+            dados_paciente["cid"] = cid
+            dados_paciente["data_1"] = primeira_data
+            campos_ajustados, _ = ajustar_campos_condicionais(dados_paciente)
+            contexto.update(campos_ajustados)
+        
+        contexto.update(mostrar_med(False))
+        return render(request, "processos/cadastro.html", contexto)
+    except Exception as e:
+        messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
+        return redirect("processos-home")
 
 
 @login_required

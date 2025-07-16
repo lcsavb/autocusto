@@ -64,7 +64,7 @@ def cadastro(request):
                             if field == 'telefone_clinica':
                                 messages.error(request, f"Telefone inválido: {error}")
                             else:
-                                messages.error(request, f"Erro no campo {field}: {error}")
+                                messages.error(request, f"{error}")
                 else:
                     messages.error(request, f"Erro de validação: {e}")
                     
