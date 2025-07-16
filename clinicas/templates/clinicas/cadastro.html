@@ -8,13 +8,27 @@
     <div class="col-lg-8 col-md-10">
         <div class="auth-process-card">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0 text-white">
-                    <i class="oi oi-plus mr-2"></i>
-                    Cadastro de Clínica
+                <h5 class="mb-0 text-white"> 
+                    <i class="oi oi-plus mr-2"></i>Gestão de clínicas
+                    <span x-text="edit_mode ? 'Editar Clínica' : 'Cadastro de Clínica'"></span>
                 </h5>
             </div>
-            <div class="card-body p-4 toast-enabled" x-data="cepHandler()">
-                {% crispy f_clinica %}
+            <div class="card-body p-4 toast-enabled" x-data="clinicHandler()">
+                <!-- Dropdown for selecting existing clinics -->
+                <div class="mb-4">
+                    <label class="form-label">Clínicas Existentes</label>
+                    <select class="form-control" x-model="selected_clinic_id" @change="loadClinicData()" style="padding: 8px 12px; line-height: 1.5;">
+                        <option value="">Selecione uma clínica para editar ou cadastre uma nova</option>
+                        <template x-for="clinic in clinics" :key="clinic.id">
+                            <option :value="clinic.id" x-text="`${clinic.nome_clinica} (CNS: ${clinic.cns_clinica})`"></option>
+                        </template>
+                    </select>
+                </div>
+                
+                <!-- Form section -->
+                <div x-show="show_form">
+                    {% crispy f_clinica %}
+                </div>
                 <div class="clearfix"></div>
                 <div style="height: 0.5rem;"></div>
             </div>
@@ -27,5 +41,115 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
 <script src="{% static 'js/cep-handler.js' %}"></script>
+<script src="{% static 'js/phone-handler.js' %}"></script>
+
+<script>
+function clinicHandler() {
+    const cepHandlerData = cepHandler();
+    const phoneHandlerData = phoneHandler();
+    
+    return {
+        ...cepHandlerData,
+        ...phoneHandlerData,
+        clinics: [],
+        selected_clinic_id: '',
+        edit_mode: false,
+        show_form: true,
+        
+        init() {
+            this.loadClinics();
+            // Initialize CEP handler
+            cepHandlerData.init.call(this);
+            // Initialize phone handler
+            phoneHandlerData.init.call(this);
+        },
+        
+        async loadClinics() {
+            try {
+                const response = await fetch('{% url "clinicas-list" %}');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.error) {
+                        console.error('Server error loading clinics:', data.error);
+                        this.showError(data.error);
+                    } else {
+                        this.clinics = data;
+                    }
+                } else {
+                    console.error('HTTP error loading clinics:', response.status);
+                    this.showError('Erro ao carregar clínicas');
+                }
+            } catch (error) {
+                console.error('Network error loading clinics:', error);
+                this.showError('Erro de conexão ao carregar clínicas');
+            }
+        },
+        
+        async loadClinicData() {
+            if (!this.selected_clinic_id) {
+                this.clearForm();
+                this.edit_mode = false;
+                this.show_form = true;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`{% url "clinicas-get" 0 %}`.replace('0', this.selected_clinic_id));
+                if (response.ok) {
+                    const clinic = await response.json();
+                    if (clinic.error) {
+                        console.error('Server error loading clinic data:', clinic.error);
+                        this.showError(clinic.error);
+                    } else {
+                        this.populateForm(clinic);
+                        this.edit_mode = true;
+                        this.show_form = true;
+                    }
+                } else {
+                    console.error('HTTP error loading clinic data:', response.status);
+                    this.showError('Erro ao carregar dados da clínica');
+                }
+            } catch (error) {
+                console.error('Network error loading clinic data:', error);
+                this.showError('Erro de conexão ao carregar dados da clínica');
+            }
+        },
+        
+        populateForm(clinic) {
+            document.getElementById('id_nome_clinica').value = clinic.nome_clinica || '';
+            document.getElementById('id_cns_clinica').value = clinic.cns_clinica || '';
+            document.getElementById('id_logradouro').value = clinic.logradouro || '';
+            document.getElementById('id_logradouro_num').value = clinic.logradouro_num || '';
+            document.getElementById('id_cidade').value = clinic.cidade || '';
+            document.getElementById('id_bairro').value = clinic.bairro || '';
+            document.getElementById('cep').value = clinic.cep || '';
+            document.getElementById('telefone').value = clinic.telefone_clinica || '';
+            
+            // Update submit button text
+            const submitBtn = document.querySelector('input[type="submit"]');
+            if (submitBtn) {
+                submitBtn.value = 'Atualizar';
+            }
+        },
+        
+        clearForm() {
+            document.getElementById('id_nome_clinica').value = '';
+            document.getElementById('id_cns_clinica').value = '';
+            document.getElementById('id_logradouro').value = '';
+            document.getElementById('id_logradouro_num').value = '';
+            document.getElementById('id_cidade').value = '';
+            document.getElementById('id_bairro').value = '';
+            document.getElementById('cep').value = '';
+            document.getElementById('telefone').value = '';
+            
+            // Update submit button text
+            const submitBtn = document.querySelector('input[type="submit"]');
+            if (submitBtn) {
+                submitBtn.value = 'Cadastrar';
+            }
+        }
+    }
+}
+</script>
 
 {% endblock scripts %}

@@ -6,7 +6,7 @@ function cepHandler() {
     return {
         init() {
             // Add event listener to CEP field
-            const cepField = document.getElementById('cep');
+            const cepField = document.getElementById('id_cep');
             if (cepField) {
                 cepField.addEventListener('blur', (e) => {
                     this.fetchAddress(e.target.value);

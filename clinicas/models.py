@@ -13,7 +13,7 @@ class Clinica(models.Model):
     cidade = models.CharField(max_length=30)
     bairro = models.CharField(max_length=30)
     cep = models.CharField(max_length=9)
-    telefone_clinica = models.CharField(max_length=13)
+    telefone_clinica = models.CharField(max_length=15)
     medicos = models.ManyToManyField(Medico, through="Emissor", related_name="clinicas")
     usuarios = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="ClinicaUsuario", related_name="clinicas"
