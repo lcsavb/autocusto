@@ -15,6 +15,18 @@ logger = logging.getLogger(__name__)
 @login_required
 @transaction.atomic
 def cadastro(request):
+    """
+    Handles clinic registration/update with complex business logic for Brazilian medical facilities.
+    
+    This view implements a sophisticated clinic management system that handles:
+    1. New clinic registration
+    2. Updates to existing clinics (based on CNS - National Health Service code)
+    3. Multi-user clinic access (multiple doctors can be associated with same clinic)
+    4. Atomic transactions to ensure data consistency
+    
+    The CNS-based logic allows multiple doctors to register the same physical clinic,
+    creating shared access while maintaining data integrity.
+    """
     usuario = request.user
     medico = seletor_medico(usuario)
 
@@ -25,31 +37,44 @@ def cadastro(request):
             dados = f_clinica.cleaned_data
 
             try:
+                # Check if clinic already exists based on CNS (National Health Service) code
+                # CNS is unique identifier for medical facilities in Brazil
                 clinica_existe = Clinica.objects.filter(
                     cns_clinica__exact=dados["cns_clinica"]
                 )
 
                 if clinica_existe:
+                    # Clinic exists - this is an update operation
+                    # Multiple doctors can update the same clinic (shared facilities)
                     instance = f_clinica.save(commit=False)
-                    instance.pk = clinica_existe[0].pk
+                    instance.pk = clinica_existe[0].pk  # Use existing clinic's primary key
                     
                     # For updates, validate without unique constraints since we're updating existing record
+                    # This prevents false positive validation errors on fields that are already unique
                     instance.full_clean(exclude=['id'])
-                    instance.save(force_update=True)
+                    instance.save(force_update=True)  # Explicitly update existing record
+                    
+                    # Add current user and doctor to clinic's associations
+                    # This allows multiple doctors to access the same clinic
                     instance.usuarios.add(usuario)
                     instance.medicos.add(medico)
+                    
                     messages.success(
                         request, f'Clínica {dados["nome_clinica"]} atualizada com sucesso!'
                     )
                     return redirect("home")
                 else:
+                    # New clinic - create fresh record
                     instance = f_clinica.save(commit=False)
                     
                     # For new records, validate everything including unique constraints
                     instance.full_clean()
                     instance.save()
+                    
+                    # Associate clinic with current user and doctor
                     instance.usuarios.add(usuario)
                     instance.medicos.add(medico)
+                    
                     messages.success(
                         request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!'
                     )

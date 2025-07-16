@@ -27,70 +27,223 @@ if hasattr(settings, 'PATH_PDF_DIR') and os.path.exists(settings.PATH_PDF_DIR):
 print(f"=== PDF SETTINGS DEBUG END ===\n")
 
 
+# English: prepare_model
 def preparar_modelo(modelo, **kwargs):
-    """Recebe o nome do model e os parâmetros a serem salvos,
-    retorna preparado para ser salvo no banco"""
+    """Prepares a Django model instance from a dictionary of data.
+
+    Think of this function as a helper that takes a blueprint for a database
+    record (the 'modelo', e.g., a Patient or a Process) and a dictionary of
+    information ('kwargs'), and it creates a new record object filled with
+    that information.
+
+    This is a common pattern in Django apps. You get data from a web form,
+    clean it up into a dictionary, and then use a function like this to
+    create a model object that you can then save to the database.
+
+    Args:
+        # English: model
+        modelo: The Django model class itself (e.g., Paciente, not an
+                instance of it).
+        **kwargs: A dictionary where keys are the model field names (e.g.,
+                  'nome_paciente') and values are the data for those fields
+                  (e.g., 'Jane Doe').
+
+    Returns:
+        An in-memory instance of the model, ready to be saved.
+        For example, if you pass the Paciente model and data for a new patient,
+        it returns a new Paciente object that hasn't been saved to the
+        database yet.
+    """
+    # This line takes the 'modelo' class and the 'kwargs' dictionary and
+    # creates a new object. The `**kwargs` syntax is a Python shortcut
+    # that unpacks the dictionary into keyword arguments.
+    # For example, if kwargs is {'field1': 'value1', 'field2': 'value2'},
+    # this line becomes: modelo(field1='value1', field2='value2')
+    
+    # English: parameterized_model
     modelo_parametrizado = modelo(**kwargs)
     return modelo_parametrizado
 
 
+# English: retrieve_prescription
 def resgatar_prescricao(dados, processo):
+    """Populates a data dictionary with prescription details from a Processo object.
+
+    This function is used to transfer prescription information from the structured
+    `processo.prescricao` field (which is a nested dictionary) into a flat
+    `dados` dictionary. This flattening is necessary to populate form fields
+    for display or editing, where each field corresponds to a key in the `dados`
+    dictionary (e.g., 'id_med1', 'med1_posologia_mes1').
+
+    Args:
+        # English: data
+        dados (dict): The dictionary to populate with prescription data. This
+                      dictionary is modified in-place.
+        # English: process
+        processo (Processo): The Django model instance containing the prescription
+                             to be retrieved. The `prescricao` attribute is expected
+                             to be a dictionary where keys are medication numbers
+                             (e.g., '1', '2') and values are dictionaries of
+                             medication details.
+
+    Returns:
+        dict: The `dados` dictionary, now updated with the flattened
+              prescription information.
+    """
+    # Counter for the medication number, ensuring form fields like 'id_med1',
+    # 'id_med2' are correctly populated.
     n = 1
+    # English: prescription
     prescricao = processo.prescricao
+
+    # The `prescricao` field on the Processo model stores medication data in a
+    # nested dictionary, for example:
+    # {
+    #   '1': {'id_med1': 123, 'med1_posologia_mes1': '...'},
+    #   '2': {'id_med2': 456, 'med2_posologia_mes1': '...'}
+    # }
+    # This loop iterates through each medication in the prescription.
     for item in prescricao.items():
-        numero_medicamento = item[0]
+        # English: medication_number
+        numero_medicamento = item[0]  # The key, e.g., '1' or '2'
         if numero_medicamento != "":
+            # This line is slightly redundant due to the inner loop, but it
+            # ensures the medication ID is set.
             dados[f"id_med{n}"] = prescricao[numero_medicamento][f"id_med{n}"]
+
+            # Unpack all key-value pairs from the inner medication dictionary
+            # into the main 'dados' dictionary.
+            # For example, 'med1_posologia_mes1' becomes a key in 'dados'.
             for i in prescricao[numero_medicamento].items():
                 dados[i[0]] = i[1]
             n += 1
     return dados
 
 
+# English: generate_prescription
 def gerar_prescricao(meds_ids, dados_formulario):
+    """Constructs a structured prescription dictionary from form data.
+
+    This function takes a list of medication IDs and a flat dictionary of form
+    data, and it builds a nested dictionary representing the prescription.
+    This nested structure is how prescription data is stored on the Processo
+    model. It organizes the dosage and quantity for each medication over a
+    six-month period.
+
+    Args:
+        # English: medication_ids
+        meds_ids (list): A list of medication IDs to be included in the
+                         prescription.
+        # English: form_data
+        dados_formulario (dict): A flat dictionary containing the form data,
+                                 with keys like 'med1_posologia_mes1',
+                                 'qtd_med1_mes1', etc.
+
+    Returns:
+        dict: A nested dictionary representing the prescription, ready to be
+              stored in the `prescricao` field of a Processo object. Example:
+              {
+                '1': {'id_med1': 123, 'med1_posologia_mes1': '...', ...},
+                '2': {'id_med2': 456, 'med2_posologia_mes1': '...', ...}
+              }
+    """
+    # English: prescription
     prescricao = {}
+    # English: medication_prescription
     med_prescricao = {}
     n = 1
     for id in meds_ids:
         m = 1
+        # English: medication_prescription
         med_prescricao[f"id_med{n}"] = id
         while m <= 6:
+            # English: medication_prescription
             med_prescricao[f"med{n}_posologia_mes{m}"] = dados_formulario[
                 f"med{n}_posologia_mes{m}"
             ]
+            # English: medication_prescription
             med_prescricao[f"qtd_med{n}_mes{m}"] = dados_formulario[
                 f"qtd_med{n}_mes{m}"
             ]
             m += 1
         if n == 1:
+            # English: medication_prescription
             med_prescricao["med1_via"] = dados_formulario["med1_via"]
+        # English: prescription
         prescricao[n] = med_prescricao
+        # English: medication_prescription
         med_prescricao = {}
         n += 1
     return prescricao
 
 
+# English: generate_medication_dosage
 def gera_med_dosagem(dados_formulario, ids_med_formulario):
-    """Busca o medicamento pelo id. Retorna o nome, a dosagem,
-    apresentação e lista dos ids dos medicamentos"""
+    """Retrieves medication details and formats them for display.
+
+    This function iterates through a list of medication IDs, fetches the full
+    medication details (name, dosage, presentation) from the database, and
+    formats this information into a string. This string is then added to the
+    main form data dictionary under a key corresponding to the medication's
+    order (e.g., 'med1', 'med2'). This is need due to fill the pdf adequately
+    with pdftk.
+
+    Args:
+        # English: form_data
+        dados_formulario (dict): The main dictionary of form data. This is
+                                 modified in-place.
+        # English: medication_form_ids
+        ids_med_formulario (list): A list of medication IDs selected in the
+                                   form.
+
+    Returns:
+        tuple: A tuple containing:
+            - dict: The updated `dados_formulario` dictionary.
+            - list: A cleaned list of medication IDs (`meds_ids`), excluding
+                    any placeholder values like "nenhum".
+    """
+    # English: medication_ids
     meds_ids = []
     n = 0
     for id_med in ids_med_formulario:
         n += 1
         if id_med != "nenhum":
+            # English: medication_ids
             meds_ids.append(id_med)
+            # English: med
             med = Medicamento.objects.get(id=id_med)
+            # English: form_data
             dados_formulario[f"med{n}"] = f"{med.nome} {med.dosagem} ({med.apres})"
     return dados_formulario, meds_ids
 
 
+# English: list_medications
 def listar_med(cid):
-    """Recupera os medicamentos associados ao Protocolo e retorna uma lista de tuplas
-    com o id e o medicamento com dosagem e apresentação respectivamente"""
+    """Retrieves medications associated with a protocol and returns a list of tuples.
+
+    This function is used to populate a dropdown menu in a form with a list of
+    medications that are appropriate for a given CID (International
+    Classification of Diseases) code. It fetches the protocol associated with
+    the CID, gets all the medications linked to that protocol, and formats them
+    into a list of (id, display_name) tuples.
+
+    Args:
+        cid (str): The CID code for the disease.
+
+    Returns:
+        tuple: A tuple of tuples, where each inner tuple contains the
+               medication's ID and a formatted string with its name, dosage,
+               and presentation. The first item is always a placeholder for the
+               dropdown.
+    """
+    # English: medication_list
     lista_med = [("nenhum", "Escolha o medicamento...")]
+    # English: protocol
     protocolo = Protocolo.objects.get(doenca__cid=cid)
+    # English: medications
     medicamentos = protocolo.medicamentos.all()
     for medicamento in medicamentos:
+        # English: item
         item = (
             medicamento.id,
             f"{medicamento.nome}"
@@ -99,22 +252,66 @@ def listar_med(cid):
             + " - "
             + f"{medicamento.apres}",
         )
+        # English: medication_list
         lista_med.append(item)
     return tuple(lista_med)
 
 
+# English: associate_medications
 def associar_med(processo, meds):
+    """Synchronizes the medications associated with a process.
+
+    This function ensures that the medications linked to a `Processo` object
+    match the provided list of medication IDs. It performs a two-way sync:
+    1. It adds any new medications from the `meds` list to the process.
+    2. It removes any medications currently associated with the process that
+       are not in the `meds` list.
+
+    Args:
+        # English: process
+        processo (Processo): The Django model instance to update.
+        # English: meds
+        meds (list): A list of medication IDs (as strings) that should be
+                     associated with the process.
+    """
     for med in meds:
+        # English: process
         processo.medicamentos.add(med)
+        # English: registered_medications
         meds_cadastrados = processo.medicamentos.all()
         for med_cadastrado in meds_cadastrados:
             if str(med_cadastrado.id) not in meds:
+                # English: process
                 processo.medicamentos.remove(med_cadastrado)
 
 
+# English: create_renewal_dictionary
 def cria_dict_renovação(modelo):
+    """Creates a dictionary with data for a renewal process.
+
+    This function takes a `Processo` model instance and extracts the necessary
+    data to create a new renewal process. It gathers patient and process
+    information into a single dictionary.
+
+    Critique:
+    This function manually copies fields from the model to a dictionary.
+    This is verbose and not easily maintainable. If the `Paciente` or
+    `Processo` model changes, this function must be updated manually. A better
+    approach would be to use Django's `model_to_dict` utility for both the
+    `processo` and `processo.paciente` instances and then merge the resulting
+    dictionaries. This would make the code more concise and resilient to
+    model changes.
+
+    Args:
+        # English: model
+        modelo (Processo): The Django model instance to get the data from.
+
+    Returns:
+        dict: A dictionary containing the data for the renewal process.
+    """
+    # English: dictionary
     dicionario = {
-        # Dados paciente
+        # Patient data
         "nome_paciente": modelo.paciente.nome_paciente,
         "cpf_paciente": modelo.paciente.cpf_paciente,
         "peso": modelo.paciente.peso,
@@ -127,7 +324,7 @@ def cria_dict_renovação(modelo):
         "telefone2_paciente": modelo.paciente.telefone2_paciente,
         "email_paciente": modelo.paciente.email_paciente,
         "end_paciente": modelo.paciente.end_paciente,
-        # Dados processo
+        # Process data
         "prescricao": modelo.prescricao,
         "cid": modelo.doenca.cid,
         "diagnostico": modelo.doenca.nome,
@@ -140,20 +337,52 @@ def cria_dict_renovação(modelo):
     return dicionario
 
 
+# English: generate_renewal_data
 def gerar_dados_renovacao(primeira_data, processo_id):
-    """Usado na renovação rápida para gerar novo processo,
-    mudando somente a data inicial. Retorna dados do processo
-    completos"""
+    """Generates a complete data dictionary for a renewal process.
+
+    This function is used for the "quick renewal" feature. It takes an
+    existing process ID and a new start date, and it constructs a full data
+    dictionary that can be used to create a new process, preserving most of
+    the original data but with the updated date.
+
+    Critique:
+    - The function has a lot of debugging prints, which should be removed
+      in a production environment. Using Python's `logging` module would be
+      a better way to handle debugging information.
+    - The function manually sets several keys to empty strings (medicos,
+      usuarios, medicamentos). This is likely to prevent errors with the PDF
+      generation library (pdftk), but it's not a clean solution. It would be
+      better to handle this in the PDF generation logic.
+    - The special handling for "dor_crônica" (chronic pain) is hardcoded.
+      This makes the function less flexible. A better approach would be to
+      have a more generic way to handle conditional data based on the
+      protocol, perhaps by storing this logic in the database alongside the
+      protocol information.
+
+    Args:
+        # English: first_date
+        primeira_data (str): The new start date for the renewal, in DD/MM/YYYY
+                             format.
+        # English: process_id
+        processo_id (int): The ID of the process to be renewed.
+
+    Returns:
+        dict: A complete dictionary of data for the new renewal process.
+    """
     print(f"\n=== GERAR_DADOS_RENOVACAO START ===")
     print(f"DEBUG: primeira_data: {primeira_data}")
     print(f"DEBUG: processo_id: {processo_id}")
     
+    # English: process
     processo = Processo.objects.get(id=processo_id)
     print(f"DEBUG: Found process: {processo.id} for patient {processo.paciente.nome_paciente}")
     print(f"DEBUG: Process CID: {processo.doenca.cid}")
     print(f"DEBUG: Process diagnosis: {processo.doenca.nome}")
     
+    # English: data
     dados = {}
+    # English: data_list
     lista_dados = [
         model_to_dict(processo),
         model_to_dict(processo.paciente),
@@ -161,15 +390,21 @@ def gerar_dados_renovacao(primeira_data, processo_id):
         model_to_dict(processo.clinica),
     ]
     for d in lista_dados:
+        # English: data
         dados.update(d)
     
     print(f"DEBUG: Combined data keys: {list(dados.keys())}")
     
-    # pdftk falha se input não for string!
+    # pdftk fails if input is not a string!
+    # English: data
     dados["medicos"] = ""
+    # English: data
     dados["usuarios"] = ""
+    # English: data
     dados["medicamentos"] = ""
+    # English: clinic_address
     end_clinica = dados["logradouro"] + ", " + dados["logradouro_num"]
+    # English: data
     dados["end_clinica"] = end_clinica
     
     # Validate and parse date
@@ -178,22 +413,29 @@ def gerar_dados_renovacao(primeira_data, processo_id):
         raise ValueError("Data de renovação não pode estar vazia")
     
     try:
+        # English: data
         dados["data_1"] = datetime.strptime(primeira_data, "%d/%m/%Y")
         print(f"DEBUG: Parsed renewal date: {dados['data_1']}")
     except ValueError as e:
         print(f"ERROR: Invalid date format '{primeira_data}': {e}")
         raise ValueError(f"Formato de data inválido: {primeira_data}. Use DD/MM/AAAA")
     
+    # English: data
     dados["cid"] = processo.doenca.cid
+    # English: data
     dados["diagnostico"] = processo.doenca.nome
     
     # CRITICAL: Setting conditional PDF flags for renovation
+    # English: data
     dados["consentimento"] = False  # No consent for renewals
+    # English: data
     dados["relatorio"] = False      # No report for renewals 
+    # English: data
     dados["exames"] = False         # No exams for renewals
     
     # CHRONIC PAIN SPECIAL LOGIC: Include LANNS/EVA form for chronic pain renewals
     try:
+        # English: protocol
         protocolo = processo.doenca.protocolo
         print(f"DEBUG: Protocol name: {protocolo.nome}")
         
@@ -203,11 +445,13 @@ def gerar_dados_renovacao(primeira_data, processo_id):
             
             # For chronic pain, we need to include the LANNS/EVA assessment form
             # This will be picked up by the conditional PDFs glob pattern
+            # English: data
             dados["include_lanns_eva"] = True
             
             # Preserve any conditional data from original process
             if processo.dados_condicionais:
                 for key, value in processo.dados_condicionais.items():
+                    # English: data
                     dados[key] = value
                     print(f"DEBUG: Preserved conditional data: {key} = {value}")
             
@@ -221,9 +465,11 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     resgatar_prescricao(dados, processo)
     print(f"DEBUG: Retrieved prescription data")
     
+    # English: medication_ids
     meds_ids = gerar_lista_meds_ids(dados)
     print(f"DEBUG: Generated medication IDs: {meds_ids}")
     
+    # English: data
     dados = gera_med_dosagem(dados, meds_ids)[0]
     print(f"DEBUG: Generated medication dosage data")
     
@@ -232,9 +478,32 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     return dados
 
 
+# English: link_issuer_data
 def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
-    """Vincula dos dados do emissor logado aos dados do processo"""
+    """Links the logged-in user's data to the process data.
+
+    This function takes the user, doctor, and clinic objects and adds their
+    relevant information to the main form data dictionary. This is used to
+    ensure that the generated documents are correctly associated with the
+    person and clinic that created them.
+
+    Args:
+        # English: user
+        usuario (User): The logged-in user.
+        # English: doctor
+        medico (Medico): The doctor associated with the user.
+        # English: clinic
+        clinica (Clinica): The clinic associated with the user.
+        # English: form_data
+        dados_formulario (dict): The main dictionary of form data. This is
+                                 modified in-place.
+
+    Returns:
+        dict: The updated `dados_formulario` dictionary.
+    """
+    # English: clinic_address
     end_clinica = clinica.logradouro + ", " + clinica.logradouro_num
+    # English: additional_data
     dados_adicionais = {
         "nome_medico": medico.nome_medico,
         "cns_medico": medico.cns_medico,
@@ -248,13 +517,33 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
         "telefone_clinica": clinica.telefone_clinica,
         "usuario": usuario,
     }
+    # English: form_data
     dados_formulario.update(dados_adicionais)
     return dados_formulario
 
 
+# English: transfer_data_to_generator
 def transfere_dados_gerador(dados):
-    """Coleta os dados finais do processo, transfere ao gerador de PDF
-    e retorna o PATH final do arquivo gerado"""
+    """Transfers the final process data to the PDF generator.
+
+    This function takes the complete data dictionary for a process, passes it
+    to the `GeradorPDF` class, and returns the path to the generated PDF file.
+
+    Critique:
+    - The function has a lot of debugging prints, which should be removed
+      in a production environment. Using Python's `logging` module would be
+      a better way to handle debugging information.
+    - The error handling is very broad. It catches any exception and returns
+      None. It would be better to catch specific exceptions and log them
+      properly to make debugging easier.
+
+    Args:
+        # English: data
+        dados (dict): The complete data dictionary for the process.
+
+    Returns:
+        str: The path to the generated PDF file, or None if an error occurs.
+    """
     try:
         print(f"\n=== TRANSFERE_DADOS_GERADOR START ===")
         print(f"DEBUG: Input data keys: {list(dados.keys())}")
@@ -268,9 +557,11 @@ def transfere_dados_gerador(dados):
         print(f"DEBUG: PATH_LME_BASE: {settings.PATH_LME_BASE}")
         print(f"DEBUG: PATH_LME_BASE exists: {os.path.exists(settings.PATH_LME_BASE)}")
         
+        # English: pdf
         pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
         print(f"DEBUG: GeradorPDF instance created")
         
+        # English: pdf_data
         dados_pdf = pdf.generico(dados, settings.PATH_LME_BASE)
         print(f"DEBUG: generico method returned: {dados_pdf}")
         
@@ -279,7 +570,8 @@ def transfere_dados_gerador(dados):
             print(f"ERROR: dados_pdf result: {dados_pdf}")
             return None
         
-        path_pdf_final = dados_pdf[1]  # a segunda variável que a função retorna é o path
+        # English: final_pdf_path
+        path_pdf_final = dados_pdf[1]  # The second variable returned by the function is the path
         print(f"DEBUG: PDF generated successfully: {path_pdf_final}")
         print(f"DEBUG: Final PDF file exists: {os.path.exists(dados_pdf[0]) if dados_pdf[0] else 'No file path'}")
         print(f"=== TRANSFERE_DADOS_GERADOR END ===\n")
@@ -291,12 +583,28 @@ def transfere_dados_gerador(dados):
         return None
 
 
+# English: generate_medication_ids_list
 def gerar_lista_meds_ids(dados):
+    """Extracts a list of medication IDs from the data dictionary.
+
+    This function iterates through the data dictionary and extracts the IDs of
+    the selected medications. The form uses keys like `id_med1`, `id_med2`,
+    etc., to store the medication IDs.
+
+    Args:
+        # English: data
+        dados (dict): The data dictionary from the form.
+
+    Returns:
+        list: A list of medication IDs.
+    """
     n = 1
+    # English: list
     lista = []
     while n <= 4:
         try:
             if dados[f"id_med{n}"] != "nenhum":
+                # English: list
                 lista.append(dados[f"id_med{n}"])
         except KeyError:
             pass # Continue if key is missing, as it means no more meds are selected
@@ -304,24 +612,72 @@ def gerar_lista_meds_ids(dados):
     return lista
 
 
+# English: generate_partial_edition_data
 def gerar_dados_edicao_parcial(dados, processo_id):
-    """Gera o dicionário com os dados que serão atualizados
-    com a renovação parcial e gera lista com os respectivos campos
-    com a exceção do ID."""
+    """Generates a dictionary for partially updating a process.
 
+    This function creates a dictionary with the data that will be updated
+    during a partial renewal. It also generates a list of the fields to be
+    updated, excluding the ID.
+
+    Critique:
+    - The function creates a list of fields to update by deleting the first
+      element ('id'). This is fragile and depends on the order of keys in the
+      dictionary. A better approach would be to explicitly list the fields to
+      be updated.
+
+    Args:
+        # English: data
+        dados (dict): The data dictionary from the form.
+        # English: process_id
+        processo_id (int): The ID of the process to be updated.
+
+    Returns:
+        tuple: A tuple containing:
+            - dict: The dictionary with the new data.
+            - list: A list of the fields to be updated.
+    """
+
+    # English: registered_medication_ids
     ids_med_cadastrados = gerar_lista_meds_ids(dados)
+    # English: prescription
     prescricao = gerar_prescricao(ids_med_cadastrados, dados)
+    # English: new_data
     novos_dados = dict(id=processo_id, data1=dados["data_1"], prescricao=prescricao)
 
+    # English: field_list
     lista_campos = []
     for key in novos_dados.keys():
+        # English: field_list
         lista_campos.append(key)
     del lista_campos[0]
 
     return novos_dados, lista_campos
 
 
+# English: generate_patient_data
 def gerar_dados_paciente(dados):
+    """Creates a dictionary with patient data.
+
+    This function extracts patient-specific data from a larger data
+    dictionary and returns it as a new dictionary. This is used to separate
+    patient data from other data in the process.
+
+    Critique:
+    - This function manually copies fields to a new dictionary. This is
+      verbose and not easily maintainable. A better approach would be to
+      define a list of patient-related fields and then use a loop to create
+      the new dictionary. This would make the code more concise and easier to
+      update. Or maybe use django dicts method?
+
+    Args:
+        # English: data
+        dados (dict): The main data dictionary.
+
+    Returns:
+        dict: A dictionary containing only the patient data.
+    """
+    # English: patient_data
     dados_paciente = dict(
         nome_paciente=dados["nome_paciente"],
         cpf_paciente=dados["cpf_paciente"],
@@ -339,8 +695,41 @@ def gerar_dados_paciente(dados):
     return dados_paciente
 
 
+# English: generate_process_data
 def gerar_dados_processo(dados, meds_ids, doenca, emissor, paciente, usuario):
+    """Creates a dictionary with process data.
+
+    This function gathers all the data related to a process and returns it as
+    a dictionary. This dictionary is then used to create a new `Processo`
+    object.
+
+    Critique:
+    - The function manually copies fields to a new dictionary. This is
+      verbose and not easily maintainable. A better approach would be to
+      define a list of process-related fields and then use a loop to create
+      the new dictionary. This would make the code more concise and easier to
+      update.
+
+    Args:
+        # English: data
+        dados (dict): The main data dictionary.
+        # English: medication_ids
+        meds_ids (list): A list of medication IDs.
+        # English: disease
+        doenca (Doenca): The disease object.
+        # English: issuer
+        emissor (Emissor): The issuer object.
+        # English: patient
+        paciente (Paciente): The patient object.
+        # English: user
+        usuario (User): The user object.
+
+    Returns:
+        dict: A dictionary containing the process data.
+    """
+    # English: prescription
     prescricao = gerar_prescricao(meds_ids, dados)
+    # English: process_data
     dados_processo = dict(
         prescricao=prescricao,
         anamnese=dados["anamnese"],
@@ -357,32 +746,74 @@ def gerar_dados_processo(dados, meds_ids, doenca, emissor, paciente, usuario):
     )
     for dado in dados.items():
         if dado[0].startswith("opt_"):
+            # English: process_data
             dados_processo["dados_condicionais"][dado[0]] = dado[1]
     return dados_processo
 
 
+# English: register_in_db
 def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
-    """Reúne todos os dados, salva no banco de dados e retorna
-    o id do processo salvo"""
+    """Registers all the data in the database.
+
+    This function brings together all the data, saves it to the database, and
+    returns the ID of the saved process.
+
+    Critique:
+    - This function has a high level of complexity. It handles both creating
+      new patients and updating existing ones, as well as creating and updating
+      processes. This makes it difficult to read and maintain. It would be
+      better to split this function into smaller, more focused functions.
+    - The function uses `force_update=True` when saving the process and
+      patient. This is generally not recommended, as it can hide bugs. It's
+      better to let Django handle the creation or update of objects based on
+      whether they have a primary key.
+
+    Args:
+        # English: data
+        dados (dict): The main data dictionary.
+        # English: medication_ids
+        meds_ids (list): A list of medication IDs.
+        # English: disease
+        doenca (Doenca): The disease object.
+        # English: issuer
+        emissor (Emissor): The issuer object.
+        # English: user
+        usuario (User): The user object.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        int: The ID of the saved process.
+    """
+    # English: patient_exists
     paciente_existe = kwargs.pop("paciente_existe")
+    # English: patient_data
     dados_paciente = gerar_dados_paciente(dados)
+    # English: patient_cpf
     cpf_paciente = dados["cpf_paciente"]
 
     if paciente_existe:
+        # English: patient_data
         dados_paciente["id"] = paciente_existe.pk
+        # English: patient
         paciente = preparar_modelo(Paciente, **dados_paciente)
+        # English: process_data
         dados_processo = gerar_dados_processo(
             dados, meds_ids, doenca, emissor, paciente, usuario
         )
+        # English: process_data
         dados_processo["paciente"] = paciente_existe
         cid = kwargs.pop("cid", None)
+        # English: process_exists
         processo_existe = False
         for p in paciente_existe.processos.all():
             if p.doenca.cid == cid:
+                # English: process_exists
                 processo_existe = True
+                # English: process_data
                 dados_processo["id"] = p.id
                 break
 
+        # English: process
         processo = preparar_modelo(Processo, **dados_processo)
 
         if processo_existe:
@@ -394,12 +825,16 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
         paciente.usuarios.add(usuario)
         emissor.pacientes.add(paciente_existe)
     else:
+        # English: patient
         paciente = preparar_modelo(Paciente, **dados_paciente)
         paciente.save()
+        # English: patient
         paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+        # English: process_data
         dados_processo = gerar_dados_processo(
             dados, meds_ids, doenca, emissor, paciente, usuario
         )
+        # English: process
         processo = preparar_modelo(Processo, **dados_processo)
         processo.save()
         associar_med(processo, meds_ids)
@@ -409,17 +844,41 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
     return processo.pk
 
 
+# English: check_if_patient_exists
 def checar_paciente_existe(cpf_paciente):
+    """Checks if a patient with the given CPF exists in the database.
+
+    Args:
+        # English: patient_cpf
+        cpf_paciente (str): The patient's CPF.
+
+    Returns:
+        Paciente or bool: The `Paciente` object if the patient exists,
+                          otherwise `False`.
+    """
     try:
+        # English: patient_exists
         paciente_existe = Paciente.objects.get(cpf_paciente=cpf_paciente)
     except Paciente.DoesNotExist:
+        # English: patient_exists
         paciente_existe = False
     return paciente_existe
 
-
+# English: generate_protocol_link
 def gerar_link_protocolo(cid):
+    """Generates a link to the protocol file for the given CID.
+
+    Args:
+        cid (str): The CID code for the disease.
+
+    Returns:
+        str: The URL to the protocol file.
+    """
+    # English: protocol
     protocolo = Protocolo.objects.get(doenca__cid=cid)
+    # English: file
     arquivo = protocolo.arquivo
+    # English: link
     link = os.path.join(settings.STATIC_URL, "protocolos", arquivo)
     return link
 
@@ -480,7 +939,7 @@ def gerar_link_protocolo(cid):
 
 # relatorio_fingo = '''
 # Relatório médico, contendo: A. Justificativa para interrupção do uso ou motivo da não utilização de primeira linha:
-# 1. Falha terapêutica à betainterferona ou ao glatirâmer ou à teriflunomida
+# 1. Falha terapêutica à betainterferona ou ao glatirâmer ou ao teriflunomida
 # 2. Ausência de contraindicação ao uso do fingolimode'
 # '''
 

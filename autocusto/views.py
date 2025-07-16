@@ -6,10 +6,23 @@ from medicos.forms import MedicoCadastroFormulario
 
 
 def home(request):
+    """
+    Main landing page that handles both user authentication and process initiation.
+    
+    This view serves dual purposes:
+    1. Registration/login interface for non-authenticated users
+    2. Process search and initiation for authenticated doctors
+    
+    The POST logic implements a complex workflow for Brazilian medical prescriptions:
+    - Validates patient exists and belongs to current doctor
+    - Determines if patient already has a process for the specified disease
+    - Routes user to either edit existing process or create new one
+    """
     usuario = request.user
+    
     if request.method == "GET":
         formulario = PreProcesso()
-        # Include registration form for non-authenticated users
+        # Dual-purpose interface: show registration form for visitors, process form for doctors
         if not usuario.is_authenticated:
             registro_form = MedicoCadastroFormulario()
             contexto = {"formulario": formulario, "registro_form": registro_form}
@@ -24,38 +37,46 @@ def home(request):
                 cid = formulario.cleaned_data["cid"]
 
                 try:
-                    # Only allow access to patients associated with the current user
+                    # Security check: Ensure doctor can only access their own patients
+                    # This prevents unauthorized access to patient data across different doctors
                     paciente = Paciente.objects.get(
                         cpf_paciente=cpf_paciente,
                         usuarios=usuario
                     )
+                    # Patient exists and belongs to current doctor
                     request.session["paciente_existe"] = True
                     request.session["paciente_id"] = paciente.id
                     request.session["cid"] = cid
                     request.session["cpf_paciente"] = cpf_paciente
                 except Paciente.DoesNotExist:
+                    # Patient doesn't exist in doctor's database - will need to create patient record
                     request.session["paciente_existe"] = False
                     request.session["cid"] = cid
                     request.session["cpf_paciente"] = cpf_paciente
                     return redirect("processos-cadastro")
 
+                # Complex business logic: Check if patient already has a process for this disease
                 busca_processos = paciente.processos.filter(doenca__cid=cid)
 
                 if busca_processos.exists():
-                    processo_cadastrado_pelo_usuario = busca_processos.filter(
+                    # Patient has processes for this disease - check if current doctor created any
+                    processos_do_usuario = busca_processos.filter(
                         usuario__id=usuario.id
-                    ).exists()
-                    if processo_cadastrado_pelo_usuario:
-                        request.session["processo_id"] = busca_processos.get(
-                            usuario__id=usuario.id
-                        ).id
-                        return redirect("processos-edicao")
+                    )
+                    if processos_do_usuario.exists():
+                        # Doctor already has a process for this patient/disease combination
+                        # Get the most recent one (handles edge cases where duplicates existed)
+                        processo_mais_recente = processos_do_usuario.order_by('-id').first()
+                        request.session["processo_id"] = processo_mais_recente.id
+                        return redirect("processos-edicao")  # Edit existing process
                     else:
+                        # Patient has processes from other doctors, but not from current doctor
                         messages.success(request, f"Processo iniciado para paciente {cpf_paciente}!")
-                        return redirect("processos-cadastro")
+                        return redirect("processos-cadastro")  # Create new process
                 else:
+                    # No processes exist for this patient/disease combination
                     messages.success(request, f"Processo iniciado para paciente {cpf_paciente}!")
-                    return redirect("processos-cadastro")
+                    return redirect("processos-cadastro")  # Create new process
             else:
                 # Form validation failed - add errors as Django messages for toast display
                 for field, errors in formulario.errors.items():

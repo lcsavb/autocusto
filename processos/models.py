@@ -70,5 +70,8 @@ class Processo(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="processos"
     )
 
+    class Meta:
+        unique_together = ['usuario', 'paciente', 'doenca']
+
     def __str__(self):
         return f"{self.doenca}"

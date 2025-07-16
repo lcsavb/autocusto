@@ -12,31 +12,76 @@ from .dados import (
 )
 from .seletor import seletor_campos
 
-
+# English: show_medication
 def mostrar_med(mostrar, *args):
+    """
+    Dynamically controls medication tab visibility in the UI based on existing process data.
+    
+    This function determines which medication tabs should be visible in the form interface.
+    By default, all medication tabs except the first one are hidden (using Bootstrap's 'd-none' class).
+    When editing an existing process, this function reveals tabs for medications that are already
+    associated with the process, ensuring users can see and edit existing medication data.
+    
+    Args:
+        # English: show
+        mostrar (bool): Whether to show medications (True for editing existing process, False for new)
+        *args: Variable arguments, where args[0] should be a Processo instance when mostrar=True
+    
+    Returns:
+        dict: CSS class mapping for medication tabs ('d-none' to hide, '' to show)
+    """
+    # Initialize all medication tabs as hidden except med1 (which is always shown)
+    # English: dic
     dic = {
         "med2_mostrar": "d-none",
-        "med3_mostrar": "d-none",
+        "med3_mostrar": "d-none", 
         "med4_mostrar": "d-none",
     }
+    
     if mostrar:
+        # English: process
         processo = args[0]
         n = 1
+        # Iterate through existing medications and reveal corresponding tabs
+        # This ensures users can see all medications already associated with the process
         for med in processo.medicamentos.all():
-            dic[f"med{n}_mostrar"] = ""
+            # English: dic
+            dic[f"med{n}_mostrar"] = ""  # Remove 'd-none' class to show the tab
             n = n + 1
     return dic
 
-
+#English: Adjust conditional fields
 def ajustar_campos_condicionais(dados_paciente):
-    """Checa se paciente é incapaz e o responsável pelo preenchimento; mostra
-    os campos condicionais de acordo com a necessidade"""
+    """
+    Conditionally shows/hides form fields based on patient data and form completion context.
+    
+    This function implements complex business logic for Brazilian medical form regulations:
+    1. If patient has email, it means the form is being filled digitally by a doctor (not patient)
+    2. If patient is incapable (incapaz), a responsible person's name field must be shown
+    3. Campo 18 refers to specific SUS (Brazilian health system) form fields that are only
+       required when the form is filled by medical personnel rather than the patient
+    
+    Args:
+        dados_paciente (dict): Patient data dictionary containing form field values
+    
+    Returns:
+        tuple: (visibility_dict, modified_patient_data)
+            - visibility_dict: CSS classes to show/hide conditional fields
+            - modified_patient_data: Updated patient data with 'preenchido_por' field set
+    """
+    # Initialize all conditional fields as hidden by default
     dic = {"responsavel_mostrar": "d-none", "campo_18_mostrar": "d-none"}
+    
+    # Business rule: If patient has email, assume doctor is filling the form digitally
+    # This triggers showing additional SUS form fields (campo 18) required for medical personnel
     if dados_paciente["email_paciente"] != "":
-        dic["campo_18_mostrar"] = ""
-        dados_paciente["preenchido_por"] = "medico"
+        dic["campo_18_mostrar"] = ""  # Show campo 18 fields
+        dados_paciente["preenchido_por"] = "medico"  # Set form completion context
+    
+    # Legal requirement: If patient is incapable, must show responsible person field
     if dados_paciente["incapaz"]:
-        dic["responsavel_mostrar"] = ""
+        dic["responsavel_mostrar"] = ""  # Show responsible person name field
+    
     return dic, dados_paciente
 
 
@@ -117,43 +162,64 @@ class NovoProcesso(forms.Form):
         self.request = kwargs.pop("request", None)
     
     def _create_medication_fields(self):
-        """Dynamically create medication-related fields to avoid repetition"""
-        # Create medication selection fields
+        """
+        Dynamically generates medication-related form fields to eliminate code duplication.
+        
+        This method creates a comprehensive set of medication fields for up to 4 different medications,
+        each with 6 months of dosage tracking. The dynamic approach prevents hundreds of lines of
+        repetitive field definitions while maintaining flexibility for different medication scenarios.
+        
+        Field Structure per medication:
+        - id_med{i}: Medication selection dropdown
+        - med{i}_repetir_posologia: Whether to repeat the same dosage across months
+        - med{i}_posologia_mes{month}: Dosage instructions for each month (1-6)
+        - qtd_med{i}_mes{month}: Quantity needed for each month (1-6)
+        
+        Business Rules:
+        - Only med1 fields are required (Brazilian regulations require at least one medication)
+        - med2-4 are optional for combination therapies
+        - 6-month tracking aligns with Brazilian prescription renewal cycles
+        """
+        # Generate fields for up to 4 different medications
         for i in range(1, 5):
+            # Medication selection dropdown - populated later with available medications
             self.fields[f"id_med{i}"] = forms.ChoiceField(
                 widget=forms.Select(attrs={"class": "custom-select"}),
-                choices=[],
+                choices=[],  # Will be populated in __init__ with actual medication options
                 label="Nome",
                 error_messages={'required': 'Por favor, selecione um medicamento.'}
             )
             
-            # Create repetir_posologia field
+            # Dosage repetition control - determines if same dosage applies to all months
             self.fields[f"med{i}_repetir_posologia"] = forms.ChoiceField(
                 required=True,
-                initial=True,
+                initial=True,  # Default to repeating dosage (most common case)
                 choices=REPETIR_ESCOLHAS,
                 label="Repetir posologia?",
                 widget=forms.Select(attrs={"class": "custom-select"}),
                 error_messages={'required': 'Por favor, selecione uma opção.'}
             )
             
-            # Create posologia fields for each month
+            # Generate dosage and quantity fields for 6-month prescription cycle
             for month in range(1, 7):
-                is_required = (i == 1)  # Only med1 fields are required
+                # Business rule: Only first medication (med1) is mandatory
+                is_required = (i == 1)
+                
+                # Dosage instructions for each month
                 self.fields[f"med{i}_posologia_mes{month}"] = forms.CharField(
                     required=is_required,
                     label="Posologia",
                     error_messages={'required': 'Por favor, insira a posologia.'}
                 )
                 
-                # Create quantity fields for each month
+                # Quantity needed for each month
                 self.fields[f"qtd_med{i}_mes{month}"] = forms.CharField(
                     required=is_required,
                     label=f"Qtde. {month} mês",
                     error_messages={'required': 'Por favor, insira a quantidade.'}
                 )
         
-        # Add the via field for med1
+        # Administration route field - only needed for the primary medication
         self.fields["med1_via"] = forms.CharField(
             required=True,
             label="Via administração",

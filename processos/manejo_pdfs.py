@@ -10,15 +10,35 @@ from processos.models import Protocolo, Medicamento
 
 PATH_EXAMES = settings.PATH_EXAMES
 
+# English: fill_forms
 def preencher_formularios(lista_pdfs, dados_finais):
-    """Preenche os pdfs individualmente e gera os arquivos
-    intermediários com nomes aleatórios"""
+    """Fills individual PDFs and generates intermediate files with random names.
+
+    Critique:
+    - The function has a lot of debugging prints, which should be removed
+      in a production environment. Using Python's `logging` module would be
+      a better way to handle debugging information.
+    - The function generates random names for the intermediate files. This is
+      not a robust way to avoid name collisions. A better approach would be
+      to use Python's `tempfile` module to create temporary files with unique
+      names.
+
+    Args:
+        # English: pdf_list
+        lista_pdfs (list): A list of PDF files to be filled.
+        # English: final_data
+        dados_finais (dict): The data to be filled into the PDFs.
+
+    Returns:
+        list: A list of the filled PDF files.
+    """
     print(f"\n=== PREENCHER_FORMULARIOS START ===")
     print(f"DEBUG: Called with {len(lista_pdfs)} PDFs")
     print(f"DEBUG: Input PDFs: {lista_pdfs}")
     print(f"DEBUG: Data keys: {list(dados_finais.keys())}")
     print(f"DEBUG: CNS Médico: {dados_finais.get('cns_medico', 'NOT_FOUND')}")
     
+    # English: files
     arquivos = []
     for i, arquivo in enumerate(lista_pdfs):
         print(f"\n--- Processing PDF {i+1}/{len(lista_pdfs)} ---")
@@ -28,12 +48,14 @@ def preencher_formularios(lista_pdfs, dados_finais):
         if not os.path.exists(arquivo):
             print(f"ERROR: PDF template not found: {arquivo}")
             print(f"ERROR: Directory exists: {os.path.exists(os.path.dirname(arquivo))}")
-            print(f"ERROR: Directory contents: {os.listdir(os.path.dirname(arquivo)) if os.path.exists(os.path.dirname(arquivo)) else 'DIR_NOT_FOUND'}")
+            print(f"ERROR: Directory contents: {os.path.listdir(os.path.dirname(arquivo)) if os.path.exists(os.path.dirname(arquivo)) else 'DIR_NOT_FOUND'}")
             continue
         
         print(f"DEBUG: PDF template exists and is readable")
         
+        # English: random_name
         aleatorio = str(random.randint(0, 10000000000)) + dados_finais["cns_medico"]
+        # English: output_pdf
         output_pdf = os.path.join(
             settings.STATIC_ROOT, "tmp", "{}.pdf".format(aleatorio)
         )
@@ -41,18 +63,21 @@ def preencher_formularios(lista_pdfs, dados_finais):
         print(f"DEBUG: Output PDF path: {output_pdf}")
         
         # Ensure output directory exists
+        # English: tmp_dir
         tmp_dir = os.path.dirname(output_pdf)
         os.makedirs(tmp_dir, exist_ok=True)
         print(f"DEBUG: Created output directory: {tmp_dir}")
         
         try:
             print(f"DEBUG: Calling pypdftk.fill_form...")
+            # English: filled_pdf
             filled_pdf = pypdftk.fill_form(arquivo, dados_finais, output_pdf)
             print(f"DEBUG: pypdftk.fill_form returned: {filled_pdf}")
             
             if filled_pdf and os.path.exists(filled_pdf):
                 file_size = os.path.getsize(filled_pdf)
                 print(f"DEBUG: Successfully filled PDF: {filled_pdf} ({file_size} bytes)")
+                # English: files
                 arquivos.append(filled_pdf)
             else:
                 print(f"ERROR: Filled PDF not created or empty: {filled_pdf}")
@@ -68,22 +93,47 @@ def preencher_formularios(lista_pdfs, dados_finais):
     return arquivos
 
 
+# English: remove_intermediate_pdfs
 def remover_pdfs_intermediarios(arquivos):
-    """Remove os arquivos intermediários após a
-    concatenação"""
+    """Removes intermediate files after concatenation.
+
+    Args:
+        # English: files
+        arquivos (list): A list of intermediate PDF files to be removed.
+    """
     for arquivo in arquivos:
         os.remove(arquivo)
 
 
+# English: generate_final_pdf
 def gerar_pdf_final(arquivos, path_pdf_final):
-    """Concatena e achata os pdfs intermediários (preenchidos);
-    gera o arquivo final para impressão"""
+    """Concatenates and flattens the intermediate (filled) PDFs;
+    generates the final file for printing.
+
+    Critique:
+    - The function has a lot of debugging prints, which should be removed
+      in a production environment. Using Python's `logging` module would be
+      a better way to handle debugging information.
+    - The error handling is very broad. It catches any exception and returns
+      None. It would be better to catch specific exceptions and log them
+      properly to make debugging easier.
+
+    Args:
+        # English: files
+        arquivos (list): A list of intermediate PDF files to be concatenated.
+        # English: final_pdf_path
+        path_pdf_final (str): The path to the final PDF file.
+
+    Returns:
+        str: The path to the final PDF file, or None if an error occurs.
+    """
     print(f"\n=== GERAR_PDF_FINAL START ===")
     print(f"DEBUG: Called with {len(arquivos)} files")
     print(f"DEBUG: Output path: {path_pdf_final}")
     
     # Check if all input files exist
     print(f"\n--- INPUT FILE VALIDATION ---")
+    # English: valid_files
     valid_files = []
     for i, arquivo in enumerate(arquivos):
         print(f"DEBUG: Input file {i+1}: {arquivo}")
@@ -105,12 +155,14 @@ def gerar_pdf_final(arquivos, path_pdf_final):
     print(f"DEBUG: Using {len(valid_files)} valid files for concatenation")
     
     # Ensure output directory exists
+    # English: output_dir
     output_dir = os.path.dirname(path_pdf_final)
     os.makedirs(output_dir, exist_ok=True)
     print(f"DEBUG: Created output directory: {output_dir}")
     
     try:
         print(f"DEBUG: Calling pypdftk.concat...")
+        # English: final_pdf
         pdf_final = pypdftk.concat(valid_files, path_pdf_final)
         print(f"DEBUG: pypdftk.concat returned: {pdf_final}")
         
@@ -141,47 +193,92 @@ def gerar_pdf_final(arquivos, path_pdf_final):
 #     return nome_med
 
 
+# English: add_exams
 def adicionar_exames(arquivos_base, dados_finais):
-    """Acrescenta pedido de exames antes do preenchimento
-    dos pdfs intermediários. Esta função está separada
-    da função preencher_formulários pois em alguns protocolos
-    os exames necessários dependem do medicamento prescrito"""
+    """Adds a request for exams before filling out the intermediate PDFs.
+
+    This function is separate from the `preencher_formularios` function because
+    in some protocols the necessary exams depend on the prescribed medication.
+
+    Args:
+        # English: base_files
+        arquivos_base (list): The base list of PDF files.
+        # English: final_data
+        dados_finais (dict): The data to be filled into the PDFs.
+
+    Returns:
+        list: A list of the filled PDF files, including the exam request.
+    """
     print(f"DEBUG: adicionar_exames called")
     print(f"DEBUG: PATH_EXAMES: {PATH_EXAMES}")
     print(f"DEBUG: PATH_EXAMES exists: {os.path.exists(PATH_EXAMES)}")
     
+    # English: exam_file
     arquivo_exame = [PATH_EXAMES]
+    # English: files_with_exams
     arquivos_com_exames = arquivos_base + arquivo_exame
     print(f"DEBUG: Total files with exams: {len(arquivos_com_exames)}")
     
+    # English: files
     arquivos = preencher_formularios(arquivos_com_exames, dados_finais)
     return arquivos
 
 
+# English: format_date
 def formatacao_data(dados):
-    """Recebe a data inicial do processo, cria as datas
-    subsequentes e formata para o padrão brasileiro"""
+    """Receives the initial date of the process, creates the subsequent dates,
+    and formats them to the Brazilian standard.
+
+    Critique:
+    - The function modifies the input dictionary `dados` in place. This can be
+      surprising and lead to unexpected side effects. It would be better to
+      return a new dictionary with the formatted dates.
+
+    Args:
+        # English: data
+        dados (dict): The data dictionary containing the initial date.
+    """
     print(f"\n--- FORMATACAO_DATA START ---")
     print(f"DEBUG: Input data_1: {dados.get('data_1', 'NOT_FOUND')} (type: {type(dados.get('data_1'))})")
     
+    # English: month
     mes = 2
+    # English: days
     dias = 30
     while mes <= 6:
+        # English: new_date
         new_date = dados["data_1"] + timedelta(days=dias)
+        # English: formatted_date
         formatted_date = new_date.strftime("%d/%m/%Y")
+        # English: data
         dados[f"data_{mes}"] = formatted_date
         print(f"DEBUG: data_{mes} = {formatted_date}")
         dias += 30
         mes += 1
     
+    # English: original_date
     original_date = dados["data_1"]
+    # English: data
     dados["data_1"] = dados["data_1"].strftime("%d/%m/%Y")
     print(f"DEBUG: Formatted data_1 from {original_date} to {dados['data_1']}")
     print(f"--- FORMATACAO_DATA END ---\n")
 
 
+# English: adjust_field_18
 def ajustar_campo_18(dados_lme):
+    """Adjusts field 18 of the LME form.
+
+    Critique:
+    - The function modifies the input dictionary `dados_lme` in place. This can be
+        surprising and lead to unexpected side effects. It would be better to
+        return a new dictionary with the adjusted fields.
+
+    Args:
+        # English: lme_data
+        dados_lme (dict): The data dictionary for the LME form.
+    """
     print(f"\n--- AJUSTAR_CAMPO_18 START ---")
+    # English: filled_by
     preenchido_por = dados_lme.get("preenchido_por", "NOT_FOUND")
     print(f"DEBUG: preenchido_por = {preenchido_por}")
     
@@ -189,6 +286,7 @@ def ajustar_campo_18(dados_lme):
         print(f"DEBUG: Not filled by doctor, adjusting field 18...")
         
         # Safely delete fields that might not exist
+        # English: fields_to_delete
         fields_to_delete = ["cpf_paciente", "telefone1_paciente", "telefone2_paciente", "email_paciente"]
         for field in fields_to_delete:
             if field in dados_lme:
@@ -197,7 +295,9 @@ def ajustar_campo_18(dados_lme):
             else:
                 print(f"DEBUG: Field not found, skipping: {field}")
         
+        # English: lme_data
         dados_lme["etnia"] = ""
+        # English: lme_data
         dados_lme["escolha_documento"] = ""
         print(f"DEBUG: Set etnia and escolha_documento to empty")
     else:
@@ -210,20 +310,53 @@ def ajustar_campo_18(dados_lme):
 # ele vai direto para Sorocaba, sem paradas.
 
 
+# English: PDFGenerator
 class GeradorPDF:
 
     def __init__(self, dados_lme_base, path_lme_base):
+        # English: base_lme_data
         self.dados_lme_base = dados_lme_base
+        # English: base_lme_path
         self.path_lme_base = path_lme_base
 
+    # English: generic
     def generico(self, dados_lme_base, path_lme_base):
+        """Generic PDF generator.
+
+        Critique:
+        - The function has a lot of debugging prints, which should be removed
+          in a production environment. Using Python's `logging` module would be
+          a better way to handle debugging information.
+        - The function has a high level of complexity. It handles conditional
+          PDF generation based on several factors. This makes it difficult to
+          read and maintain. It would be better to split this function into
+          smaller, more focused functions.
+        - The error handling is very broad. It catches any exception and returns
+          None. It would be better to catch specific exceptions and log them
+          properly to make debugging easier.
+
+        Args:
+            # English: base_lme_data
+            dados_lme_base (dict): The base data for the LME form.
+            # English: base_lme_path
+            path_lme_base (str): The path to the base LME form.
+
+        Returns:
+            tuple: A tuple containing the path to the final PDF and the URL to
+                   the final PDF, or (None, None) if an error occurs.
+        """
         print(f"\n=== GERADOR_PDF.GENERICO START ===")
         
+        # English: patient_cpf
         cpf_paciente = dados_lme_base["cpf_paciente"]
         cid = dados_lme_base["cid"]
+        # English: final_pdf_name
         nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
+        # English: first_time
         primeira_vez = dados_lme_base["consentimento"]
+        # English: report
         relatorio = dados_lme_base["relatorio"]
+        # English: exams
         exames = dados_lme_base["exames"]
         
         print(f"DEBUG: Patient CPF: {cpf_paciente}")
@@ -242,9 +375,11 @@ class GeradorPDF:
         formatacao_data(dados_lme_base)
         print(f"DEBUG: Date formatting complete")
 
+        # English: base_files
         arquivos_base = [path_lme_base]
         print(f"\n--- PROTOCOL LOOKUP ---")
         try:
+            # English: protocol
             protocolo = Protocolo.objects.get(doenca__cid=cid)
             print(f"DEBUG: Found protocol: {protocolo.nome}")
             print(f"DEBUG: Protocol ID: {protocolo.id}")
@@ -254,6 +389,7 @@ class GeradorPDF:
 
         print(f"\n--- CONDITIONAL PDFs SECTION ---")
         try:
+            # English: conditional_pdfs_dir
             dir_pdfs_condicionais = os.path.join(
                 settings.PATH_PDF_DIR, protocolo.nome, "pdfs_base/"
             )
@@ -265,6 +401,7 @@ class GeradorPDF:
             if os.path.exists(dir_pdfs_condicionais):
                 print(f"DEBUG: Directory contents: {os.listdir(dir_pdfs_condicionais)}")
             
+            # English: base_conditional_pdfs
             pdfs_condicionais_base = glob.glob(dir_pdfs_condicionais + "*.*")
             print(f"DEBUG: Glob pattern: {dir_pdfs_condicionais + '*.*'}")
             print(f"DEBUG: Found {len(pdfs_condicionais_base)} conditional PDFs")
@@ -274,6 +411,7 @@ class GeradorPDF:
                 print(f"DEBUG: File exists: {os.path.exists(pdf)}")
                 if os.path.exists(pdf):
                     print(f"DEBUG: File size: {os.path.getsize(pdf)} bytes")
+                    # English: base_files
                     arquivos_base.append(pdf)
                     print(f"DEBUG: Added conditional PDF to base files")
                 else:
@@ -292,6 +430,7 @@ class GeradorPDF:
                 id_med = dados_lme_base["id_med1"]
                 print(f"DEBUG: Medication ID for consent: {id_med}")
                 
+                # English: consent_pdf
                 consentimento_pdf = os.path.join(
                     settings.PATH_PDF_DIR, protocolo.nome, "consentimento.pdf"
                 )
@@ -301,11 +440,14 @@ class GeradorPDF:
                 if os.path.exists(consentimento_pdf):
                     print(f"DEBUG: Consent PDF file size: {os.path.getsize(consentimento_pdf)} bytes")
                 
+                # English: medication
                 medicamento = Medicamento.objects.get(id=id_med)
+                # English: base_lme_data
                 dados_lme_base["consentimento_medicamento"] = medicamento.nome
                 print(f"DEBUG: Consent medication: {medicamento.nome}")
                 
                 if os.path.exists(consentimento_pdf):
+                    # English: base_files
                     arquivos_base.append(consentimento_pdf)
                     print(f"DEBUG: Added consent PDF to base files")
                 else:
@@ -327,6 +469,7 @@ class GeradorPDF:
             
             if os.path.exists(settings.PATH_RELATORIO):
                 print(f"DEBUG: Report PDF file size: {os.path.getsize(settings.PATH_RELATORIO)} bytes")
+                # English: base_files
                 arquivos_base.append(settings.PATH_RELATORIO)
                 print(f"DEBUG: Added report PDF to base files")
             else:
@@ -343,6 +486,7 @@ class GeradorPDF:
             
             if os.path.exists(settings.PATH_EXAMES):
                 print(f"DEBUG: Exam PDF file size: {os.path.getsize(settings.PATH_EXAMES)} bytes")
+                # English: base_files
                 arquivos_base.append(settings.PATH_EXAMES)
                 print(f"DEBUG: Added exam PDF to base files")
             else:
@@ -360,18 +504,22 @@ class GeradorPDF:
         for i, arquivo in enumerate(arquivos_base):
             print(f"DEBUG: Base file {i+1}: {arquivo} (exists: {os.path.exists(arquivo)})")
         
+        # English: final_pdf_path
         path_pdf_final = os.path.join(settings.STATIC_URL, "tmp", nome_final_pdf)
+        # English: final_output_pdf
         output_pdf_final = os.path.join(settings.STATIC_ROOT, "tmp", nome_final_pdf)
         
         print(f"\nDEBUG: Final PDF URL path: {path_pdf_final}")
         print(f"DEBUG: Final PDF file path: {output_pdf_final}")
         
         # Ensure tmp directory exists
+        # English: tmp_dir
         tmp_dir = os.path.join(settings.STATIC_ROOT, "tmp")
         os.makedirs(tmp_dir, exist_ok=True)
         print(f"DEBUG: Created tmp directory: {tmp_dir}")
         
         print(f"\n--- CALLING PREENCHER_FORMULARIOS ---")
+        # English: filled_intermediate_pdfs
         pdfs_intermediarios_preenchidos = preencher_formularios(
             arquivos_base, dados_lme_base
         )
@@ -381,6 +529,7 @@ class GeradorPDF:
             return None, None
         
         print(f"\n--- CALLING GERAR_PDF_FINAL ---")
+        # English: pdf
         pdf = gerar_pdf_final(pdfs_intermediarios_preenchidos, output_pdf_final)
         
         if pdf:

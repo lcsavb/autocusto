@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
 from processos.models import Processo, Doenca
-from .forms import (
+from .forms (
     mostrar_med,
     ajustar_campos_condicionais,
     extrair_campos_condicionais,
     fabricar_formulario,
 )
-from .dados import (
+from .dados (
     cria_dict_renovação,
     gerar_dados_renovacao,
     vincula_dados_emissor,
@@ -31,21 +31,66 @@ from .dados import (
 )
 
 
+# English: _get_initial_data
 def _get_initial_data(request, paciente_existe, primeira_data, cid):
-    """Helper function to get initial data for form rendering"""
+    """
+    Constructs initial form data based on patient existence and session context.
+    
+    This helper function handles two distinct scenarios in Brazilian medical prescription workflow:
+    1. Existing patient: Pre-populate form with patient data from database
+    2. New patient: Initialize form with minimal data from session (CPF + disease info)
+    
+    The function bridges the gap between session-based workflow state and form initialization,
+    ensuring data consistency across the multi-step prescription process.
+
+    Critique:
+    - The function raises a generic `KeyError` if session data is missing.
+      It would be better to raise a more specific custom exception to allow for
+      more granular error handling.
+    
+    Args:
+        request: HTTP request containing session data
+        # English: patient_exists
+        paciente_existe (bool): Whether patient exists in doctor's database
+        # English: first_date
+        primeira_data (str): Default date for prescription
+        cid (str): Disease CID code
+    
+    Returns:
+        dict: Form initial data dictionary
+    
+    Raises:
+        KeyError: If required session data is missing (indicates broken workflow)
+    """
     if paciente_existe:
+        # Patient exists - load full patient data from database
         if "paciente_id" not in request.session:
             raise KeyError("ID do paciente não encontrado na sessão.")
+        
+        # English: patient_id
         paciente_id = request.session["paciente_id"]
+        # English: patient
         paciente = Paciente.objects.get(id=paciente_id)
+        
+        # Convert patient model to dictionary for form initialization
+        # English: patient_data
         dados_paciente = model_to_dict(paciente)
+        
+        # Add prescription-specific data not stored in patient model
+        # English: patient_data
         dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+        # English: patient_data
         dados_paciente["cid"] = cid
+        # English: patient_data
         dados_paciente["data_1"] = primeira_data
+        
         return dados_paciente
     else:
+        # New patient - minimal form initialization with session data
         if "cpf_paciente" not in request.session:
             raise KeyError("CPF do paciente não encontrado na sessão.")
+        
+        # Return minimal data structure for new patient form
         return {
             "cpf_paciente": request.session["cpf_paciente"],
             "data_1": primeira_data,
@@ -54,18 +99,36 @@ def _get_initial_data(request, paciente_existe, primeira_data, cid):
         }
 
 
+# English: search_processes
 @login_required
 def busca_processos(request):
+    """Searches for processes associated with the logged-in user.
+
+    If the request is a GET, it displays a search form. If it's a POST, it
+    searches for the specified process and, if found, redirects to the
+    edition page.
+
+    Args:
+        request: The HTTP request.
+
+    Returns:
+        A rendered HTML page or a redirect.
+    """
     if request.method == "GET":
+        # English: user
         usuario = request.user
+        # English: user_patients
         pacientes_usuario = usuario.pacientes.all()
 
+        # English: context
         contexto = {"pacientes_usuario": pacientes_usuario, "usuario": usuario}
         return render(request, "processos/busca.html", contexto)
     else:
+        # English: process_id
         processo_id = request.POST.get("processo_id")
         # Verify user owns this process
         try:
+            # English: process
             processo = Processo.objects.get(id=processo_id, usuario=request.user)
             request.session["processo_id"] = processo_id
             request.session["cid"] = processo.doenca.cid
@@ -76,30 +139,64 @@ def busca_processos(request):
             return redirect("processos-busca")
 
 
+# English: edition
 @login_required
 def edicao(request):
+    """
+    Handles editing of existing medical prescription processes.
+    
+    This view implements a complex workflow for Brazilian medical prescription renewals:
+    1. Validates session state and user permissions
+    2. Dynamically constructs form based on disease protocol
+    3. Handles both GET (form display) and POST (form processing) requests
+    4. Manages medication data and PDF generation
+    
+    The view includes extensive error handling and logging due to the critical nature
+    of medical prescription data and the complexity of the Brazilian SUS system requirements.
+
+    Critique:
+    - This view is very long and complex. It would be better to split it into
+      smaller, more focused functions. For example, the form processing logic
+      could be moved to a separate function.
+    - The error handling is very broad. It catches any exception and returns
+      a generic error message. It would be better to catch specific exceptions
+      and log them properly to make debugging easier.
+    """
     try:
         logger.info(f"Edicao view started - User: {request.user}, Method: {request.method}")
         
+        # English: user
         usuario = request.user
         logger.info(f"Usuario: {usuario}")
         
+        # Get doctor record associated with current user
+        # English: doctor
         medico = seletor_medico(usuario)
         logger.info(f"Medico: {medico}")
         
+        # Get clinics available to this doctor for prescription issuance
+        # English: clinics
         clinicas = medico.clinicas.all()
         logger.info(f"Clinicas count: {clinicas.count()}")
         
+        # Create choices tuple for clinic selection dropdown
+        # English: choices
         escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
         logger.info(f"Escolhas: {escolhas}")
         
+        # Get disease CID from session (set by home view workflow)
         cid = request.session["cid"]
         logger.info(f"CID from session: {cid}")
         
+        # Get medications approved for this specific disease
+        # English: medications
         medicamentos = listar_med(cid)
         logger.info(f"Medicamentos count: {len(medicamentos) if medicamentos else 0}")
         
-        ModeloFormulario = fabricar_formulario(cid, True)
+        # Dynamically construct form class based on disease protocol
+        # This is crucial because different diseases have different required fields
+        # English: FormModel
+        ModeloFormulario = fabricar_formulario(cid, True)  # True = renewal form
         logger.info(f"ModeloFormulario created: {ModeloFormulario}")
         
     except Exception as e:
@@ -109,10 +206,12 @@ def edicao(request):
         return redirect("processos-busca")
 
     try:
+        # English: process_id
         processo_id = request.session["processo_id"]
         logger.info(f"Processo ID from session: {processo_id}")
         
         # Verify user owns this process
+        # English: process
         processo = Processo.objects.get(id=processo_id, usuario=usuario)
         logger.info(f"Processo found: {processo}")
         
@@ -122,9 +221,11 @@ def edicao(request):
         return redirect("processos-busca")
 
     try:
+        # English: first_date
         primeira_data = request.session["data1"]
         logger.info(f"Primeira data from session: {primeira_data}")
     except KeyError:
+        # English: first_date
         primeira_data = date.today().strftime("%d/%m/%Y")
         logger.info(f"Using default primeira_data: {primeira_data}")
 
@@ -132,37 +233,45 @@ def edicao(request):
         logger.info("Processing POST request")
         
         try:
+            # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
             logger.info(f"Formulario created successfully")
             
             if formulario.is_valid():
                 logger.info("Formulario is valid, processing data")
                 
+                # English: form_data
                 dados_formulario = formulario.cleaned_data
                 logger.info(f"Dados formulario keys: {list(dados_formulario.keys())}")
                 
+                # English: clinic_id
                 id_clin = dados_formulario["clinicas"]
                 logger.info(f"Clinica ID selected: {id_clin}")
                 
+                # English: clinic
                 clinica = medico.clinicas.get(id=id_clin)
                 logger.info(f"Clinica found: {clinica}")
                 
                 try:
+                    # English: registered_medication_ids
                     ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
                     logger.info(f"Medication IDs generated: {ids_med_cadastrados}")
 
+                    # English: form_data, medication_ids
                     dados_formulario, meds_ids = gera_med_dosagem(
                         dados_formulario, ids_med_cadastrados
                     )
                     logger.info(f"Medication dosage generated, meds_ids: {meds_ids}")
 
-                    # Registra os dados do médico logado e da clínica associada
+                    # Registers the data of the logged-in doctor and the associated clinic
+                    # English: data
                     dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
                     logger.info(f"Emissor data linked successfully")
 
                     formulario.save(usuario, medico, processo_id, meds_ids)
                     logger.info(f"Formulario saved successfully")
 
+                    # English: final_pdf_path
                     path_pdf_final = transfere_dados_gerador(dados)
                     logger.info(f"PDF path generated: {path_pdf_final}")
 
@@ -194,23 +303,36 @@ def edicao(request):
             logger.error(f"Traceback: {traceback.format_exc()}")
             messages.error(request, f"Erro no processamento: {str(e)}")
             # Create a new form instance for template rendering when there's an exception
+            # English: initial_data
             dados_iniciais = cria_dict_renovação(processo)
+            # English: initial_data
             dados_iniciais["data_1"] = primeira_data
+            # English: initial_data
             dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
+            # English: initial_data
             dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
+            # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
 
     else:
+        # English: initial_data
         dados_iniciais = cria_dict_renovação(processo)
+        # English: initial_data
         dados_iniciais["data_1"] = primeira_data
+        # English: initial_data
         dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
+        # English: initial_data
         dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
+        # English: form
         formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
     
     # Set up variables needed for template rendering (for both GET and POST with validation errors)
+    # English: conditional_fields
     campos_condicionais = extrair_campos_condicionais(formulario)
+    # English: protocol_link
     link_protocolo = gerar_link_protocolo(cid)
 
+    # English: context
     contexto = {
         "formulario": formulario,
         "processo": processo,
@@ -222,31 +344,58 @@ def edicao(request):
     return render(request, "processos/edicao.html", contexto)
 
 
+# English: quick_renewal
 @login_required
 def renovacao_rapida(request):
+    """Handles the quick renewal process.
+
+    If the request is a GET, it displays a search form for patients. If it's a
+    POST, it either redirects to the edition page or generates a new PDF for
+    the renewal.
+
+    Critique:
+    - The function has a lot of debugging prints, which should be removed
+      in a production environment. Using Python's `logging` module would be
+      a better way to handle debugging information.
+    - The error handling is very broad. It catches any exception and returns
+      a generic error message. It would be better to catch specific exceptions
+      and log them properly to make debugging easier.
+
+    Args:
+        request: The HTTP request.
+
+    Returns:
+        A rendered HTML page, a redirect, or a JSON response.
+    """
     if request.method == "GET":
         try:
             print(f"DEBUG: GET request to renovacao_rapida")
+            # English: search
             busca = request.GET.get("b")
             print(f"DEBUG: busca parameter = '{busca}'")
             
+            # English: user
             usuario = request.user
             print(f"DEBUG: usuario = {usuario}")
             
             request.session["busca"] = busca
             
+            # English: user_patients
             pacientes_usuario = usuario.pacientes.all()
             print(f"DEBUG: pacientes_usuario count = {pacientes_usuario.count()}")
             
             if busca:
+                # English: search_patients
                 busca_pacientes = pacientes_usuario.filter(
                     (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
                 )
             else:
+                # English: search_patients
                 busca_pacientes = pacientes_usuario.none()  # Empty queryset if no search
             
             print(f"DEBUG: busca_pacientes count = {busca_pacientes.count()}")
 
+            # English: context
             contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
             print(f"DEBUG: About to render template")
             return render(request, "processos/renovacao_rapida.html", contexto)
@@ -259,7 +408,9 @@ def renovacao_rapida(request):
             raise
 
     else:
+        # English: process_id
         processo_id = request.POST.get("processo_id")
+        # English: new_date
         nova_data = request.POST.get("data_1")
 
         # Check if user wants to edit the process
@@ -275,9 +426,11 @@ def renovacao_rapida(request):
             print(f"DEBUG: processo_id: {processo_id}")
             print(f"DEBUG: nova_data: {nova_data}")
             
+            # English: data
             dados = gerar_dados_renovacao(nova_data, processo_id)
             print(f"DEBUG: Generated renovation data successfully")
             
+            # English: final_pdf_path
             path_pdf_final = transfere_dados_gerador(dados)
             print(f"DEBUG: transfere_dados_gerador returned: {path_pdf_final}")
             
@@ -315,22 +468,53 @@ def renovacao_rapida(request):
                 messages.error(request, f"Erro interno: {str(e)}")
         
         # On error, recreate the GET context and render the form again (non-AJAX only)
+        # English: search
         busca = request.session.get("busca", "")
+        # English: user
         usuario = request.user
+        # English: user_patients
         pacientes_usuario = usuario.pacientes.all()
+        # English: search_patients
         busca_pacientes = pacientes_usuario.filter(
             (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
         )
+        # English: context
         contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
         return render(request, "processos/renovacao_rapida.html", contexto)
 
 
+# English: registration
 @login_required
 def cadastro(request):
+    """Handles the registration of new medical prescription processes.
+
+    This view implements a complex workflow for creating new Brazilian medical
+    prescriptions:
+    1. Validates session state and user permissions
+    2. Dynamically constructs form based on disease protocol
+    3. Handles both GET (form display) and POST (form processing) requests
+    4. Manages medication data and PDF generation
+
+    The view includes extensive error handling and logging due to the critical
+    nature of medical prescription data and the complexity of the Brazilian SUS
+    system requirements.
+
+    Critique:
+    - This view is very long and complex. It would be better to split it into
+      smaller, more focused functions. For example, the form processing logic
+      could be moved to a separate function.
+    - The error handling is very broad. It catches any exception and returns
+      a generic error message. It would be better to catch specific exceptions
+      and log them properly to make debugging easier.
+    """
     try:
+        # English: user
         usuario = request.user
+        # English: doctor
         medico = seletor_medico(usuario)
+        # English: clinics
         clinicas = medico.clinicas.all()
+        # English: choices
         escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
         
         # Check for required session variables
@@ -342,10 +526,14 @@ def cadastro(request):
             messages.error(request, "CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.")
             return redirect("processos-home")
             
+        # English: patient_exists
         paciente_existe = request.session["paciente_existe"]
+        # English: first_date
         primeira_data = date.today().strftime("%d/%m/%Y")
         cid = request.session["cid"]
+        # English: medications
         medicamentos = listar_med(cid)
+        # English: FormModel
         ModeloFormulario = fabricar_formulario(cid, False)
     except Exception as e:
         messages.error(request, f"Erro ao carregar dados do cadastro: {e}")
@@ -353,20 +541,29 @@ def cadastro(request):
 
     if request.method == "POST":
         try:
+            # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
 
             if formulario.is_valid():
                 try:
+                    # English: form_data
                     dados_formulario = formulario.cleaned_data
+                    # English: clinic_id
                     id_clin = dados_formulario["clinicas"]
+                    # English: clinic
                     clinica = medico.clinicas.get(id=id_clin)
 
+                    # English: registered_medication_ids
                     ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+                    # English: form_data, medication_ids
                     dados_formulario, meds_ids = gera_med_dosagem(
                         dados_formulario, ids_med_cadastrados
                     )
+                    # English: data
                     dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
+                    # English: process_id
                     processo_id = formulario.save(usuario, medico, meds_ids)
+                    # English: final_pdf_path
                     path_pdf_final = transfere_dados_gerador(dados)
 
                     if path_pdf_final:
@@ -389,7 +586,9 @@ def cadastro(request):
         except Exception as e:
             messages.error(request, f"Erro ao processar formulário: {e}")
             # Create a new form instance for template rendering when there's an exception
+            # English: initial_data
             dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
+            # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
     
     # If this is a GET request, create a fresh form
@@ -397,7 +596,9 @@ def cadastro(request):
         try:
             if not usuario.clinicas.exists():
                 return redirect("clinicas-cadastro")
+            # English: initial_data
             dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
+            # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
         except Exception as e:
             messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
@@ -405,9 +606,12 @@ def cadastro(request):
     
     # Setup context for template rendering (works for both GET and POST with errors)
     try:
+        # English: conditional_fields
         campos_condicionais = extrair_campos_condicionais(formulario)
+        # English: protocol_link
         link_protocolo = gerar_link_protocolo(cid)
         
+        # English: context
         contexto = {
             "formulario": formulario,
             "paciente_existe": paciente_existe,
@@ -420,15 +624,22 @@ def cadastro(request):
             if "paciente_id" not in request.session:
                 messages.error(request, "ID do paciente não encontrado na sessão.")
                 return redirect("processos-home")
+            # English: patient_id
             paciente_id = request.session["paciente_id"]
+            # English: patient
             paciente = Paciente.objects.get(id=paciente_id)
             contexto["paciente"] = paciente
             
             # Add conditional fields for existing patient
+            # English: patient_data
             dados_paciente = model_to_dict(paciente)
+            # English: patient_data
             dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+            # English: patient_data
             dados_paciente["cid"] = cid
+            # English: patient_data
             dados_paciente["data_1"] = primeira_data
+            # English: adjusted_fields
             campos_ajustados, _ = ajustar_campos_condicionais(dados_paciente)
             contexto.update(campos_ajustados)
         
@@ -439,9 +650,20 @@ def cadastro(request):
         return redirect("processos-home")
 
 
+# English: pdf
 @login_required
 def pdf(request):
+    """Displays the generated PDF.
+
+    Args:
+        request: The HTTP request.
+
+    Returns:
+        A rendered HTML page with a link to the PDF.
+    """
     if request.method == "GET":
+        # English: pdf_link
         link_pdf = request.session["path_pdf_final"]
+        # English: context
         contexto = {"link_pdf": link_pdf}
         return render(request, "processos/pdf.html", contexto)

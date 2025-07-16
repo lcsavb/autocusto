@@ -43,22 +43,37 @@ def cadastro(request):
 @csrf_protect
 @require_http_methods(["POST"])
 def custom_login(request):
+    """
+    Custom login view that handles AJAX-style login from the home page.
+    
+    This view differs from Django's standard login view in several ways:
+    1. It's designed to work with AJAX requests from the home page
+    2. Uses HTTP_REFERER to redirect back to the originating page
+    3. Provides immediate feedback through Django messages
+    4. Handles authentication without full page reloads
+    
+    The implementation ensures smooth UX for the home page dual-interface
+    (registration/login for visitors, process forms for authenticated users).
+    """
     
     username = request.POST.get('username', '').strip()
     password = request.POST.get('password', '').strip()
     
-    # Check for blank fields
+    # Pre-authentication validation to provide immediate feedback
     if not username or not password:
         messages.error(request, "Por favor, preencha todos os campos.")
         return redirect(request.META.get('HTTP_REFERER', 'home'))
     
-    # Try to authenticate
+    # Attempt authentication using Django's built-in authentication system
     user = authenticate(request, username=username, password=password)
     if user is not None:
+        # Authentication successful - establish session
         login(request, user)
         messages.success(request, "Login realizado com sucesso!")
+        # Redirect back to originating page (usually home) to show authenticated interface
         return redirect(request.META.get('HTTP_REFERER', 'home'))
     else:
+        # Authentication failed - provide user feedback
         messages.error(request, "Email ou senha incorretos.")
         return redirect(request.META.get('HTTP_REFERER', 'home'))
 

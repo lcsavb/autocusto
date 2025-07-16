@@ -9,8 +9,9 @@ logging
 dor_crÔnica 
 recuperacao de senha
 envio de emails
-editar clinicas
 logout redirect
+saving pdfs and removing them
+verify need for changes in db
 
 
 
