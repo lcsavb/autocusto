@@ -3,18 +3,56 @@
 {% load static %}
 
 {% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/processos.css' %}">
+
+<!-- Include PDF Modal -->
+{% include 'components/pdf_modal.html' %}
 
 <div class="container-fluid toast-enabled">
   <form method="POST" novalidate> {% csrf_token %}
 
-    
     <div class="card rounded" style="padding: 1.5rem;">
 
-      <div><h3>{{ processo.paciente.nome_paciente }} - {{ processo.doenca.cid }}</h3></div><hr>
-
-      <div class="form-row">
-        <div class="col-sm-2"> {{ formulario.edicao_completa|as_crispy_field }} </div>
-          <div class="col-sm-2"> {{ formulario.data_1|as_crispy_field }} </div>
+      <!-- Compact Process Header with Inline Controls -->
+      <div class="process-header">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <h4>
+              <span class="oi oi-document mr-2"></span>
+              Edição de Processo
+            </h4>
+            <p class="subtitle">
+              <span class="oi oi-person mr-1"></span>
+              {{ processo.paciente.nome_paciente }} - 
+              <span class="oi oi-medical-cross mr-1 ml-1"></span>
+              {{ processo.doenca.cid }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <div class="header-controls justify-content-end">
+              <!-- Protocol Consultation Link -->
+              <button type="button" class="protocol-link" 
+                      @click="$dispatch('open-pdf', { 
+                        url: '{{ link_protocolo }}', 
+                        title: 'Protocolo - {{ processo.doenca.cid }}',
+                        allowDownload: true 
+                      })">
+                <span class="oi oi-document mr-1"></span>
+                Consultar Protocolo
+              </button>
+              <!-- Compact Edition Mode -->
+              <div class="edition-badge">
+                <span class="oi oi-warning mr-1"></span>
+                {{ formulario.edicao_completa|as_crispy_field }}
+              </div>
+              <!-- Compact Date -->
+              <div class="date-badge">
+                <span class="oi oi-calendar mr-1"></span>
+                {{ formulario.data_1|as_crispy_field }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {% include 'processos/docs_adicionais.html' %}
@@ -22,95 +60,117 @@
             <!-- Medicamentos -->
       {% include 'processos/form_med.html' %}
 
-      <!-- Dados que são geralmente repetidos -->
-      <div class="d-none" id="dados-repetidos">
-            <div class="form-row">
-              <div class="col-10"> {{ formulario.clinicas|as_crispy_field }} </div>
-            </div>
+      <!-- Organized Form Sections -->
       
-  
-      <div class="form-row">
-          <div class="col-2">{{ formulario.cid|as_crispy_field }}</div>
-          <div class="col-10">{{ formulario.diagnostico|as_crispy_field }}</div>
-      </div>
-  
-      <div class="form-row">
-              <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
-      </div>
-  
-  
-      <div class="form-row">
-              <div class="col-3">{{ formulario.tratou|as_crispy_field }}</div>
-              <div class="col-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
-      </div>
-  
-      <div class="form-row">
-          <div class="col-md-2"> {{ formulario.preenchido_por|as_crispy_field }}</div>
-          
-          <div class="col-md-2 campo-18 d-none"> {{ formulario.etnia|as_crispy_field }}</div>
-          <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone1_paciente|as_crispy_field }}</div>
-          <div class="col-md-2 campo-18 d-none"> {{ formulario.telefone2_paciente|as_crispy_field }}</div>
-          <div class="col-md-4 campo-18 d-none"> {{ formulario.email_paciente|as_crispy_field }}</div>
-      </div>
-
-    <div class="form-row">
-        <div class="col-sm-2"> {{ formulario.cpf_paciente|as_crispy_field }} </div>
-    </div>
-
-     <div class="form-row">
-                 
-        <div class="col-10"> {{ formulario.nome_paciente|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.altura|as_crispy_field }}</div>
-        
-    </div>
-
-    <div class="form-row">
-        <div class="col-10"> {{ formulario.nome_mae|as_crispy_field }}</div>
-        <div class="col-2"> {{ formulario.peso|as_crispy_field }}</div>
-    </div>
-
-    <div class="form-row">
-        <div class="col-12"> {{ formulario.end_paciente|as_crispy_field }}</div>
-    </div>
-
-
-    <div class="form-row">
-            <div class="col-3">{{ formulario.incapaz|as_crispy_field }}</div>
-            <div class="col-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
-    </div>
-
-
-          <!-- Campos condicionais -->
-
-          {% if campos_condicionais %}
-          {% include 'processos/campos_condicionais.html' %}
-          {% endif %}
-
-          <!-- Fim dos campos condicionais -->
-
-    <!-- Fim dos dados geralmente repetidos -->
-  </div>
-
-
-
-    <div class="form-row">      
-            <button class="btn btn-outline-info" type="submit">Renovar</button>
+      <!-- Process Data Section (hidden by default) -->
+      <div class="d-none" id="dados-repetidos">
+        <div class="section-card">
+          <div class="section-header">
+            <span class="oi oi-cog mr-2"></span>
+            Dados da Clínica
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-12">{{ formulario.clinicas|as_crispy_field }}</div>
+            </div>
+          </div>
         </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <span class="oi oi-medical-cross mr-2"></span>
+            Diagnóstico e Anamnese
+          </div>
+          <div class="section-body">
+            <div class="row mb-3">
+              <div class="col-md-2">{{ formulario.cid|as_crispy_field }}</div>
+              <div class="col-md-10">{{ formulario.diagnostico|as_crispy_field }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-12">{{ formulario.anamnese|as_crispy_field }}</div>
+            </div>
+            <div class="row">
+              <div class="col-md-3">{{ formulario.tratou|as_crispy_field }}</div>
+              <div class="col-md-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <span class="oi oi-person mr-2"></span>
+            Dados do Paciente
+          </div>
+          <div class="section-body">
+            <div class="row mb-3">
+              <div class="col-md-3">{{ formulario.preenchido_por|as_crispy_field }}</div>
+              <div class="col-md-2 campo-18 d-none">{{ formulario.etnia|as_crispy_field }}</div>
+              <div class="col-md-2 campo-18 d-none">{{ formulario.telefone1_paciente|as_crispy_field }}</div>
+              <div class="col-md-2 campo-18 d-none">{{ formulario.telefone2_paciente|as_crispy_field }}</div>
+              <div class="col-md-3 campo-18 d-none">{{ formulario.email_paciente|as_crispy_field }}</div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-3">{{ formulario.cpf_paciente|as_crispy_field }}</div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-8">{{ formulario.nome_paciente|as_crispy_field }}</div>
+              <div class="col-md-4">{{ formulario.altura|as_crispy_field }}</div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-8">{{ formulario.nome_mae|as_crispy_field }}</div>
+              <div class="col-md-4">{{ formulario.peso|as_crispy_field }}</div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-12">{{ formulario.end_paciente|as_crispy_field }}</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3">{{ formulario.incapaz|as_crispy_field }}</div>
+              <div class="col-md-9 d-none" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Conditional Fields Section -->
+      {% if campos_condicionais %}
+      <div class="section-card">
+        <div class="section-header">
+          <span class="oi oi-list mr-2"></span>
+          Campos Específicos da Doença
+        </div>
+        <div class="section-body">
+          {% include 'processos/campos_condicionais.html' %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Submit Section -->
+      <div class="submit-section">
+        <button class="btn btn-submit-process" type="submit">
+          <span class="oi oi-check mr-2"></span>
+          Renovar Processo
+        </button>
+        <p class="text-muted mt-2 mb-0">
+          <small>Clique para finalizar a edição do processo</small>
+        </p>
+      </div>
     </div>    
 
   </form>
 </div>
 
-      <!-- Consulta de protocolo -->
-      {% include 'processos/consulta_protocolo.html' %}
-
-
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'js/pdf-modal.js' %}"></script>
 <script src="{% static 'processos/js/processo.js' %}"></script>
 <script src="{% static 'processos/js/processoEdit.js' %}"></script>
 <script src="{% static 'processos/js/documentosAdicionais.js' %}"></script>
 <script src="{% static 'processos/js/emitirExames.js' %}"></script>
-<script src="{% static 'processos/js/mostrarProtocolo.js' %}"></script>
 {% endblock %}

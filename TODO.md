@@ -12,9 +12,8 @@ logout redirect
 verify need for changes in db
 verificar 1 vez bug
 med validaion error when adding/removing med
-add new process error 500
-
-
+consulta protocolo not opening the modal
+emissao de exames / relatorio not being attached
 
 roadmap
 Finish front/backend test coverage
