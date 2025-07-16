@@ -6,10 +6,13 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
+    # English: initial
     initial = True
 
+    # English: dependencies
     dependencies = []
 
+    # English: operations
     operations = [
         migrations.CreateModel(
             name="Clinica",
@@ -23,13 +26,21 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                # English: clinic_name
                 ("nome_clinica", models.CharField(max_length=200)),
+                # English: clinic_cns
                 ("cns_clinica", models.CharField(max_length=7)),
+                # English: street_address
                 ("logradouro", models.CharField(max_length=200)),
+                # English: street_number
                 ("logradouro_num", models.CharField(max_length=6)),
+                # English: city
                 ("cidade", models.CharField(max_length=30)),
+                # English: neighborhood
                 ("bairro", models.CharField(max_length=30)),
+                # English: zip_code
                 ("cep", models.CharField(max_length=9)),
+                # English: clinic_phone
                 ("telefone_clinica", models.CharField(max_length=13)),
             ],
         ),

@@ -120,11 +120,14 @@ def cadastro(request):
     return render(request, "clinicas/cadastro.html", contexto)
 
 
+# English: list_clinics
 @login_required
 def list_clinics(request):
     """Return user's clinics as JSON for dropdown population"""
     try:
+        # English: user
         user = request.user
+        # English: clinics
         clinics = Clinica.objects.filter(usuarios=user).values('id', 'nome_clinica', 'cns_clinica')
         return JsonResponse(list(clinics), safe=False)
     except Exception as e:
@@ -132,13 +135,17 @@ def list_clinics(request):
         return JsonResponse({'error': 'Erro ao carregar clínicas'}, status=500)
 
 
+# English: get_clinic
 @login_required
 def get_clinic(request, clinic_id):
     """Return clinic data as JSON for editing"""
     try:
+        # English: user
         user = request.user
+        # English: clinic
         clinic = get_object_or_404(Clinica, id=clinic_id, usuarios=user)
         
+        # English: data
         data = {
             'id': clinic.id,
             'nome_clinica': clinic.nome_clinica,

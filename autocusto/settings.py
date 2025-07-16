@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# English: base_directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -20,16 +21,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# English: secret_key
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# English: debug
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
+# English: allowed_hosts
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1 [::1]').split()
 
 
 # SERVER CHOICE
 
+# English: server
 SERVER = os.environ.get("SERVER")
 
 # Application definition

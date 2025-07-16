@@ -6,13 +6,16 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
+    # English: initial
     initial = True
 
+    # English: dependencies
     dependencies = [
         ("medicos", "0001_initial"),
         ("clinicas", "0001_initial"),
     ]
 
+    # English: operations
     operations = [
         migrations.AddField(
             model_name="emissor",

@@ -7,14 +7,17 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
+    # English: initial
     initial = True
 
+    # English: dependencies
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("clinicas", "0003_auto_20200228_1704"),
         ("medicos", "0001_initial"),
     ]
 
+    # English: operations
     operations = [
         migrations.AddField(
             model_name="clinicausuario",

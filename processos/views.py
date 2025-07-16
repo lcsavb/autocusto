@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
 from processos.models import Processo, Doenca
-from .forms (
+from .forms import (
     mostrar_med,
     ajustar_campos_condicionais,
     extrair_campos_condicionais,
     fabricar_formulario,
 )
-from .dados (
+from .dados import (
     cria_dict_renovação,
     gerar_dados_renovacao,
     vincula_dados_emissor,
@@ -231,6 +231,12 @@ def edicao(request):
 
     if request.method == "POST":
         logger.info("Processing POST request")
+        
+        # DEBUG: Print all field names received in POST request
+        logger.info("=== DEBUG: POST Request Fields ===")
+        for field_name, field_value in request.POST.items():
+            logger.info(f"Field: {field_name} = {field_value}")
+        logger.info("=== END DEBUG ===")
         
         try:
             # English: form

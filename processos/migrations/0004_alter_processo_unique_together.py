@@ -5,13 +5,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
+    # English: dependencies
     dependencies = [
         ('pacientes', '0003_alter_paciente_id'),
         ('processos', '0003_alter_doenca_id_alter_medicamento_id_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
+    # English: operations
     operations = [
         migrations.AlterUniqueTogether(
             name='processo',

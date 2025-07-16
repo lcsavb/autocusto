@@ -8,9 +8,26 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
 
+# English: PatientRegistrationForm
 class PacienteCadastroFormulario(forms.ModelForm):
+    """Form for registering new patients.
+
+    This form is a Django ModelForm, which simplifies the process of creating
+    forms that interact directly with a model. It uses `crispy_forms` for
+    rendering, providing a cleaner and more customizable form layout.
+
+    Critique:
+    - The form explicitly sets `form_show_errors` and `error_text_inline` to
+      `False`. While this might be intended for custom error display, it can
+      make debugging form validation issues harder if not handled properly in
+      the templates.
+    - The loop to add `form-control` class to all fields is a common pattern
+      with `crispy_forms`, but it could be more concisely handled by setting
+      a default template pack or using a custom layout in `FormHelper`.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # English: helper
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.attrs = {'novalidate': True}
@@ -24,5 +41,7 @@ class PacienteCadastroFormulario(forms.ModelForm):
                 field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
 
     class Meta:
+        # English: model
         model = Paciente
+        # English: fields
         fields = ["nome_paciente", "nome_mae", "cpf_paciente"]

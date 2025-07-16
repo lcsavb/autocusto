@@ -385,6 +385,62 @@ class NovoProcesso(forms.Form):
         widget=forms.Textarea(attrs={"class": "exames", "rows": "6"}),
     )
 
+    def clean(self):
+        """
+        Custom form validation that handles medications not submitted in POST request.
+        This includes both removed medications and blank medications, as both have their
+        name attributes removed by frontend JavaScript before form submission.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info("=== DEBUG: Form validation starting ===")
+        logger.info(f"Form errors before custom validation: {dict(self.errors)}")
+        
+        cleaned_data = super().clean()
+        
+        # Check which medications were actually submitted
+        submitted_fields = set(self.data.keys()) if self.data else set()
+        logger.info(f"Submitted fields: {submitted_fields}")
+        
+        # Skip validation for medications not submitted (removed or blank)
+        for i in range(1, 5):
+            med_id_field = f"id_med{i}"
+            logger.info(f"Checking medication {i}: {med_id_field}")
+            
+            if med_id_field not in submitted_fields:
+                logger.info(f"Medication {i} not submitted, removing validation errors")
+                # This medication was not submitted, skip its validation
+                
+                # Remove errors for main medication fields
+                if med_id_field in self.errors:
+                    logger.info(f"Removing error for {med_id_field}")
+                    del self.errors[med_id_field]
+                
+                repetir_field = f"med{i}_repetir_posologia"
+                if repetir_field in self.errors:
+                    logger.info(f"Removing error for {repetir_field}")
+                    del self.errors[repetir_field]
+                
+                # Remove errors for dosage and quantity fields
+                for month in range(1, 7):
+                    posologia_field = f"med{i}_posologia_mes{month}"
+                    qtd_field = f"qtd_med{i}_mes{month}"
+                    
+                    if posologia_field in self.errors:
+                        logger.info(f"Removing error for {posologia_field}")
+                        del self.errors[posologia_field]
+                    if qtd_field in self.errors:
+                        logger.info(f"Removing error for {qtd_field}")
+                        del self.errors[qtd_field]
+            else:
+                logger.info(f"Medication {i} was submitted: {self.data.get(med_id_field)}")
+        
+        logger.info(f"Form errors after custom validation: {dict(self.errors)}")
+        logger.info("=== DEBUG: Form validation complete ===")
+        
+        return cleaned_data
+
     @transaction.atomic
     def save(self, usuario, medico, meds_ids):
         dados = self.cleaned_data

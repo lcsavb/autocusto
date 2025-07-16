@@ -7,8 +7,11 @@ from clinicas.models import Clinica, Emissor
 
 
 class Medicamento(models.Model):
+    # English: name
     nome = models.CharField(max_length=600)
+    # English: dosage
     dosagem = models.CharField(max_length=100, blank=True)
+    # English: presentation
     apres = models.CharField(max_length=600, blank=True)
 
     def __str__(self):
@@ -16,9 +19,13 @@ class Medicamento(models.Model):
 
 
 class Protocolo(models.Model):
+    # English: name
     nome = models.CharField(max_length=600)
+    # English: file
     arquivo = models.CharField(max_length=600)
+    # English: medications
     medicamentos = models.ManyToManyField(Medicamento)
+    # English: conditional_data
     dados_condicionais = JSONField(null=True)
 
     def __str__(self):

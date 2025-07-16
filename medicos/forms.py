@@ -15,6 +15,31 @@ from crispy_forms.layout import Submit
 
 
 class MedicoCadastroFormulario(CustomUserCreationForm):
+    """Form for registering new medical accounts.
+
+    This form extends Django's `CustomUserCreationForm` to handle the registration
+    of new doctors. It includes fields specific to a doctor's profile (name, CRM, CNS)
+    and custom validation rules for these fields, as well as for email and password
+    confirmation. It uses `crispy_forms` for rendering.
+
+    Critique:
+    - The form explicitly defines `nome`, `crm`, `cns`, and `email2` as `forms.CharField`
+      or `forms.EmailField`. While this is functional, for fields directly mapping to a
+      model, using `Meta` class and `fields` attribute is generally more concise and
+      less error-prone. Custom validation can still be done via `clean_field_name` methods.
+    - The `__init__` method contains a lot of manual configuration for `crispy_forms`
+      and error messages. Some of this could potentially be streamlined by using a
+      custom `FormHelper` class or by defining default error messages in the model
+      fields themselves.
+    - The `clean_password2` and `clean_email2` methods are good for confirming inputs.
+    - The `clean_email`, `clean_crm`, and `clean_cns` methods perform validation that
+      could potentially be moved to model-level validation or custom validators for
+      better reusability and separation of concerns.
+    - The `save` method handles the creation of both `Usuario` and `Medico` objects
+      within a single atomic transaction, which is good for data integrity. However,
+      the commented-out `clinica` creation suggests incomplete or evolving logic.
+    """
+    # English: name
     nome = forms.CharField(
         max_length=200, 
         label="Nome completo",
@@ -23,6 +48,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
             'max_length': 'Nome deve ter no máximo 200 caracteres.'
         }
     )
+    # English: crm
     crm = forms.CharField(
         max_length=10, 
         label="CRM",
@@ -31,6 +57,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
             'max_length': 'CRM deve ter no máximo 10 caracteres.'
         }
     )
+    # English: cns
     cns = forms.CharField(
         max_length=15, 
         label="Cartão Nacional de Saúde (CNS)",
@@ -39,6 +66,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
             'max_length': 'CNS deve ter no máximo 15 caracteres.'
         }
     )
+    # English: email2
     email2 = forms.EmailField(
         label="Confirmar email",
         error_messages={
@@ -51,6 +79,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         super().__init__(*args, **kwargs)
         
         # Configure Crispy Forms helper
+        # English: helper
         self.helper = FormHelper()
         self.helper.form_method = "POST"
         self.helper.attrs = {'novalidate': True}
@@ -88,51 +117,68 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
                 field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
 
     class Meta(CustomUserCreationForm.Meta):
+        # English: model
         model = Usuario
+        # English: fields
         fields = ["nome", "crm", "cns", "email", "email2", "password1", "password2"]
 
+    # English: clean_password2
     def clean_password2(self):
         """Validate that the two password entries match."""
+        # English: password1
         password1 = self.cleaned_data.get("password1")
+        # English: password2
         password2 = self.cleaned_data.get("password2")
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("As senhas não coincidem.")
         return password2
 
+    # English: clean_email2
     def clean_email2(self):
         """Validate that the two email entries match."""
+        # English: email1
         email1 = self.cleaned_data.get("email")
+        # English: email2
         email2 = self.cleaned_data.get("email2")
         if email1 and email2 and email1 != email2:
             raise forms.ValidationError("Os emails não coincidem.")
         return email2
 
+    # English: clean_email
     def clean_email(self):
         """Validate that the email is unique."""
+        # English: email
         email = self.cleaned_data.get("email")
         if email and Usuario.objects.filter(email=email).exists():
             raise forms.ValidationError("Este email já está em uso.")
         return email
 
+    # English: clean_crm
     def clean_crm(self):
         """Validate CRM format."""
+        # English: crm
         crm = self.cleaned_data.get("crm")
         if crm and not crm.isdigit():
             raise forms.ValidationError("CRM deve conter apenas números.")
         return crm
 
+    # English: clean_cns
     def clean_cns(self):
         """Validate CNS format."""
+        # English: cns
         cns = self.cleaned_data.get("cns")
         if cns and (not cns.isdigit() or len(cns) != 15):
             raise forms.ValidationError("CNS deve conter exatamente 15 números.")
         return cns
 
+    # English: save
     @transaction.atomic
     def save(self):
+        # English: user
         usuario = super().save(commit=False)
         usuario.is_medico = True
         usuario.save()
+        # English: doctor
         medico = Medico(
             cns_medico=self.cleaned_data["cns"],
             crm_medico=self.cleaned_data["crm"],

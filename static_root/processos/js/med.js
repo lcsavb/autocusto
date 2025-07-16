@@ -2,42 +2,41 @@
     const addMed = document.querySelector('#add-med');
 
     addMed.addEventListener('click', function (event) {
-        const medSel = document.querySelector('#medicamentos-tab').children;
-        const listaMedSel = Array.from(medSel);
+        event.preventDefault();
+        
+        // Get all medication tabs (a elements)
+        const medTabs = document.querySelectorAll('#medicamentos-tab a[id$="-tab"]');
         const medicamento = document.querySelector('#medicamentos').children;
         const listaMedicamentos = Array.from(medicamento);
-        for (let n = 0; n < 5; n++) {
-            if (medSel[n].classList.contains('d-none')) {
-                event.preventDefault();
-                const medicamentoVinculado = document.querySelector(`#medicamento-${n}`);
+        
+        for (let n = 0; n < medTabs.length; n++) {
+            const currentTab = medTabs[n];
+            if (currentTab.classList.contains('d-none')) {
+                const medicamentoVinculado = document.querySelector(`#medicamento-${n + 1}`);
 
-
-                listaMedSel.forEach(element => {
-                    if (element !== medSel[n]) {
-                        element.classList.remove('active');
-                        medicamentoVinculado.classList.remove('active');
-                        medicamentoVinculado.classList.remove('show');
-
-                    }
-                    listaMedicamentos.forEach(element => {
-                        if (element !== medicamentoVinculado) {
-                            element.classList.remove('active');
-                            element.classList.remove('show');
-                        }
-
-                    })
-
+                // Remove active class from all tabs and contents
+                medTabs.forEach(tab => {
+                    tab.classList.remove('active');
                 });
-                medSel[n].classList.remove('d-none');
-                medSel[n].classList.add('active');
-                medicamento[n].classList.toggle('active');
-                medicamento[n].classList.toggle('show');
+                
+                listaMedicamentos.forEach(element => {
+                    element.classList.remove('active');
+                    element.classList.remove('show');
+                });
 
+                // Show and activate the new medication
+                currentTab.classList.remove('d-none');
+                currentTab.classList.add('active');
+                medicamentoVinculado.classList.add('active');
+                medicamentoVinculado.classList.add('show');
+                
+                // Show remove button for this medication (except for med 1 which is always required)
+                if (n > 0) {
+                    const removeButton = document.querySelector(`[data-med="${n + 1}"].remove-med`);
+                    if (removeButton) removeButton.classList.remove('d-none');
+                }
 
                 break;
-            }
-            else {
-                event.preventDefault();
             }
         }
     });
@@ -89,6 +88,118 @@
     repetirPosologia(3);
     repetirPosologia(4);
     repetirPosologia(5);
+
+    // Handle manual tab switching
+    const medicationTabs = document.querySelectorAll('#medicamentos-tab a[id$="-tab"]');
+    
+    medicationTabs.forEach(tab => {
+        tab.addEventListener('click', function(event) {
+            event.preventDefault();
+            
+            // Remove active class from all tabs and contents
+            medicationTabs.forEach(t => t.classList.remove('active'));
+            const allContents = document.querySelectorAll('#medicamentos .tab-pane');
+            allContents.forEach(content => {
+                content.classList.remove('active', 'show');
+            });
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Show corresponding content
+            const targetId = this.getAttribute('href').substring(1);
+            const targetContent = document.querySelector(`#${targetId}`);
+            if (targetContent) {
+                targetContent.classList.add('active', 'show');
+            }
+        });
+    });
+
+    // Remove medication functionality
+    const removeMedButtons = document.querySelectorAll('.remove-med');
+    
+    removeMedButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            const medNumber = this.getAttribute('data-med');
+            removeMedication(medNumber);
+        });
+    });
+
+    function removeMedication(medNumber) {
+        // Get the tab and content elements
+        const tabElement = document.querySelector(`#medicamento-${medNumber}-tab`);
+        const contentElement = document.querySelector(`#medicamento-${medNumber}`);
+        
+        // Check if this was the active tab before removing classes
+        const wasActive = tabElement.classList.contains('active');
+        
+        // Hide the tab and content
+        tabElement.classList.add('d-none');
+        tabElement.classList.remove('active');
+        contentElement.classList.remove('active', 'show');
+        
+        // Hide remove button
+        const removeButton = document.querySelector(`[data-med="${medNumber}"].remove-med`);
+        if (removeButton) removeButton.classList.add('d-none');
+        
+        // Clear all form fields for this medication
+        clearMedicationFields(medNumber);
+        
+        // If this was the active tab, switch to the first visible tab
+        if (wasActive) {
+            switchToFirstVisibleTab();
+        }
+    }
+
+    function clearMedicationFields(medNumber) {
+        // Clear medication selection
+        const medSelect = document.querySelector(`#id_med${medNumber}`);
+        if (medSelect) medSelect.value = '';
+        
+        // Clear via field
+        const viaField = document.querySelector(`#id_med${medNumber}_via`);
+        if (viaField) viaField.value = '';
+        
+        // Clear repeat posology checkbox
+        const repeatCheckbox = document.querySelector(`#id_med${medNumber}_repetir_posologia`);
+        if (repeatCheckbox) repeatCheckbox.checked = false;
+        
+        // Clear all month fields
+        for (let month = 1; month <= 6; month++) {
+            const posologyField = document.querySelector(`#id_med${medNumber}_posologia_mes${month}`);
+            const quantityField = document.querySelector(`#id_qtd_med${medNumber}_mes${month}`);
+            
+            if (posologyField) posologyField.value = '';
+            if (quantityField) quantityField.value = '';
+        }
+        
+        // Hide optional posology fields
+        const optionalDiv = document.querySelector(`#posologias-opcionais-med${medNumber}`);
+        if (optionalDiv) optionalDiv.classList.add('d-none');
+    }
+
+    function switchToFirstVisibleTab() {
+        const tabs = document.querySelectorAll('#medicamentos-tab .nav-link');
+        const contents = document.querySelectorAll('#medicamentos .tab-pane');
+        
+        // First remove active class from all tabs and contents
+        tabs.forEach(tab => tab.classList.remove('active'));
+        contents.forEach(content => content.classList.remove('active', 'show'));
+        
+        // Find first visible tab and activate it
+        for (let tab of tabs) {
+            if (!tab.classList.contains('d-none') && tab.id !== 'add-med') {
+                tab.classList.add('active');
+                const tabTarget = tab.getAttribute('href').substring(1);
+                const targetContent = document.querySelector(`#${tabTarget}`);
+                if (targetContent) {
+                    targetContent.classList.add('active', 'show');
+                }
+                break;
+            }
+        }
+    }
 
 
 })();

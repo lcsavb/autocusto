@@ -10,12 +10,37 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login
 
 
+# English: registration
 @transaction.atomic
 def cadastro(request):
+    """Handles the registration of new medical accounts.
+
+    This view processes the form submission for creating a new doctor's account.
+    If the form is valid, it saves the new user and redirects to the login page.
+    Otherwise, it displays error messages.
+
+    Critique:
+    - The error handling for form validation iterates through `formulario.errors.items()`
+      and adds each error as a separate message. While functional, Django's form
+      rendering often handles displaying field-specific errors directly in the template,
+      making these `messages.error` calls potentially redundant or leading to duplicate
+      error displays.
+    - The `referer` logic to redirect back to 'home' if not coming from 'cadastro'
+      might be overly complex. A simpler approach could be to always redirect to a
+      specific success/failure page or to re-render the form with errors.
+
+    Args:
+        request: The HTTP request.
+
+    Returns:
+        A rendered HTML page or a redirect.
+    """
     if request.method == "POST":
+        # English: form
         formulario = MedicoCadastroFormulario(request.POST)
         if formulario.is_valid():
             formulario.save()
+            # English: name
             nome = formulario.cleaned_data.get("nome")
             messages.success(
                 request, f"Conta médica criada para {nome}! Você já pode fazer o login."
@@ -27,10 +52,12 @@ def cadastro(request):
                 for error in errors:
                     messages.error(request, error)
             # If this came from home page, redirect back with errors
+            # English: referer
             referer = request.META.get('HTTP_REFERER', '')
             if referer and 'cadastro' not in referer:
                 return redirect("home")
     else:
+        # English: form
         formulario = MedicoCadastroFormulario()
     
     return render(
@@ -40,6 +67,7 @@ def cadastro(request):
     )
 
 
+# English: custom_login
 @csrf_protect
 @require_http_methods(["POST"])
 def custom_login(request):
@@ -56,7 +84,9 @@ def custom_login(request):
     (registration/login for visitors, process forms for authenticated users).
     """
     
+    # English: username
     username = request.POST.get('username', '').strip()
+    # English: password
     password = request.POST.get('password', '').strip()
     
     # Pre-authentication validation to provide immediate feedback
@@ -65,6 +95,7 @@ def custom_login(request):
         return redirect(request.META.get('HTTP_REFERER', 'home'))
     
     # Attempt authentication using Django's built-in authentication system
+    # English: user
     user = authenticate(request, username=username, password=password)
     if user is not None:
         # Authentication successful - establish session
@@ -78,6 +109,7 @@ def custom_login(request):
         return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
+# English: profile
 @login_required
 def perfil(request):
     return render(request, "medicos/perfil.html")

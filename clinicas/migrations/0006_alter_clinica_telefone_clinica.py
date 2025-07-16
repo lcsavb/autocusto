@@ -5,10 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    # English: dependencies
     dependencies = [
         ("clinicas", "0005_alter_clinica_id_alter_clinicausuario_id_and_more"),
     ]
 
+    # English: operations
     operations = [
         migrations.AlterField(
             model_name="clinica",

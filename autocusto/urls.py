@@ -20,6 +20,7 @@ from . import views
 from django.conf.urls.static import static
 from django.conf import settings
 
+# English: url_patterns
 urlpatterns = [
     path("", views.home, name="home"),
     path("privacidade/", views.privacy_policy, name="privacy-policy"),
@@ -32,5 +33,9 @@ urlpatterns = [
     path("solicitar-funcionalidade/", views.solicitar_funcionalidade, name="solicitar-funcionalidade"),
 ]
 
+# Serve static files in development
+# English: debug
 if settings.DEBUG:
+    # English: static_url
+    # English: static_root
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
