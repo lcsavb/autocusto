@@ -12,6 +12,7 @@ document.addEventListener('alpine:init', () => {
     showDownload: true,
     
     openPdf(url, modalTitle = 'Documento PDF', allowDownload = true) {
+      console.log('[DEBUG] openPdf called', { url, modalTitle, allowDownload });
       this.pdfUrl = url;
       this.title = modalTitle;
       this.showDownload = allowDownload;

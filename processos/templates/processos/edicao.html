@@ -31,15 +31,21 @@
           <div class="col-md-6">
             <div class="header-controls justify-content-end">
               <!-- Protocol Consultation Link -->
-              <button type="button" class="protocol-link" 
-                      @click="$dispatch('open-pdf', { 
-                        url: '{{ link_protocolo }}', 
-                        title: 'Protocolo - {{ processo.doenca.cid }}',
-                        allowDownload: true 
-                      })">
-                <span class="oi oi-document mr-1"></span>
-                Consultar Protocolo
-              </button>
+              <div x-data>
+                <button type="button" class="protocol-link" 
+                        @click="console.log('[DEBUG] Consultar Protocolo clicked', {
+                          url: '{{ link_protocolo }}',
+                          title: 'Protocolo - {{ processo.doenca.cid }}',
+                          allowDownload: true
+                        }); $dispatch('open-pdf', { 
+                          url: '{{ link_protocolo }}', 
+                          title: 'Protocolo - {{ processo.doenca.cid }}',
+                          allowDownload: true 
+                        })">
+                  <span class="oi oi-document mr-1"></span>
+                  Consultar Protocolo
+                </button>
+              </div>
               <!-- Compact Edition Mode -->
               <div class="edition-badge">
                 <span class="oi oi-warning mr-1"></span>
