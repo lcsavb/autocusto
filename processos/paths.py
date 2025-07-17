@@ -2,6 +2,26 @@
 # Paths básicos
 # English: PATH_LME_BASE
 # PATH_LME_BASE = os.path.join(BASE_DIR, 'static_root', 'lme_base_modelo.pdf')
+
+# SECURITY FIX: Secure PDF generation directory (not publicly accessible)
+# English: PATH_SECURE_PDF_DIR
+def get_secure_pdf_path():
+    """Returns the secure path for PDF generation with debug logging."""
+    from django.conf import settings
+    import os
+    
+    secure_path = os.path.join(settings.BASE_DIR, "processos", "pdf")
+    print(f"DEBUG: Secure PDF path configured as: {secure_path}")
+    print(f"DEBUG: Secure PDF path exists: {os.path.exists(secure_path)}")
+    
+    # Ensure directory exists
+    os.makedirs(secure_path, exist_ok=True)
+    print(f"DEBUG: Created secure PDF directory: {secure_path}")
+    
+    return secure_path
+
+PATH_SECURE_PDF_DIR = get_secure_pdf_path()
+
 # English: PATH_EXAMS
 PATH_EXAMES = "static_root/processos/exames_base_modelo.pdf"
 # English: PATH_REPORT

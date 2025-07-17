@@ -2,12 +2,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.forms.models import model_to_dict
 from django.db import IntegrityError
 from datetime import date
 import logging
 import traceback
+import os
+import mimetypes
 
 logger = logging.getLogger(__name__)
 from medicos.seletor import medico as seletor_medico
@@ -677,3 +679,87 @@ def pdf(request):
         # English: context
         contexto = {"link_pdf": link_pdf}
         return render(request, "processos/pdf.html", contexto)
+
+
+# English: serve_pdf
+@login_required
+def serve_pdf(request, filename):
+    """Serves PDF files securely with authentication and authorization.
+    
+    This view replaces the public static file serving for PDF files.
+    It ensures that only authenticated users can access PDFs and that
+    they can only access PDFs they are authorized to view.
+    
+    Args:
+        request: The HTTP request.
+        filename: The PDF filename to serve.
+    
+    Returns:
+        HttpResponse: The PDF file content with proper headers.
+        
+    Raises:
+        Http404: If file doesn't exist or user lacks permission.
+    """
+    try:
+        # Validate filename format for security
+        if not filename.endswith('.pdf'):
+            raise Http404("Invalid file type")
+        
+        # Basic filename validation to prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            raise Http404("Invalid filename")
+        
+        # Build secure file path
+        from django.conf import settings
+        file_path = os.path.join(settings.BASE_DIR, 'processos', 'pdf', filename)
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            logger.warning(f"PDF file not found: {file_path}")
+            raise Http404("PDF file not found")
+        
+        # Authorization check - verify user has access to this PDF
+        user = request.user
+        
+        # Extract patient CPF from filename (format: pdf_final_CPF_CID.pdf)
+        try:
+            # Parse filename to extract CPF
+            base_name = filename.replace('.pdf', '')
+            if base_name.startswith('pdf_final_'):
+                parts = base_name.split('_')
+                if len(parts) >= 3:
+                    patient_cpf = parts[2]  # CPF is the 3rd part
+                    
+                    # Check if user has access to this patient
+                    if not user.pacientes.filter(cpf_paciente=patient_cpf).exists():
+                        logger.warning(f"User {user.username} attempted to access PDF for unauthorized patient: {patient_cpf}")
+                        raise Http404("Access denied")
+                else:
+                    logger.warning(f"Invalid PDF filename format: {filename}")
+                    raise Http404("Invalid filename format")
+            else:
+                logger.warning(f"Unrecognized PDF filename pattern: {filename}")
+                raise Http404("Invalid filename format")
+                
+        except Exception as e:
+            logger.error(f"Error parsing filename {filename}: {e}")
+            raise Http404("Invalid filename")
+        
+        # Serve the file
+        try:
+            with open(file_path, 'rb') as pdf_file:
+                response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'inline; filename="{filename}"'
+                response['X-Content-Type-Options'] = 'nosniff'
+                response['X-Frame-Options'] = 'SAMEORIGIN'
+                return response
+                
+        except Exception as e:
+            logger.error(f"Error serving PDF file {file_path}: {e}")
+            raise Http404("Error serving PDF")
+            
+    except Http404:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in serve_pdf: {e}")
+        raise Http404("Server error")

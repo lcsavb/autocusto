@@ -7,6 +7,7 @@ import pypdftk
 from django.conf import settings
 
 from processos.models import Protocolo, Medicamento
+from processos.paths import PATH_SECURE_PDF_DIR
 
 PATH_EXAMES = settings.PATH_EXAMES
 
@@ -57,16 +58,17 @@ def preencher_formularios(lista_pdfs, dados_finais):
         aleatorio = str(random.randint(0, 10000000000)) + dados_finais["cns_medico"]
         # English: output_pdf
         output_pdf = os.path.join(
-            settings.STATIC_ROOT, "tmp", "{}.pdf".format(aleatorio)
+            PATH_SECURE_PDF_DIR, "{}.pdf".format(aleatorio)
         )
         print(f"DEBUG: Random suffix: {aleatorio}")
         print(f"DEBUG: Output PDF path: {output_pdf}")
+        print(f"DEBUG: Using secure PDF directory: {PATH_SECURE_PDF_DIR}")
         
         # Ensure output directory exists
-        # English: tmp_dir
-        tmp_dir = os.path.dirname(output_pdf)
-        os.makedirs(tmp_dir, exist_ok=True)
-        print(f"DEBUG: Created output directory: {tmp_dir}")
+        # English: secure_dir
+        secure_dir = os.path.dirname(output_pdf)
+        os.makedirs(secure_dir, exist_ok=True)
+        print(f"DEBUG: Created/verified secure directory: {secure_dir}")
         
         try:
             print(f"DEBUG: Calling pypdftk.fill_form...")
@@ -504,19 +506,23 @@ class GeradorPDF:
         for i, arquivo in enumerate(arquivos_base):
             print(f"DEBUG: Base file {i+1}: {arquivo} (exists: {os.path.exists(arquivo)})")
         
-        # English: final_pdf_path
-        path_pdf_final = os.path.join(settings.STATIC_URL, "tmp", nome_final_pdf)
+        # SECURITY FIX: Generate secure URL for PDF access
+        from django.urls import reverse
+        
+        # English: final_pdf_path  
+        path_pdf_final = reverse('processos-serve-pdf', kwargs={'filename': nome_final_pdf})
         # English: final_output_pdf
-        output_pdf_final = os.path.join(settings.STATIC_ROOT, "tmp", nome_final_pdf)
+        output_pdf_final = os.path.join(PATH_SECURE_PDF_DIR, nome_final_pdf)
         
-        print(f"\nDEBUG: Final PDF URL path: {path_pdf_final}")
-        print(f"DEBUG: Final PDF file path: {output_pdf_final}")
+        print(f"\nDEBUG: Final PDF secure URL path: {path_pdf_final}")
+        print(f"DEBUG: Final PDF secure file path: {output_pdf_final}")
+        print(f"DEBUG: Using secure PDF directory: {PATH_SECURE_PDF_DIR}")
         
-        # Ensure tmp directory exists
-        # English: tmp_dir
-        tmp_dir = os.path.join(settings.STATIC_ROOT, "tmp")
-        os.makedirs(tmp_dir, exist_ok=True)
-        print(f"DEBUG: Created tmp directory: {tmp_dir}")
+        # Ensure secure directory exists
+        # English: secure_dir
+        secure_dir = os.path.dirname(output_pdf_final)
+        os.makedirs(secure_dir, exist_ok=True)
+        print(f"DEBUG: Created/verified secure directory: {secure_dir}")
         
         print(f"\n--- CALLING PREENCHER_FORMULARIOS ---")
         # English: filled_intermediate_pdfs
