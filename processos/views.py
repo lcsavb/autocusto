@@ -745,17 +745,27 @@ def serve_pdf(request, filename):
             logger.error(f"Error parsing filename {filename}: {e}")
             raise Http404("Invalid filename")
         
-        # Serve the file
+        # Serve the file from cache (generated in memory)
         try:
-            with open(file_path, 'rb') as pdf_file:
-                response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+            from django.core.cache import cache
+            cache_key = f"pdf_response_{filename}"
+            pdf_content = cache.get(cache_key)
+            
+            if pdf_content:
+                # Serve from cache
+                response = HttpResponse(pdf_content, content_type='application/pdf')
                 response['Content-Disposition'] = f'inline; filename="{filename}"'
                 response['X-Content-Type-Options'] = 'nosniff'
                 response['X-Frame-Options'] = 'SAMEORIGIN'
+                print(f"DEBUG: Serving PDF from cache: {cache_key}")
                 return response
+            else:
+                # Cache miss - PDF was not generated or expired
+                logger.warning(f"PDF not found in cache: {cache_key}")
+                raise Http404("PDF not found or expired")
                 
         except Exception as e:
-            logger.error(f"Error serving PDF file {file_path}: {e}")
+            logger.error(f"Error serving PDF from cache: {e}")
             raise Http404("Error serving PDF")
             
     except Http404:
