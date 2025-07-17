@@ -1,13 +1,12 @@
 (() => {
-    const campoPrimeiraVez = $('#id_consentimento');
     const url = $('#div_url_1_vez').attr('data-1-vez-url');
     const relatorio = $('.relatorio');
-    const emitirRelatorio = $('#id_emitir_relatorio');
     const divRelatorio = $('#div-relatorio');
     const cid = $('#id_cid').val();
 
-    emitirRelatorio.change(() => {
-        let escolha = emitirRelatorio.val();
+    $(document).on('change', 'input[name="emitir_relatorio"]', function() {
+        let escolha = $('input[name="emitir_relatorio"]:checked').val();
+        console.log('Emitir relatório changed:', escolha);
         escolha = escolha == 'True'
         if (escolha) {
             divRelatorio.removeClass('d-none');
@@ -18,8 +17,9 @@
         }
     });
 
-    campoPrimeiraVez.change(() => {
-        let escolha = campoPrimeiraVez.val();
+    $(document).on('change', 'input[name="consentimento"]', function() {
+        let escolha = $('input[name="consentimento"]:checked').val();
+        console.log('Consentimento changed:', escolha);
         escolha = escolha == 'True';
         if (escolha) {
             $.ajax ( {
@@ -29,7 +29,7 @@
                 success: function(res) {
                     if (res.relatorio) {
                         divRelatorio.removeClass('d-none');
-                        emitirRelatorio.val('True');
+                        $('input[name="emitir_relatorio"][value="True"]').prop('checked', true);
                         relatorio.val(res.relatorio);
                     }
                 }
@@ -38,7 +38,7 @@
             );
         }
         else {
-            emitirRelatorio.val('False');
+            $('input[name="emitir_relatorio"][value="False"]').prop('checked', true);
             divRelatorio.addClass('d-none');
             relatorio.val('');
         }

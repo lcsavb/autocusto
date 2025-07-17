@@ -279,10 +279,10 @@ class NovoProcesso(forms.Form):
 
 
     consentimento = forms.ChoiceField(
-        initial={False},
+        initial=False,
         label="Protocolo 1ª vez: ",
         choices=[(False, "Não"), (True, "Sim")],
-        widget=forms.Select(attrs={"class": "custom-select"}),
+        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
     )
 
     cid = forms.CharField(
@@ -366,17 +366,17 @@ class NovoProcesso(forms.Form):
     )
 
     emitir_relatorio = forms.ChoiceField(
-        initial={False},
+        initial=False,
         label="Emissão de relatório: ",
         choices=[(False, "Não"), (True, "Sim")],
-        widget=forms.Select(attrs={"class": "custom-select emitir-relatorio"}),
+        widget=forms.RadioSelect(attrs={"class": "emitir-relatorio form-check-inline"}),
     )
 
     emitir_exames = forms.ChoiceField(
-        initial={False},
+        initial=False,
         label="Emissão de exames: ",
         choices=[(False, "Não"), (True, "Sim")],
-        widget=forms.Select(attrs={"class": "custom-select"}),
+        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
     )
 
     exames = forms.CharField(
@@ -462,9 +462,9 @@ class NovoProcesso(forms.Form):
 class RenovarProcesso(NovoProcesso):
     edicao_completa = forms.ChoiceField(
         required=True,
-        initial={False},
+        initial=False,
         choices=[(False, "Não"), (True, "Sim")],
-        widget=forms.Select(attrs={"class": "custom-select"}),
+        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
         error_messages={'required': 'Por favor, selecione uma opção.'}
     )
 

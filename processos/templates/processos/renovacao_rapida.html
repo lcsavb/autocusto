@@ -70,13 +70,22 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
                                         
-                                        <select class="form-control font-weight-bold" name="processo_id" id="processo_{{ paciente.id }}" style="background-color: #fff; color: #333; border: 2px solid #dee2e6; height: auto; min-height: 38px; line-height: 1.5;">
-                                            {% for processo in paciente.processos.all %}
-                                            {% if processo.usuario == usuario %}
-                                            <option value="{{ processo.id }}"> {{ processo.doenca.cid }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
+                                        <div class="process-radio-group">
+                                            <div class="row">
+                                                {% for processo in paciente.processos.all %}
+                                                {% if processo.usuario == usuario %}
+                                                <div class="col-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="processo_id" id="processo_{{ processo.id }}_{{ paciente.id }}" value="{{ processo.id }}" {% if forloop.first %}checked{% endif %}>
+                                                        <label class="form-check-label" for="processo_{{ processo.id }}_{{ paciente.id }}">
+                                                            {{ processo.doenca.cid }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
                                 </td>
                                 <td class="align-middle">
                                         <div class="input-group input-group-sm">

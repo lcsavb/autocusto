@@ -9,29 +9,30 @@
 {% include 'components/pdf_modal.html' %}
 
 <div class="container-fluid toast-enabled">
-  <form method="POST" novalidate> {% csrf_token %}
+  <form method="POST" novalidate x-data="{ loading: false }" @submit.prevent="loading = true; $refs.submitBtn.disabled = true; fetch(window.location.pathname, { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'Accept': 'application/json' }, body: new FormData($el) }).then(async resp => { if (resp.ok) { let data = await resp.json(); if (data.pdf_url) { $dispatch('open-pdf', { url: data.pdf_url, title: 'PDF Gerado', allowDownload: true }); } else { alert('PDF não gerado.'); } } else { let err = await resp.text(); alert('Erro ao enviar: ' + err); } }).catch(e => { alert('Erro de rede: ' + e); }).finally(() => { loading = false; $refs.submitBtn.disabled = false; });">
 
     <div class="card rounded" style="padding: 1.5rem;">
 
       <!-- Compact Process Header with Inline Controls -->
       <div class="process-header">
         <div class="row align-items-center">
-          <div class="col-md-6">
-            <h4>
-              <span class="oi oi-document mr-2"></span>
-              Edição de Processo
-            </h4>
-            <p class="subtitle">
-              <span class="oi oi-person mr-1"></span>
-              {{ processo.paciente.nome_paciente }} - 
-              <span class="oi oi-medical-cross mr-1 ml-1"></span>
-              {{ processo.doenca.cid }}
-            </p>
-          </div>
-          <div class="col-md-6">
-            <div class="header-controls justify-content-end">
+          <div class="col-md-12">
+            <div class="d-flex align-items-center">
+              <div class="mr-4">
+                <h4>
+                  <span class="oi oi-document mr-2"></span>
+                  Edição de Processo
+                </h4>
+                <p class="subtitle">
+                  <span class="oi oi-person mr-1"></span>
+                  {{ processo.paciente.nome_paciente }} - 
+                  <span class="oi oi-medical-cross mr-1 ml-1"></span>
+                  {{ processo.doenca.cid }}
+                </p>
+              </div>
+              
               <!-- Protocol Consultation Link -->
-              <div x-data>
+              <div x-data class="mr-3">
                 <button type="button" class="protocol-link" 
                         @click="console.log('[DEBUG] Consultar Protocolo clicked', {
                           url: '{{ link_protocolo }}',
@@ -46,11 +47,13 @@
                   Consultar Protocolo
                 </button>
               </div>
+              
               <!-- Compact Edition Mode -->
-              <div class="edition-badge">
+              <div class="edition-badge mr-3">
                 <span class="oi oi-warning mr-1"></span>
                 {{ formulario.edicao_completa|as_crispy_field }}
               </div>
+              
               <!-- Compact Date -->
               <div class="date-badge">
                 <span class="oi oi-calendar mr-1"></span>
@@ -158,15 +161,17 @@
 
       <!-- Submit Section -->
       <div class="submit-section">
-        <button class="btn btn-submit-process" type="submit">
+        <button class="btn btn-submit-process" type="submit" x-ref="submitBtn" :disabled="loading">
           <span class="oi oi-check mr-2"></span>
-          Renovar Processo
+          <span x-show="!loading">Renovar Processo</span>
+          <span x-show="loading">Enviando...</span>
         </button>
         <p class="text-muted mt-2 mb-0">
           <small>Clique para finalizar a edição do processo</small>
         </p>
       </div>
-    </div>    
+    </div>
+    
 
   </form>
 </div>

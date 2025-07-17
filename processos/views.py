@@ -231,94 +231,97 @@ def edicao(request):
 
     if request.method == "POST":
         logger.info("Processing POST request")
-        
         # DEBUG: Print all field names received in POST request
         logger.info("=== DEBUG: POST Request Fields ===")
         for field_name, field_value in request.POST.items():
             logger.info(f"Field: {field_name} = {field_value}")
         logger.info("=== END DEBUG ===")
-        
+
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         try:
-            # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
             logger.info(f"Formulario created successfully")
-            
+
             if formulario.is_valid():
                 logger.info("Formulario is valid, processing data")
-                
-                # English: form_data
                 dados_formulario = formulario.cleaned_data
                 logger.info(f"Dados formulario keys: {list(dados_formulario.keys())}")
-                
-                # English: clinic_id
                 id_clin = dados_formulario["clinicas"]
                 logger.info(f"Clinica ID selected: {id_clin}")
-                
-                # English: clinic
                 clinica = medico.clinicas.get(id=id_clin)
                 logger.info(f"Clinica found: {clinica}")
-                
                 try:
-                    # English: registered_medication_ids
                     ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
                     logger.info(f"Medication IDs generated: {ids_med_cadastrados}")
-
-                    # English: form_data, medication_ids
-                    dados_formulario, meds_ids = gera_med_dosagem(
-                        dados_formulario, ids_med_cadastrados
-                    )
+                    dados_formulario, meds_ids = gera_med_dosagem(dados_formulario, ids_med_cadastrados)
                     logger.info(f"Medication dosage generated, meds_ids: {meds_ids}")
-
-                    # Registers the data of the logged-in doctor and the associated clinic
-                    # English: data
                     dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
                     logger.info(f"Emissor data linked successfully")
-
                     formulario.save(usuario, medico, processo_id, meds_ids)
                     logger.info(f"Formulario saved successfully")
-
-                    # English: final_pdf_path
                     path_pdf_final = transfere_dados_gerador(dados)
                     logger.info(f"PDF path generated: {path_pdf_final}")
-
                     if path_pdf_final:
                         request.session["path_pdf_final"] = path_pdf_final
                         request.session["processo_id"] = processo_id
-                        messages.success(request, "Processo atualizado com sucesso! PDF gerado.")
-                        return redirect("processos-pdf")
+                        if is_ajax:
+                            return JsonResponse({
+                                'success': True,
+                                'pdf_url': path_pdf_final,
+                                'message': 'Processo atualizado com sucesso! PDF gerado.',
+                                'filename': 'processo_atualizado.pdf'
+                            })
+                        else:
+                            messages.success(request, "Processo atualizado com sucesso! PDF gerado.")
+                            return redirect("processos-pdf")
                     else:
                         logger.error("Failed to generate PDF path")
-                        messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
-                        return redirect("processos-cadastro")
-                        
+                        if is_ajax:
+                            return JsonResponse({
+                                'success': False,
+                                'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                            })
+                        else:
+                            messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                            return redirect("processos-cadastro")
                 except Exception as e:
                     logger.error(f"Error in form processing: {str(e)}")
                     logger.error(f"Traceback: {traceback.format_exc()}")
-                    messages.error(request, f"Erro no processamento dos dados: {str(e)}")
-                    return redirect("processos-busca")
-                    
+                    if is_ajax:
+                        return JsonResponse({
+                            'success': False,
+                            'error': f'Erro no processamento dos dados: {str(e)}'
+                        })
+                    else:
+                        messages.error(request, f"Erro no processamento dos dados: {str(e)}")
+                        return redirect("processos-busca")
             else:
                 logger.error(f"Formulario validation failed: {formulario.errors}")
-                # Form validation failed - add errors as Django messages for toast display
-                for field, errors in formulario.errors.items():
-                    for error in errors:
-                        messages.error(request, f"{error}")
-                        
+                if is_ajax:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Erro de validação do formulário.',
+                        'form_errors': formulario.errors
+                    })
+                else:
+                    for field, errors in formulario.errors.items():
+                        for error in errors:
+                            messages.error(request, f"{error}")
         except Exception as e:
             logger.error(f"Error in POST processing: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            messages.error(request, f"Erro no processamento: {str(e)}")
-            # Create a new form instance for template rendering when there's an exception
-            # English: initial_data
-            dados_iniciais = cria_dict_renovação(processo)
-            # English: initial_data
-            dados_iniciais["data_1"] = primeira_data
-            # English: initial_data
-            dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
-            # English: initial_data
-            dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
-            # English: form
-            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Erro no processamento: {str(e)}'
+                })
+            else:
+                messages.error(request, f"Erro no processamento: {str(e)}")
+                dados_iniciais = cria_dict_renovação(processo)
+                dados_iniciais["data_1"] = primeira_data
+                dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
+                dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
+                formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
 
     else:
         # English: initial_data
