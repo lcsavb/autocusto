@@ -91,8 +91,8 @@ window.ToastSystem = {
         Object.keys(groupedMessages).forEach((type, index) => {
             setTimeout(() => {
                 if (groupedMessages[type].length === 1) {
-                    // Single message - show as is
-                    this.add(groupedMessages[type][0], type, type === 'error' ? 8000 : 5000);
+                    // Single message - show as is with longer duration
+                    this.add(groupedMessages[type][0], type, type === 'error' ? 10000 : 6000);
                 } else {
                     // Multiple messages - create summary
                     this.addSummaryToast(groupedMessages[type], type);
@@ -132,7 +132,7 @@ window.ToastSystem = {
     },
 
     // Helper: Show error message  
-    error(message, duration = 5000) {
+    error(message, duration = 8000) {
         return this.add(message, 'error', duration);
     },
 

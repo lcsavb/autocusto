@@ -9,7 +9,7 @@
 {% include 'components/pdf_modal.html' %}
 
 <div class="container-fluid toast-enabled">
-  <form method="POST" novalidate x-data="{ loading: false }" @submit.prevent="loading = true; $refs.submitBtn.disabled = true; fetch(window.location.pathname, { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'Accept': 'application/json' }, body: new FormData($el) }).then(async resp => { if (resp.ok) { let data = await resp.json(); console.log('[DEBUG] AJAX submit response', data); if (data.pdf_url) { $dispatch('open-pdf', { url: data.pdf_url, title: 'PDF Gerado', allowDownload: true }); } else { alert('PDF não gerado.'); } } else { let err = await resp.text(); alert('Erro ao enviar: ' + err); } }).catch(e => { console.error('[DEBUG] AJAX submit error', e); alert('Erro de rede: ' + e); }).finally(() => { loading = false; $refs.submitBtn.disabled = false; });"> {% csrf_token %}
+  <form method="POST" novalidate x-data="{ loading: false }" @submit.prevent="loading = true; $refs.submitBtn.disabled = true; fetch(window.location.pathname, { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'Accept': 'application/json' }, body: new FormData($el) }).then(async resp => { let data = await resp.json(); console.log('[DEBUG] AJAX submit response', data); if (data.success) { if (data.pdf_url) { $dispatch('open-pdf', { url: data.pdf_url, title: 'PDF Gerado', allowDownload: true }); } else { window.ToastSystem.error('PDF não gerado.'); } } else { if (data.form_errors) { const errorMessages = []; Object.values(data.form_errors).forEach(fieldErrors => { fieldErrors.forEach(error => errorMessages.push(error)); }); window.ToastSystem.addSummaryToast(errorMessages, 'error'); } else { window.ToastSystem.error(data.error || 'Erro desconhecido'); } } }).catch(e => { console.error('[DEBUG] AJAX submit error', e); window.ToastSystem.error('Erro de rede: ' + e.message); }).finally(() => { loading = false; $refs.submitBtn.disabled = false; });"> {% csrf_token %}
 
     <div class="card rounded" style="padding: 1.5rem;">   
       
@@ -71,10 +71,12 @@
           Dados do Paciente
         </div>
         <div class="section-body">
-          <div class="row mb-3">
+          <!-- Hidden CPF field -->
+          <div class="row mb-3 d-none">
             <div class="col-md-3">{{ formulario.cpf_paciente|as_crispy_field }}</div>
           </div>
 
+          <!-- Patient Name first -->
           <div class="row mb-3">
             <div class="col-md-8">{{ formulario.nome_paciente|as_crispy_field }}</div>
             <div class="col-md-4">{{ formulario.altura|as_crispy_field }}</div>
@@ -89,6 +91,7 @@
             <div class="col-12">{{ formulario.end_paciente|as_crispy_field }}</div>
           </div>
 
+          <!-- É incapaz last, with better alignment -->
           <div class="row">
             <div class="col-md-3">{{ formulario.incapaz|as_crispy_field }}</div>
             <div class="col-md-9 {{ responsavel_mostrar }}" id="resp-escondido">{{ formulario.nome_responsavel|as_crispy_field }}</div>
@@ -128,16 +131,17 @@
         </div>
         <div class="section-body">
           <div class="row mb-3">
-            <div class="col-md-3">{{ formulario.tratou|as_crispy_field }}</div>
-            <div class="col-md-9 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
+            <div class="col-md-6">{{ formulario.preenchido_por|as_crispy_field }}</div>
           </div>
-
+          <div class="row mb-3 campo-18 {{ campo_18_mostrar }}">
+            <div class="col-md-3">{{ formulario.etnia|as_crispy_field }}</div>
+            <div class="col-md-3">{{ formulario.telefone1_paciente|as_crispy_field }}</div>
+            <div class="col-md-3">{{ formulario.telefone2_paciente|as_crispy_field }}</div>
+            <div class="col-md-3">{{ formulario.email_paciente|as_crispy_field }}</div>
+          </div>
           <div class="row">
-            <div class="col-md-3">{{ formulario.preenchido_por|as_crispy_field }}</div>
-            <div class="col-md-2 campo-18 {{ campo_18_mostrar }}">{{ formulario.etnia|as_crispy_field }}</div>
-            <div class="col-md-2 campo-18 {{ campo_18_mostrar }}">{{ formulario.telefone1_paciente|as_crispy_field }}</div>
-            <div class="col-md-2 campo-18 {{ campo_18_mostrar }}">{{ formulario.telefone2_paciente|as_crispy_field }}</div>
-            <div class="col-md-3 campo-18 {{ campo_18_mostrar }}">{{ formulario.email_paciente|as_crispy_field }}</div>
+            <div class="col-md-4">{{ formulario.tratou|as_crispy_field }}</div>
+            <div class="col-md-8 d-none" id="trat-escondido">{{ formulario.tratamentos_previos|as_crispy_field }}</div>
           </div>
         </div>
       </div>
@@ -162,10 +166,8 @@
       <div class="submit-section">
         <button class="btn btn-submit-process" type="submit" x-ref="submitBtn" :disabled="loading">
           <span class="oi oi-plus mr-2"></span>
-          <template x-if="loading">
-            <span class="spinner-border spinner-border-sm mr-2" role="status"></span>
-          </template>
-          Cadastrar Processo
+          <span x-show="!loading">Cadastrar Processo</span>
+          <span x-show="loading">Enviando...</span>
         </button>
         <p class="text-muted mt-2 mb-0">
           <small>Clique para criar o novo processo</small>

@@ -237,7 +237,7 @@ def edicao(request):
             logger.info(f"Field: {field_name} = {field_value}")
         logger.info("=== END DEBUG ===")
 
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        # Since the template ALWAYS sends AJAX requests, we ALWAYS return JSON
         try:
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
             logger.info(f"Formulario created successfully")
@@ -264,64 +264,39 @@ def edicao(request):
                     if path_pdf_final:
                         request.session["path_pdf_final"] = path_pdf_final
                         request.session["processo_id"] = processo_id
-                        if is_ajax:
-                            return JsonResponse({
-                                'success': True,
-                                'pdf_url': path_pdf_final,
-                                'message': 'Processo atualizado com sucesso! PDF gerado.',
-                                'filename': 'processo_atualizado.pdf'
-                            })
-                        else:
-                            messages.success(request, "Processo atualizado com sucesso! PDF gerado.")
-                            return redirect("processos-pdf")
+                        return JsonResponse({
+                            'success': True,
+                            'pdf_url': path_pdf_final,
+                            'message': 'Processo atualizado com sucesso! PDF gerado.',
+                            'filename': 'processo_atualizado.pdf'
+                        })
                     else:
                         logger.error("Failed to generate PDF path")
-                        if is_ajax:
-                            return JsonResponse({
-                                'success': False,
-                                'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
-                            })
-                        else:
-                            messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
-                            return redirect("processos-cadastro")
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                        })
                 except Exception as e:
                     logger.error(f"Error in form processing: {str(e)}")
                     logger.error(f"Traceback: {traceback.format_exc()}")
-                    if is_ajax:
-                        return JsonResponse({
-                            'success': False,
-                            'error': f'Erro no processamento dos dados: {str(e)}'
-                        })
-                    else:
-                        messages.error(request, f"Erro no processamento dos dados: {str(e)}")
-                        return redirect("processos-busca")
-            else:
-                logger.error(f"Formulario validation failed: {formulario.errors}")
-                if is_ajax:
                     return JsonResponse({
                         'success': False,
-                        'error': 'Erro de validação do formulário.',
-                        'form_errors': formulario.errors
+                        'error': f'Erro no processamento dos dados: {str(e)}'
                     })
-                else:
-                    for field, errors in formulario.errors.items():
-                        for error in errors:
-                            messages.error(request, f"{error}")
+            else:
+                logger.error(f"Formulario validation failed: {formulario.errors}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Erro de validação do formulário.',
+                    'form_errors': formulario.errors
+                })
         except Exception as e:
             logger.error(f"Error in POST processing: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            if is_ajax:
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Erro no processamento: {str(e)}'
-                })
-            else:
-                messages.error(request, f"Erro no processamento: {str(e)}")
-                dados_iniciais = cria_dict_renovação(processo)
-                dados_iniciais["data_1"] = primeira_data
-                dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
-                dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
-                formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+            return JsonResponse({
+                'success': False,
+                'error': f'Erro no processamento: {str(e)}'
+            })
 
     else:
         # English: initial_data
@@ -549,6 +524,7 @@ def cadastro(request):
         return redirect("processos-home")
 
     if request.method == "POST":
+        # Since the template ALWAYS sends AJAX requests, we ALWAYS return JSON
         try:
             # English: form
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
@@ -578,27 +554,33 @@ def cadastro(request):
                     if path_pdf_final:
                         request.session["path_pdf_final"] = path_pdf_final
                         request.session["processo_id"] = processo_id
-                        messages.success(request, "Processo criado com sucesso! PDF gerado.")
-                        return redirect("processos-pdf")
+                        return JsonResponse({
+                            'success': True,
+                            'pdf_url': path_pdf_final,
+                            'message': 'Processo criado com sucesso! PDF gerado.',
+                            'filename': 'processo_cadastrado.pdf'
+                        })
                     else:
-                        messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
-                        # Don't redirect, fall through to render the form again with error message
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                        })
                 except Exception as e:
-                    messages.error(request, f"Erro ao processar dados do formulário: {e}")
-                    # Fall through to render form again
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Erro ao processar dados do formulário: {str(e)}'
+                    })
             else:
-                # Form validation failed - add errors as Django messages for toast display
-                for field, errors in formulario.errors.items():
-                    for error in errors:
-                        messages.error(request, error)
-                # Don't redirect - fall through to render the form with errors preserved
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Erro de validação do formulário.',
+                    'form_errors': formulario.errors
+                })
         except Exception as e:
-            messages.error(request, f"Erro ao processar formulário: {e}")
-            # Create a new form instance for template rendering when there's an exception
-            # English: initial_data
-            dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
-            # English: form
-            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+            return JsonResponse({
+                'success': False,
+                'error': f'Erro ao processar formulário: {str(e)}'
+            })
     
     # If this is a GET request, create a fresh form
     if request.method == "GET":

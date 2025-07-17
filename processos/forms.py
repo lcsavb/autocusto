@@ -266,10 +266,10 @@ class NovoProcesso(forms.Form):
         error_messages={'required': 'Por favor, insira o endereço.'}
     )
     incapaz = forms.ChoiceField(
-        choices=((True, "Sim"), (False, "Não")),
+        choices=((False, "Não"), (True, "Sim")),
         label="É incapaz?",
         initial=False,
-        widget=forms.Select(attrs={"class": "custom-select"}),
+        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
     )
     nome_responsavel = forms.CharField(
         label="Nome do responsável",
@@ -299,14 +299,14 @@ class NovoProcesso(forms.Form):
     )
     anamnese = forms.CharField(required=True, label="Anamnese", error_messages={'required': 'Por favor, insira a anamnese.'})
     preenchido_por = forms.ChoiceField(
-        initial={"paciente"},
+        initial="paciente",
         choices=[
             ("paciente", "Paciente"),
             ("mae", "Mãe"),
             ("responsavel", "Responsável"),
             ("medico", "Médico"),
         ],
-        widget=forms.Select(attrs={"class": "custom-select"}),
+        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
     )
 
     etnia = forms.ChoiceField(
@@ -337,10 +337,10 @@ class NovoProcesso(forms.Form):
         widget=forms.TextInput(attrs={"class": "cond-campo-18"}),
     )
     tratou = forms.ChoiceField(
-        choices=((True, "Sim"), (False, "Não")),
+        choices=((False, "Não"), (True, "Sim")),
         label="Fez tratamento prévio?",
         initial=False,
-        widget=forms.Select(attrs={"class": "custom-select"}),
+        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
     )
     tratamentos_previos = forms.CharField(
         label="Descrição dos tratamentos prévios",

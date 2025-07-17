@@ -1,5 +1,26 @@
 /* Enhanced Process Forms Styling */
 
+/* Radio Button Inline Styling */
+.form-check-inline {
+    display: inline-block !important;
+    margin-right: 1rem !important;
+}
+
+.form-check-inline .form-check-input {
+    margin-right: 0.5rem !important;
+}
+
+/* Ensure radio button groups are displayed inline */
+.custom-control.custom-radio {
+    display: inline-block !important;
+    margin-right: 1rem !important;
+}
+
+.custom-control.custom-radio .custom-control-input:checked ~ .custom-control-label::before {
+    border-color: #007bff;
+    background-color: #007bff;
+}
+
 /* Compact Process Header */
 .process-header {
     background: #ffffff;
