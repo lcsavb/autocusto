@@ -464,7 +464,7 @@ class GeradorPDF:
 
         print(f"\n--- REPORT PDF SECTION ---")
         print(f"DEBUG: Checking report requirement: relatorio = {relatorio}")
-        if relatorio == "True" or relatorio == True:
+        if relatorio and str(relatorio).strip() and str(relatorio).strip().lower() != "false":
             print(f"DEBUG: Report PDF required")
             print(f"DEBUG: Report PDF path: {settings.PATH_RELATORIO}")
             print(f"DEBUG: Report PDF exists: {os.path.exists(settings.PATH_RELATORIO)}")
@@ -481,7 +481,7 @@ class GeradorPDF:
 
         print(f"\n--- EXAM PDF SECTION ---")
         print(f"DEBUG: Checking exam requirement: exames = {exames}")
-        if exames == "True" or exames == True:
+        if exames and str(exames).strip() and str(exames).strip().lower() != "false":
             print(f"DEBUG: Exam PDF required")
             print(f"DEBUG: Exam PDF path: {settings.PATH_EXAMES}")
             print(f"DEBUG: Exam PDF exists: {os.path.exists(settings.PATH_EXAMES)}")

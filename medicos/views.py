@@ -7,7 +7,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
 
 # English: registration
@@ -113,3 +113,10 @@ def custom_login(request):
 @login_required
 def perfil(request):
     return render(request, "medicos/perfil.html")
+
+
+def custom_logout(request):
+    """Custom logout view that adds success message and redirects to home"""
+    logout(request)
+    messages.success(request, "Logout realizado com sucesso!")
+    return redirect("home")

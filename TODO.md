@@ -6,13 +6,9 @@ The pdfs_base directories exist for some protocols but not for epilepsia. Let me
 remove selenium from production build
 logging
 dor_crÔnica 
-recuperacao de senha
-envio de emails
-logout redirect
 verify need for changes in db
 verificar 1 vez bug
 med validaion error when adding/removing med
-emissao de exames / relatorio not being attached
 
 roadmap
 Finish front/backend test coverage

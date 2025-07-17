@@ -2,8 +2,8 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="card rounded" style="padding: 1.5rem; max-width: 800px; margin: 2rem auto;">
+<div class="container-fluid d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 80px);">
+  <div class="card rounded" style="padding: 1.5rem; max-width: 800px; width: 100%;">
     <div class="card-header bg-danger text-white rounded" style="margin: -1.5rem -1.5rem 1.5rem -1.5rem;">
       <h4 class="mb-0 text-white">
         <i class="oi oi-bug mr-2"></i>
@@ -12,32 +12,17 @@
     </div>
     
     <form method="POST" action="{% url 'reportar-erros' %}" novalidate>{% csrf_token %}
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="errorSubject">Assunto:</label>
-            <input type="text" class="form-control" id="errorSubject" name="subject" placeholder="Breve descrição do erro">
-          </div>
+      {% if not user.is_authenticated %}
+        <div class="alert alert-info">
+          <i class="oi oi-info mr-2"></i>
+          <strong>Usuário não logado:</strong> Por favor, preencha seu nome e email para contato.
         </div>
-      </div>
+        {{ form.name|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+      {% endif %}
       
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="errorDescription">Descrição Detalhada:</label>
-            <textarea class="form-control" id="errorDescription" name="description" rows="6" placeholder="Descreva o erro em detalhes, incluindo os passos para reproduzi-lo."></textarea>
-          </div>
-        </div>
-      </div>
-      
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="errorSteps">Passos para Reproduzir:</label>
-            <textarea class="form-control" id="errorSteps" name="steps" rows="4" placeholder="1. Faça isso...\n2. Clique aqui...\n3. O erro acontece quando..."></textarea>
-          </div>
-        </div>
-      </div>
+      {{ form.description|as_crispy_field }}
+      {{ form.steps|as_crispy_field }}
       
       <div class="form-row">
         <div class="col-12 text-center">

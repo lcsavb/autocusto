@@ -64,10 +64,14 @@
         <a class="nav-link" href="{% url 'clinicas-cadastro' %}">Clínicas</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'reportar-erros' %}">Reportar Erros</a>
+        <a class="nav-link" href="{% url 'reportar-erros' %}" title="Reportar Erro" data-toggle="tooltip" data-placement="bottom">
+          <span class="oi oi-bug text-white"></span>
+        </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'solicitar-funcionalidade' %}">Solicitar Funcionalidade</a>
+        <a class="nav-link" href="{% url 'solicitar-funcionalidade' %}" title="Solicitar Funcionalidade" data-toggle="tooltip" data-placement="bottom">
+          <span class="oi oi-lightbulb text-white"></span>
+        </a>
       </li>
       <li class="nav-item">
         <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0; padding: 0;" novalidate>
@@ -84,20 +88,25 @@
 
     {% else %}
     <!-- Compact login form for non-authenticated users -->
-    <div class="toast-enabled d-flex align-items-center">
+    <div class="toast-enabled d-flex flex-column" style="padding-top: 8px;">
       <form method="POST" action="{% url 'login' %}" class="form-inline my-2 my-lg-0" novalidate>
       {% csrf_token %}
-      <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" style="max-width: 150px;">
-      <input name="password" type="password" class="form-control mr-sm-2" placeholder="Senha" aria-label="Password" style="max-width: 120px;">
-      <button class="btn btn-outline-light" type="submit">
-        <span class="oi oi-account-login"></span> Login
-      </button>
+      <div class="d-flex align-items-center">
+        <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" style="max-width: 150px;">
+        <input name="password" type="password" class="form-control mr-sm-2" placeholder="Senha" aria-label="Password" style="max-width: 120px;">
+        <button class="btn btn-outline-light" type="submit">
+          <span class="oi oi-account-login"></span> Login
+        </button>
+      </div>
       </form>
       
-      <!-- Forgot password link -->
-      <a href="{% url 'password_reset' %}" class="btn btn-sm btn-outline-light ml-2" title="Esqueceu sua senha?">
-        <span class="oi oi-key"></span>
-      </a>
+      <!-- Forgot password link below, aligned with end of login button -->
+      <div class="mt-1 d-flex justify-content-end"></div>
+        <a href="{% url 'password_reset' %}" class="text-light" style="font-size: 0.8rem; text-decoration: none;">
+          <span class="oi oi-key mr-1" style="font-size: 0.7rem;"></span>
+          Esqueci minha senha
+        </a>
+      </div>
     </div>
     {% endif %}
   </div>
@@ -105,6 +114,7 @@
 
   <!-- Alpine.js Toast Container -->
   <style>
+    [x-cloak] { display: none !important; }
     .inline-toast-wrapper {
       position: fixed;
       bottom: 20px;
@@ -187,6 +197,36 @@
       line-height: 1;
       cursor: pointer;
     }
+    
+    /* Modal positioning fix */
+    .modal.show {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1050;
+    }
+    
+    /* White tooltips */
+    .tooltip .tooltip-inner {
+      background-color: white;
+      color: #333;
+      border: 1px solid #ddd;
+      font-weight: 500;
+    }
+    .tooltip.bs-tooltip-bottom .arrow::before {
+      border-bottom-color: #ddd;
+    }
+    .tooltip.bs-tooltip-top .arrow::before {
+      border-top-color: #ddd;
+    }
+    .tooltip.bs-tooltip-left .arrow::before {
+      border-left-color: #ddd;
+    }
+    .tooltip.bs-tooltip-right .arrow::before {
+      border-right-color: #ddd;
+    }
   </style>
   <div x-data="toastContainer()" x-init="init(); checkForFormErrors()" class="inline-toast-wrapper" x-cloak>
     <!-- DEBUG: Toast container initialized -->
@@ -229,6 +269,12 @@
 
     <!-- Scripts -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+      // Initialize Bootstrap tooltips
+      $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+      });
+    </script>
     <script src="{% static 'js/toast-system.js' %}"></script>
     
     <!-- Alpine.js - Must load AFTER toast-system.js -->

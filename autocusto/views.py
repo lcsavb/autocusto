@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
 from processos.forms import PreProcesso
 from pacientes.models import Paciente
 from medicos.forms import MedicoCadastroFormulario
+from .forms import ErrorReportForm, FeatureRequestForm
 
 
 def home(request):
@@ -173,9 +176,82 @@ def privacy_policy(request):
 
 def reportar_erros(request):
     """Report errors page"""
-    return render(request, "reportar_erros.html")
+    if request.method == 'POST':
+        form = ErrorReportForm(request.POST)
+        if form.is_valid():
+            # Determine user info
+            if request.user.is_authenticated:
+                user_info = f"Usuário: {request.user.email}"
+            else:
+                name = form.cleaned_data.get('name', '')
+                email = form.cleaned_data.get('email', '')
+                user_info = f"Nome: {name}\nEmail: {email}"
+            
+            # Send email
+            subject = 'Relatório de Erro - CliqueReceita'
+            message = f'''
+Relatório de Erro
+
+Descrição do Erro:
+{form.cleaned_data['description']}
+
+Passos para Reproduzir:
+{form.cleaned_data['steps']}
+
+{user_info}
+'''
+            
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                ['lcsavb@gmail.com'],
+                fail_silently=False,
+            )
+            
+            messages.success(request, 'Relatório de erro enviado com sucesso!')
+            return redirect('reportar-erros')
+    else:
+        form = ErrorReportForm()
+    
+    return render(request, 'reportar_erros.html', {'form': form})
 
 
 def solicitar_funcionalidade(request):
     """Request feature page"""
-    return render(request, "solicitar_funcionalidade.html")
+    if request.method == 'POST':
+        form = FeatureRequestForm(request.POST)
+        if form.is_valid():
+            # Determine user info
+            if request.user.is_authenticated:
+                user_info = f"Usuário: {request.user.email}"
+            else:
+                name = form.cleaned_data.get('name', '')
+                email = form.cleaned_data.get('email', '')
+                user_info = f"Nome: {name}\nEmail: {email}"
+            
+            # Send email
+            subject = 'Solicitação de Funcionalidade - CliqueReceita'
+            message = f'''
+Solicitação de Funcionalidade
+
+Descrição da Funcionalidade:
+{form.cleaned_data['description']}
+
+{user_info}
+'''
+            
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                ['lcsavb@gmail.com'],
+                fail_silently=False,
+            )
+            
+            messages.success(request, 'Solicitação de funcionalidade enviada com sucesso!')
+            return redirect('solicitar-funcionalidade')
+    else:
+        form = FeatureRequestForm()
+    
+    return render(request, 'solicitar_funcionalidade.html', {'form': form})

@@ -2,8 +2,8 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="card rounded" style="padding: 1.5rem; max-width: 800px; margin: 2rem auto;">
+<div class="container-fluid d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 80px);">
+  <div class="card rounded" style="padding: 1.5rem; max-width: 800px; width: 100%;">
     <div class="card-header bg-success text-white rounded" style="margin: -1.5rem -1.5rem 1.5rem -1.5rem;">
       <h4 class="mb-0 text-white">
         <i class="oi oi-lightbulb mr-2"></i>
@@ -12,46 +12,16 @@
     </div>
     
     <form method="POST" action="{% url 'solicitar-funcionalidade' %}" novalidate>{% csrf_token %}
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="featureSubject">Assunto:</label>
-            <input type="text" class="form-control" id="featureSubject" name="subject" placeholder="Breve descrição da funcionalidade">
-          </div>
+      {% if not user.is_authenticated %}
+        <div class="alert alert-info">
+          <i class="oi oi-info mr-2"></i>
+          <strong>Usuário não logado:</strong> Por favor, preencha seu nome e email para contato.
         </div>
-      </div>
+        {{ form.name|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+      {% endif %}
       
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="featureDescription">Descrição Detalhada:</label>
-            <textarea class="form-control" id="featureDescription" name="description" rows="6" placeholder="Descreva a funcionalidade desejada em detalhes, incluindo o problema que ela resolveria."></textarea>
-          </div>
-        </div>
-      </div>
-      
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="featureJustification">Justificativa:</label>
-            <textarea class="form-control" id="featureJustification" name="justification" rows="4" placeholder="Por que essa funcionalidade é importante? Que problema ela resolve?"></textarea>
-          </div>
-        </div>
-      </div>
-      
-      <div class="form-row">
-        <div class="col-12">
-          <div class="form-group">
-            <label for="featurePriority">Prioridade:</label>
-            <select class="form-control" id="featurePriority" name="priority">
-              <option value="baixa">Baixa</option>
-              <option value="media" selected>Média</option>
-              <option value="alta">Alta</option>
-              <option value="urgente">Urgente</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      {{ form.description|as_crispy_field }}
       
       <div class="form-row">
         <div class="col-12 text-center">
