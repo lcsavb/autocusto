@@ -169,9 +169,9 @@ def home(request):
                 return redirect("home")
 
 
-def privacy_policy(request):
+def privacy(request):
     """Privacy policy page"""
-    return render(request, "privacy_policy.html")
+    return render(request, "privacy.html")
 
 
 def reportar_erros(request):

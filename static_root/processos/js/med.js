@@ -261,6 +261,72 @@
             }
         }
     }
+    
+    // HYBRID APPROACH: Handle "nenhum" selection
+    
+    // Option 1: Immediate change event listeners for each medication dropdown
+    function initializeMedicationChangeListeners() {
+        for (let medNumber = 1; medNumber <= 4; medNumber++) {
+            const medSelect = document.querySelector(`#id_med${medNumber}`);
+            if (medSelect) {
+                medSelect.addEventListener('change', function() {
+                    console.log(`Medication ${medNumber} changed to: ${this.value}`);
+                    
+                    if (this.value === 'nenhum' || this.value === '' || this.value === 'none') {
+                        console.log(`Clearing fields for medication ${medNumber} due to nenhum/empty selection`);
+                        clearMedicationFields(medNumber);
+                        
+                        // Optionally hide the tab for better UX (except med1 which is always required)
+                        if (medNumber > 1) {
+                            const tabElement = document.querySelector(`#medicamento-${medNumber}-tab`);
+                            const contentElement = document.querySelector(`#medicamento-${medNumber}`);
+                            if (tabElement && contentElement) {
+                                tabElement.classList.add('d-none');
+                                tabElement.classList.remove('active');
+                                contentElement.classList.remove('active', 'show');
+                                
+                                // Switch to first visible tab if this was active
+                                if (contentElement.classList.contains('active')) {
+                                    switchToFirstVisibleTab();
+                                }
+                            }
+                        }
+                    } else {
+                        console.log(`Enabling fields for medication ${medNumber}`);
+                        enableMedicationFields(medNumber);
+                    }
+                });
+            }
+        }
+    }
+    
+    // Option 2: Form submission handler as backup
+    function initializeFormSubmissionHandler() {
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('Form submission - checking for nenhum medications');
+                
+                for (let medNumber = 1; medNumber <= 4; medNumber++) {
+                    const medSelect = document.querySelector(`#id_med${medNumber}`);
+                    if (medSelect) {
+                        const value = medSelect.value;
+                        if (value === 'nenhum' || value === '' || value === 'none') {
+                            console.log(`Form submit: Clearing fields for medication ${medNumber} (value: ${value})`);
+                            clearMedicationFields(medNumber);
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize both approaches on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeMedicationChangeListeners();
+        initializeFormSubmissionHandler();
+        console.log('Hybrid nenhum handling initialized');
+    });
 
 
 })();

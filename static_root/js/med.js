@@ -113,6 +113,38 @@ $(document).ready(function() {
         }
     });
     }
+    
+    // Function to switch to the highest-numbered visible medication tab
+    function switchToPreviousVisibleMedication(removedMedNum) {
+        console.log(`Switching to previous visible medication after removing ${removedMedNum}`);
+        
+        // Find the highest-numbered visible medication tab (excluding the one being removed)
+        let targetMedNum = null;
+        for (let i = 4; i >= 1; i--) {
+            if (i !== removedMedNum) {
+                const tab = $(`#medicamento-${i}-tab`);
+                if (tab.length && !tab.hasClass('d-none')) {
+                    targetMedNum = i;
+                    console.log(`Found visible medication ${i} to switch to`);
+                    break;
+                }
+            }
+        }
+        
+        if (targetMedNum) {
+            // Remove active class from all tabs and content
+            $('.nav-link').removeClass('active');
+            $('.tab-pane').removeClass('active show');
+            
+            // Activate the target medication tab and content
+            $(`#medicamento-${targetMedNum}-tab`).addClass('active');
+            $(`#medicamento-${targetMedNum}`).addClass('active show');
+            
+            console.log(`Switched to medication ${targetMedNum}`);
+        } else {
+            console.log('No visible medications found to switch to');
+        }
+    }
 
     // Disable fields for removed medications - using event delegation
     $(document).on('click', '.remove-med', function() {
@@ -139,6 +171,9 @@ $(document).ready(function() {
         // Set medication name to DEBUG_REMOVED for debugging
         $('#medicamento-' + medNum + ' select[name*="id_med"]').val('').append('<option value="DEBUG_REMOVED" selected>DEBUG_REMOVED</option>');
         console.log(`Disabled and cleared fields for medicamento ${medNum}:`, fields);
+        
+        // Switch to the previous visible medication
+        switchToPreviousVisibleMedication(medNum);
     });
 
     function repetirPosologia(numMed) {
@@ -213,25 +248,153 @@ $(document).ready(function() {
         console.log('Tab switched to:', $(this).attr('href'));
     });
 
-    // Before form submission, remove name attributes from blank medications
+    // HYBRID APPROACH: Handle "nenhum" selection
+    
+    // Option 1: Immediate change event listeners for medication dropdowns
+    function initializeMedicationChangeListeners() {
+        for (let medNumber = 1; medNumber <= 4; medNumber++) {
+            const medSelect = $(`#id_id_med${medNumber}`);
+            if (medSelect.length) {
+                medSelect.on('change', function() {
+                    const value = $(this).val();
+                    console.log(`Medication ${medNumber} changed to: ${value}`);
+                    
+                    if (!value || value === 'nenhum' || value === '' || value === 'none') {
+                        console.log(`Clearing fields for medication ${medNumber} due to nenhum/empty selection`);
+                        clearMedicationFieldsFromNenhum(medNumber);
+                        
+                        // Hide tab for medications 2-4 (med 1 is always required)
+                        if (medNumber > 1) {
+                            $(`#medicamento-${medNumber}-tab`).addClass('d-none').removeClass('active');
+                            $(`#medicamento-${medNumber}`).removeClass('active show');
+                            $(`[data-med="${medNumber}"].remove-med`).addClass('d-none');
+                            
+                            // Switch to the previous visible medication
+                            switchToPreviousVisibleMedication(medNumber);
+                        }
+                    } else {
+                        // Valid medication selected - re-enable fields
+                        console.log(`Valid medication selected for ${medNumber}, re-enabling fields`);
+                        enableMedicationFieldsFromNenhum(medNumber);
+                    }
+                });
+            }
+        }
+    }
+    
+    // Function to clear fields when "nenhum" is selected
+    function clearMedicationFieldsFromNenhum(medNumber) {
+        const fields = $(`#medicamento-${medNumber} input, #medicamento-${medNumber} select, #medicamento-${medNumber} textarea`);
+        console.log(`Clearing ${fields.length} fields for medication ${medNumber}`);
+        
+        fields.each(function() {
+            const $field = $(this);
+            const originalName = $field.attr('name');
+            const fieldName = $field.attr('name') || $field.attr('id') || '';
+            
+            // Skip the via field - it should never be disabled
+            if (fieldName.includes('_via')) {
+                console.log(`Skipping via field: ${originalName}`);
+                return; // Skip this field
+            }
+            
+            // Clear value
+            if (this.tagName === 'SELECT') {
+                this.selectedIndex = 0;
+            } else if (this.type === 'checkbox' || this.type === 'radio') {
+                this.checked = false;
+            } else {
+                $field.val('');
+            }
+            
+            // For medication 1 (always required): only clear values and remove name attributes, but keep fields enabled
+            // For medications 2-4: clear values, remove name attributes, AND disable fields
+            if (medNumber === 1) {
+                // Medication 1 is always required - keep fields enabled but remove from submission
+                $field.removeAttr('name');
+                console.log(`Cleared field but kept enabled (med 1): ${originalName}`);
+            } else {
+                // Medications 2-4 can be fully disabled
+                $field.removeAttr('name').prop('disabled', true);
+                console.log(`Cleared and disabled field: ${originalName}`);
+            }
+        });
+    }
+    
+    // Function to re-enable fields when a valid medication is selected after "nenhum"
+    function enableMedicationFieldsFromNenhum(medNumber) {
+        const fields = $(`#medicamento-${medNumber} input, #medicamento-${medNumber} select, #medicamento-${medNumber} textarea`);
+        console.log(`Re-enabling ${fields.length} fields for medication ${medNumber}`);
+        
+        fields.each(function() {
+            const $field = $(this);
+            const fieldId = $field.attr('id');
+            
+            // Skip the via field - it should never be disabled anyway
+            const fieldName = $field.attr('name') || $field.attr('id') || '';
+            if (fieldName.includes('_via')) {
+                console.log(`Skipping via field (already enabled): ${fieldName}`);
+                return; // Skip this field
+            }
+            
+            // Re-enable the field
+            $field.prop('disabled', false);
+            
+            // Restore name attribute based on field ID
+            if (fieldId && !$field.attr('name')) {
+                let nameAttr;
+                if (fieldId.startsWith('id_id_')) {
+                    // Handle double id_ prefix (e.g., id_id_med2 → id_med2)
+                    nameAttr = fieldId.replace('id_id_', 'id_');
+                } else if (fieldId.startsWith('id_')) {
+                    // Handle single id_ prefix (e.g., id_med2_repetir_posologia → med2_repetir_posologia)
+                    nameAttr = fieldId.replace('id_', '');
+                } else {
+                    // No id_ prefix, use as is
+                    nameAttr = fieldId;
+                }
+                $field.attr('name', nameAttr);
+                console.log(`✓ Re-enabled and restored name attribute: ${nameAttr} for field ${fieldId}`);
+            } else if (fieldId && $field.attr('name')) {
+                console.log(`✓ Re-enabled field ${fieldId} (name already exists: ${$field.attr('name')})`);
+            } else {
+                console.log(`⚠ Field has no ID, skipping name restoration`);
+            }
+        });
+    }
+    
+    // Option 2: Enhanced form submission handler
     $('form').on('submit', function() {
         console.log('Form submitting - checking for blank medications');
         
-        for (let i = 2; i <= 4; i++) {
+        // Check all medications 1-4 (enhanced to include med 1)
+        for (let i = 1; i <= 4; i++) {
             const medSelect = $(`#id_id_med${i}`);
             const medValue = medSelect.val();
             
-            if (!medValue || medValue === 'nenhum' || medValue === '') {
-                console.log(`Medication ${i} is blank (${medValue}), removing all fields from submission`);
+            if (!medValue || medValue === 'nenhum' || medValue === '' || medValue === 'none') {
+                console.log(`Medication ${i} is blank/nenhum (${medValue}), removing all fields from submission`);
                 
-                // Remove name attribute from all fields for this medication
+                // Remove name attribute from all fields for this medication (except via field)
                 $(`#medicamento-${i} input, #medicamento-${i} select, #medicamento-${i} textarea`).each(function() {
                     const originalName = $(this).attr('name');
+                    const fieldName = $(this).attr('name') || $(this).attr('id') || '';
+                    
+                    // Skip the via field - it should never have its name removed
+                    if (fieldName.includes('_via')) {
+                        console.log(`Form submit: Skipping via field: ${originalName}`);
+                        return; // Skip this field
+                    }
+                    
                     $(this).removeAttr('name');
-                    console.log(`Removed name attribute from ${originalName}`);
+                    console.log(`Form submit: Removed name attribute from ${originalName}`);
                 });
             }
         }
     });
+    
+    // Initialize the change listeners
+    initializeMedicationChangeListeners();
+    console.log('Hybrid nenhum handling initialized');
 
 });
