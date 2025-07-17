@@ -10,12 +10,14 @@ document.addEventListener('alpine:init', () => {
     pdfUrl: '',
     title: 'Documento PDF',
     showDownload: true,
+    showEdit: false,
     
-    openPdf(url, modalTitle = 'Documento PDF', allowDownload = true) {
-      console.log('[DEBUG] openPdf called', { url, modalTitle, allowDownload });
+    openPdf(url, modalTitle = 'Documento PDF', allowDownload = true, allowEdit = false) {
+      console.log('[DEBUG] openPdf called', { url, modalTitle, allowDownload, allowEdit });
       this.pdfUrl = url;
       this.title = modalTitle;
       this.showDownload = allowDownload;
+      this.showEdit = allowEdit;
       this.isOpen = true;
       document.body.style.overflow = 'hidden';
     },
@@ -24,6 +26,13 @@ document.addEventListener('alpine:init', () => {
       this.isOpen = false;
       this.pdfUrl = '';
       document.body.style.overflow = '';
+      // Dispatch custom event when modal is closed
+      this.$dispatch('modal-closed');
+    },
+
+    editProcess() {
+      // Redirect to edit page - the session should already have processo_id set
+      window.location.href = '/processos/edicao/';
     },
     
     downloadPdf() {

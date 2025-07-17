@@ -89,7 +89,7 @@
                                 </td>
                                 <td class="align-middle">
                                         <div class="input-group input-group-sm">
-                                            <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                                            <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA" @input="formatDate($event)">
                                             <div class="input-group-append">
                                                 <button class="btn btn-outline-secondary btn-sm today-btn" type="button" data-target="data_{{ paciente.id }}">
                                                     <i class="oi oi-calendar"></i>
@@ -136,25 +136,27 @@
 <script src="{% static 'js/pdf-modal.js' %}"></script>
 <script>
 $('.datas').mask('00/00/0000');
+
+// Debug: Listen for Alpine.js toast events
+document.addEventListener('alpine:init', () => {
+    console.log('[DEBUG] Alpine.js initialized, setting up toast event listeners');
+});
+
+document.addEventListener('add-toast', function(event) {
+    console.log('[DEBUG] Alpine add-toast event received:', event.detail);
+    if (window.ToastSystem) {
+        console.log('[DEBUG] Calling ToastSystem.add with:', event.detail.message, event.detail.type);
+        window.ToastSystem.add(event.detail.message, event.detail.type);
+    } else {
+        console.error('[DEBUG] ToastSystem not available');
+    }
+});
+
+console.log('[DEBUG] Toast event listener added');
 </script>
 
 <script>
-(() => {
-    const button = $('.btn-primary');
-    button.click(function(){
-    const dateField = $(event.target).closest('form').find('.datas');
-    let dateFieldVal = dateField.val();
-    let day = dateFieldVal.slice(0,2)
-    let month = dateFieldVal.slice(3,5);
-    let year = dateFieldVal.slice(6,10);
-    const date = new Date(year, (+month-1), day);
-    const isValidDate = (Boolean(+date) && date.getDate() == day && date.getMonth() == month -1 && date.getFullYear() == year);  
-    if (!isValidDate) {
-        event.preventDefault();
-        alert('Data inválida!')
-    };
-    });
-})();
+// Date validation is now handled by Alpine.js renovacaoForm component
 
 // Today button functionality
 $('.today-btn').on('click', function() {

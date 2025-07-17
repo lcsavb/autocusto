@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
+from django.db import IntegrityError
 from datetime import date
 import logging
 import traceback
@@ -397,6 +398,25 @@ def renovacao_rapida(request):
         # English: new_date
         nova_data = request.POST.get("data_1")
 
+        # Validate required fields
+        print(f"[DEBUG] Renovacao validation - processo_id: '{processo_id}', nova_data: '{nova_data}'")
+        validation_errors = False
+        
+        if not processo_id:
+            print("[DEBUG] Adding error message: Selecione um processo para renovar")
+            messages.error(request, "Selecione um processo para renovar")
+            validation_errors = True
+            
+        if not nova_data or nova_data.strip() == "":
+            print("[DEBUG] Adding error message: Data é obrigatória")
+            messages.error(request, "Data é obrigatória")
+            validation_errors = True
+        
+        # If there are validation errors, redirect back to the form
+        if validation_errors:
+            print("[DEBUG] Validation errors found, redirecting back to form")
+            return redirect("processos-renovacao-rapida")
+
         # Check if user wants to edit the process
         if request.POST.get("edicao"):
             request.session["processo_id"] = processo_id
@@ -530,45 +550,39 @@ def cadastro(request):
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
 
             if formulario.is_valid():
-                try:
-                    # English: form_data
-                    dados_formulario = formulario.cleaned_data
-                    # English: clinic_id
-                    id_clin = dados_formulario["clinicas"]
-                    # English: clinic
-                    clinica = medico.clinicas.get(id=id_clin)
+                # English: form_data
+                dados_formulario = formulario.cleaned_data
+                # English: clinic_id
+                id_clin = dados_formulario["clinicas"]
+                # English: clinic
+                clinica = medico.clinicas.get(id=id_clin)
 
-                    # English: registered_medication_ids
-                    ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
-                    # English: form_data, medication_ids
-                    dados_formulario, meds_ids = gera_med_dosagem(
-                        dados_formulario, ids_med_cadastrados
-                    )
-                    # English: data
-                    dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
-                    # English: process_id
-                    processo_id = formulario.save(usuario, medico, meds_ids)
-                    # English: final_pdf_path
-                    path_pdf_final = transfere_dados_gerador(dados)
+                # English: registered_medication_ids
+                ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
+                # English: form_data, medication_ids
+                dados_formulario, meds_ids = gera_med_dosagem(
+                    dados_formulario, ids_med_cadastrados
+                )
+                # English: data
+                dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
+                # English: process_id
+                processo_id = formulario.save(usuario, medico, meds_ids)
+                # English: final_pdf_path
+                path_pdf_final = transfere_dados_gerador(dados)
 
-                    if path_pdf_final:
-                        request.session["path_pdf_final"] = path_pdf_final
-                        request.session["processo_id"] = processo_id
-                        return JsonResponse({
-                            'success': True,
-                            'pdf_url': path_pdf_final,
-                            'message': 'Processo criado com sucesso! PDF gerado.',
-                            'filename': 'processo_cadastrado.pdf'
-                        })
-                    else:
-                        return JsonResponse({
-                            'success': False,
-                            'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
-                        })
-                except Exception as e:
+                if path_pdf_final:
+                    request.session["path_pdf_final"] = path_pdf_final
+                    request.session["processo_id"] = processo_id
+                    return JsonResponse({
+                        'success': True,
+                        'pdf_url': path_pdf_final,
+                        'message': 'Processo criado com sucesso! PDF gerado.',
+                        'filename': 'processo_cadastrado.pdf'
+                    })
+                else:
                     return JsonResponse({
                         'success': False,
-                        'error': f'Erro ao processar dados do formulário: {str(e)}'
+                        'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
                     })
             else:
                 return JsonResponse({
@@ -576,6 +590,11 @@ def cadastro(request):
                     'error': 'Erro de validação do formulário.',
                     'form_errors': formulario.errors
                 })
+        except IntegrityError as e:
+            return JsonResponse({
+                'success': False,
+                'error': 'Este processo já existe para este paciente. Verifique se não há duplicatas.'
+            })
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -583,7 +602,7 @@ def cadastro(request):
             })
     
     # If this is a GET request, create a fresh form
-    if request.method == "GET":
+    elif request.method == "GET":
         try:
             if not usuario.clinicas.exists():
                 return redirect("clinicas-cadastro")
@@ -595,7 +614,7 @@ def cadastro(request):
             messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
             return redirect("processos-home")
     
-    # Setup context for template rendering (works for both GET and POST with errors)
+    # Setup context for template rendering (only for GET requests)
     try:
         # English: conditional_fields
         campos_condicionais = extrair_campos_condicionais(formulario)
