@@ -108,7 +108,10 @@ AUTH_USER_MODEL = "usuarios.Usuario"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'autocusto.validation.CustomMinimumLengthValidator',
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -196,3 +199,18 @@ LOGGING = {
         },
     },
 }
+
+# Email settings for password reset
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Real email sending
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'digitalproductcats@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ukmi zxht fwsy yrle')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'CliqueReceita <digitalproductcats@gmail.com>')
+
+# In production, set these environment variables:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'
+# DEFAULT_FROM_EMAIL = 'AutoCusto <noreply@autocusto.com>'

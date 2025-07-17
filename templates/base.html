@@ -84,7 +84,7 @@
 
     {% else %}
     <!-- Compact login form for non-authenticated users -->
-    <div class="toast-enabled">
+    <div class="toast-enabled d-flex align-items-center">
       <form method="POST" action="{% url 'login' %}" class="form-inline my-2 my-lg-0" novalidate>
       {% csrf_token %}
       <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" style="max-width: 150px;">
@@ -93,6 +93,11 @@
         <span class="oi oi-account-login"></span> Login
       </button>
       </form>
+      
+      <!-- Forgot password link -->
+      <a href="{% url 'password_reset' %}" class="btn btn-sm btn-outline-light ml-2" title="Esqueceu sua senha?">
+        <span class="oi oi-key"></span>
+      </a>
     </div>
     {% endif %}
   </div>
