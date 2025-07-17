@@ -387,9 +387,10 @@ class NovoProcesso(forms.Form):
 
     def clean(self):
         """
-        Custom form validation that handles medications not submitted in POST request.
-        This includes both removed medications and blank medications, as both have their
-        name attributes removed by frontend JavaScript before form submission.
+        Custom form validation that handles medications submitted in POST request.
+        FIRST: Extract all submitted med_ids
+        THEN: For each submitted med_id, validate that ALL required fields are filled
+        FINALLY: Remove validation errors only for medications not submitted at all
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -403,16 +404,80 @@ class NovoProcesso(forms.Form):
         submitted_fields = set(self.data.keys()) if self.data else set()
         logger.info(f"Submitted fields: {submitted_fields}")
         
-        # Skip validation for medications not submitted (removed or blank)
+        # FIRST: Extract all submitted med_ids
+        submitted_med_ids = []
         for i in range(1, 5):
             med_id_field = f"id_med{i}"
-            logger.info(f"Checking medication {i}: {med_id_field}")
+            if med_id_field in submitted_fields:
+                med_id_value = self.data.get(med_id_field)
+                if med_id_value and med_id_value.strip() and med_id_value.strip().lower() != "nenhum":  # Non-empty value and not "nenhum"
+                    submitted_med_ids.append(i)
+                    logger.info(f"Found submitted medication {i}: {med_id_value}")
+                else:
+                    logger.info(f"Medication {i} has value '{med_id_value}' - treating as not submitted")
+        
+        logger.info(f"Total submitted medications: {submitted_med_ids}")
+        
+        # THEN: For each submitted med_id, validate ALL required fields are filled
+        for i in submitted_med_ids:
+            logger.info(f"Validating all fields for submitted medication {i}")
             
-            if med_id_field not in submitted_fields:
+            # Check main medication field
+            med_id_field = f"id_med{i}"
+            med_id_value = self.data.get(med_id_field)
+            if not med_id_value or not med_id_value.strip():
+                self.add_error(None, f"Medicamento {i}: Seleção do medicamento é obrigatória")
+                logger.info(f"Added med_id error for medication {i}")
+            
+            # Check repetir posologia field
+            repetir_field = f"med{i}_repetir_posologia"
+            has_repetir_error = False
+            if repetir_field not in submitted_fields:
+                has_repetir_error = True
+                logger.info(f"Missing {repetir_field}")
+            
+            if has_repetir_error:
+                self.add_error(None, f"Medicamento {i}: Campo 'repetir posologia' deve ser preenchido")
+                logger.info(f"Added repetir error for medication {i}")
+            
+            # Check dosage and quantity fields for all 6 months
+            has_missing_fields = False
+            for month in range(1, 7):
+                posologia_field = f"med{i}_posologia_mes{month}"
+                qtd_field = f"qtd_med{i}_mes{month}"
+                
+                # Check posologia field
+                if posologia_field not in submitted_fields:
+                    has_missing_fields = True
+                    logger.info(f"Missing {posologia_field}")
+                else:
+                    posologia_value = self.data.get(posologia_field)
+                    if not posologia_value or not posologia_value.strip():
+                        has_missing_fields = True
+                        logger.info(f"Empty {posologia_field}")
+                
+                # Check quantity field
+                if qtd_field not in submitted_fields:
+                    has_missing_fields = True
+                    logger.info(f"Missing {qtd_field}")
+                else:
+                    qtd_value = self.data.get(qtd_field)
+                    if not qtd_value or not qtd_value.strip():
+                        has_missing_fields = True
+                        logger.info(f"Empty {qtd_field}")
+            
+            # Add single summary error message if any fields are missing/invalid
+            if has_missing_fields:
+                self.add_error(None, f"Medicamento {i}: Todos os campos de posologia e quantidade (6 meses) devem ser preenchidos")
+                logger.info(f"Added summary error for medication {i}")
+        
+        # FINALLY: Remove validation errors only for medications not submitted at all
+        for i in range(1, 5):
+            if i not in submitted_med_ids:
                 logger.info(f"Medication {i} not submitted, removing validation errors")
-                # This medication was not submitted, skip its validation
                 
                 # Remove errors for main medication fields
+                med_id_field = f"id_med{i}"
                 if med_id_field in self.errors:
                     logger.info(f"Removing error for {med_id_field}")
                     del self.errors[med_id_field]
@@ -433,8 +498,6 @@ class NovoProcesso(forms.Form):
                     if qtd_field in self.errors:
                         logger.info(f"Removing error for {qtd_field}")
                         del self.errors[qtd_field]
-            else:
-                logger.info(f"Medication {i} was submitted: {self.data.get(med_id_field)}")
         
         logger.info(f"Form errors after custom validation: {dict(self.errors)}")
         logger.info("=== DEBUG: Form validation complete ===")

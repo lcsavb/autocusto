@@ -7,8 +7,8 @@ remove selenium from production build
 logging
 dor_crÔnica 
 verify need for changes in db
-verificar 1 vez bug
 med validaion error when adding/removing med
+add copaxone for ms
 
 roadmap
 Finish front/backend test coverage
@@ -18,3 +18,4 @@ prescrições a vencer
 modal pdf -> imprimir diretamente
 saving pdfs and removing them
 when trying to add a duplicated process a html response is being generated, not a json
+add custom pdf files

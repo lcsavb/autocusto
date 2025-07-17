@@ -35,6 +35,9 @@
                     const removeButton = document.querySelector(`[data-med="${n + 1}"].remove-med`);
                     if (removeButton) removeButton.classList.remove('d-none');
                 }
+                
+                // Re-enable fields for this medication
+                enableMedicationFields(n + 1);
 
                 break;
             }
@@ -153,30 +156,88 @@
     }
 
     function clearMedicationFields(medNumber) {
-        // Clear medication selection
+        // Clear medication selection, remove name attribute, and disable
         const medSelect = document.querySelector(`#id_med${medNumber}`);
-        if (medSelect) medSelect.value = '';
+        if (medSelect) {
+            medSelect.value = '';
+            medSelect.removeAttribute('name');
+            medSelect.disabled = true;
+        }
         
-        // Clear via field
+        // Clear via field, remove name attribute, and disable
         const viaField = document.querySelector(`#id_med${medNumber}_via`);
-        if (viaField) viaField.value = '';
+        if (viaField) {
+            viaField.value = '';
+            viaField.removeAttribute('name');
+            viaField.disabled = true;
+        }
         
-        // Clear repeat posology checkbox
+        // Clear repeat posology checkbox, remove name attribute, and disable
         const repeatCheckbox = document.querySelector(`#id_med${medNumber}_repetir_posologia`);
-        if (repeatCheckbox) repeatCheckbox.checked = false;
+        if (repeatCheckbox) {
+            repeatCheckbox.checked = false;
+            repeatCheckbox.removeAttribute('name');
+            repeatCheckbox.disabled = true;
+        }
         
-        // Clear all month fields
+        // Clear all month fields, remove name attributes, and disable
         for (let month = 1; month <= 6; month++) {
             const posologyField = document.querySelector(`#id_med${medNumber}_posologia_mes${month}`);
             const quantityField = document.querySelector(`#id_qtd_med${medNumber}_mes${month}`);
             
-            if (posologyField) posologyField.value = '';
-            if (quantityField) quantityField.value = '';
+            if (posologyField) {
+                posologyField.value = '';
+                posologyField.removeAttribute('name');
+                posologyField.disabled = true;
+            }
+            if (quantityField) {
+                quantityField.value = '';
+                quantityField.removeAttribute('name');
+                quantityField.disabled = true;
+            }
         }
         
         // Hide optional posology fields
         const optionalDiv = document.querySelector(`#posologias-opcionais-med${medNumber}`);
         if (optionalDiv) optionalDiv.classList.add('d-none');
+    }
+    
+    function enableMedicationFields(medNumber) {
+        // Re-enable medication selection and restore name attribute
+        const medSelect = document.querySelector(`#id_med${medNumber}`);
+        if (medSelect) {
+            medSelect.setAttribute('name', `id_med${medNumber}`);
+            medSelect.disabled = false;
+        }
+        
+        // Re-enable via field and restore name attribute
+        const viaField = document.querySelector(`#id_med${medNumber}_via`);
+        if (viaField) {
+            viaField.setAttribute('name', `med${medNumber}_via`);
+            viaField.disabled = false;
+        }
+        
+        // Re-enable repeat posology checkbox and restore name attribute
+        const repeatCheckbox = document.querySelector(`#id_med${medNumber}_repetir_posologia`);
+        if (repeatCheckbox) {
+            repeatCheckbox.setAttribute('name', `med${medNumber}_repetir_posologia`);
+            repeatCheckbox.disabled = false;
+        }
+        
+        // Re-enable all month fields and restore name attributes
+        for (let month = 1; month <= 6; month++) {
+            const posologyField = document.querySelector(`#id_med${medNumber}_posologia_mes${month}`);
+            const quantityField = document.querySelector(`#id_qtd_med${medNumber}_mes${month}`);
+            
+            if (posologyField) {
+                posologyField.setAttribute('name', `med${medNumber}_posologia_mes${month}`);
+                posologyField.disabled = false;
+            }
+            if (quantityField) {
+                quantityField.setAttribute('name', `qtd_med${medNumber}_mes${month}`);
+                quantityField.disabled = false;
+            }
+        }
     }
 
     function switchToFirstVisibleTab() {
