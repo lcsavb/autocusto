@@ -3,6 +3,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from datetime import datetime
 from .manejo_pdfs import GeradorPDF
+from .manejo_pdfs_memory import GeradorPDFMemory
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
 
@@ -527,7 +528,8 @@ def transfere_dados_gerador(dados):
     """Transfers the final process data to the PDF generator.
 
     This function takes the complete data dictionary for a process, passes it
-    to the `GeradorPDF` class, and returns the path to the generated PDF file.
+    to the `GeradorPDFMemory` class, and returns the path to the generated PDF file.
+    The PDF is generated in memory and cached for serving.
 
     Critique:
     - The function has a lot of debugging prints, which should be removed
@@ -557,27 +559,95 @@ def transfere_dados_gerador(dados):
         print(f"DEBUG: PATH_LME_BASE: {settings.PATH_LME_BASE}")
         print(f"DEBUG: PATH_LME_BASE exists: {os.path.exists(settings.PATH_LME_BASE)}")
         
+        # Save CPF and CID before PDF generation (they might be modified during processing)
+        cpf_paciente = dados.get('cpf_paciente', 'unknown')
+        cid = dados.get('cid', 'unknown')
+        print(f"DEBUG: Saved CPF before PDF generation: '{cpf_paciente}'")
+        print(f"DEBUG: Saved CID before PDF generation: '{cid}'")
+        
         # English: pdf
-        pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
-        print(f"DEBUG: GeradorPDF instance created")
+        pdf = GeradorPDFMemory(dados, settings.PATH_LME_BASE)
+        print(f"DEBUG: GeradorPDFMemory instance created")
         
-        # English: pdf_data
-        dados_pdf = pdf.generico(dados, settings.PATH_LME_BASE)
-        print(f"DEBUG: generico method returned: {dados_pdf}")
+        # Generate PDF in memory and get HttpResponse
+        response = pdf.generico_stream(dados, settings.PATH_LME_BASE)
+        print(f"DEBUG: generico_stream method returned response")
         
-        if dados_pdf is None or dados_pdf[0] is None or dados_pdf[1] is None:
+        if response is None:
             print(f"ERROR: PDF generation failed in transfere_dados_gerador")
-            print(f"ERROR: dados_pdf result: {dados_pdf}")
             return None
         
-        # English: final_pdf_path
-        path_pdf_final = dados_pdf[1]  # The second variable returned by the function is the path
+        # Store the response in a cache or session for later serving
+        # Use the saved CPF and CID (not from dados which might be modified)
+        
+        print(f"DEBUG: Using saved CPF: '{cpf_paciente}' (type: {type(cpf_paciente)})")
+        print(f"DEBUG: Using saved CID: '{cid}' (type: {type(cid)})")
+        
+        # Check if CPF was saved correctly
+        if cpf_paciente == 'unknown':
+            print(f"DEBUG: CPF was not saved correctly! Checking all keys...")
+            for key, value in dados.items():
+                if 'cpf' in key.lower():
+                    print(f"DEBUG: Found CPF-related key: {key} = {value}")
+        
+        nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
+        print(f"DEBUG: Final PDF name will be: {nome_final_pdf}")
+        
+        # Cache the response for immediate serving (short-lived)
+        from django.core.cache import caches
+        pdf_cache = caches['pdf_cache']
+        cache_key = f"pdf_response_{nome_final_pdf}"
+        pdf_cache.set(cache_key, response.content)  # Use pdf_cache default timeout (5 minutes)
+        print(f"DEBUG: PDF cached with key: {cache_key}")
+        
+        # Return the URL path as before
+        from django.urls import reverse
+        path_pdf_final = reverse('processos-serve-pdf', kwargs={'filename': nome_final_pdf})
+        
         print(f"DEBUG: PDF generated successfully: {path_pdf_final}")
-        print(f"DEBUG: Final PDF file exists: {os.path.exists(dados_pdf[0]) if dados_pdf[0] else 'No file path'}")
         print(f"=== TRANSFERE_DADOS_GERADOR END ===\n")
         return path_pdf_final
+        
     except Exception as e:
         print(f"ERROR: Exception in transfere_dados_gerador: {e}")
+        import traceback
+        print(f"ERROR: Traceback: {traceback.format_exc()}")
+        return None
+
+
+def gerar_pdf_stream(dados):
+    """Generates PDF entirely in memory and returns HttpResponse for streaming.
+    
+    This function replaces the disk-based PDF generation with in-memory operations.
+    It uses the new GeradorPDFMemory class to generate PDFs directly in RAM and
+    returns an HttpResponse that streams the PDF to the browser.
+    
+    Args:
+        dados (dict): The complete data dictionary for the process.
+        
+    Returns:
+        HttpResponse: PDF response ready for streaming, or None if error occurs.
+    """
+    try:
+        print(f"\n=== GERAR_PDF_STREAM START ===")
+        print(f"DEBUG: Input data keys: {list(dados.keys())}")
+        print(f"DEBUG: Patient CPF: {dados.get('cpf_paciente', 'NOT_FOUND')}")
+        print(f"DEBUG: CID: {dados.get('cid', 'NOT_FOUND')}")
+        print(f"DEBUG: Using in-memory PDF generation")
+        
+        # Create memory-based PDF generator
+        pdf_generator = GeradorPDFMemory(dados, settings.PATH_LME_BASE)
+        print(f"DEBUG: GeradorPDFMemory instance created")
+        
+        # Generate PDF and return HttpResponse
+        response = pdf_generator.generico_stream(dados, settings.PATH_LME_BASE)
+        print(f"DEBUG: PDF stream generated successfully")
+        print(f"=== GERAR_PDF_STREAM END ===\n")
+        
+        return response
+        
+    except Exception as e:
+        print(f"ERROR: Exception in gerar_pdf_stream: {e}")
         import traceback
         print(f"ERROR: Traceback: {traceback.format_exc()}")
         return None

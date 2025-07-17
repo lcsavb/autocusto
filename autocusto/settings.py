@@ -149,6 +149,29 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
 
 STATICFILES_DIRS = []  # All static files should be collected into STATIC_ROOT
 
+# Cache Configuration
+# Optimized for PDF generation system - short-lived cache for immediate serving
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default-cache',
+        'TIMEOUT': 3600,  # 1 hour default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    },
+    'pdf_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'pdf-cache',
+        'TIMEOUT': 300,   # 5 minutes - short-lived for immediate serving
+        'OPTIONS': {
+            'MAX_ENTRIES': 100,   # Small cache for immediate PDF serving
+            'CULL_FREQUENCY': 2,  # Quick cleanup when full
+        }
+    }
+}
+
 # Configurações do Crispy
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 CRISPY_FAIL_SILENTLY = True

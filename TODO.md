@@ -14,6 +14,8 @@ add copaxone for ms
 -----------------------------------------------------------------------------------------------------------------
 
 js folders duplicated staticroot and staticroot/processos
+erase duplicated old files (on drive pdf management)
+put entire base pdfs in ram
 roadmap
 Finish front/backend test coverage
 Finish frontend prescription test

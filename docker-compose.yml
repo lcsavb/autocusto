@@ -15,6 +15,9 @@ services:
     command: uwsgi --ini uwsgi.ini
     volumes:
       - .:/home/appuser/app
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+      - /dev/shm:rw,noexec,nosuid,size=100m
     depends_on:
       - db
     environment:

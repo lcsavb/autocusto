@@ -573,19 +573,28 @@ def cadastro(request):
                 path_pdf_final = transfere_dados_gerador(dados)
 
                 if path_pdf_final:
-                    request.session["path_pdf_final"] = path_pdf_final
+                    import os
+                    filename = os.path.basename(path_pdf_final)
+                    from django.urls import reverse
+                    #pdf_url = reverse('processos-serve-pdf', args=[filename])
+                    #request.session["path_pdf_final"] = path_pdf_final
                     request.session["processo_id"] = processo_id
                     return JsonResponse({
                         'success': True,
                         'pdf_url': path_pdf_final,
                         'message': 'Processo criado com sucesso! PDF gerado.',
-                        'filename': 'processo_cadastrado.pdf'
+                        'filename': filename
                     })
                 else:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
-                    })
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                        })
+                    else:
+                        from django.contrib import messages
+                        messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                        return redirect("processos-home")
             else:
                 return JsonResponse({
                     'success': False,
@@ -709,53 +718,34 @@ def serve_pdf(request, filename):
         if '..' in filename or '/' in filename or '\\' in filename:
             raise Http404("Invalid filename")
         
-        # Build secure file path
-        from django.conf import settings
-        file_path = os.path.join(settings.BASE_DIR, 'processos', 'pdf', filename)
-        
-        # Check if file exists
-        if not os.path.exists(file_path):
-            logger.warning(f"PDF file not found: {file_path}")
-            raise Http404("PDF file not found")
-        
-        # Authorization check - verify user has access to this PDF
-        user = request.user
-        
-        # Extract patient CPF from filename (format: pdf_final_CPF_CID.pdf)
+               
+        # Serve the file from cache (generated in memory)
         try:
-            # Parse filename to extract CPF
-            base_name = filename.replace('.pdf', '')
-            if base_name.startswith('pdf_final_'):
-                parts = base_name.split('_')
-                if len(parts) >= 3:
-                    patient_cpf = parts[2]  # CPF is the 3rd part
-                    
-                    # Check if user has access to this patient
-                    if not user.pacientes.filter(cpf_paciente=patient_cpf).exists():
-                        logger.warning(f"User {user.username} attempted to access PDF for unauthorized patient: {patient_cpf}")
-                        raise Http404("Access denied")
-                else:
-                    logger.warning(f"Invalid PDF filename format: {filename}")
-                    raise Http404("Invalid filename format")
-            else:
-                logger.warning(f"Unrecognized PDF filename pattern: {filename}")
-                raise Http404("Invalid filename format")
-                
-        except Exception as e:
-            logger.error(f"Error parsing filename {filename}: {e}")
-            raise Http404("Invalid filename")
-        
-        # Serve the file
-        try:
-            with open(file_path, 'rb') as pdf_file:
-                response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+            from django.core.cache import caches
+            pdf_cache = caches['pdf_cache']
+            cache_key = f"pdf_response_{filename}"
+            pdf_content = pdf_cache.get(cache_key)
+            
+            if pdf_content:
+                # Serve from cache
+                response = HttpResponse(pdf_content, content_type='application/pdf')
                 response['Content-Disposition'] = f'inline; filename="{filename}"'
                 response['X-Content-Type-Options'] = 'nosniff'
                 response['X-Frame-Options'] = 'SAMEORIGIN'
+                print(f"DEBUG: Serving PDF from cache: {cache_key}")
+                
+                # Optional: Delete from cache after serving (immediate cleanup)
+                pdf_cache.delete(cache_key)
+                print(f"DEBUG: PDF removed from cache after serving: {cache_key}")
+                
                 return response
+            else:
+                # Cache miss - PDF was not generated or expired
+                logger.warning(f"PDF not found in cache: {cache_key}")
+                raise Http404("PDF not found or expired")
                 
         except Exception as e:
-            logger.error(f"Error serving PDF file {file_path}: {e}")
+            logger.error(f"Error serving PDF from cache: {e}")
             raise Http404("Error serving PDF")
             
     except Http404:
