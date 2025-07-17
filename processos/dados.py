@@ -593,12 +593,11 @@ def transfere_dados_gerador(dados):
         nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
         print(f"DEBUG: Final PDF name will be: {nome_final_pdf}")
         
-        # Cache the response for immediate serving (short-lived)
-        from django.core.cache import caches
-        pdf_cache = caches['pdf_cache']
-        cache_key = f"pdf_response_{nome_final_pdf}"
-        pdf_cache.set(cache_key, response.content)  # Use pdf_cache default timeout (5 minutes)
-        print(f"DEBUG: PDF cached with key: {cache_key}")
+        # Save PDF to /tmp for immediate serving
+        tmp_pdf_path = f"/tmp/{nome_final_pdf}"
+        with open(tmp_pdf_path, 'wb') as f:
+            f.write(response.content)
+        print(f"DEBUG: PDF saved to: {tmp_pdf_path}")
         
         # Return the URL path as before
         from django.urls import reverse

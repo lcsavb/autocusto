@@ -719,33 +719,34 @@ def serve_pdf(request, filename):
             raise Http404("Invalid filename")
         
                
-        # Serve the file from cache (generated in memory)
+        # Serve the file from /tmp filesystem
         try:
-            from django.core.cache import caches
-            pdf_cache = caches['pdf_cache']
-            cache_key = f"pdf_response_{filename}"
-            pdf_content = pdf_cache.get(cache_key)
+            import os
+            tmp_pdf_path = f"/tmp/{filename}"
             
-            if pdf_content:
-                # Serve from cache
+            if os.path.exists(tmp_pdf_path):
+                # Serve from filesystem
+                with open(tmp_pdf_path, 'rb') as f:
+                    pdf_content = f.read()
+                
                 response = HttpResponse(pdf_content, content_type='application/pdf')
                 response['Content-Disposition'] = f'inline; filename="{filename}"'
                 response['X-Content-Type-Options'] = 'nosniff'
                 response['X-Frame-Options'] = 'SAMEORIGIN'
-                print(f"DEBUG: Serving PDF from cache: {cache_key}")
+                print(f"DEBUG: Serving PDF from filesystem: {tmp_pdf_path}")
                 
-                # Optional: Delete from cache after serving (immediate cleanup)
-                pdf_cache.delete(cache_key)
-                print(f"DEBUG: PDF removed from cache after serving: {cache_key}")
+                # Optional: Delete file after serving (immediate cleanup)
+                os.remove(tmp_pdf_path)
+                print(f"DEBUG: PDF removed from filesystem after serving: {tmp_pdf_path}")
                 
                 return response
             else:
-                # Cache miss - PDF was not generated or expired
-                logger.warning(f"PDF not found in cache: {cache_key}")
+                # File not found - PDF was not generated or expired
+                logger.warning(f"PDF not found in filesystem: {tmp_pdf_path}")
                 raise Http404("PDF not found or expired")
                 
         except Exception as e:
-            logger.error(f"Error serving PDF from cache: {e}")
+            logger.error(f"Error serving PDF from filesystem: {e}")
             raise Http404("Error serving PDF")
             
     except Http404:
