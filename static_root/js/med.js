@@ -363,8 +363,9 @@ $(document).ready(function() {
         });
     }
     
-    // Option 2: Enhanced form submission handler
-    $('form').on('submit', function() {
+    // Option 2: Enhanced form submission handler - ONLY for forms with medication fields
+    $('form:has(#id_id_med1, #id_id_med2, #id_id_med3, #id_id_med4)').on('submit', function(event) {
+        // Do NOT prevent default - let FormHandler take over
         console.log('Form submitting - checking for blank medications');
         
         // Check all medications 1-4 (enhanced to include med 1)
@@ -391,6 +392,8 @@ $(document).ready(function() {
                 });
             }
         }
+        
+        console.log('Med.js processing complete - allowing form submission to continue');
     });
     
     // Initialize the change listeners

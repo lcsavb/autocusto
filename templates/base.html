@@ -17,8 +17,7 @@
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     
-    <!-- Med.js script -->
-    <script src="{% static 'js/med.js' %}"></script>
+    <!-- Med.js script moved to specific templates that need it -->
 
     <!-- Custom styles for this template -->
     
@@ -28,6 +27,7 @@
 
   </head>
   <body>
+  <!-- Toast container now created dynamically by vanilla JS toast system -->
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
   <a class="navbar-brand" href="{% url 'home' %}">
     <img src="{% static 'img/logo.png' %}" alt="AutoCusto Logo" style="height: 52px; vertical-align: middle; margin-right: 8px;">
@@ -228,23 +228,7 @@
       border-right-color: #ddd;
     }
   </style>
-  <div x-data="toastContainer()" x-init="init(); checkForFormErrors()" class="inline-toast-wrapper" x-cloak>
-    <!-- DEBUG: Toast container initialized -->
-    <script>console.log('[DEBUG] Toast container initialized');</script>
-    <template x-for="toast in toasts" :key="toast.id">
-      <div :class="getToastClasses(toast)" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-          <i :class="getIconClass(toast)" class="mr-2"></i>
-          <strong class="mr-auto" x-text="getTitle(toast)"></strong>
-          <button type="button" class="ml-2 mb-1 close" @click="removeToast(toast.id); console.log('[DEBUG] Toast closed', toast);" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="toast-body" x-html="toast.message.replace(/\n/g, '<br>')"></div>
-        <script>console.log('[DEBUG] Toast rendered:', toast);</script>
-      </div>
-    </template>
-  </div>
+
 
   <!-- Pass Django messages to Alpine.js toast system -->
   {% if messages %}
@@ -268,6 +252,7 @@
     {%block content %}{% endblock %}
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script>
       // Initialize Bootstrap tooltips
@@ -276,8 +261,9 @@
       });
     </script>
     <script src="{% static 'js/toast-system.js' %}"></script>
+    <script src="{% static 'js/form-handler.js' %}"></script>
     
-    <!-- Alpine.js - Must load AFTER toast-system.js -->
+    <!-- Alpine.js - Must load AFTER toast-system.js and form-handler.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   
     {% block scripts %}

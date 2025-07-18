@@ -57,15 +57,9 @@ document.addEventListener('alpine:init', () => {
           printWindow.print();
         };
         
-        this.$dispatch('add-toast', {
-          message: 'PDF aberto em nova janela. Use Ctrl+P para imprimir.',
-          type: 'info'
-        });
+        Toast.info('PDF aberto em nova janela. Use Ctrl+P para imprimir.');
       } else {
-        this.$dispatch('add-toast', {
-          message: 'Popup bloqueado. Permita popups e tente novamente.',
-          type: 'warning'
-        });
+        Toast.warning('Popup bloqueado. Permita popups e tente novamente.');
       }
     }
   }));
@@ -104,11 +98,9 @@ document.addEventListener('alpine:init', () => {
       
       // Validate date
       if (!this.isValidDate(dateValue)) {
-        console.log('Dispatching date validation error toast');
-        this.$dispatch('add-toast', {
-          message: 'Data inválida! Use o formato DD/MM/AAAA',
-          type: 'error'
-        });
+        console.log('Adding date validation error toast');
+        // Date validation should be immediate - no delay needed
+        Toast.error('Data inválida! Use o formato DD/MM/AAAA');
         return;
       }
       
@@ -142,27 +134,13 @@ document.addEventListener('alpine:init', () => {
             allowDownload: true
           });
           
-          // Show success toast using Alpine.js event system
-          console.log('Dispatching success toast');
-          this.$dispatch('add-toast', {
-            message: data.message || 'PDF gerado com sucesso!',
-            type: 'success'
-          });
+          Toast.success(data.message || 'PDF gerado com sucesso!');
         } else {
-          // Show error toast using Alpine.js event system
-          console.log('Dispatching error toast');
-          this.$dispatch('add-toast', {
-            message: data.error || 'Erro ao gerar PDF',
-            type: 'error'
-          });
+          Toast.error(data.error || 'Erro ao gerar PDF');
         }
       } catch (error) {
         console.error('Error:', error);
-        console.log('Dispatching connection error toast');
-        this.$dispatch('add-toast', {
-          message: 'Erro de conexão. Tente novamente.',
-          type: 'error'
-        });
+        Toast.error('Erro de conexão. Tente novamente.');
       } finally {
         this.isSubmitting = false;
       }

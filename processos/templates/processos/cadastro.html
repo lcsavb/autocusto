@@ -9,7 +9,7 @@
 {% include 'components/pdf_modal.html' %}
 
 <div class="container-fluid toast-enabled">
-  <form method="POST" novalidate x-data="{ loading: false }" @submit.prevent="loading = true; $refs.submitBtn.disabled = true; fetch(window.location.pathname, { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'Accept': 'application/json' }, body: new FormData($el) }).then(async resp => { let data = await resp.json(); console.log('[DEBUG] AJAX submit response', data); if (data.success) { if (data.pdf_url) { $dispatch('open-pdf', { url: data.pdf_url, title: 'PDF Gerado', allowDownload: true, allowEdit: true }); document.addEventListener('modal-closed', function() { window.location.href = '/'; }, { once: true }); } else { window.ToastSystem.error('PDF não gerado.'); } } else { if (data.form_errors) { const errorMessages = []; Object.values(data.form_errors).forEach(fieldErrors => { fieldErrors.forEach(error => errorMessages.push(error)); }); window.ToastSystem.addSummaryToast(errorMessages, 'error'); } else { window.ToastSystem.error(data.error || 'Erro desconhecido'); } } }).catch(e => { console.error('[DEBUG] AJAX submit error', e); window.ToastSystem.error('Erro de rede: ' + e.message); }).finally(() => { loading = false; $refs.submitBtn.disabled = false; });">
+  <form method="POST" novalidate id="cadastro-form">
 {% csrf_token %}
 
     <div class="card rounded" style="padding: 1.5rem;">   
@@ -165,13 +165,12 @@
 
       <!-- Submit Section -->
       <div class="submit-section">
-        <button class="btn btn-submit-process position-relative overflow-hidden" type="submit" x-ref="submitBtn" :disabled="loading">
+        <button class="btn btn-submit-process position-relative overflow-hidden" type="submit" id="submit-btn">
           <span class="oi oi-plus mr-2"></span>
-          <span x-show="!loading">Cadastrar Processo</span>
-          <span x-show="loading">Enviando...</span>
-          <div x-show="loading" 
-               class="progress-bar-fill position-absolute" 
-               style="top: 0; left: 0; height: 100%; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3)); width: 0%; animation: fillProgress 3s ease-out forwards;">
+          <span class="submit-text">Cadastrar Processo</span>
+          <span class="loading-text" style="display: none;">Enviando...</span>
+          <div class="progress-bar-fill position-absolute" 
+               style="display: none; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3)); width: 0%; animation: fillProgress 3s ease-out forwards;">
           </div>
         </button>
         <p class="text-muted mt-2 mb-0">
@@ -190,7 +189,23 @@
 <script src="{% static 'js/pdf-modal.js' %}"></script>
 <script src="{% static 'processos/js/processo.js' %}"></script>
 <script src="{% static 'processos/js/mascaras.js' %}"></script>
-<script src="{% static 'processos/js/med.js' %}"></script>
+<script src="{% static 'js/med.js' %}"></script>
 <script src="{% static 'processos/js/documentosAdicionais.js' %}"></script>
 <script src="{% static 'processos/js/emitirExames.js' %}"></script>
+
+<script>
+// Initialize PdfFormHandler for Cadastro form
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[CADASTRO] Initializing PDF form handler');
+    
+    new PdfFormHandler('#cadastro-form')
+        .withLoadingText('Enviando...')
+        .withPdfModal(true)
+        .withSuccessRedirect('/')
+        .init();
+    
+    console.log('[CADASTRO] PDF form handler initialized');
+});
+</script>
+
 {% endblock %}

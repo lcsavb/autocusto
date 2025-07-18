@@ -14,8 +14,7 @@ logging
 dor_crÔnica 
 verify need for changes in dbd
 add copaxone for ms
-print without dialog -> not working and opening a browser dialog
-layout breaking on mobile (home)
+all pdfs in memory
 
 
 
