@@ -2,22 +2,25 @@
 
 FOR EARLY DEPLOYMENT
 
+security fixes
+when the medicamento is nenhum it works
+some toasts too fast
+recuperacao da senha instrucoes em ingles
+no inline validation feedback
 depois da criação da conta, login automático
 instituir autenticação de dois fatores obrigatória
 The pdfs_base directories exist for some protocols but not for epilepsia. Let me check if it should exist:
-remove selenium from production build
 logging
 dor_crÔnica 
 verify need for changes in dbd
 add copaxone for ms
+print without dialog -> not working and opening a browser dialog
+layout breaking on mobile (home)
 
-when trying to register a duplicate user it is not handled gracefully
-django.db.utils.IntegrityError: duplicate key value violates unique constraint "medicos_medico_crm_medico_key"
-DETAIL:  Key (crm_medico)=(150494) already exists.
 
 
 -----------------------------------------------------------------------------------------------------------------
-
+integracao api cnes
 js folders duplicated staticroot and staticroot/processos
 erase duplicated old files (on drive pdf management)dd
 put entire base pdfs in ram

@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Jekyll v3.8.5">
-    <title>AutoCusto</title>
+    <title>CliqueReceita - LME em 2 cliques</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/4.3/examples/starter-template/">
 
@@ -91,9 +91,9 @@
     <div class="toast-enabled d-flex flex-column" style="padding-top: 8px;">
       <form method="POST" action="{% url 'login' %}" class="form-inline my-2 my-lg-0" novalidate>
       {% csrf_token %}
-      <div class="d-flex align-items-center">
-        <input name="username" type="email" class="form-control mr-sm-2" placeholder="Email" aria-label="Email" style="max-width: 150px;">
-        <input name="password" type="password" class="form-control mr-sm-2" placeholder="Senha" aria-label="Password" style="max-width: 120px;">
+      <div class="d-flex flex-column d-lg-flex flex-lg-row align-items-center">
+        <input name="username" type="email" class="form-control mr-sm-2 mb-1 mb-lg-0" placeholder="Email" aria-label="Email" style="max-width: 150px;">
+        <input name="password" type="password" class="form-control mr-sm-2 mb-1 mb-lg-0" placeholder="Senha" aria-label="Password" style="max-width: 120px;">
         <button class="btn btn-outline-light" type="submit">
           <span class="oi oi-account-login"></span> Login
         </button>

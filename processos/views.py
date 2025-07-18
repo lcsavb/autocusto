@@ -735,9 +735,7 @@ def serve_pdf(request, filename):
                 response['X-Frame-Options'] = 'SAMEORIGIN'
                 print(f"DEBUG: Serving PDF from filesystem: {tmp_pdf_path}")
                 
-                # Optional: Delete file after serving (immediate cleanup)
-                os.remove(tmp_pdf_path)
-                print(f"DEBUG: PDF removed from filesystem after serving: {tmp_pdf_path}")
+                # Let system handle cleanup - /tmp is usually tmpfs or auto-cleaned
                 
                 return response
             else:

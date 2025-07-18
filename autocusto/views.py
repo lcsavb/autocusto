@@ -150,10 +150,9 @@ def home(request):
                     
                     print(f"🔍 STEP 3: Total messages after adding: {len(list(messages.get_messages(request)))}")
                     
-                    # Clear form errors to prevent crispy from showing inline errors
-                    # (we've already copied them to messages for toast display)
-                    registro_form._errors.clear()
-                    print("🔍 STEP 4: Cleared form errors to prevent inline display")
+                    # Note: Form errors are handled via crispy forms configuration
+                    # form_show_errors = False prevents inline display
+                    print("🔍 STEP 4: Form errors preserved for proper validation state")
                     
                     # Re-render form but messages will show as toasts
                     # English: form
