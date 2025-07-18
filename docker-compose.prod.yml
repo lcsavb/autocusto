@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  web:
+    image: ghcr.io/lcsavb/autocusto:master
+    ports:
+      - "8001:8001"
+    environment:
+      - DEBUG=0
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1] www.cliquereceita.com.br cliquereceita.com.br
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=autocusto
+      - SQL_USER=lucas
+      - SQL_PASSWORD=rraptnor
+      - SQL_HOST=db
+      - SQL_PORT=5432
+      - SERVER=nginx
+    depends_on:
+      - db
+    volumes:
+      - static_volume:/home/appuser/app/static_root
+      - media_volume:/home/appuser/app/media
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+      - static_volume:/home/appuser/app/static_root
+      - media_volume:/home/appuser/app/media
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  db:
+    image: postgres:17.4-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=autocusto
+      - POSTGRES_USER=lucas
+      - POSTGRES_PASSWORD=rraptnor
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

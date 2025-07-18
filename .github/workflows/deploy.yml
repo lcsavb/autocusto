@@ -96,79 +96,89 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.KINGHOST_SSH_KEY }}
         script: |
-
+          echo "=== REGISTRY-ONLY DEPLOYMENT START ==="
+          
+          # Setup deployment directory
           sudo chown $USER:$USER /opt/autocusto
+          mkdir -p /opt/autocusto
           cd /opt/autocusto
-          
-          # Force clean deployment to avoid stale files
-          echo "=== Cleaning deployment directory ==="
-          cd /opt
-          rm -rf autocusto
-          mkdir -p autocusto
-          cd autocusto
-          
-          # Clone fresh copy
-          echo "=== Cloning fresh repository ==="
-          git clone https://github.com/lcsavb/autocusto.git .
-          
-          echo "=== Verifying fresh clone ==="
-          git log --oneline -1
-          git status
           
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           
           # Pull latest image
+          echo "=== Pulling latest image ==="
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
           
-          # Update image tag in docker-compose
-          echo "=== EXTENSIVE DEBUGGING START ==="
-          echo "Current directory: $(pwd)"
-          echo "Files in directory:"
-          ls -la
-          echo ""
+          # Create production docker-compose.yml dynamically
+          echo "=== Creating production docker-compose.yml ==="
+          cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+
+          services:
+            web:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
+              ports:
+                - "8001:8001"
+              environment:
+                - DEBUG=0
+                - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1] www.cliquereceita.com.br cliquereceita.com.br
+                - SQL_ENGINE=django.db.backends.postgresql
+                - SQL_DATABASE=autocusto
+                - SQL_USER=lucas
+                - SQL_PASSWORD=rraptnor
+                - SQL_HOST=db
+                - SQL_PORT=5432
+                - SERVER=nginx
+              depends_on:
+                - db
+              volumes:
+                - static_volume:/home/appuser/app/static_root
+                - media_volume:/home/appuser/app/media
+              restart: unless-stopped
+
+            nginx:
+              image: nginx:alpine
+              ports:
+                - "80:80"
+                - "443:443"
+              volumes:
+                - ./nginx.conf:/etc/nginx/nginx.conf
+                - ./ssl:/etc/nginx/ssl
+                - static_volume:/home/appuser/app/static_root
+                - media_volume:/home/appuser/app/media
+              depends_on:
+                - web
+              restart: unless-stopped
+
+            db:
+              image: postgres:17.4-alpine
+              volumes:
+                - postgres_data:/var/lib/postgresql/data/
+              environment:
+                - POSTGRES_DB=autocusto
+                - POSTGRES_USER=lucas
+                - POSTGRES_PASSWORD=rraptnor
+              restart: unless-stopped
+
+          volumes:
+            postgres_data:
+            static_volume:
+            media_volume:
+          EOF
           
-          echo "=== Original docker-compose.yml (with line numbers) ==="
-          cat -n docker-compose.yml
-          echo "======================================================="
-          echo ""
+          # Copy nginx config and SSL certs (these should already exist)
+          echo "=== Verifying nginx config and SSL certs ==="
+          ls -la nginx.conf || echo "Warning: nginx.conf not found"
+          ls -la ssl/ || echo "Warning: ssl directory not found"
           
-          echo "=== Searching for volumes lines ==="
-          grep -n "volumes:" docker-compose.yml || echo "No volumes lines found"
-          echo "===================================="
-          echo ""
-          
-          echo "=== Web service section ==="
-          grep -A 15 "web:" docker-compose.yml | cat -n
-          echo "==========================="
-          echo ""
-          
-          sed -i 's|build: \.|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master|' docker-compose.yml
-          
-          echo "=== After sed replacement ==="
-          cat -n docker-compose.yml
-          echo "============================="
-          echo ""
-          
-          
-          echo "=== Final docker-compose.yml ==="
-          cat -n docker-compose.yml
-          echo "================================="
-          echo ""
+          echo "=== Generated docker-compose.yml ==="
+          cat docker-compose.yml
+          echo "=================================="
           
           # Validate docker-compose syntax
           echo "=== Validating docker-compose.yml ==="
           docker-compose config --quiet
-          validation_result=$?
-          echo "Validation result: $validation_result"
-          
-          if [ $validation_result -ne 0 ]; then
-            echo "=== VALIDATION FAILED - DETAILED ERROR ==="
-            docker-compose config 2>&1
-            echo "==========================================="
-            exit 1
-          fi
-          echo "=== EXTENSIVE DEBUGGING END ==="
           
           # Stop and remove old containers
           docker-compose down
@@ -181,3 +191,5 @@ jobs:
           
           # Run migrations
           docker-compose exec -T web python manage.py migrate
+          
+          echo "=== REGISTRY-ONLY DEPLOYMENT COMPLETE ==="

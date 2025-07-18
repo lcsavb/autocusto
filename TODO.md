@@ -275,3 +275,104 @@ jobs:
           docker image prune -f
           
           echo "=== DEPLOYMENT COMPLETE ==="
+
+
+          SECURITY
+          
+           🚨 CRITICAL PRODUCTION ISSUES FOUND
+
+  Based on my comprehensive audit, here are the IMMEDIATE CHANGES you must make:
+
+  🔥 CRITICAL SECURITY FIXES (DO NOW)
+
+  1. Generate New SECRET_KEY
+  # Generate a new secret key
+  python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+
+  2. Remove Hardcoded Credentials
+  # In settings.py - REMOVE these defaults:
+  EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ukmi zxht fwsy yrle')  # ❌ REMOVE DEFAULT
+  SECRET_KEY = os.environ.get('SECRET_KEY')  # ✅ Already correct
+
+  3. Add Security Headers to nginx.conf
+  # Add to your HTTPS server block:
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+  add_header X-Content-Type-Options nosniff;
+  add_header X-Frame-Options DENY;
+  add_header X-XSS-Protection "1; mode=block";
+  add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+  4. Environment Variable Security
+  # Add .env to .gitignore (if not already)
+  echo ".env" >> .gitignore
+
+  # Remove .env from git history
+  git rm --cached .env
+  git commit -m "Remove .env from version control"
+
+  ⚡ PERFORMANCE FIXES
+
+  5. Database Query Optimization
+  # In views.py - Add select_related for foreign keys:
+  busca_processos = paciente.processos.select_related('doenca', 'medico').filter(doenca__cid=cid)
+
+  6. Production Cache Backend
+  # In settings.py - Use Redis for production:
+  if not DEBUG:
+      CACHES = {
+          'default': {
+              'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+              'LOCATION': 'redis://127.0.0.1:6379/1',
+          }
+      }
+
+  🔧 PRODUCTION SETTINGS
+
+  7. Add Production Settings
+  # Add to settings.py:
+  if not DEBUG:
+      SESSION_COOKIE_SECURE = True
+      SESSION_COOKIE_HTTPONLY = True
+      CSRF_COOKIE_SECURE = True
+      SECURE_SSL_REDIRECT = True
+      SECURE_HSTS_SECONDS = 31536000
+      SECURE_CONTENT_TYPE_NOSNIFF = True
+      SECURE_BROWSER_XSS_FILTER = True
+
+  8. Enhanced Logging
+  # Update LOGGING in settings.py:
+  LOGGING = {
+      'version': 1,
+      'disable_existing_loggers': False,
+      'handlers': {
+          'file': {
+              'level': 'ERROR',
+              'class': 'logging.handlers.RotatingFileHandler',
+              'filename': '/var/log/django/error.log',
+              'maxBytes': 1024*1024*10,  # 10 MB
+              'backupCount': 5,
+          },
+          'console': {
+              'class': 'logging.StreamHandler',
+          },
+      },
+      'loggers': {
+          'django': {
+              'handlers': ['file', 'console'],
+              'level': 'ERROR',
+              'propagate': True,
+          },
+      },
+  }
+
+  📋 IMMEDIATE TODO LIST
+
+  1. ✅ Change SECRET_KEY
+  2. ✅ Remove hardcoded passwords
+  3. ✅ Add security headers
+  4. ✅ Remove .env from git
+  5. ✅ Add production settings
+  6. ✅ Set up database backups
+  7. ✅ Add monitoring/health checks
+
+  Priority Level: 🔴 CRITICAL - Your app has several security vulnerabilities that need immediate attention before production use.
