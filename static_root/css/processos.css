@@ -17,8 +17,8 @@
 }
 
 .custom-control.custom-radio .custom-control-input:checked ~ .custom-control-label::before {
-    border-color: #007bff;
-    background-color: #007bff;
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
 }
 
 /* Compact Process Header */

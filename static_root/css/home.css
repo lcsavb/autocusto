@@ -415,7 +415,7 @@ body {
 
 /* ENHANCED CALL-TO-ACTION BUTTON */
 .registration-card .btn-primary {
-  background: linear-gradient(135deg, #007bff, #0056b3) !important;
+  background: linear-gradient(135deg, var(--primary-color), #34495e) !important;
   border: none !important;
   font-weight: 600 !important;
   padding: 0.75rem 1.5rem !important;
@@ -473,7 +473,7 @@ body {
 
 /* ENHANCED CALL-TO-ACTION BUTTON */
 .registration-card .btn-primary {
-  background: linear-gradient(135deg, #007bff, #0056b3) !important;
+  background: linear-gradient(135deg, var(--primary-color), #34495e) !important;
   border: none !important;
   font-weight: 600 !important;
   padding: 0.75rem 1.5rem !important;
@@ -695,8 +695,8 @@ body {
 }
 
 .registration-card .form-control:focus {
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25) !important;
 }
 
 .registration-card label {

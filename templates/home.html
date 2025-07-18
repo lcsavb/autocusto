@@ -6,16 +6,16 @@
 
 {% if user.is_authenticated %}
 
-    <div class="auth-viewport" style="align-items: flex-start; padding-top: 15vh;">
-        <div class="auth-content-wrapper toast-enabled">
-            <div x-data="searchForm()" style="position: relative; width: 100%;">
+    <div class="d-flex align-items-start justify-content-center pt-5 px-3 pb-5">
+        <div class="w-100" style="max-width: 900px;">
+            <div x-data="searchForm()" class="position-relative">
                 <!-- Main Form Card -->
-                <div class="auth-process-card" style="max-width: 55vw;">
+                <div class="card shadow-sm mx-auto" style="max-width: 700px;">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0 text-white">
+                        <h4 class="mb-0 text-white">
                             <i class="oi oi-plus mr-2"></i>
                             Adicionar Processo
-                        </h5>
+                        </h4>
                     </div>
                     <div class="card-body p-4">
                         <form method="POST" autocomplete="off" id="js-form" data-busca-doencas="{% url 'busca-doencas' %}" data-busca-pacientes="{% url 'busca-pacientes' %}" novalidate>
@@ -52,7 +52,7 @@
                                 </div>
                                 
                                 <div class="col-sm-3">
-                                    <button class="btn btn-primary btn-block" type="submit" style="height: 40px;">
+                                    <button class="btn btn-primary btn-block" type="submit">
                                         <i class="oi oi-check mr-2"></i>
                                         Cadastrar
                                     </button>
@@ -62,25 +62,25 @@
                     </div>
                 </div>
                 
-                <!-- Results List - Below the card -->
-                <div class="results-container">
+                <!-- Results positioned absolutely below the card -->
+                <div class="position-absolute mt-3 mx-auto" style="top: 100%; z-index: 1050; max-width: 700px; width: 100%; left: 50%; transform: translateX(-50%);">
                     <!-- Patients Results -->
-                    <div x-show="activeSearch === 'patients' && patients.length > 0" class="external-results">
-                        <div class="results-header">
-                            <h6 class="mb-0">
+                    <div x-show="activeSearch === 'patients' && patients.length > 0" class="card shadow-lg">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
                                 <i class="oi oi-person mr-2"></i>
                                 Pacientes encontrados (<span x-text="patients.length"></span>)
-                            </h6>
+                            </h5>
                         </div>
-                        <div class="results-list">
+                        <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                             <template x-for="patient in patients" :key="patient.cpf_paciente">
-                                <div class="result-row" @click="selectPatient(patient)">
-                                    <div class="result-content">
-                                        <div class="patient-name" x-text="patient.nome_paciente"></div>
-                                        <div class="patient-cpf" x-text="'CPF: ' + patient.cpf_paciente"></div>
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 border-bottom" @click="selectPatient(patient)">
+                                    <div>
+                                        <div class="font-weight-bold" x-text="patient.nome_paciente"></div>
+                                        <small class="text-muted" x-text="'CPF: ' + patient.cpf_paciente"></small>
                                     </div>
                                     <button type="button" class="btn btn-primary btn-sm">
-                                        <i class="oi oi-check mr-1"></i>
+                                        <i class="oi oi-check mr-2"></i>
                                         Selecionar
                                     </button>
                                 </div>
@@ -89,22 +89,22 @@
                     </div>
                     
                     <!-- Diseases Results -->
-                    <div x-show="activeSearch === 'diseases' && diseases.length > 0" class="external-results">
-                        <div class="results-header">
-                            <h6 class="mb-0">
+                    <div x-show="activeSearch === 'diseases' && diseases.length > 0" class="card shadow-lg">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
                                 <i class="oi oi-medical-cross mr-2"></i>
                                 Doenças encontradas (<span x-text="diseases.length"></span>)
-                            </h6>
+                            </h5>
                         </div>
-                        <div class="results-list">
+                        <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                             <template x-for="disease in diseases" :key="disease.cid">
-                                <div class="result-row" @click="selectDisease(disease)">
-                                    <div class="result-content">
-                                        <div class="disease-title" x-text="disease.nome"></div>
-                                        <div class="disease-code" x-text="'CID: ' + disease.cid"></div>
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 border-bottom" @click="selectDisease(disease)">
+                                    <div>
+                                        <div class="font-weight-bold" x-text="disease.nome"></div>
+                                        <small class="text-muted" x-text="'CID: ' + disease.cid"></small>
                                     </div>
                                     <button type="button" class="btn btn-primary btn-sm">
-                                        <i class="oi oi-check mr-1"></i>
+                                        <i class="oi oi-check mr-2"></i>
                                         Selecionar
                                     </button>
                                 </div>
@@ -115,21 +115,21 @@
             </div>
         </div>
     </div>
-
+</div>
 
 {% else %}
 <!-- Hero Section with Registration Form -->
-<div class="hero-section">
+<div class="py-5">
     <div class="container-fluid">
-        <div class="main-content-card mx-3">
+        <div class="card shadow-lg mx-3">
             <div class="row align-items-center no-gutters">
                 <!-- Left Column: Hero Content -->
-                <div class="col-lg-6 hero-content p-4">
-                    <h1 class="display-4 main-heading mb-3">LME em 2 cliques!</h1>
+                <div class="col-lg-6 p-4">
+                    <h1 class="display-4 mb-3">LME em 2 cliques!</h1>
                     <p class="lead text-secondary mb-4">Receitas e formulários de alto custo sem complicação.</p>
                     
                     <div class="developer-info mb-4">
-                        <h6 class="developer-title mb-3">Sobre o desenvolvedor</h6>
+                        <h5 class="mb-3">Sobre o desenvolvedor</h5>
                         <p class="mb-2 text-muted text-justify">Olá, me chamo Lucas. Sou neurologista formado pela UNIFESP e estudo Informática da Saúde na <a href="https://www.th-deg.de">Technische Hochschule Deggendorf</a>. Minha missão é não te deixar perder tempo com burocracia.</p>
                         <p class="mb-3 text-muted text-justify">Sempre amei tecnologia e software livre; por isso, desenvolvi este app de código aberto, baseado nas dificuldades que encontrava no dia a dia.</p>
                         <div class="d-flex flex-wrap align-items-center justify-content-between">
@@ -139,7 +139,7 @@
                             </a>
                             <div class="text-muted small">
                                 <a href="{% url 'privacy' %}" class="text-muted mr-3">
-                                    <span class="oi oi-shield mr-1"></span>
+                                    <span class="oi oi-shield mr-2"></span>
                                     Privacidade
                                 </a>
                                 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" class="text-muted">
@@ -199,7 +199,7 @@
                     
                     <!-- Support Links -->
                     <div class="support-links mt-4">
-                        <h6 class="text-muted mb-3">Suporte e Feedback</h6>
+                        <h5 class="text-muted mb-3">Suporte e Feedback</h5>
                         <div class="row no-gutters">
                             <div class="col-6 pr-2">
                                 <a href="{% url 'reportar-erros' %}" class="btn btn-outline-danger btn-sm btn-block">
@@ -218,10 +218,8 @@
                 </div>
 
                 <!-- Right Column: Registration Form -->
-                <div class="col-lg-6 registration-column p-4">
-                    <div class="card shadow-lg border-0 registration-card toast-enabled mx-auto">
-                        <!-- DEBUG: Registration card rendered -->
-                        <script>console.log('[DEBUG] Registration card rendered');</script>
+                <div class="col-lg-6 p-4">
+                    <div class="card shadow-lg border-0 mx-auto">
                         <div class="card-header bg-primary text-white">
                             <h4 class="card-title mb-0">
                                 <span class="oi oi-task mr-2 text-white"></span>
@@ -229,14 +227,6 @@
                             </h4>
                         </div>
                         <div class="card-body p-4">
-                            <!-- DEBUG: Messages handled by JavaScript toast system -->
-                            <script>
-                              if (window.djangoMessages) {
-                                console.log('[DEBUG] home.html: window.djangoMessages:', window.djangoMessages);
-                              } else {
-                                console.log('[DEBUG] home.html: No window.djangoMessages found');
-                              }
-                            </script>
 
                             {% if registro_form %}
                             <form method="POST" action="{% url 'home' %}" novalidate>
@@ -273,14 +263,6 @@
 {% block scripts %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
 
-<!-- DEBUG: Django messages will be automatically converted to toasts by django-messages-toast.js -->
-<script>
-  if (window.djangoMessages) {
-    console.log('[DEBUG] home.html: Django messages for toast:', window.djangoMessages);
-  } else {
-    console.log('[DEBUG] home.html: No Django messages for toast');
-  }
-</script>
 
 
 {% if user.is_authenticated %}
@@ -288,149 +270,16 @@
 <script src="{% static 'js/alpine-masks.js' %}"></script>
 
 <style>
-/* Clean professional styling */
-.auth-process-card {
-  overflow: visible !important;
-}
-
-/* Results Container - Absolutely positioned to float below card */
-.results-container {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  margin-top: 1rem;
-  width: 100%;
-  max-width: 55vw; /* Match the card width */
-}
-
-/* External Results - Muted professional styling */
-.external-results {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #d1d5db; /* Muted gray border */
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
-
-/* Results Header - Muted colors */
-.results-header {
-  background: linear-gradient(135deg, #6b7280, #4b5563); /* Muted gray gradient */
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.results-header h6 {
-  color: white;
-  font-weight: 600;
-  margin: 0;
-}
-
-/* Results List */
-.results-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-/* Individual Result Rows */
-.result-row {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f3f4;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.2s ease;
-  background: white;
-}
-
-.result-row:hover {
-  background: #f8f9fa;
-  border-left: 4px solid #6b7280; /* Muted gray hover accent */
-  padding-left: calc(1.5rem - 4px);
-}
-
-.result-row:last-child {
-  border-bottom: none;
-}
-
-/* Result Content */
-.result-content {
-  flex: 1;
-  min-width: 0;
-  margin-right: 1rem;
-}
-
-/* Disease-specific styling */
-.disease-title {
-  font-weight: 600;
-  color: #2d3748;
-  font-size: 1rem;
-  line-height: 1.4;
-  margin-bottom: 0.25rem;
-}
-
-.disease-code {
-  color: #6c757d;
-  font-size: 0.85rem;
-  font-family: 'Courier New', monospace;
-  background: #f8f9fa;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-/* Patient styling */
-.patient-name {
-  font-weight: 600;
-  color: #2d3748;
-  font-size: 1rem;
-  line-height: 1.4;
-  margin-bottom: 0.25rem;
-}
-
-.patient-cpf {
-  color: #6c757d;
-  font-size: 0.85rem;
-  font-family: 'Courier New', monospace;
-  background: #f8f9fa;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-/* Action buttons */
-.result-row .btn {
-  flex-shrink: 0;
-  font-weight: 600;
-  padding: 0.4rem 1rem;
-  font-size: 0.85rem;
-}
-
-.result-row .btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3); /* Muted gray shadow */
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .results-container {
-    max-width: 95vw;
-  }
-  
-  .result-row {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: left;
-  }
-  
-  .result-content {
-    margin-right: 0;
-    margin-bottom: 0.75rem;
-  }
+/* Ensure consistent button heights in search results */
+.list-group-item .btn-sm {
+  height: 32px !important;
+  min-height: 32px !important;
+  line-height: 1.2 !important;
+  padding: 0.25rem 0.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
 }
 </style>
 
@@ -463,8 +312,6 @@ document.addEventListener('alpine:init', () => {
     
     // Search diseases
     async searchDiseases() {
-      console.log('[DEBUG] Searching diseases for:', this.cid);
-      
       if (this.cid.length < 2) {
         this.diseases = [];
         return;
@@ -480,7 +327,6 @@ document.addEventListener('alpine:init', () => {
         
         const data = await response.json();
         this.diseases = data || [];
-        console.log('[DEBUG] Found diseases:', this.diseases.length);
         
       } catch (error) {
         console.error('[ERROR] Disease search failed:', error);
@@ -490,8 +336,6 @@ document.addEventListener('alpine:init', () => {
     
     // Search patients
     async searchPatients() {
-      console.log('[DEBUG] Searching patients for:', this.cpf);
-      
       if (this.cpf.length < 3) {
         this.patients = [];
         return;
@@ -506,8 +350,7 @@ document.addEventListener('alpine:init', () => {
         }
         
         const data = await response.json();
-        this.patients = data || []; // Direct array, no .pacientes wrapper
-        console.log('[DEBUG] Found patients:', this.patients.length);
+        this.patients = data || [];
         
       } catch (error) {
         console.error('[ERROR] Patient search failed:', error);
@@ -517,18 +360,16 @@ document.addEventListener('alpine:init', () => {
     
     // Select disease
     selectDisease(disease) {
-      this.cid = disease.cid; // Only store the CID code for form submission
+      this.cid = disease.cid;
       this.diseases = [];
       this.activeSearch = '';
-      console.log('[DEBUG] Selected disease:', disease);
     },
     
     // Select patient  
     selectPatient(patient) {
-      this.cpf = patient.cpf_paciente; // Store just the CPF for form submission
+      this.cpf = patient.cpf_paciente;
       this.patients = [];
       this.activeSearch = '';
-      console.log('[DEBUG] Selected patient:', patient);
     }
   }))
 });

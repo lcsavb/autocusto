@@ -166,10 +166,14 @@
 
       <!-- Submit Section -->
       <div class="submit-section">
-        <button class="btn btn-submit-process" type="submit" x-ref="submitBtn" :disabled="loading">
+        <button class="btn btn-submit-process position-relative overflow-hidden" type="submit" x-ref="submitBtn" :disabled="loading">
           <span class="oi oi-check mr-2"></span>
           <span x-show="!loading">Renovar Processo</span>
           <span x-show="loading">Enviando...</span>
+          <div x-show="loading" 
+               class="progress-bar-fill position-absolute" 
+               style="top: 0; left: 0; height: 100%; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3)); width: 0%; animation: fillProgress 3s ease-out forwards;">
+          </div>
         </button>
         <p class="text-muted mt-2 mb-0">
           <small>Clique para finalizar a edição do processo</small>
