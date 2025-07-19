@@ -163,7 +163,7 @@ def reportar_erros(request):
         if form.is_valid():
             # Determine user info
             if request.user.is_authenticated:
-                user_info = f"Usuário: {request.user.email}"
+                user_info = f"Usuario: {request.user.email}"
             else:
                 name = form.cleaned_data.get('name', '')
                 email = form.cleaned_data.get('email', '')
