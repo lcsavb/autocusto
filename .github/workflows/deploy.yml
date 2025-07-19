@@ -69,19 +69,18 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-    
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        no-cache: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        labels: |
+          org.opencontainers.image.source=${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
 
   deploy:
     needs: build
@@ -106,9 +105,9 @@ jobs:
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           
-          # Pull latest image
-          echo "=== Pulling latest image ==="
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
+          # Pull latest image with commit SHA
+          echo "=== Pulling latest image with SHA ${{ github.sha }} ==="
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           
           # Create production docker-compose.yml dynamically
           echo "=== Creating production docker-compose.yml ==="
@@ -117,7 +116,7 @@ jobs:
 
           services:
             web:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
               ports:
                 - "8001:8001"
               environment:
