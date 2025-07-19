@@ -1,8 +1,10 @@
 import os
+import secrets
+import time
 from django.conf import settings
 from django.forms.models import model_to_dict
+from django.core.cache import cache
 from datetime import datetime
-from .manejo_pdfs import GeradorPDF
 from .manejo_pdfs_memory import GeradorPDFMemory
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
@@ -28,9 +30,10 @@ if hasattr(settings, 'PATH_PDF_DIR') and os.path.exists(settings.PATH_PDF_DIR):
 print(f"=== PDF SETTINGS DEBUG END ===\n")
 
 
-# English: prepare_model
+# prepare_model
 def preparar_modelo(modelo, **kwargs):
-    """Prepares a Django model instance from a dictionary of data.
+    """
+    Prepares a Django model instance from a dictionary of data.
 
     Think of this function as a helper that takes a blueprint for a database
     record (the 'modelo', e.g., a Patient or a Process) and a dictionary of
@@ -42,7 +45,7 @@ def preparar_modelo(modelo, **kwargs):
     create a model object that you can then save to the database.
 
     Args:
-        # English: model
+        # model
         modelo: The Django model class itself (e.g., Paciente, not an
                 instance of it).
         **kwargs: A dictionary where keys are the model field names (e.g.,
@@ -61,12 +64,12 @@ def preparar_modelo(modelo, **kwargs):
     # For example, if kwargs is {'field1': 'value1', 'field2': 'value2'},
     # this line becomes: modelo(field1='value1', field2='value2')
     
-    # English: parameterized_model
+    # parameterized_model
     modelo_parametrizado = modelo(**kwargs)
     return modelo_parametrizado
 
 
-# English: retrieve_prescription
+# retrieve_prescription
 def resgatar_prescricao(dados, processo):
     """Populates a data dictionary with prescription details from a Processo object.
 
@@ -371,6 +374,8 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     Returns:
         dict: A complete dictionary of data for the new renewal process.
     """
+    import time
+    start_time = time.time()
     print(f"\n=== GERAR_DADOS_RENOVACAO START ===")
     print(f"DEBUG: primeira_data: {primeira_data}")
     print(f"DEBUG: processo_id: {processo_id}")
@@ -475,6 +480,8 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     print(f"DEBUG: Generated medication dosage data")
     
     print(f"DEBUG: Final data keys before return: {list(dados.keys())}")
+    end_time = time.time()
+    print(f"DEBUG: Data generation completed in {end_time - start_time:.3f}s")
     print(f"=== GERAR_DADOS_RENOVACAO END ===\n")
     return dados
 
@@ -547,6 +554,8 @@ def transfere_dados_gerador(dados):
         str: The path to the generated PDF file, or None if an error occurs.
     """
     try:
+        import time
+        start_time = time.time()
         print(f"\n=== TRANSFERE_DADOS_GERADOR START ===")
         print(f"DEBUG: Input data keys: {list(dados.keys())}")
         print(f"DEBUG: Patient CPF: {dados.get('cpf_paciente', 'NOT_FOUND')}")
@@ -566,12 +575,16 @@ def transfere_dados_gerador(dados):
         print(f"DEBUG: Saved CID before PDF generation: '{cid}'")
         
         # English: pdf
+        pdf_create_start = time.time()
         pdf = GeradorPDFMemory(dados, settings.PATH_LME_BASE)
-        print(f"DEBUG: GeradorPDFMemory instance created")
+        pdf_create_end = time.time()
+        print(f"DEBUG: GeradorPDFMemory instance created in {pdf_create_end - pdf_create_start:.3f}s")
         
         # Generate PDF in memory and get HttpResponse
+        pdf_gen_start = time.time()
         response = pdf.generico_stream(dados, settings.PATH_LME_BASE)
-        print(f"DEBUG: generico_stream method returned response")
+        pdf_gen_end = time.time()
+        print(f"DEBUG: generico_stream method returned response in {pdf_gen_end - pdf_gen_start:.3f}s")
         
         if response is None:
             print(f"ERROR: PDF generation failed in transfere_dados_gerador")
@@ -603,7 +616,10 @@ def transfere_dados_gerador(dados):
         from django.urls import reverse
         path_pdf_final = reverse('processos-serve-pdf', kwargs={'filename': nome_final_pdf})
         
+        end_time = time.time()
+        total_time = end_time - start_time
         print(f"DEBUG: PDF generated successfully: {path_pdf_final}")
+        print(f"DEBUG: Total transfere_dados_gerador time: {total_time:.3f}s")
         print(f"=== TRANSFERE_DADOS_GERADOR END ===\n")
         return path_pdf_final
         

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "usuarios.apps.UsuariosConfig",
     "crispy_forms",
     "crispy_bootstrap4",
+    "django_crontab",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -308,3 +309,9 @@ if not DEBUG:
             },
         },
     }
+
+
+# Django-crontab configuration
+CRONJOBS = [
+    ('0 3 * * *', 'django.core.management.call_command', ['cleanup_pdfs']),
+]

@@ -5,11 +5,14 @@ from django.db.models import Q
 from django.http import JsonResponse, HttpResponse, Http404
 from django.forms.models import model_to_dict
 from django.db import IntegrityError
+from django.core.cache import cache
 from datetime import date
 import logging
 import traceback
 import os
 import mimetypes
+import secrets
+import time
 
 logger = logging.getLogger(__name__)
 from medicos.seletor import medico as seletor_medico
@@ -428,17 +431,25 @@ def renovacao_rapida(request):
         
         # Generate PDF for renewal
         try:
+            import time
+            start_time = time.time()
             print(f"\n=== RENOVACAO_RAPIDA PDF GENERATION START ===")
             print(f"DEBUG: processo_id: {processo_id}")
             print(f"DEBUG: nova_data: {nova_data}")
             
             # English: data
+            data_start = time.time()
             dados = gerar_dados_renovacao(nova_data, processo_id)
-            print(f"DEBUG: Generated renovation data successfully")
+            data_end = time.time()
+            print(f"DEBUG: Generated renovation data successfully in {data_end - data_start:.3f}s")
             
             # English: final_pdf_path
+            pdf_start = time.time()
             path_pdf_final = transfere_dados_gerador(dados)
-            print(f"DEBUG: transfere_dados_gerador returned: {path_pdf_final}")
+            pdf_end = time.time()
+            total_time = pdf_end - start_time
+            print(f"DEBUG: transfere_dados_gerador returned: {path_pdf_final} in {pdf_end - pdf_start:.3f}s")
+            print(f"DEBUG: Total PDF generation time: {total_time:.3f}s")
             
             if path_pdf_final:
                 # Check if this is an AJAX request

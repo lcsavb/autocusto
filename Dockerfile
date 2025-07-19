@@ -19,6 +19,7 @@ FROM python:3.11-slim
 # Install only runtime dependencies (pdftk with its Java runtime)
 RUN apt-get update && apt-get install -y \
     pdftk \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
@@ -44,9 +45,12 @@ USER appuser
 # Copy application code (this runs as root even though USER is appuser)
 COPY . .
 
+# Make startup script executable
+USER root
+RUN chmod +x /home/appuser/app/startup.sh
+
 # Fix ownership of copied files so appuser can write to static/tmp
 # Create log directory for Django
-USER root
 RUN mkdir -p /var/log/django && chown -R appuser:appuser /var/log/django
 RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
@@ -54,5 +58,6 @@ USER appuser
 # Expose port
 EXPOSE 8001
 
-# Run the application
+# Use startup script as entrypoint to set up memory mount, then run the application
+ENTRYPOINT ["/home/appuser/app/startup.sh"]
 CMD ["uwsgi", "--ini", "uwsgi.ini"]

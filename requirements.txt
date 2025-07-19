@@ -2,6 +2,7 @@ asgiref==3.8.1
 crispy-bootstrap4==2024.10
 Django==5.2.4
 django-crispy-forms==2.3
+django-crontab==0.7.1
 dotenv==0.9.9
 psycopg2-binary==2.9.10
 pypdftk==0.5

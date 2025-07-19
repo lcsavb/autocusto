@@ -37,35 +37,35 @@ def home(request):
     - The `print` statements for debugging should be replaced with `logger.debug`
       or `logger.info` for proper logging in a production environment.
     """
-    # English: user
+    # user
     usuario = request.user
     
     if request.method == "GET":
-        # English: form
+        # form
         formulario = PreProcesso()
         # Dual-purpose interface: show registration form for visitors, process form for doctors
         if not usuario.is_authenticated:
-            # English: registration_form
+            # registration_form
             registro_form = MedicoCadastroFormulario()
-            # English: context
+            # context
             contexto = {"formulario": formulario, "registro_form": registro_form}
         else:
-            # English: context
+            # context
             contexto = {"formulario": formulario}
         return render(request, "home.html", contexto)
     else:
         if usuario.is_authenticated:
-            # English: form
+            # form
             formulario = PreProcesso(request.POST)
             if formulario.is_valid():
-                # English: patient_cpf
+                # patient_cpf
                 cpf_paciente = formulario.cleaned_data["cpf_paciente"]
                 cid = formulario.cleaned_data["cid"]
 
                 try:
                     # Security check: Ensure doctor can only access their own patients
                     # This prevents unauthorized access to patient data across different doctors
-                    # English: patient
+                    # patient
                     paciente = Paciente.objects.get(
                         cpf_paciente=cpf_paciente,
                         usuarios=usuario
@@ -83,19 +83,19 @@ def home(request):
                     return redirect("processos-cadastro")
 
                 # Complex business logic: Check if patient already has a process for this disease
-                # English: search_processes
+                # search_processes
                 busca_processos = paciente.processos.select_related('doenca', 'usuario').filter(doenca__cid=cid)
 
                 if busca_processos.exists():
                     # Patient has processes for this disease - check if current doctor created any
-                    # English: user_processes
+                    # user_processes
                     processos_do_usuario = busca_processos.filter(
                         usuario__id=usuario.id
                     )
                     if processos_do_usuario.exists():
                         # Doctor already has a process for this patient/disease combination
                         # Get the most recent one (handles edge cases where duplicates existed)
-                        # English: most_recent_process
+                        # most_recent_process
                         processo_mais_recente = processos_do_usuario.order_by('-id').first()
                         request.session["processo_id"] = processo_mais_recente.id
                         return redirect("processos-edicao")  # Edit existing process
@@ -116,7 +116,7 @@ def home(request):
                 # Clear form errors to prevent inline display (errors will show as toasts)
                 formulario._errors.clear()
                 
-                # English: context
+                # context
                 contexto = {"formulario": formulario}
                 return render(request, "home.html", contexto)
         else:
@@ -125,13 +125,13 @@ def home(request):
                 from django.db import transaction
                 from django.http import JsonResponse
                 
-                # English: registration_form
+                # registration_form
                 registro_form = MedicoCadastroFormulario(request.POST)
                 
                 if registro_form.is_valid():
                     with transaction.atomic():
                         registro_form.save()
-                        # English: name
+                        # name
                         nome = registro_form.cleaned_data.get("nome")
                         return JsonResponse({
                             'success': True,

@@ -32,6 +32,8 @@ def preencher_formularios_memory(lista_pdfs, dados_finais):
     Returns:
         list: List of BytesIO objects containing filled PDFs
     """
+    import time
+    start_time = time.time()
     print(f"\n=== PREENCHER_FORMULARIOS_MEMORY START ===")
     print(f"DEBUG: Processing {len(lista_pdfs)} PDFs using tmpfs/RAM disk approach")
     
@@ -62,8 +64,11 @@ def preencher_formularios_memory(lista_pdfs, dados_finais):
             print(f"DEBUG: Temporary RAM path: {ram_pdf_path}")
             
             # Use pypdftk normally - it will write to RAM (tmpfs)
+            fill_start = time.time()
             filled_pdf_path = pypdftk.fill_form(pdf_path, dados_finais, ram_pdf_path)
+            fill_end = time.time()
             
+            print(f"DEBUG: pypdftk.fill_form completed in {fill_end - fill_start:.3f}s")
             print(f"DEBUG: pypdftk.fill_form returned: {filled_pdf_path}")
             
             # Check if PDF was created in RAM
@@ -96,7 +101,9 @@ def preencher_formularios_memory(lista_pdfs, dados_finais):
             print(f"ERROR: Traceback: {traceback.format_exc()}")
             continue
     
-    print(f"DEBUG: Successfully processed {len(filled_pdfs)} PDFs using tmpfs")
+    end_time = time.time()
+    total_time = end_time - start_time
+    print(f"DEBUG: Successfully processed {len(filled_pdfs)} PDFs using tmpfs in {total_time:.3f}s")
     print(f"=== PREENCHER_FORMULARIOS_MEMORY END ===\n")
     return filled_pdfs
 
@@ -168,6 +175,8 @@ def concatenar_pdfs_memory(pdf_ios):
     Returns:
         bytes: Concatenated PDF bytes
     """
+    import time
+    start_time = time.time()
     print(f"\n=== CONCATENAR_PDFS_MEMORY START ===")
     print(f"DEBUG: Concatenating {len(pdf_ios)} PDFs using pypdftk with tmpfs")
     
@@ -205,8 +214,11 @@ def concatenar_pdfs_memory(pdf_ios):
         print(f"DEBUG: Output file: {output_ram_path}")
         
         # Use pypdftk.concat to maintain UTF-8 handling consistency
+        concat_start = time.time()
         concatenated_pdf = pypdftk.concat(temp_files, output_ram_path)
+        concat_end = time.time()
         
+        print(f"DEBUG: pypdftk.concat completed in {concat_end - concat_start:.3f}s")
         print(f"DEBUG: pypdftk.concat returned: {concatenated_pdf}")
         
         # Read concatenated PDF from RAM
@@ -230,6 +242,9 @@ def concatenar_pdfs_memory(pdf_ios):
             except Exception as cleanup_error:
                 print(f"DEBUG: Failed to cleanup RAM temp file {temp_file}: {cleanup_error}")
         
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f"DEBUG: Total concatenation time: {total_time:.3f}s")
         print(f"=== CONCATENAR_PDFS_MEMORY END ===\n")
         return pdf_bytes
         

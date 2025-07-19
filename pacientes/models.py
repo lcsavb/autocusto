@@ -2,46 +2,56 @@ from django.db import models
 from django.conf import settings
 
 
+# Patient
 class Paciente(models.Model):
-    # English: patient_name
+    """
+    Patient model storing patient information for medical prescriptions.
+    
+    Security: Patients are linked to specific doctors through the usuarios (users)
+    ManyToManyField, ensuring data access control and patient privacy.
+    
+    Data Privacy: Contains sensitive personal health information (PHI) including
+    CPF (Brazilian tax ID), CNS (national health card), and medical data.
+    """
+    # patient_name
     nome_paciente = models.CharField(max_length=100)
-    # English: age
+    # age
     idade = models.CharField(max_length=100)
-    # English: gender
+    # gender
     sexo = models.CharField(max_length=100)
-    # English: mothers_name
+    # mothers_name
     nome_mae = models.CharField(max_length=100)
-    # English: incapable
+    # incapable (legally incapacitated, requiring guardian consent)
     incapaz = models.BooleanField()
-    # English: responsible_name
+    # responsible_name (guardian name for incapacitated patients)
     nome_responsavel = models.CharField(max_length=100)
-    # English: id number
+    # id_number (Brazilian RG - state ID document)
     rg = models.CharField(max_length=100)
-    # English: weight
+    # weight
     peso = models.CharField(max_length=100)
-    # English: height
+    # height
     altura = models.CharField(max_length=100, default="1,70m")
-    # English: ethnicity_choice
+    # ethnicity_choice (patient's self-declared ethnicity choice)
     escolha_etnia = models.CharField(max_length=100)
-    # English: patient brazilian social security number
+    # patient_cpf (Brazilian social security number - unique identifier)
     cpf_paciente = models.CharField(unique=True, max_length=14)
-    # English: patient_cns
+    # patient_cns (Brazilian national health card number)
     cns_paciente = models.CharField(max_length=100)
-    # English: patient_email
+    # patient_email
     email_paciente = models.EmailField(null=True)
-    # English: patient_city
+    # patient_city
     cidade_paciente = models.CharField(max_length=100)
-    # English: patient_address
+    # patient_address
     end_paciente = models.CharField(max_length=100)
-    # English: patient_zip_code
+    # patient_zip_code
     cep_paciente = models.CharField(max_length=100)
-    # English: patient_phone1
+    # patient_phone1
     telefone1_paciente = models.CharField(max_length=100)
-    # English: patient_phone2
+    # patient_phone2
     telefone2_paciente = models.CharField(max_length=100)
-    # English: ethnicity
+    # ethnicity (final ethnicity classification)
     etnia = models.CharField(max_length=100)
-    # English: users
+    # users (doctors who have access to this patient's data)
     usuarios = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="pacientes"
     )

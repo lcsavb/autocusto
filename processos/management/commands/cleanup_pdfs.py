@@ -22,7 +22,7 @@ class Command(BaseCommand):
         self.stdout.write(f'Cleaning up PDFs older than {max_age_minutes} minutes...')
         
         # Find all PDF files in /tmp that match our naming pattern
-        pdf_files = glob.glob("/tmp/pdf_*.pdf")
+        pdf_files = glob.glob("/tmp/pdf_final_*.pdf")
         
         if not pdf_files:
             self.stdout.write('No PDF files found in /tmp')

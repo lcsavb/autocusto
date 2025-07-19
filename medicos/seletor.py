@@ -1,13 +1,17 @@
 
 
-# English: doctor
+# doctor (selector function)
 def medico(usuario_ativo):
-    """Retrieves the Medico (Doctor) object associated with an active user.
+    """
+    Retrieves the Medico (Doctor) object associated with an active user.
 
     This function acts as a selector to get the specific doctor profile linked
     to the currently authenticated user. It assumes a one-to-one or one-to-many
     relationship where a user can be associated with one or more doctor profiles,
     and it retrieves the first one found.
+
+    Security: Only returns doctor objects for users with is_medico flag set,
+    providing role-based access control for medical functions.
 
     Critique:
     - The function name `medico` is in Portuguese. It should be `get_doctor` or
@@ -19,7 +23,7 @@ def medico(usuario_ativo):
       relationship is broken or not yet established).
 
     Args:
-        # English: active_user
+        # active_user
         usuario_ativo (User): The currently authenticated user object.
 
     Returns:
@@ -27,7 +31,7 @@ def medico(usuario_ativo):
                 the user is not a doctor or no doctor profile is found.
     """
     if usuario_ativo.is_medico:
-        # English: doctor
+        # doctor (get first associated doctor profile)
         medico = usuario_ativo.medicos.first()
         return medico
     else:

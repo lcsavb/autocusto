@@ -7,13 +7,18 @@ from django.utils import timezone
 from .managers import CustomUserManager
 
 
+# User
 class Usuario(AbstractBaseUser, PermissionsMixin):
-    """Custom User model for the application.
+    """
+    Custom User model for the medical prescription application.
 
     This model extends Django's `AbstractBaseUser` and `PermissionsMixin`
     to provide a custom user authentication system. It uses email as the
     primary authentication field and includes additional flags to identify
     user roles (e.g., doctor, clinic).
+
+    Security: Email-based authentication provides better user experience
+    and reduces username enumeration attacks compared to username-based systems.
 
     Critique:
     - The `is_medico` and `is_clinica` fields are boolean flags. While functional,
@@ -24,23 +29,23 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
       applications.
     - It uses a `CustomUserManager`, which is necessary for custom user models.
     """
-    # English: email
+    # email
     email = models.EmailField(_("email address"), unique=True)
-    # English: is_staff
+    # is_staff
     is_staff = models.BooleanField(default=False)
-    # English: is_active
+    # is_active
     is_active = models.BooleanField(default=True)
-    # English: date_joined
+    # date_joined
     date_joined = models.DateTimeField(default=timezone.now)
 
-    # English: is_doctor
+    # is_doctor (Doctor Status)
     is_medico = models.BooleanField("Status de Médico", default=False)
-    # English: is_clinic
+    # is_clinic (Clinic Status)
     is_clinica = models.BooleanField("Status de Clínica", default=False)
 
     USERNAME_FIELD = "email"
 
-    # English: objects
+    # objects (custom user manager)
     objects = CustomUserManager()
 
     def __str__(self):

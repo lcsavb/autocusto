@@ -126,7 +126,9 @@ jobs:
               volumes:
                 - static_volume:/home/appuser/app/static_root
                 - media_volume:/home/appuser/app/media
-                - ./cleanup-cron:/etc/cron.d/cleanup-cron:ro
+              tmpfs:
+                - /tmp:rw,noexec,nosuid,size=100m
+                - /dev/shm:rw,noexec,nosuid,size=100m
               restart: unless-stopped
 
             nginx:
@@ -161,17 +163,6 @@ jobs:
           echo "=== Verifying nginx config and SSL certs ==="
           ls -la nginx.conf || echo "Warning: nginx.conf not found"
           ls -la ssl/ || echo "Warning: ssl directory not found"
-          
-          # Create cleanup-cron file for PDF cleanup
-          echo "=== Creating cleanup-cron file ==="
-          cat > cleanup-cron << 'CRONEOF'
-          # Clean up old PDF files every 10 minutes
-          # PDFs older than 5 minutes will be deleted
-          */10 * * * * root cd /home/appuser/app && python manage.py cleanup_pdfs >> /var/log/cleanup_pdfs.log 2>&1
-          CRONEOF
-          
-          echo "=== Created cleanup-cron file ==="
-          cat cleanup-cron
           
           echo "=== Generated docker-compose.yml ==="
           cat docker-compose.yml
