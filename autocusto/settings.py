@@ -101,25 +101,6 @@ DATABASES = {
     }
 }
 
-# DEBUG: Print database configuration (only in production for debugging)
-if not DEBUG:
-    print("=== DATABASE DEBUG ===")
-    print(f"SQL_ENGINE: {os.environ.get('SQL_ENGINE', 'NOT_SET')}")
-    print(f"SQL_DATABASE: '{os.environ.get('SQL_DATABASE', 'NOT_SET')}'")
-    print(f"SQL_USER: '{os.environ.get('SQL_USER', 'NOT_SET')}'")
-    sql_password = os.environ.get('SQL_PASSWORD', 'NOT_SET')
-    print(f"SQL_PASSWORD: {'SET' if sql_password else 'NOT_SET'} (length: {len(sql_password) if sql_password else 0})")
-    print(f"SQL_HOST: {os.environ.get('SQL_HOST', 'NOT_SET')}")
-    print(f"SQL_PORT: {os.environ.get('SQL_PORT', 'NOT_SET')}")
-    print(f"DATABASE NAME VALUE: '{DATABASES['default']['NAME']}'")
-    print(f"DATABASE NAME EMPTY: {DATABASES['default']['NAME'] == ''}")
-    
-    # Check if both containers have same password variables
-    postgres_password = os.environ.get('POSTGRES_PASSWORD', 'NOT_SET')
-    print(f"POSTGRES_PASSWORD: {'SET' if postgres_password else 'NOT_SET'} (length: {len(postgres_password) if postgres_password else 0})")
-    print(f"Password match: {sql_password == postgres_password if sql_password and postgres_password else 'UNKNOWN'}")
-    print("=== DATABASE DEBUG END ===")
-
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
@@ -170,15 +151,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static', 'autocusto'),
 ]
 
-# For debugging - let's see what Django is looking for
-if DEBUG:
-    import os
-    static_dir = os.path.join(BASE_DIR, 'static', 'autocusto')
-    print(f"DEBUG: STATICFILES_DIRS pointing to: {static_dir}")
-    print(f"DEBUG: Directory exists: {os.path.exists(static_dir)}")
-    css_file = os.path.join(static_dir, 'css', 'base.css')
-    print(f"DEBUG: CSS file path: {css_file}")
-    print(f"DEBUG: CSS file exists: {os.path.exists(css_file)}")
+# Static file configuration validated during development
 
 # Cache Configuration
 # Optimized for PDF generation system - short-lived cache for immediate serving

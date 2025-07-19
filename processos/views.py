@@ -695,13 +695,14 @@ def pdf(request):
 def serve_pdf(request, filename):
     """Serves PDF files securely with authentication and authorization.
     
-    This view replaces the public static file serving for PDF files.
-    It ensures that only authenticated users can access PDFs and that
-    they can only access PDFs they are authorized to view.
+    This view ensures that only authenticated users can access PDFs and that
+    they can only access PDFs they are authorized to view. Authorization is
+    verified by checking if the user has access to the patient whose CPF is
+    embedded in the PDF filename.
     
     Args:
         request: The HTTP request.
-        filename: The PDF filename to serve.
+        filename: The PDF filename to serve (format: pdf_final_{cpf}_{cid}.pdf).
     
     Returns:
         HttpResponse: The PDF file content with proper headers.
@@ -712,13 +713,63 @@ def serve_pdf(request, filename):
     try:
         # Validate filename format for security
         if not filename.endswith('.pdf'):
+            logger.warning(f"Invalid file type requested: {filename}")
             raise Http404("Invalid file type")
         
         # Basic filename validation to prevent directory traversal
         if '..' in filename or '/' in filename or '\\' in filename:
+            logger.warning(f"Directory traversal attempt: {filename}")
             raise Http404("Invalid filename")
         
-               
+        # Verify PDF filename follows expected pattern: pdf_final_{cpf}_{cid}.pdf
+        if not filename.startswith('pdf_final_'):
+            logger.warning(f"Invalid PDF filename pattern: {filename}")
+            raise Http404("Invalid filename format")
+        
+        # Extract patient CPF from filename for authorization
+        try:
+            # Remove prefix 'pdf_final_' and suffix '.pdf'
+            core_name = filename[10:-4]  # Remove 'pdf_final_' and '.pdf'
+            parts = core_name.split('_')
+            
+            if len(parts) < 2:
+                logger.warning(f"Invalid filename structure: {filename}")
+                raise Http404("Invalid filename format")
+            
+            # First part is CPF, remaining parts form the CID
+            cpf_raw = parts[0]
+            
+            # Clean CPF - remove dots and dashes to get only digits
+            cpf_paciente = cpf_raw.replace('.', '').replace('-', '')
+            
+            # Verify CPF format (11 digits after cleaning)
+            if not cpf_paciente.isdigit() or len(cpf_paciente) != 11:
+                logger.warning(f"Invalid CPF format in filename: {cpf_raw} (cleaned: {cpf_paciente})")
+                raise Http404("Invalid filename format")
+            
+        except (IndexError, ValueError) as e:
+            logger.warning(f"Error parsing filename {filename}: {e}")
+            raise Http404("Invalid filename format")
+        
+        # AUTHORIZATION: Verify user has access to this patient
+        try:
+            # Check if current user has access to patient with this CPF
+            # Try both cleaned CPF and original formatted CPF from filename
+            has_access = (
+                request.user.pacientes.filter(cpf_paciente=cpf_paciente).exists() or
+                request.user.pacientes.filter(cpf_paciente=cpf_raw).exists()
+            )
+            
+            if not has_access:
+                logger.warning(f"User {request.user.email} attempted unauthorized access to PDF for CPF {cpf_paciente}")
+                raise Http404("Access denied")
+            
+            logger.info(f"User {request.user.email} authorized to access PDF for CPF {cpf_paciente}")
+            
+        except Exception as e:
+            logger.error(f"Error during authorization check: {e}")
+            raise Http404("Authorization error")
+        
         # Serve the file from /tmp filesystem
         try:
             import os
@@ -733,9 +784,8 @@ def serve_pdf(request, filename):
                 response['Content-Disposition'] = f'inline; filename="{filename}"'
                 response['X-Content-Type-Options'] = 'nosniff'
                 response['X-Frame-Options'] = 'SAMEORIGIN'
-                print(f"DEBUG: Serving PDF from filesystem: {tmp_pdf_path}")
                 
-                # Let system handle cleanup - /tmp is usually tmpfs or auto-cleaned
+                logger.info(f"Successfully served PDF {filename} to user {request.user.email}")
                 
                 return response
             else:

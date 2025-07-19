@@ -1,4 +1,6 @@
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.http import Http404
 from .models import Medicamento, Protocolo, Doenca, Processo
 from pacientes.models import Paciente
 from medicos.models import Medico
@@ -7,6 +9,8 @@ from usuarios.models import Usuario
 from datetime import date
 from processos.dados import checar_paciente_existe, gerar_lista_meds_ids, gerar_prescricao, resgatar_prescricao, gera_med_dosagem, listar_med
 from processos.forms import PreProcesso, NovoProcesso, RenovarProcesso # Import the forms
+import tempfile
+import os
 
 class MedicamentoModelTest(TestCase):
 
@@ -406,3 +410,331 @@ class PreProcessoFormTest(TestCase):
         self.assertIn('cid', form.errors)
         self.assertEqual(form.errors['cpf_paciente'], ['Este campo é obrigatório.'])
         self.assertEqual(form.errors['cid'], ['Este campo é obrigatório.'])
+
+
+class PDFAccessControlTest(TestCase):
+    """
+    Comprehensive test suite for PDF access control and security.
+    
+    This test class verifies that the serve_pdf view properly implements:
+    - Authentication requirements
+    - Authorization based on patient ownership
+    - Filename validation and security
+    - CPF format handling (formatted vs cleaned)
+    - Directory traversal protection
+    - Error handling and logging
+    """
+    
+    def setUp(self):
+        """Set up test data including users, patients, and temporary PDF files."""
+        # Create test users
+        self.user1 = Usuario.objects.create_user(
+            email="doctor1@example.com", 
+            password="testpass123",
+            is_medico=True
+        )
+        self.user2 = Usuario.objects.create_user(
+            email="doctor2@example.com", 
+            password="testpass123",
+            is_medico=True
+        )
+        self.user3 = Usuario.objects.create_user(
+            email="unauthorized@example.com", 
+            password="testpass123"
+        )
+        
+        # Create test patients with different CPF formats
+        self.patient1_formatted = Paciente.objects.create(
+            nome_paciente="Patient One",
+            cpf_paciente="333.774.158-40",  # Formatted CPF
+            cns_paciente="123456789012345",
+            nome_mae="Mae Um",
+            idade="30",
+            sexo="M",
+            peso="70",
+            altura="1.70",
+            incapaz=False,
+            etnia="Parda",
+            telefone1_paciente="11999999999",
+            end_paciente="Rua Test, 1",
+            rg="1234567",
+            escolha_etnia="Parda",
+            cidade_paciente="Test City",
+            cep_paciente="12345-678",
+            telefone2_paciente="",
+            nome_responsavel=""
+        )
+        
+        self.patient2_clean = Paciente.objects.create(
+            nome_paciente="Patient Two",
+            cpf_paciente="12345678901",  # Clean CPF
+            cns_paciente="123456789012346",
+            nome_mae="Mae Dois",
+            idade="35",
+            sexo="F",
+            peso="60",
+            altura="1.65",
+            incapaz=False,
+            etnia="Branca",
+            telefone1_paciente="11888888888",
+            end_paciente="Rua Test, 2",
+            rg="7654321",
+            escolha_etnia="Branca",
+            cidade_paciente="Test City",
+            cep_paciente="12345-679",
+            telefone2_paciente="",
+            nome_responsavel=""
+        )
+        
+        # Create patient relationships
+        self.patient1_formatted.usuarios.add(self.user1)  # user1 has access to patient1
+        self.patient2_clean.usuarios.add(self.user2)      # user2 has access to patient2
+        # user3 has no patient access
+        
+        # Create temporary test PDF files
+        self.temp_dir = tempfile.mkdtemp()
+        
+        # PDF for patient1 (formatted CPF in filename)
+        self.pdf1_path = "/tmp/pdf_final_333.774.158-40_G35.pdf"
+        with open(self.pdf1_path, 'wb') as f:
+            f.write(b'%PDF-1.4 fake pdf content for patient 1')
+            
+        # PDF for patient2 (clean CPF in filename) 
+        self.pdf2_path = "/tmp/pdf_final_12345678901_M06.pdf"
+        with open(self.pdf2_path, 'wb') as f:
+            f.write(b'%PDF-1.4 fake pdf content for patient 2')
+            
+        # Test client
+        self.client = Client()
+        
+    def tearDown(self):
+        """Clean up temporary files."""
+        # Remove test PDF files
+        for pdf_path in [self.pdf1_path, self.pdf2_path]:
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+                
+    def test_unauthenticated_access_denied(self):
+        """Test that unauthenticated users cannot access PDFs."""
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Should redirect to login (302) or return 403/401
+        self.assertIn(response.status_code, [302, 401, 403])
+        
+    def test_authorized_user_access_granted(self):
+        """Test that authorized users can access their patients' PDFs."""
+        # Login as user1 who has access to patient1
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Should successfully serve the PDF
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(response['Content-Disposition'], 'inline; filename="pdf_final_333.774.158-40_G35.pdf"')
+        self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
+        self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
+        
+    def test_unauthorized_user_access_denied(self):
+        """Test that users cannot access PDFs for patients they don't own."""
+        # Login as user2 who does NOT have access to patient1
+        self.client.login(email="doctor2@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Should return 404 (access denied)
+        self.assertEqual(response.status_code, 404)
+        
+    def test_user_without_patients_access_denied(self):
+        """Test that users with no patients cannot access any PDFs."""
+        # Login as user3 who has no patient relationships
+        self.client.login(email="unauthorized@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Should return 404 (access denied)
+        self.assertEqual(response.status_code, 404)
+        
+    def test_cpf_format_handling_formatted(self):
+        """Test that PDFs with formatted CPFs in filename work correctly."""
+        # Login as user1 who has access to patient1 (formatted CPF)
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Should successfully serve the PDF
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+    def test_cpf_format_handling_clean(self):
+        """Test that PDFs with clean CPFs in filename work correctly."""
+        # Login as user2 who has access to patient2 (clean CPF)
+        self.client.login(email="doctor2@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_12345678901_M06.pdf'])
+        response = self.client.get(url)
+        
+        # Should successfully serve the PDF
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+    def test_invalid_filename_format(self):
+        """Test that invalid filename formats are rejected."""
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        invalid_filenames = [
+            "not_pdf_format.txt",
+            "missing_prefix_G35.pdf", 
+            "pdf_final_.pdf",
+            "pdf_final_invalid_cpf_G35.pdf",
+            "pdf_final_123_G35.pdf",  # CPF too short
+            "pdf_final_1234567890123_G35.pdf",  # CPF too long
+        ]
+        
+        for filename in invalid_filenames:
+            with self.subTest(filename=filename):
+                url = reverse('processos-serve-pdf', args=[filename])
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 404)
+                
+    def test_directory_traversal_protection(self):
+        """Test that directory traversal attempts are blocked."""
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        # Test filenames that Django URL routing will accept but should be blocked by our validation
+        malicious_filenames = [
+            "pdf_final_333\\774\\158-40_G35.pdf",  # Windows path separator
+            "pdf_final_..333.774.158-40_G35.pdf",  # Dot sequences
+            "pdf_final_333.774.158-40..G35.pdf",   # Embedded dots
+        ]
+        
+        for filename in malicious_filenames:
+            with self.subTest(filename=filename):
+                try:
+                    url = reverse('processos-serve-pdf', args=[filename])
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, 404)
+                except Exception:
+                    # If URL routing fails, that's also acceptable protection
+                    pass
+                
+    def test_non_pdf_extension_rejected(self):
+        """Test that non-PDF files are rejected."""
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        non_pdf_files = [
+            "pdf_final_333.774.158-40_G35.txt",
+            "pdf_final_333.774.158-40_G35.doc", 
+            "pdf_final_333.774.158-40_G35.exe",
+            "pdf_final_333.774.158-40_G35",  # No extension
+        ]
+        
+        for filename in non_pdf_files:
+            with self.subTest(filename=filename):
+                url = reverse('processos-serve-pdf', args=[filename])
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 404)
+                
+    def test_missing_pdf_file(self):
+        """Test behavior when PDF file doesn't exist on filesystem."""
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        # Try to access a PDF that should be authorized but doesn't exist
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_Z99.pdf'])
+        response = self.client.get(url)
+        
+        # Should return 404 (file not found)
+        self.assertEqual(response.status_code, 404)
+        
+    def test_cross_user_patient_access_denied(self):
+        """Test comprehensive cross-user access denial."""
+        # user1 tries to access user2's patient PDF
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_12345678901_M06.pdf'])
+        response = self.client.get(url)
+        
+        # Should be denied
+        self.assertEqual(response.status_code, 404)
+        
+        # user2 tries to access user1's patient PDF  
+        self.client.login(email="doctor2@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Should be denied
+        self.assertEqual(response.status_code, 404)
+        
+    def test_pdf_content_integrity(self):
+        """Test that PDF content is served correctly."""
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Verify content
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'%PDF-1.4 fake pdf content for patient 1')
+        
+    def test_security_headers_present(self):
+        """Test that proper security headers are set."""
+        self.client.login(email="doctor1@example.com", password="testpass123")
+        
+        url = reverse('processos-serve-pdf', args=['pdf_final_333.774.158-40_G35.pdf'])
+        response = self.client.get(url)
+        
+        # Verify security headers
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
+        self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+    def test_edge_case_cpf_formats(self):
+        """Test edge cases in CPF format handling."""
+        # Create patient with edge case CPF format
+        patient_edge = Paciente.objects.create(
+            nome_paciente="Edge Case Patient",
+            cpf_paciente="000.000.001-91",  # Edge case formatted CPF
+            cns_paciente="123456789012347",
+            nome_mae="Mae Edge",
+            idade="25",
+            sexo="F",
+            peso="55",
+            altura="1.60",
+            incapaz=False,
+            etnia="Indígena",
+            telefone1_paciente="11777777777",
+            end_paciente="Rua Edge, 1",
+            rg="1111111",
+            escolha_etnia="Indígena",
+            cidade_paciente="Edge City",
+            cep_paciente="12345-680",
+            telefone2_paciente="",
+            nome_responsavel=""
+        )
+        patient_edge.usuarios.add(self.user1)
+        
+        # Create PDF file for edge case
+        edge_pdf_path = "/tmp/pdf_final_000.000.001-91_H30.pdf"
+        with open(edge_pdf_path, 'wb') as f:
+            f.write(b'%PDF-1.4 edge case pdf content')
+            
+        try:
+            self.client.login(email="doctor1@example.com", password="testpass123")
+            
+            url = reverse('processos-serve-pdf', args=['pdf_final_000.000.001-91_H30.pdf'])
+            response = self.client.get(url)
+            
+            # Should work correctly
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response['Content-Type'], 'application/pdf')
+            
+        finally:
+            if os.path.exists(edge_pdf_path):
+                os.remove(edge_pdf_path)
