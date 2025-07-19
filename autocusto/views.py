@@ -122,44 +122,27 @@ def home(request):
         else:
             # Handle registration form submission for non-authenticated users
             if 'nome' in request.POST:  # This is a registration form submission
-                print("🔍 STEP 1: Registration form detected in POST")
                 from django.db import transaction
+                from django.http import JsonResponse
                 
                 # English: registration_form
                 registro_form = MedicoCadastroFormulario(request.POST)
-                print(f"🔍 STEP 1: Form created, is_valid: {registro_form.is_valid()}")
                 
                 if registro_form.is_valid():
                     with transaction.atomic():
                         registro_form.save()
                         # English: name
                         nome = registro_form.cleaned_data.get("nome")
-                        messages.success(
-                            request, f"Conta médica criada para {nome}! Você já pode fazer o login."
-                        )
-                        return redirect("login")
+                        return JsonResponse({
+                            'success': True,
+                            'message': f"Conta médica criada para {nome}! Você já pode fazer o login."
+                        })
                 else:
-                    print("🔍 STEP 2: Form validation FAILED")
-                    print(f"🔍 STEP 2: Form errors: {dict(registro_form.errors)}")
-                    
-                    # Form has errors, add them as Django messages for toast display
-                    for field, errors in registro_form.errors.items():
-                        for error in errors:
-                            print(f"🔍 STEP 2: Adding message.error: {error}")
-                            messages.error(request, error)
-                    
-                    print(f"🔍 STEP 3: Total messages after adding: {len(list(messages.get_messages(request)))}")
-                    
-                    # Note: Form errors are handled via crispy forms configuration
-                    # form_show_errors = False prevents inline display
-                    print("🔍 STEP 4: Form errors preserved for proper validation state")
-                    
-                    # Re-render form but messages will show as toasts
-                    # English: form
-                    formulario = PreProcesso()
-                    # English: context
-                    contexto = {"formulario": formulario, "registro_form": registro_form}
-                    return render(request, "home.html", contexto)
+                    # Return JSON response with form errors for AJAX requests
+                    return JsonResponse({
+                        'success': False,
+                        'form_errors': dict(registro_form.errors)
+                    })
             else:
                 # This is a regular process form submission - require authentication
                 messages.warning(

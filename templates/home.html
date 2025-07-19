@@ -229,17 +229,26 @@
                         <div class="card-body p-4">
 
                             {% if registro_form %}
-                            <form method="POST" action="{% url 'home' %}" novalidate>
+                            <form id="registration-form" method="POST" action="{% url 'home' %}" novalidate>
                                 {% csrf_token %}
                                 {{ registro_form|crispy }}
                                 <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
                                     <span class="oi oi-task mr-2"></span>
-                                    Criar conta gratuita
+                                    <span class="submit-text">Criar conta gratuita</span>
+                                    <span class="loading-text" style="display: none;">Criando conta...</span>
                                 </button>
                                 <p class="text-center text-muted small mt-3 mb-1">
                                     🔒 Dados protegidos de acordo com a LGPD
                                 </p>
                             </form>
+                            
+                            <!-- Success message (initially hidden) -->
+                            <div id="registration-success" class="text-center" style="display: none;">
+                                <div class="alert alert-success">
+                                    <h5><span class="oi oi-check mr-2"></span>Conta criada, faça o login acima!</h5>
+                                    <p class="mb-0">Desejo muitas horas economizadas com papéis e mais horas de dedicação aos seus pacientes!</p>
+                                </div>
+                            </div>
                             {% else %}
                             <!-- Fallback simple registration form -->
                             <p class="text-center">
@@ -375,5 +384,18 @@ document.addEventListener('alpine:init', () => {
 });
 </script>
 <!-- jQuery masks removed - using Alpine.js masks instead -->
+{% else %}
+<!-- Registration Form Handler -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    new window.FormHandler.BaseFormHandler('#registration-form')
+        .withSuccessCallback((data) => {
+            document.getElementById('registration-form').style.display = 'none';
+            document.getElementById('success-message-text').textContent = data.message;
+            document.getElementById('registration-success').style.display = 'block';
+        })
+        .init();
+});
+</script>
 {% endif %}
 {% endblock %}

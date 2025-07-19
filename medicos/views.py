@@ -45,7 +45,7 @@ def cadastro(request):
             messages.success(
                 request, f"Conta médica criada para {nome}! Você já pode fazer o login."
             )
-            return redirect("login")
+            return redirect("home")
         else:
             # Add form errors to messages for display
             for field, errors in formulario.errors.items():
