@@ -45,7 +45,9 @@ USER appuser
 COPY . .
 
 # Fix ownership of copied files so appuser can write to static/tmp
+# Create log directory for Django
 USER root
+RUN mkdir -p /var/log/django && chown -R appuser:appuser /var/log/django
 RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 

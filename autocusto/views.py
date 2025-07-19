@@ -84,7 +84,7 @@ def home(request):
 
                 # Complex business logic: Check if patient already has a process for this disease
                 # English: search_processes
-                busca_processos = paciente.processos.filter(doenca__cid=cid)
+                busca_processos = paciente.processos.select_related('doenca', 'usuario').filter(doenca__cid=cid)
 
                 if busca_processos.exists():
                     # Patient has processes for this disease - check if current doctor created any

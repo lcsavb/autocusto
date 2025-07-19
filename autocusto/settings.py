@@ -101,6 +101,19 @@ DATABASES = {
     }
 }
 
+# DEBUG: Print database configuration (only in production for debugging)
+if not DEBUG:
+    print("=== DATABASE DEBUG ===")
+    print(f"SQL_ENGINE: {os.environ.get('SQL_ENGINE', 'NOT_SET')}")
+    print(f"SQL_DATABASE: '{os.environ.get('SQL_DATABASE', 'NOT_SET')}'")
+    print(f"SQL_USER: '{os.environ.get('SQL_USER', 'NOT_SET')}'")
+    print(f"SQL_PASSWORD: {'SET' if os.environ.get('SQL_PASSWORD') else 'NOT_SET'}")
+    print(f"SQL_HOST: {os.environ.get('SQL_HOST', 'NOT_SET')}")
+    print(f"SQL_PORT: {os.environ.get('SQL_PORT', 'NOT_SET')}")
+    print(f"DATABASE NAME VALUE: '{DATABASES['default']['NAME']}'")
+    print(f"DATABASE NAME EMPTY: {DATABASES['default']['NAME'] == ''}")
+    print("=== DATABASE DEBUG END ===")
+
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
@@ -252,3 +265,67 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'CliqueReceita <digitalprod
 # EMAIL_HOST_USER = 'your-email@gmail.com'
 # EMAIL_HOST_PASSWORD = 'your-app-password'
 # DEFAULT_FROM_EMAIL = 'AutoCusto <noreply@autocusto.com>'
+
+# Production Security Settings
+if not DEBUG:
+    # SSL/HTTPS Security
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    
+    # Note: X_FRAME_OPTIONS handled by nginx for consistency
+
+# Enhanced Logging for Production
+if not DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'file': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/django/error.log',
+                'maxBytes': 1024*1024*10,  # 10 MB
+                'backupCount': 5,
+                'formatter': 'verbose',
+            },
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file', 'console'],
+                'level': 'ERROR',
+                'propagate': False,
+            },
+            'processos': {
+                'handlers': ['file', 'console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
