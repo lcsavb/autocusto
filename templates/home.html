@@ -244,9 +244,9 @@
                             
                             <!-- Success message (initially hidden) -->
                             <div id="registration-success" class="text-center" style="display: none;">
-                                <div class="alert alert-success">
+                                <div class="alert alert-success animate-fade-in">
                                     <h5><span class="oi oi-check mr-2"></span>Conta criada, faça o login acima!</h5>
-                                    <p class="mb-0">Desejo muitas horas economizadas com papéis e mais horas de dedicação aos seus pacientes!</p>
+                                    <p id="success-message-text" class="mb-0">Desejo muitas horas economizadas com papéis e mais horas de dedicação aos seus pacientes!</p>
                                 </div>
                             </div>
                             {% else %}
@@ -386,13 +386,64 @@ document.addEventListener('alpine:init', () => {
 <!-- jQuery masks removed - using Alpine.js masks instead -->
 {% else %}
 <!-- Registration Form Handler -->
+<style>
+.animate-fade-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-fade-out {
+    animation: fadeOut 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.registration-transition {
+    transition: all 0.4s ease-out;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     new window.FormHandler.BaseFormHandler('#registration-form')
         .withSuccessCallback((data) => {
-            document.getElementById('registration-form').style.display = 'none';
-            document.getElementById('success-message-text').textContent = data.message;
-            document.getElementById('registration-success').style.display = 'block';
+            const form = document.getElementById('registration-form');
+            const successDiv = document.getElementById('registration-success');
+            const messageText = document.getElementById('success-message-text');
+            
+            // Add transition class and fade out form
+            form.classList.add('registration-transition', 'animate-fade-out');
+            
+            // Update message text
+            if (data.message) {
+                messageText.textContent = data.message;
+            }
+            
+            // After fade out animation completes, hide form and show success
+            setTimeout(() => {
+                form.style.display = 'none';
+                successDiv.style.display = 'block';
+                successDiv.classList.add('animate-fade-in');
+            }, 400);
         })
         .init();
 });

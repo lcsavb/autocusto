@@ -147,7 +147,19 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
 
-STATICFILES_DIRS = []  # All static files should be collected into STATIC_ROOT
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static', 'autocusto'),
+]
+
+# For debugging - let's see what Django is looking for
+if DEBUG:
+    import os
+    static_dir = os.path.join(BASE_DIR, 'static', 'autocusto')
+    print(f"DEBUG: STATICFILES_DIRS pointing to: {static_dir}")
+    print(f"DEBUG: Directory exists: {os.path.exists(static_dir)}")
+    css_file = os.path.join(static_dir, 'css', 'base.css')
+    print(f"DEBUG: CSS file path: {css_file}")
+    print(f"DEBUG: CSS file exists: {os.path.exists(css_file)}")
 
 # Cache Configuration
 # Optimized for PDF generation system - short-lived cache for immediate serving
@@ -190,14 +202,17 @@ LOGIN_URL = "login"
 
 # PDFs
 
-PATH_LME_BASE = os.path.join(
-    STATIC_ROOT, "processos", "lme_base_modelo.pdf"
-)
-PATH_RELATORIO = os.path.join(
-    STATIC_ROOT, "processos", "relatorio_modelo.pdf"
-)
-PATH_EXAMES = os.path.join(STATIC_ROOT, "processos", "sadt.pdf")
-PATH_PDF_DIR = os.path.join(STATIC_ROOT, "protocolos")
+def get_static_path(*args):
+    """Get static file path that works in both development and production"""
+    if DEBUG:
+        return os.path.join(BASE_DIR, "static", "autocusto", *args)
+    else:
+        return os.path.join(STATIC_ROOT, *args)
+
+PATH_LME_BASE = get_static_path("processos", "lme_base_modelo.pdf")
+PATH_RELATORIO = get_static_path("processos", "relatorio_modelo.pdf") 
+PATH_EXAMES = get_static_path("processos", "sadt.pdf")
+PATH_PDF_DIR = get_static_path("protocolos")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

@@ -57,8 +57,5 @@ urlpatterns = [
 ]
 
 # Serve static files in development
-# English: debug
 if settings.DEBUG:
-    # English: static_url
-    # English: static_root
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

@@ -13,6 +13,8 @@ services:
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8001
+    ports:
+      - "8001:8001"
     volumes:
       - .:/home/appuser/app
     tmpfs:
@@ -21,7 +23,7 @@ services:
     depends_on:
       - db
     environment:
-      - DEBUG=1
+      - DEBUG=true
       - SECRET_KEY=jklahjkldfakjhKLJHADJKFHASDKHFJKLhadsfhjkladhOIUYHQ6516AS5DFASD65F48A6S1652asd1f3as2d
       - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 0.0.0.0
       - USE_X_FORWARDED_HOST=1
@@ -33,15 +35,6 @@ services:
       - SQL_HOST=db
       - SQL_PORT=5432
 
-  nginx:
-    image: nginx:latest
-    ports:
-      - "8001:80"
-    volumes:
-      - ./nginx-dev.conf:/etc/nginx/conf.d/default.conf
-      - ./static_root:/home/appuser/app/static_root
-    depends_on:
-      - web
 
 volumes:
   postgres_data:

@@ -1,0 +1,351 @@
+/* Enhanced Process Forms Styling */
+
+/* Radio Button Inline Styling */
+.form-check-inline {
+    display: inline-block !important;
+    margin-right: 1rem !important;
+}
+
+.form-check-inline .form-check-input {
+    margin-right: 0.5rem !important;
+}
+
+/* Ensure radio button groups are displayed inline */
+.custom-control.custom-radio {
+    display: inline-block !important;
+    margin-right: 1rem !important;
+}
+
+.custom-control.custom-radio .custom-control-input:checked ~ .custom-control-label::before {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
+}
+
+/* Compact Process Header */
+.process-header {
+    background: #ffffff;
+    color: #495057;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-bottom: 3px solid #e9ecef;
+}
+
+.process-header h4 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.process-header .subtitle {
+    opacity: 0.7;
+    font-size: 0.9rem;
+    margin: 0;
+    color: #6c757d;
+}
+
+/* Compact Section Cards */
+.section-card {
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.section-card:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.section-body {
+    padding: 1rem;
+}
+
+/* Compact Header Controls */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.protocol-link {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 4px rgba(23,162,184,0.2);
+    transition: all 0.15s ease-in-out;
+    min-width: 140px;
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+}
+
+.protocol-link:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(23,162,184,0.3);
+}
+
+.edition-badge {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 4px rgba(220,53,69,0.2);
+    position: relative;
+    overflow: hidden;
+    min-width: 180px;
+}
+
+.edition-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ffc107, #fd7e14, #ffc107);
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.edition-badge .form-group {
+    margin-bottom: 0;
+}
+
+.edition-badge label {
+    color: white !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.edition-badge .custom-select {
+    background-color: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,255,255,0.5);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    height: auto;
+}
+
+.edition-badge .custom-select:focus {
+    background-color: white;
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.1rem rgba(255,193,7,0.25);
+}
+
+.date-badge {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 4px rgba(40,167,69,0.2);
+    min-width: 140px;
+}
+
+.date-badge .form-group {
+    margin-bottom: 0;
+}
+
+.date-badge label {
+    color: white !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.date-badge .form-control {
+    background-color: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,255,255,0.5);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    height: auto;
+}
+
+.date-badge .form-control:focus {
+    background-color: white;
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.1rem rgba(32,201,151,0.25);
+}
+
+/* Date Field */
+.date-field {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(40,167,69,0.2);
+}
+
+.date-field label {
+    color: white !important;
+    font-weight: 600;
+}
+
+.date-field .form-control {
+    background-color: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,255,255,0.5);
+    font-weight: 500;
+}
+
+.date-field .form-control:focus {
+    background-color: white;
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.2rem rgba(32,201,151,0.25);
+}
+
+/* Patient Info Section */
+.patient-info {
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(111,66,193,0.2);
+}
+
+.patient-info label {
+    color: white !important;
+    font-weight: 600;
+}
+
+.patient-info .form-control,
+.patient-info .custom-select {
+    background-color: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,255,255,0.5);
+    font-weight: 500;
+}
+
+.patient-info .form-control:focus,
+.patient-info .custom-select:focus {
+    background-color: white;
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.2rem rgba(111,66,193,0.25);
+}
+
+/* Process Data Section */
+.process-data {
+    background: linear-gradient(135deg, #fd7e14, #e8590c);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(253,126,20,0.2);
+}
+
+.process-data label {
+    color: white !important;
+    font-weight: 600;
+}
+
+.process-data .form-control,
+.process-data .custom-select {
+    background-color: rgba(255,255,255,0.95);
+    border: 1px solid rgba(255,255,255,0.5);
+    font-weight: 500;
+}
+
+.process-data .form-control:focus,
+.process-data .custom-select:focus {
+    background-color: white;
+    border-color: #fd7e14;
+    box-shadow: 0 0 0 0.2rem rgba(253,126,20,0.25);
+}
+
+/* Form Section Titles */
+.form-section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 1.25rem;
+}
+
+/* Submit Button Enhancement */
+.submit-section {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.btn-submit-process {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-radius: 0.5rem;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-submit-process:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,123,255,0.4);
+    color: white;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .process-header {
+        padding: 1.5rem;
+        margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+    }
+    
+    .process-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .edition-alert {
+        padding: 1rem;
+    }
+    
+    .section-body {
+        padding: 1rem;
+    }
+    
+    .header-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .protocol-link {
+        min-width: auto;
+        width: 100%;
+    }
+}
