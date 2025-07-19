@@ -107,11 +107,17 @@ if not DEBUG:
     print(f"SQL_ENGINE: {os.environ.get('SQL_ENGINE', 'NOT_SET')}")
     print(f"SQL_DATABASE: '{os.environ.get('SQL_DATABASE', 'NOT_SET')}'")
     print(f"SQL_USER: '{os.environ.get('SQL_USER', 'NOT_SET')}'")
-    print(f"SQL_PASSWORD: {'SET' if os.environ.get('SQL_PASSWORD') else 'NOT_SET'}")
+    sql_password = os.environ.get('SQL_PASSWORD', 'NOT_SET')
+    print(f"SQL_PASSWORD: {'SET' if sql_password else 'NOT_SET'} (length: {len(sql_password) if sql_password else 0})")
     print(f"SQL_HOST: {os.environ.get('SQL_HOST', 'NOT_SET')}")
     print(f"SQL_PORT: {os.environ.get('SQL_PORT', 'NOT_SET')}")
     print(f"DATABASE NAME VALUE: '{DATABASES['default']['NAME']}'")
     print(f"DATABASE NAME EMPTY: {DATABASES['default']['NAME'] == ''}")
+    
+    # Check if both containers have same password variables
+    postgres_password = os.environ.get('POSTGRES_PASSWORD', 'NOT_SET')
+    print(f"POSTGRES_PASSWORD: {'SET' if postgres_password else 'NOT_SET'} (length: {len(postgres_password) if postgres_password else 0})")
+    print(f"Password match: {sql_password == postgres_password if sql_password and postgres_password else 'UNKNOWN'}")
     print("=== DATABASE DEBUG END ===")
 
 # Password validation
