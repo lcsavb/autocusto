@@ -5,7 +5,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from django.core.cache import cache
 from datetime import datetime
-from .manejo_pdfs_memory import GeradorPDFMemory
+from .manejo_pdfs_memory import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
 
@@ -576,7 +576,7 @@ def transfere_dados_gerador(dados):
         
         # English: pdf
         pdf_create_start = time.time()
-        pdf = GeradorPDFMemory(dados, settings.PATH_LME_BASE)
+        pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
         pdf_create_end = time.time()
         print(f"DEBUG: GeradorPDFMemory instance created in {pdf_create_end - pdf_create_start:.3f}s")
         

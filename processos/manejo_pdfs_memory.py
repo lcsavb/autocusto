@@ -15,6 +15,7 @@ from django.conf import settings
 from django.http import HttpResponse
 
 from processos.models import Protocolo, Medicamento
+from processos.pdf_strategies import DataDrivenStrategy
 
 
 def preencher_formularios_memory(lista_pdfs, dados_finais):
@@ -308,7 +309,7 @@ def ajustar_campo_18(dados_lme):
     print(f"--- AJUSTAR_CAMPO_18 END ---\n")
 
 
-class GeradorPDFMemory:
+class GeradorPDF:
     """
     Memory-based PDF generator that streams PDFs directly to browser.
     """
@@ -350,26 +351,32 @@ class GeradorPDFMemory:
         # Start with base LME template
         arquivos_base = [path_lme_base]
         
-        # Get protocol info
+        # Get protocol info and initialize strategy
         try:
             protocolo = Protocolo.objects.get(doenca__cid=cid)
             print(f"DEBUG: Found protocol: {protocolo.nome}")
+            
+            # Initialize data-driven strategy
+            strategy = DataDrivenStrategy(protocolo)
         except Protocolo.DoesNotExist:
             print(f"ERROR: Protocol not found for CID: {cid}")
             return HttpResponse("Protocol not found", status=404)
         
-        # Add conditional PDFs
+        # Add disease-specific PDFs using strategy
         try:
-            dir_pdfs_condicionais = os.path.join(
-                settings.PATH_PDF_DIR, protocolo.nome, "pdfs_base/"
-            )
-            if os.path.exists(dir_pdfs_condicionais):
-                import glob
-                pdfs_condicionais = glob.glob(dir_pdfs_condicionais + "*.*")
-                arquivos_base.extend(pdfs_condicionais)
-                print(f"DEBUG: Added {len(pdfs_condicionais)} conditional PDFs")
+            disease_files = strategy.get_disease_specific_paths(dados_lme_base)
+            arquivos_base.extend(disease_files)
+            print(f"DEBUG: Added {len(disease_files)} disease-specific PDFs via strategy")
         except Exception as e:
-            print(f"ERROR: Failed to add conditional PDFs: {e}")
+            print(f"ERROR: Failed to add disease-specific PDFs: {e}")
+        
+        # Add medication-specific PDFs using strategy
+        try:
+            medication_files = strategy.get_medication_specific_paths(dados_lme_base)
+            arquivos_base.extend(medication_files)
+            print(f"DEBUG: Added {len(medication_files)} medication-specific PDFs via strategy")
+        except Exception as e:
+            print(f"ERROR: Failed to add medication-specific PDFs: {e}")
         
         # Add consent PDF if needed
         if primeira_vez == "True" or primeira_vez == True:

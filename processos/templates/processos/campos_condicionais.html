@@ -1,12 +1,62 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-<h3>Campos Condicionais</h3>
-<hr>
-<div class="form-row">
+<style>
+.campos-condicionais-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: flex-start;
+}
+
+.campos-condicionais-container .form-group {
+    margin-bottom: 0;
+    flex: 0 0 auto;
+    min-width: fit-content;
+}
+
+/* Specific sizing for different field types */
+.campos-condicionais-container .form-group:has(input[type="checkbox"]) {
+    flex: 0 0 auto;
+    min-width: 150px;
+}
+
+.campos-condicionais-container .form-group:has(select) {
+    flex: 0 0 auto;
+    min-width: 180px;
+}
+
+.campos-condicionais-container .form-group:has(input[type="text"]) {
+    flex: 0 0 auto;
+    min-width: 200px;
+}
+
+.campos-condicionais-container .form-group:has(input[type="date"]) {
+    flex: 0 0 auto;
+    min-width: 180px;
+}
+
+.campos-condicionais-container .form-group:has(input[type="number"]) {
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+@media (max-width: 768px) {
+    .campos-condicionais-container {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .campos-condicionais-container .form-group {
+        flex: 1 1 100%;
+        min-width: 100%;
+    }
+}
+</style>
+
+<div class="campos-condicionais-container">
     {% for campo in campos_condicionais %}
-    <div class="col-xs-1">
         {{ campo|as_crispy_field }}
-    </div>
     {% endfor %}
 </div>
