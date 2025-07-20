@@ -148,6 +148,16 @@ def get_conditional_fields(protocolo):
                 campos[field_name] = campo
                 print(f"DEBUG: Created text field: {field_name}")
                 
+            elif field_type == "textarea":
+                campo = forms.CharField(
+                    label=label,
+                    required=required,
+                    initial=field_config.get("initial", ""),
+                    widget=forms.Textarea(attrs={"class": widget_class, "rows": 4})
+                )
+                campos[field_name] = campo
+                print(f"DEBUG: Created textarea field: {field_name}")
+                
             elif field_type == "date":
                 campo = forms.DateField(
                     label=label,

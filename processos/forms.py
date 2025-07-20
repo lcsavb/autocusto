@@ -559,6 +559,11 @@ class RenovarProcesso(NovoProcesso):
                 dados, processo_id
             )
             processo = preparar_modelo(Processo, **dados_modificados)
+            
+            # Update conditional data for partial edits
+            processo.dados_condicionais = {k: v for k, v in dados.items() if k.startswith("opt_")}
+            campos_modificados.append('dados_condicionais')
+            
             processo.save(update_fields=campos_modificados)
             associar_med(Processo.objects.get(id=processo_id), meds_ids)
 

@@ -1,0 +1,171 @@
+{
+  "fields": [
+    {
+      "name": "opt_medicacao_select",
+      "type": "choice",
+      "label": "Medicação",
+      "choices": [["", "Selecione..."], ["nusinersena", "Nusinersena"], ["risdiplam", "Risdiplam"]],
+      "initial": "",
+      "widget_class": "custom-select"
+    },
+    {
+      "name": "opt_ventilacao_select", 
+      "type": "choice",
+      "label": "Uso de ventilação mecânica",
+      "choices": [["", "Selecione..."], ["nao", "Não"], ["nao_invasiva", "Sim, ventilação não invasiva"], ["invasiva", "Sim, ventilação invasiva"]],
+      "initial": "",
+      "widget_class": "custom-select"
+    },
+    {
+      "name": "opt_vent_nao_inv_horas",
+      "type": "number",
+      "label": "Horas/dia - ventilação não invasiva",
+      "required": false
+    },
+    {
+      "name": "opt_vent_nao_inv_dias",
+      "type": "number",
+      "label": "Dias - ventilação não invasiva",
+      "required": false
+    },
+    {
+      "name": "opt_vent_inv_horas",
+      "type": "number",
+      "label": "Horas/dia - ventilação invasiva",
+      "required": false
+    },
+    {
+      "name": "opt_vent_inv_dias",
+      "type": "number",
+      "label": "Dias - ventilação invasiva",
+      "required": false
+    },
+    {
+      "name": "opt_spo2",
+      "type": "number",
+      "label": "Saturação de O2 (%)",
+      "required": false
+    },
+    {
+      "name": "opt_via_alimentacao_select",
+      "type": "choice",
+      "label": "Via de alimentação majoritária",
+      "choices": [["", "Selecione..."], ["oral", "Oral"], ["enteral", "Nutrição enteral"]],
+      "initial": "",
+      "widget_class": "custom-select"
+    },
+    {
+      "name": "opt_consistencia_dieta_select",
+      "type": "choice",
+      "label": "Consistência da dieta majoritária", 
+      "choices": [["", "Selecione..."], ["solida", "Sólida"], ["pastosa", "Pastosa"], ["liquida", "Líquida"]],
+      "initial": "",
+      "widget_class": "custom-select"
+    },
+    {
+      "name": "opt_peso_paciente",
+      "type": "number",
+      "label": "Peso (kg)",
+      "required": false
+    },
+    {
+      "name": "opt_sexo_select",
+      "type": "choice", 
+      "label": "Sexo",
+      "choices": [["", "Selecione..."], ["masculino", "Masculino"], ["feminino", "Feminino"]],
+      "initial": "",
+      "widget_class": "custom-select"
+    },
+    {
+      "name": "opt_estatura_paciente",
+      "type": "number",
+      "label": "Estatura (cm)",
+      "required": false
+    },
+    {
+      "name": "opt_perimetro_cefalico",
+      "type": "number",
+      "label": "Perímetro cefálico (cm)",
+      "required": false
+    },
+    {
+      "name": "opt_perimetro_braquial",
+      "type": "number",
+      "label": "Perímetro braquial (cm)",
+      "required": false
+    },
+    {
+      "name": "opt_perimetro_toracico",
+      "type": "number",
+      "label": "Perímetro torácico (cm)",
+      "required": false
+    },
+    {
+      "name": "opt_escore_z",
+      "type": "text",
+      "label": "Escore Z (OMS)",
+      "required": false
+    },
+    {
+      "name": "opt_peso_idade",
+      "type": "text",
+      "label": "Peso por idade",
+      "required": false
+    },
+    {
+      "name": "opt_altura_idade",
+      "type": "text",
+      "label": "Altura por idade",
+      "required": false
+    },
+    {
+      "name": "opt_imc",
+      "type": "number",
+      "label": "Índice de Massa Corporal",
+      "required": false
+    },
+    {
+      "name": "opt_classificacao_ame_select",
+      "type": "choice",
+      "label": "Classificação da AME",
+      "choices": [["", "Selecione..."], ["tipo1", "Tipo 1"], ["tipo2", "Tipo 2"], ["tipo3_4", "Tipo 3 ou 4"]],
+      "initial": "",
+      "widget_class": "custom-select"
+    },
+    {
+      "name": "opt_chop",
+      "type": "number",
+      "label": "Escala CHOP-INTEND (pontos)",
+      "required": false
+    },
+    {
+      "name": "opt_hfmse",
+      "type": "number",
+      "label": "Escala HFMSE (pontos)",
+      "required": false
+    },
+    {
+      "name": "opt_relatorio_medico",
+      "type": "textarea",
+      "label": "Relatório médico com descrição da situação motora",
+      "required": false
+    },
+    {
+      "name": "nome_medico",
+      "type": "text",
+      "label": "Médico Responsável (CRM)",
+      "required": false
+    }
+  ],
+  "medications": {
+    "risdiplam": {
+      "files": [],
+      "consent_name": "risdiplam"
+    },
+    "nusinersena": {
+      "files": [],
+      "consent_name": "nusinersena"
+    }
+  },
+  "disease_files": ["pdfs_base/questionario.pdf"]
+}

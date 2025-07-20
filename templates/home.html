@@ -47,8 +47,7 @@
                                         @input="handleCIDInput($event)"
                                         @focus="activeSearch = 'diseases'"
                                         autocomplete="off" 
-                                        :placeholder="AlpineMasks.cid.placeholder"
-                                        :maxlength="AlpineMasks.cid.maxLength">
+                                        placeholder="Digite o CID">
                                 </div>
                                 
                                 <div class="col-sm-3">
@@ -313,11 +312,11 @@ document.addEventListener('alpine:init', () => {
       this.activeSearch = 'patients';
     }),
     
-    handleCIDInput: AlpineMasks.createHandler('cid', function(event, masked) {
-      this.cid = masked;
+    handleCIDInput(event) {
+      this.cid = event.target.value;
       this.searchDiseases();
       this.activeSearch = 'diseases';
-    }),
+    },
     
     // Search diseases
     async searchDiseases() {

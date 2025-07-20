@@ -338,6 +338,10 @@ def cria_dict_renovação(modelo):
         "preenchido_por": modelo.preenchido_por,
         "clinica": modelo.clinica,
     }
+    
+    # Add conditional data from the process
+    if modelo.dados_condicionais:
+        dicionario.update(modelo.dados_condicionais)
     return dicionario
 
 

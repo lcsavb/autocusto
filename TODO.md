@@ -3,8 +3,11 @@
 FOR EARLY DEPLOYMENT
 
 when the medicamento is nenhum it works
-remove cid mask
+dados condicionais not being saved and not being retrieved (symptom?
+
+database backup
 add renovacao rapida progress bar
+in renovacao rapida the latest conditional data are not being loaded
 recuperacao da senha instrucoes em ingles
 instituir autenticação de dois fatores obrigatória
 The pdfs_base directories exist for some protocols but not for epilepsia. Let me check if it should exist:
