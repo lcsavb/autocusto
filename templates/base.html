@@ -59,6 +59,16 @@
 
     <ul class="navbar-nav ml-auto">
       {% if user.is_authenticated %}
+            <li class="nav-item">
+        <a class="nav-link" href="{% url 'reportar-erros' %}" title="Reportar Erro" data-toggle="tooltip" data-placement="bottom">
+          <span class="oi oi-bug text-white"></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'solicitar-funcionalidade' %}" title="Solicitar Funcionalidade" data-toggle="tooltip" data-placement="bottom">
+          <span class="oi oi-lightbulb text-white"></span>
+        </a>
+      </li>
 
             <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -69,16 +79,7 @@
           <a class="dropdown-item" href="{% url 'clinicas-cadastro' %}">Clínicas</a>
         </div>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'reportar-erros' %}" title="Reportar Erro" data-toggle="tooltip" data-placement="bottom">
-          <span class="oi oi-bug text-white"></span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'solicitar-funcionalidade' %}" title="Solicitar Funcionalidade" data-toggle="tooltip" data-placement="bottom">
-          <span class="oi oi-lightbulb text-white"></span>
-        </a>
-      </li>
+
       <li class="nav-item">
         <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0; padding: 0;" novalidate>
           {% csrf_token %}

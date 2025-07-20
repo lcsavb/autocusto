@@ -2,16 +2,12 @@
 
 FOR EARLY DEPLOYMENT
 
-security fixes
-pdf clean up
-add progress bar renovaocao rapida
 when the medicamento is nenhum it works
 recuperacao da senha instrucoes em ingles
-no inline validation feedback
 instituir autenticação de dois fatores obrigatória
 The pdfs_base directories exist for some protocols but not for epilepsia. Let me check if it should exist:
 add copaxone for ms
-all pdfs in memory
+
 
 
 

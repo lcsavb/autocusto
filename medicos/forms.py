@@ -172,6 +172,14 @@ class ProfileCompletionForm(forms.Form):
             'max_length': 'CRM deve ter no máximo 10 caracteres.'
         }
     )
+    crm2 = forms.CharField(
+        max_length=10, 
+        label="Confirmar CRM",
+        error_messages={
+            'required': 'Confirmação de CRM é obrigatória.',
+            'max_length': 'CRM deve ter no máximo 10 caracteres.'
+        }
+    )
     cns = forms.CharField(
         max_length=15, 
         label="Cartão Nacional de Saúde (CNS)",
@@ -180,10 +188,31 @@ class ProfileCompletionForm(forms.Form):
             'max_length': 'CNS deve ter no máximo 15 caracteres.'
         }
     )
+    cns2 = forms.CharField(
+        max_length=15, 
+        label="Confirmar CNS",
+        error_messages={
+            'required': 'Confirmação de CNS é obrigatória.',
+            'max_length': 'CNS deve ter no máximo 15 caracteres.'
+        }
+    )
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # Check if CRM/CNS are already set (immutable once set)
+        if self.user:
+            medico = self.user.medicos.first()
+            if medico:
+                if medico.crm_medico:
+                    self.fields['crm'].disabled = True
+                    self.fields['crm2'].disabled = True
+                    self.fields['crm'].help_text = "CRM já definido e não pode ser alterado"
+                if medico.cns_medico:
+                    self.fields['cns'].disabled = True
+                    self.fields['cns2'].disabled = True
+                    self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
         
         # Configure Crispy Forms helper
         self.helper = FormHelper()
@@ -232,6 +261,23 @@ class ProfileCompletionForm(forms.Form):
         
         return cns
 
+    def clean_crm2(self):
+        """Validate that the two CRM entries match."""
+        crm1 = self.cleaned_data.get("crm")
+        crm2 = self.cleaned_data.get("crm2")
+        if crm1 and crm2 and crm1 != crm2:
+            raise forms.ValidationError("Os CRMs não coincidem.")
+        return crm2
+
+    def clean_cns2(self):
+        """Validate that the two CNS entries match."""
+        cns1 = self.cleaned_data.get("cns")
+        cns2 = self.cleaned_data.get("cns2")
+        if cns1 and cns2 and cns1 != cns2:
+            raise forms.ValidationError("Os CNSs não coincidem.")
+        return cns2
+
+
     @transaction.atomic
     def save(self):
         """Update medico with CRM and CNS data."""
@@ -240,8 +286,11 @@ class ProfileCompletionForm(forms.Form):
             
         medico = self.user.medicos.first()
         if medico:
-            medico.crm_medico = self.cleaned_data["crm"]
-            medico.cns_medico = self.cleaned_data["cns"]
+            # Only update if not already set (frontend should prevent this, but safety check)
+            if not medico.crm_medico:
+                medico.crm_medico = self.cleaned_data["crm"]
+            if not medico.cns_medico:
+                medico.cns_medico = self.cleaned_data["cns"]
             medico.save()
         
         return self.user
@@ -290,6 +339,17 @@ class UserDoctorEditForm(forms.Form):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
+        # Check if CRM/CNS are already set (immutable once set)
+        if self.user:
+            medico = self.user.medicos.first()
+            if medico:
+                if medico.crm_medico:
+                    self.fields['crm'].disabled = True
+                    self.fields['crm'].help_text = "CRM já definido e não pode ser alterado"
+                if medico.cns_medico:
+                    self.fields['cns'].disabled = True
+                    self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
+        
         # Configure Crispy Forms helper
         self.helper = FormHelper()
         self.helper.form_method = "POST"
@@ -299,6 +359,15 @@ class UserDoctorEditForm(forms.Form):
         self.helper.error_text_inline = False
         self.helper.help_text_inline = True
         self.helper.add_input(Submit("submit", "Atualizar Perfil", css_class="btn btn-primary float-right mt-3"))
+        
+        # Add spacing between form fields
+        from crispy_forms.layout import Layout, Div
+        self.helper.layout = Layout(
+            Div('name', css_class="mb-4"),
+            Div('email', css_class="mb-4"), 
+            Div('crm', css_class="mb-4"),
+            Div('cns', css_class="mb-4"),
+        )
 
         # Apply form-control to all fields
         for field_name, field in self.fields.items():
@@ -341,9 +410,10 @@ class UserDoctorEditForm(forms.Form):
             # Update existing medico with provided fields
             if self.cleaned_data.get("name"):
                 medico.nome_medico = self.cleaned_data["name"]
-            if self.cleaned_data.get("crm"):
+            # Only update CRM/CNS if not already set (immutable once set)
+            if self.cleaned_data.get("crm") and not medico.crm_medico:
                 medico.crm_medico = self.cleaned_data["crm"]
-            if self.cleaned_data.get("cns"):
+            if self.cleaned_data.get("cns") and not medico.cns_medico:
                 medico.cns_medico = self.cleaned_data["cns"]
             medico.save()
         
