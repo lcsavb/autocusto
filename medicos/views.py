@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
-from .forms import MedicoCadastroFormulario
+from .forms import MedicoCadastroFormulario, ProfileCompletionForm, UserDoctorEditForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
@@ -120,3 +120,86 @@ def custom_logout(request):
     logout(request)
     messages.success(request, "Logout realizado com sucesso!")
     return redirect("home")
+
+
+@login_required
+@transaction.atomic
+def complete_profile(request):
+    """Simple view for completing missing CRM/CNS data."""
+    
+    if request.method == "POST":
+        form = ProfileCompletionForm(request.POST, user=request.user)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, "Dados médicos atualizados com sucesso!")
+                # Check if user has clinics now, if so redirect to process form
+                if request.user.clinicas.exists():
+                    messages.info(request, "Voltando para o formulário de criação do processo...")
+                    return redirect("processos-cadastro")
+                else:
+                    return redirect("clinicas-cadastro")
+            except IntegrityError as e:
+                if 'cns_medico' in str(e):
+                    messages.error(request, "Este CNS já está sendo usado por outro médico.")
+                elif 'crm_medico' in str(e):
+                    messages.error(request, "Este CRM já está sendo usado por outro médico.")
+                else:
+                    messages.error(request, "Erro de integridade dos dados. Verifique se os dados não estão duplicados.")
+        else:
+            # Add form errors to messages for display
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
+    else:
+        # Pre-populate with existing data if available
+        initial_data = {}
+        medico = request.user.medicos.first()
+        if medico:
+            initial_data = {
+                'crm': medico.crm_medico,
+                'cns': medico.cns_medico,
+            }
+        form = ProfileCompletionForm(initial=initial_data, user=request.user)
+    
+    return render(
+        request,
+        "medicos/complete_profile.html",
+        {"form": form, "titulo": "Complete seus Dados Médicos"},
+    )
+
+
+@login_required
+@transaction.atomic
+def edit_profile(request):
+    """Handle editing of user and doctor profile information."""
+    
+    if request.method == "POST":
+        form = UserDoctorEditForm(request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil atualizado com sucesso!")
+            return redirect("edit-profile")
+        else:
+            # Add form errors to messages for display
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
+    else:
+        # Pre-populate form with current user/doctor data
+        initial_data = {}
+        medico = request.user.medicos.first()
+        if medico:
+            initial_data = {
+                'name': medico.nome_medico,
+                'crm': medico.crm_medico,
+                'cns': medico.cns_medico,
+            }
+        initial_data['email'] = request.user.email
+        form = UserDoctorEditForm(initial=initial_data, user=request.user)
+    
+    return render(
+        request,
+        "medicos/edit_profile.html",
+        {"form": form, "titulo": "Editar Perfil"},
+    )

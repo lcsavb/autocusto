@@ -62,7 +62,11 @@ def cadastro(request):
                     messages.success(
                         request, f'Clínica {dados["nome_clinica"]} atualizada com sucesso!'
                     )
-                    return redirect("home")
+                    # Check if coming from setup flow - if session has process data, redirect back
+                    if "paciente_existe" in request.session and "cid" in request.session:
+                        return redirect("processos-cadastro")
+                    else:
+                        return redirect("home")
                 else:
                     # New clinic - create fresh record
                     instance = f_clinica.save(commit=False)
@@ -78,7 +82,11 @@ def cadastro(request):
                     messages.success(
                         request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!'
                     )
-                    return redirect("home")
+                    # Check if coming from setup flow - if session has process data, redirect back
+                    if "paciente_existe" in request.session and "cid" in request.session:
+                        return redirect("processos-cadastro")
+                    else:
+                        return redirect("home")
                     
             except ValidationError as e:
                 # Handle model validation errors

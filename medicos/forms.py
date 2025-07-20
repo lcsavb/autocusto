@@ -48,24 +48,6 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
             'max_length': 'Nome deve ter no máximo 200 caracteres.'
         }
     )
-    # English: crm
-    crm = forms.CharField(
-        max_length=10, 
-        label="CRM",
-        error_messages={
-            'required': 'CRM é obrigatório.',
-            'max_length': 'CRM deve ter no máximo 10 caracteres.'
-        }
-    )
-    # English: cns
-    cns = forms.CharField(
-        max_length=15, 
-        label="Cartão Nacional de Saúde (CNS)",
-        error_messages={
-            'required': 'CNS é obrigatório.',
-            'max_length': 'CNS deve ter no máximo 15 caracteres.'
-        }
-    )
     # English: email2
     email2 = forms.EmailField(
         label="Confirmar email",
@@ -120,7 +102,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         # English: model
         model = Usuario
         # English: fields
-        fields = ["nome", "crm", "cns", "email", "email2", "password1", "password2"]
+        fields = ["nome", "email", "email2", "password1", "password2"]
 
     # English: clean_password2
     def clean_password2(self):
@@ -153,23 +135,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
             raise forms.ValidationError("Este email já está em uso.")
         return email
 
-    # English: clean_crm
-    def clean_crm(self):
-        """Validate CRM format."""
-        # English: crm
-        crm = self.cleaned_data.get("crm")
-        if crm and not crm.isdigit():
-            raise forms.ValidationError("CRM deve conter apenas números.")
-        return crm
 
-    # English: clean_cns
-    def clean_cns(self):
-        """Validate CNS format."""
-        # English: cns
-        cns = self.cleaned_data.get("cns")
-        if cns and (not cns.isdigit() or len(cns) != 15):
-            raise forms.ValidationError("CNS deve conter exatamente 15 números.")
-        return cns
 
     # English: save
     @transaction.atomic
@@ -180,8 +146,8 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         usuario.save()
         # English: doctor
         medico = Medico(
-            cns_medico=self.cleaned_data["cns"],
-            crm_medico=self.cleaned_data["crm"],
+            cns_medico="",
+            crm_medico="",
             nome_medico=self.cleaned_data["nome"],
         )
         medico.save()
@@ -193,3 +159,192 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         # clinica.save()
 
         return usuario
+
+
+class ProfileCompletionForm(forms.Form):
+    """Simple form for completing CRM and CNS data."""
+    
+    crm = forms.CharField(
+        max_length=10, 
+        label="CRM",
+        error_messages={
+            'required': 'CRM é obrigatório.',
+            'max_length': 'CRM deve ter no máximo 10 caracteres.'
+        }
+    )
+    cns = forms.CharField(
+        max_length=15, 
+        label="Cartão Nacional de Saúde (CNS)",
+        error_messages={
+            'required': 'CNS é obrigatório.',
+            'max_length': 'CNS deve ter no máximo 15 caracteres.'
+        }
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Configure Crispy Forms helper
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False
+        self.helper.error_text_inline = False
+        self.helper.help_text_inline = True
+        self.helper.add_input(Submit("submit", "Continuar para Clínicas", css_class="btn btn-primary float-right mt-3"))
+
+        # Apply form-control to all fields
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+
+    def clean_crm(self):
+        """Validate CRM format and uniqueness."""
+        crm = self.cleaned_data.get("crm")
+        if crm and not crm.isdigit():
+            raise forms.ValidationError("CRM deve conter apenas números.")
+        
+        # Check if CRM already exists for another medico
+        if crm and self.user:
+            current_medico = self.user.medicos.first()
+            existing_medico = Medico.objects.filter(crm_medico=crm).exclude(
+                id=current_medico.id if current_medico else None
+            ).first()
+            if existing_medico:
+                raise forms.ValidationError("Este CRM já está sendo usado por outro médico.")
+        
+        return crm
+
+    def clean_cns(self):
+        """Validate CNS format and uniqueness."""
+        cns = self.cleaned_data.get("cns")
+        if cns and (not cns.isdigit() or len(cns) != 15):
+            raise forms.ValidationError("CNS deve conter exatamente 15 números.")
+        
+        # Check if CNS already exists for another medico
+        if cns and self.user:
+            current_medico = self.user.medicos.first()
+            existing_medico = Medico.objects.filter(cns_medico=cns).exclude(
+                id=current_medico.id if current_medico else None
+            ).first()
+            if existing_medico:
+                raise forms.ValidationError("Este CNS já está sendo usado por outro médico.")
+        
+        return cns
+
+    @transaction.atomic
+    def save(self):
+        """Update medico with CRM and CNS data."""
+        if not self.user:
+            raise ValueError("User is required")
+            
+        medico = self.user.medicos.first()
+        if medico:
+            medico.crm_medico = self.cleaned_data["crm"]
+            medico.cns_medico = self.cleaned_data["cns"]
+            medico.save()
+        
+        return self.user
+
+
+class UserDoctorEditForm(forms.Form):
+    """Form for editing User and Doctor information."""
+    
+    # User fields
+    name = forms.CharField(
+        max_length=200, 
+        label="Nome completo",
+        required=False,
+        error_messages={
+            'max_length': 'Nome deve ter no máximo 200 caracteres.'
+        }
+    )
+    email = forms.EmailField(
+        label="Email",
+        disabled=True,
+        required=False,
+        error_messages={
+            'invalid': 'Digite um email válido.'
+        }
+    )
+    
+    # Doctor fields
+    crm = forms.CharField(
+        max_length=10, 
+        label="CRM",
+        required=False,
+        error_messages={
+            'max_length': 'CRM deve ter no máximo 10 caracteres.'
+        }
+    )
+    cns = forms.CharField(
+        max_length=15, 
+        label="Cartão Nacional de Saúde (CNS)",
+        required=False,
+        error_messages={
+            'max_length': 'CNS deve ter no máximo 15 caracteres.'
+        }
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Configure Crispy Forms helper
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.form_action = ""
+        self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False
+        self.helper.error_text_inline = False
+        self.helper.help_text_inline = True
+        self.helper.add_input(Submit("submit", "Atualizar Perfil", css_class="btn btn-primary float-right mt-3"))
+
+        # Apply form-control to all fields
+        for field_name, field in self.fields.items():
+            if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect, forms.ClearableFileInput)):
+                field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+
+    def clean_crm(self):
+        """Validate CRM format."""
+        crm = self.cleaned_data.get("crm")
+        if crm and not crm.isdigit():
+            raise forms.ValidationError("CRM deve conter apenas números.")
+        return crm
+
+    def clean_cns(self):
+        """Validate CNS format."""
+        cns = self.cleaned_data.get("cns")
+        if cns and (not cns.isdigit() or len(cns) != 15):
+            raise forms.ValidationError("CNS deve conter exatamente 15 números.")
+        return cns
+
+    @transaction.atomic
+    def save(self):
+        """Update User and Doctor information (partial updates allowed)."""
+        if not self.user:
+            raise ValueError("User is required for editing")
+            
+        # Get or create medico for this user
+        medico = self.user.medicos.first()
+        if not medico:
+            # Only create if we have at least name
+            if self.cleaned_data.get("name"):
+                medico = Medico(
+                    nome_medico=self.cleaned_data["name"],
+                    crm_medico=self.cleaned_data.get("crm", ""),
+                    cns_medico=self.cleaned_data.get("cns", ""),
+                )
+                medico.save()
+                self.user.medicos.add(medico)
+        else:
+            # Update existing medico with provided fields
+            if self.cleaned_data.get("name"):
+                medico.nome_medico = self.cleaned_data["name"]
+            if self.cleaned_data.get("crm"):
+                medico.crm_medico = self.cleaned_data["crm"]
+            if self.cleaned_data.get("cns"):
+                medico.cns_medico = self.cleaned_data["cns"]
+            medico.save()
+        
+        return self.user

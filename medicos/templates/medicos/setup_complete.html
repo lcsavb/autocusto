@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+   
+{% block content %}
+
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem);">
+    <div class="col-lg-10 col-md-12">
+        <div class="auth-process-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 text-white"> 
+                    <i class="oi oi-task mr-2"></i>Complete sua Configuração
+                </h5>
+                <p class="mb-0 mt-2 text-white-50">
+                    Passo {{ current_step_number }} de {{ total_steps }} - Complete as informações necessárias para criar processos médicos
+                </p>
+            </div>
+            <div class="card-body p-4 toast-enabled">
+                
+                <!-- Progress Bar -->
+                <div class="progress mb-4" style="height: 8px;">
+                    <div class="progress-bar bg-primary" role="progressbar" 
+                         style="width: {{ progress_percentage }}%"
+                         aria-valuenow="{{ current_step_number }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="{{ total_steps }}">
+                    </div>
+                </div>
+
+                <!-- Step Indicator -->
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge badge-warning mr-2">Passo {{ current_step_number }}</span>
+                    <h6 class="mb-0">
+                        {% if current_step == 'profile' %}
+                            Complete seus Dados Médicos
+                        {% elif current_step == 'clinic' %}
+                            Cadastre uma Clínica
+                        {% endif %}
+                    </h6>
+                </div>
+
+                <!-- Form section -->
+                <div class="card">
+                    <div class="card-body">
+                        {% if current_step == 'profile' %}
+                            {% crispy profile_form %}
+                        {% elif current_step == 'clinic' %}
+                            {% crispy clinic_form %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="clearfix"></div>
+                <div style="height: 0.5rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
+<script src="{% static 'js/mascaras.js' %}"></script>
+<script src="{% static 'js/cep-handler.js' %}"></script>
+<script src="{% static 'js/phone-handler.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply masks
+    if (typeof window.aplicarMascara === 'function') {
+        window.aplicarMascara();
+    }
+    
+    // Initialize CEP handler
+    if (typeof window.cepHandler === 'function') {
+        const cepHandlerInstance = window.cepHandler();
+        if (cepHandlerInstance.init) {
+            cepHandlerInstance.init();
+        }
+    }
+    
+    // Initialize phone handler
+    if (typeof window.phoneHandler === 'function') {
+        const phoneHandlerInstance = window.phoneHandler();
+        if (phoneHandlerInstance.init) {
+            phoneHandlerInstance.init();
+        }
+    }
+    
+    // Initialize FormHandler
+    const form = document.querySelector('form');
+    if (form && window.FormHandler) {
+        console.log('Setup: Form found:', form);
+        console.log('Setup: Form action:', form.action);
+        console.log('Setup: Form method:', form.method);
+        
+        new window.FormHandler.BaseFormHandler('form')
+            .withSuccessCallback(handleFormSuccess)
+            .withErrorCallback((error) => {
+                console.log('Setup: FormHandler error:', error);
+            })
+            .withBeforeSubmit((form, handler) => {
+                console.log('Setup: Before submit called');
+                console.log('Setup: Form data summary:', handler.getFormDataSummary());
+                return true; // Continue with submission
+            })
+            .withCustomHeaders({'X-Requested-With': 'XMLHttpRequest'})
+            .init();
+    } else {
+        console.log('Setup: Form or FormHandler not found', {form, FormHandler: window.FormHandler});
+    }
+});
+
+function handleFormSuccess(data) {
+    if (data.next_step === 'clinic') {
+        // Move to clinic step - reload page
+        window.location.reload();
+    } else if (data.redirect) {
+        // Setup complete - show success toast and redirect
+        if (window.Toast) {
+            window.Toast.success(data.message || 'Configuração completa!');
+        }
+        setTimeout(() => {
+            window.location.href = data.redirect_url;
+        }, 2000);
+    }
+}
+</script>
+
+{% endblock scripts %}

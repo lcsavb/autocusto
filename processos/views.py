@@ -603,7 +603,6 @@ def cadastro(request):
                             'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
                         })
                     else:
-                        from django.contrib import messages
                         messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
                         return redirect("processos-home")
             else:
@@ -626,7 +625,14 @@ def cadastro(request):
     # If this is a GET request, create a fresh form
     elif request.method == "GET":
         try:
+            # Check if doctor has CRM and CNS first
+            if not medico.crm_medico or not medico.cns_medico:
+                messages.info(request, "Complete seus dados médicos antes de criar processos.")
+                return redirect("complete-profile")
+            
+            # Then check if they have clinics
             if not usuario.clinicas.exists():
+                messages.info(request, "Cadastre uma clínica antes de criar processos.")
                 return redirect("clinicas-cadastro")
             # English: initial_data
             dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)

@@ -6,6 +6,8 @@ from . import views
 urlpatterns = [
     path("cadastro/", views.cadastro, name="medicos-cadastro"),
     path("perfil/", views.perfil, name="medicos-perfil"),
+    path("editar-perfil/", views.edit_profile, name="edit-profile"),
+    path("completar-perfil/", views.complete_profile, name="complete-profile"),
     path(
         "login/",
         views.custom_login,

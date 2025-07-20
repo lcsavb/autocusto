@@ -1,0 +1,7 @@
+{% load crispy_forms_tags %}
+
+<form method="POST" id="clinic-form" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="clinic_submit" value="1">
+    {% crispy clinic_form %}
+</form>

@@ -9,6 +9,10 @@ class CustomUserCreationForm(UserCreationForm):
         if 'username' in self.fields:
             del self.fields['username']
 
+        self.fields["password1"].label = "Senha"
+        self.fields["password2"].label = "Confirmar senha"
+        self.fields["email"].label = "Endereço de email"
+
     class Meta(UserCreationForm.Meta):
         model = Usuario
         fields = ("email",)

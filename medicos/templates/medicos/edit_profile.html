@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+   
+{% block content %}
+
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 5rem);">
+    <div class="col-lg-8 col-md-10">
+        <div class="auth-process-card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 text-white"> 
+                    <i class="oi oi-person mr-2"></i>{{ titulo }}
+                </h5>
+                <p class="mb-0 mt-2 text-white-50">
+                    Atualize suas informações pessoais e profissionais
+                </p>
+            </div>
+            <div class="card-body p-4 toast-enabled">
+                <!-- Form section -->
+                <div>
+                    {% crispy form %}
+                </div>
+                <div class="clearfix"></div>
+                <div style="height: 0.5rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/mascaras.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply masks if needed
+    if (typeof window.aplicarMascara === 'function') {
+        window.aplicarMascara();
+    }
+});
+</script>
+
+{% endblock scripts %}
