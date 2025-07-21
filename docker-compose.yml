@@ -18,7 +18,6 @@ services:
     volumes:
       - .:/home/appuser/app
       - ./backups:/var/backups/autocusto
-      - /root/.gnupg:/home/appuser/.gnupg:ro
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=100m
       - /dev/shm:rw,noexec,nosuid,size=100m

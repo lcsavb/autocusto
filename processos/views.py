@@ -105,7 +105,7 @@ def _get_initial_data(request, paciente_existe, primeira_data, cid):
         }
 
 
-# English: search_processes
+# search processes
 @login_required
 def busca_processos(request):
     """Searches for processes associated with the logged-in user.
@@ -145,7 +145,7 @@ def busca_processos(request):
             return redirect("processos-busca")
 
 
-# English: edition
+# edition
 @login_required
 def edicao(request):
     """
@@ -334,7 +334,7 @@ def edicao(request):
     return render(request, "processos/edicao.html", contexto)
 
 
-# English: quick_renewal
+# quick renewal
 @login_required
 def renovacao_rapida(request):
     """Handles the quick renewal process.
@@ -500,7 +500,7 @@ def renovacao_rapida(request):
         return render(request, "processos/renovacao_rapida.html", contexto)
 
 
-# English: registration
+# registration
 @login_required
 def cadastro(request):
     """Handles the registration of new medical prescription processes.
@@ -688,7 +688,7 @@ def cadastro(request):
         return redirect("processos-home")
 
 
-# English: pdf
+# pdf
 @login_required
 def pdf(request):
     """Displays the generated PDF.
@@ -707,7 +707,7 @@ def pdf(request):
         return render(request, "processos/pdf.html", contexto)
 
 
-# English: serve_pdf
+# serve pdf
 @login_required
 def serve_pdf(request, filename):
     """Serves PDF files securely with authentication and authorization.

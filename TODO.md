@@ -6,6 +6,7 @@ when the medicamento is nenhum it works
 dados condicionais not being saved and not being retrieved (symptom?
 
 database backup
+admin dashboard with stats
 add renovacao rapida progress bar
 in renovacao rapida the latest conditional data are not being loaded
 recuperacao da senha instrucoes em ingles
@@ -174,3 +175,315 @@ add custom pdf files
   5. Eventually deprecate legacy system
 
   This approach eliminates the 1000 disease classes problem while preserving all existing functionality and leveraging your current directory structure.
+
+  Automated GPG Encrypted Backup Deployment Roadmap
+
+  Deployment Objective
+
+  Create a fully automated, production-ready backup system that runs without manual intervention on your VPS, encrypting database backups before uploading to Nextcloud.
+
+  Production Deployment Configuration
+
+  Step 1: VPS Environment Setup
+
+  1.1 Generate Production GPG Key
+  # On VPS as root
+  gpg --batch --gen-key <<EOF
+  Key-Type: RSA
+  Key-Length: 4096
+  Subkey-Type: RSA
+  Subkey-Length: 4096
+  Name-Real: AutoCusto Backup System
+  Name-Email: lcsavb@gmail.com
+  Expire-Date: 2y
+  Passphrase: YOUR_SECURE_PASSPHRASE
+  %commit
+  EOF
+
+  1.2 Secure GPG Key Storage
+  # Export keys for backup
+  gpg --export-secret-keys --armor lcsavb@gmail.com > /root/autocusto-backup-private.asc
+  gpg --export --armor lcsavb@gmail.com > /root/autocusto-backup-public.asc
+
+  # Secure the private key backup
+  chmod 600 /root/autocusto-backup-private.asc
+
+  1.3 Create Production Environment File
+  # Create /opt/autocusto/.backupenv
+  cat > /opt/autocusto/.backupenv <<EOF
+  NC_BACKUP_URL=https://coupleofbytes.com/remote.php/dav/files/admin/
+  NC_BACKUP_USERNAME=admin
+  NC_BACKUP_PASSWORD=YOUR_NEXTCLOUD_APP_PASSWORD
+  EOF
+
+  chmod 600 /opt/autocusto/.backupenv
+
+  Step 2: Container GPG Integration
+
+  2.1 Update Dockerfile for Production GPG
+  # Add to /opt/autocusto/Dockerfile after line 28
+  RUN apt-get update && apt-get install -y \
+      pdftk \
+      cron \
+      wget \
+      gnupg \
+      && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+      && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+      && apt-get update \
+      && apt-get install -y postgresql-client-17 \
+      && rm -rf /var/lib/apt/lists/*
+
+  # Add GPG key import during build
+  COPY autocusto-backup-public.asc /tmp/
+  RUN gpg --import /tmp/autocusto-backup-public.asc && rm /tmp/autocusto-backup-public.asc
+
+  2.2 Update docker-compose.yml for Production
+  services:
+    web:
+      build: .
+      volumes:
+        - .:/home/appuser/app
+        - ./backups:/var/backups/autocusto
+        # Remove GPG mount - key embedded in image instead
+      env_file:
+        - .backupenv
+
+  Step 3: Automated Scheduling Configuration
+
+  3.1 Enable Cron in Container
+  # Add to Dockerfile
+  USER root
+  RUN service cron start
+  USER appuser
+
+  3.2 Configure Django Cron Jobs
+  # In /opt/autocusto/autocusto/settings.py
+  CRONJOBS = [
+      ('0 3 * * *', 'django.core.management.call_command', ['cleanup_pdfs']),
+      ('0 2 * * *', 'django.core.management.call_command', ['dbbackup']),
+      ('15 2 * * *', 'django.core.management.call_command', ['upload_backup']),
+  ]
+
+  # Add cron logging
+  CRON_CLASSES = [
+      'django_crontab.cron.CronJobLog',
+  ]
+
+  3.3 Production Startup Script
+  # Update /opt/autocusto/startup.sh
+  #!/bin/bash
+
+  # Start cron service
+  service cron start
+
+  # Install cron jobs
+  python manage.py crontab add
+
+  # Copy PDF templates to memory mount
+  echo "Setting up memory mount for PDF templates..."
+  mkdir -p /dev/shm/autocusto/static/processos
+  mkdir -p /dev/shm/autocusto/static/protocolos
+  cp -r /home/appuser/app/static/autocusto/processos/* /dev/shm/autocusto/static/processos/ 2>/dev/null || true
+  cp -r /home/appuser/app/static/autocusto/protocolos/* /dev/shm/autocusto/static/protocolos/ 2>/dev/null || true
+
+  # Execute the original command
+  exec "$@"
+
+  Step 4: Production Upload Command
+
+  4.1 Simplified Production Upload Command
+  # Update /opt/autocusto/processos/management/commands/upload_backup.py
+  import os
+  import glob
+  import subprocess
+  import logging
+  from django.core.management.base import BaseCommand
+  from webdav4.client import Client
+
+  logger = logging.getLogger('backup')
+
+  class Command(BaseCommand):
+      help = 'Upload encrypted database backups to Nextcloud'
+
+      def handle(self, *args, **options):
+          try:
+              # Nextcloud configuration
+              nc_url = os.environ.get('NC_BACKUP_URL')
+              nc_username = os.environ.get('NC_BACKUP_USERNAME')
+              nc_password = os.environ.get('NC_BACKUP_PASSWORD')
+
+              if not all([nc_url, nc_username, nc_password]):
+                  logger.error('Nextcloud credentials not configured')
+                  return
+
+              # Find backup files
+              backup_dir = '/var/backups/autocusto/'
+              backup_files = glob.glob(os.path.join(backup_dir, 'autocusto_db_*.psql.bin'))
+
+              if not backup_files:
+                  logger.info('No backup files found')
+                  return
+
+              # WebDAV client
+              client = Client(nc_url, auth=(nc_username, nc_password), timeout=60)
+
+              # Ensure backups directory exists
+              try:
+                  client.ls("backups/")
+              except:
+                  client.mkdir("backups")
+
+              for backup_file in backup_files:
+                  filename = os.path.basename(backup_file)
+                  encrypted_file = f"{backup_file}.gpg"
+                  encrypted_filename = f"{filename}.gpg"
+                  remote_path = f'backups/{encrypted_filename}'
+
+                  # Encrypt backup
+                  encrypt_cmd = [
+                      'gpg', '--trust-model', 'always', '--cipher-algo', 'AES256',
+                      '--compress-algo', '2', '--encrypt', '-r', 'lcsavb@gmail.com',
+                      '--output', encrypted_file, backup_file
+                  ]
+
+                  result = subprocess.run(encrypt_cmd, capture_output=True)
+                  if result.returncode != 0:
+                      logger.error(f'Encryption failed for {filename}: {result.stderr.decode()}')
+                      continue
+
+                  # Check if file already exists
+                  try:
+                      client.ls(remote_path)
+                      logger.info(f'File {encrypted_filename} already exists on Nextcloud')
+                  except:
+                      # Upload encrypted file
+                      client.upload_file(encrypted_file, remote_path)
+                      logger.info(f'Uploaded {encrypted_filename} to Nextcloud')
+
+                  # Cleanup
+                  if os.path.exists(encrypted_file):
+                      os.remove(encrypted_file)
+
+          except Exception as e:
+              logger.error(f'Backup upload failed: {str(e)}')
+              raise
+
+  Step 5: Monitoring and Logging
+
+  5.1 Configure Backup Logging
+  # Add to /opt/autocusto/autocusto/settings.py
+  LOGGING = {
+      'version': 1,
+      'disable_existing_loggers': False,
+      'handlers': {
+          'backup_file': {
+              'level': 'INFO',
+              'class': 'logging.FileHandler',
+              'filename': '/var/log/django/backup.log',
+          },
+      },
+      'loggers': {
+          'backup': {
+              'handlers': ['backup_file'],
+              'level': 'INFO',
+              'propagate': False,
+          },
+      },
+  }
+
+  5.2 Health Check Script
+  # Create /opt/autocusto/check_backups.sh
+  #!/bin/bash
+
+  # Check if backups are being created
+  LATEST_BACKUP=$(find /var/backups/autocusto/ -name "*.psql.bin" -mtime -1 | wc -l)
+  if [ $LATEST_BACKUP -eq 0 ]; then
+      echo "ERROR: No backups created in last 24 hours"
+      exit 1
+  fi
+
+  # Check Nextcloud connectivity
+  if ! curl -s -u "admin:$NC_BACKUP_PASSWORD" "$NC_BACKUP_URL" > /dev/null; then
+      echo "ERROR: Cannot connect to Nextcloud"
+      exit 1
+  fi
+
+  echo "Backup system healthy"
+
+  Step 6: Deployment Steps
+
+  6.1 Build and Deploy
+  # On VPS
+  cd /opt/autocusto
+
+  # Copy public key for container build
+  cp /root/autocusto-backup-public.asc .
+
+  # Build with GPG key embedded
+  docker-compose build --no-cache
+
+  # Deploy
+  docker-compose down
+  docker-compose up -d
+
+  # Verify cron jobs are installed
+  docker-compose exec web python manage.py crontab show
+
+  6.2 Test Full System
+  # Test backup creation
+  docker-compose exec web python manage.py dbbackup
+
+  # Test encrypted upload
+  docker-compose exec web python manage.py upload_backup
+
+  # Verify in Nextcloud
+  curl -u "admin:$NC_BACKUP_PASSWORD" "$NC_BACKUP_URL/backups/"
+
+  6.3 Monitoring Setup
+  # Add to crontab for daily health checks
+  0 8 * * * /opt/autocusto/check_backups.sh
+
+  # Monitor logs
+  tail -f /opt/autocusto/logs/backup.log
+
+  Production Checklist
+
+  Security Requirements:
+
+  - ✅ GPG private key securely stored and backed up
+  - ✅ Nextcloud app password (not main password)
+  - ✅ Environment file permissions (600)
+  - ✅ Container runs as non-root user
+  - ✅ Encrypted backups only stored remotely
+
+  Automation Requirements:
+
+  - ✅ Cron jobs automatically installed on container start
+  - ✅ Daily backup at 2:00 AM
+  - ✅ Daily upload at 2:15 AM
+  - ✅ Local cleanup after 7 days
+  - ✅ Automatic container restart recovery
+
+  Monitoring Requirements:
+
+  - ✅ Backup creation logging
+  - ✅ Upload success/failure logging
+  - ✅ Daily health check script
+  - ✅ Nextcloud storage monitoring
+  - ✅ Alert on backup failures
+
+  Final Production Architecture
+
+  VPS Host (2:00 AM daily)
+  ├── Docker Container
+  │   ├── python manage.py dbbackup → /var/backups/autocusto/file.psql.bin
+  │   └── (2:15 AM) python manage.py upload_backup
+  │       ├── GPG encrypt → file.psql.bin.gpg
+  │       ├── Upload to Nextcloud → backups/file.psql.bin.gpg  
+  │       └── Delete local .gpg file
+  ├── Local Storage (7-day retention)
+  │   └── /var/backups/autocusto/*.psql.bin
+  └── Nextcloud Storage (permanent)
+      └── backups/*.psql.bin.gpg (encrypted)
+
+  This roadmap creates a zero-maintenance, production-ready backup system with military-grade encryption and automated monitoring.

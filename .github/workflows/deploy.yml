@@ -102,6 +102,13 @@ jobs:
           mkdir -p /opt/autocusto
           cd /opt/autocusto
           
+          # Copy GPG public key for container use
+          echo "=== Setting up GPG key for backups ==="
+          if [ ! -f /root/lucas-backup-public.asc ]; then
+            echo "Exporting GPG public key..."
+            gpg --export --armor lcsavb@gmail.com > /root/lucas-backup-public.asc
+          fi
+          
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           
@@ -180,6 +187,10 @@ jobs:
           
           # Clean up old images
           docker image prune -f
+          
+          # Import GPG key into container
+          echo "=== Setting up GPG in container ==="
+          docker-compose exec -T web bash -c "gpg --import /dev/stdin" < /root/lucas-backup-public.asc
           
           # Run migrations
           docker-compose exec -T web python manage.py migrate

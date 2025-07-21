@@ -239,7 +239,34 @@ doencas = {
 }
 
 
+# save diseases
 def salvar_doencas(doencas):
+    """
+    Saves disease data to the database from a dictionary of CID codes.
+    
+    This function populates the Doenca model with ICD-10 disease codes
+    and their corresponding Portuguese names. It's typically used for
+    initial database seeding or bulk updates of disease information.
+    
+    Args:
+        doencas (dict): Dictionary mapping CID codes to disease names
+                       Format: {'CID_CODE': 'Disease Name'}
+    
+    Critique:
+    - Function uses bare except which can hide important errors
+    - No transaction handling - partial failures leave inconsistent state
+    - Print statements instead of proper logging
+    - No validation of CID code format or duplicate checking
+    - Function executes immediately upon import (line 251)
+    
+    Suggested Improvements:
+    - Add proper logging instead of print statements
+    - Implement get_or_create to handle duplicates gracefully
+    - Add transaction.atomic decorator for consistency
+    - Validate CID code format (ICD-10 standard)
+    - Add progress reporting for large datasets
+    - Remove automatic execution and make it a management command
+    """
     for item in doencas.items():
         try:
             doenca = Doenca(cid=item[0], nome=item[1])

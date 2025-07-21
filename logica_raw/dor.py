@@ -14,11 +14,13 @@ from manejo_pdfs import (
 path_lme_base = PATH_LME_BASE
 
 
+# pain
 class Dor(GeradorPDF):
     def __init__(self, dados_lme_base, dados_condicionais, path_lme_base):
         GeradorPDF.__init__(self, dados_lme_base, dados_condicionais, path_lme_base)
         self.dados_condicionais = dados_condicionais
 
+    # renew
     def renovar(self, dados_lme_base, dados_condicionais, path_lme_base):
         dados_lme_base.update(dados_condicionais)
         dados_finais = dados_lme_base
@@ -37,6 +39,7 @@ class Dor(GeradorPDF):
         remover_pdfs_intermediarios(*arquivos)
         return pdf
 
+    # first time
     def primeira_vez(self, dados_lme_base, dados_condicionais, path_lme_base):
         dados_lme_base.update(dados_condicionais)
         dados_finais = dados_lme_base

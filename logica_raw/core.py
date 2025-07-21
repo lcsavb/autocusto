@@ -32,6 +32,7 @@ from dislipidemia import Dislipidemia
 from dor import Dor
 
 
+# merge
 def mesclar(dados_clinica, dados_medico, dados_paciente, dados_processo):
     dados_lme_base = {}
     dados_lme_base.update(dados_clinica)
@@ -41,6 +42,7 @@ def mesclar(dados_clinica, dados_medico, dados_paciente, dados_processo):
     return dados_lme_base
 
 
+# generate pdf
 def gerar_pdf(dados_lme_base, dados_condicionais):
     cid = dados_lme_base["cid"]
     renovacao = dados_lme_base["renovacao"]

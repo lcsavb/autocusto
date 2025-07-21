@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @transaction.atomic
+# registration
 def cadastro(request):
     """
     Handles clinic registration/update with complex business logic for Brazilian medical facilities.

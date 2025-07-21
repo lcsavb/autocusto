@@ -14,7 +14,7 @@ from .dados import (
 # from .seletor import seletor_campos
 from .pdf_strategies import get_conditional_fields
 
-# English: show_medication
+# show medication
 def mostrar_med(mostrar, *args):
     """
     Dynamically controls medication tab visibility in the UI based on existing process data.
@@ -52,7 +52,7 @@ def mostrar_med(mostrar, *args):
             n = n + 1
     return dic
 
-#English: Adjust conditional fields
+# adjust conditional fields
 def ajustar_campos_condicionais(dados_paciente):
     """
     Conditionally shows/hides form fields based on patient data and form completion context.
@@ -94,6 +94,7 @@ from crispy_forms.layout import Submit, Layout, Field
 REPETIR_ESCOLHAS = [(True, "Sim"), (False, "Não")]
 
 
+# pre process
 class PreProcesso(forms.Form):
     cpf_paciente = forms.CharField(
         required=True, 
@@ -136,6 +137,7 @@ class PreProcesso(forms.Form):
         return cpf_paciente
 
 
+# new process
 class NovoProcesso(forms.Form):
     def __init__(self, escolhas, medicamentos, *args, **kwargs):
         super(NovoProcesso, self).__init__(*args, **kwargs)
@@ -387,12 +389,28 @@ class NovoProcesso(forms.Form):
         widget=forms.Textarea(attrs={"class": "exames", "rows": "6"}),
     )
 
+    # validate form data
     def clean(self):
         """
         Custom form validation that handles medications submitted in POST request.
         FIRST: Extract all submitted med_ids
         THEN: For each submitted med_id, validate that ALL required fields are filled
         FINALLY: Remove validation errors only for medications not submitted at all
+        
+        Critique:
+        - This method is extremely complex (100+ lines) and violates SRP
+        - Mixes validation logic with logging and debugging code
+        - Hardcoded medication field names (med1-med4) reduce maintainability
+        - Complex nested loops and conditionals make it hard to test
+        - Heavy use of logger in validation logic suggests debugging code left in production
+        
+        Suggested Improvements:
+        - Extract medication validation to separate MedicationValidator class
+        - Create clean_medication_field() helper methods for each medication
+        - Remove debugging logger calls from production validation code
+        - Use configuration-driven field validation instead of hardcoded loops
+        - Add unit tests for each validation scenario
+        - Consider using Django's formsets for dynamic medication handling
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -506,8 +524,39 @@ class NovoProcesso(forms.Form):
         
         return cleaned_data
 
+    # save prescription process
     @transaction.atomic
     def save(self, usuario, medico, meds_ids):
+        """
+        Saves a new prescription process to the database.
+        
+        This method handles the complex business logic of creating a new
+        medical prescription process, including patient creation/retrieval,
+        process creation, and medication associations.
+        
+        Args:
+            usuario (User): The authenticated user (doctor)
+            medico (Medico): The doctor's profile
+            meds_ids (list): List of medication IDs to associate
+            
+        Returns:
+            int: The ID of the created process
+            
+        Critique:
+        - Method is too long and handles multiple responsibilities
+        - Mixes patient management with process creation logic
+        - Hardcoded field mappings reduce maintainability
+        - No validation of business rules (e.g., duplicate processes)
+        - Error handling is minimal for database operations
+        
+        Suggested Improvements:
+        - Extract patient creation/retrieval to PatientService
+        - Create ProcessBuilder class to handle process creation
+        - Add validation for duplicate patient/disease combinations
+        - Implement proper error handling and rollback strategies
+        - Add audit logging for medical prescription creation
+        - Consider using Django model managers for complex queries
+        """
         dados = self.cleaned_data
         clinica_id = dados["clinicas"]
         doenca = Doenca.objects.get(cid=dados["cid"])
@@ -524,6 +573,7 @@ class NovoProcesso(forms.Form):
         return processo_id
 
 
+# renew process
 class RenovarProcesso(NovoProcesso):
     edicao_completa = forms.ChoiceField(
         required=True,
@@ -568,6 +618,7 @@ class RenovarProcesso(NovoProcesso):
             associar_med(Processo.objects.get(id=processo_id), meds_ids)
 
 
+# extract conditional fields
 def extrair_campos_condicionais(formulario):
     campos_condicionais = []
     for campo in formulario:
@@ -576,6 +627,7 @@ def extrair_campos_condicionais(formulario):
     return campos_condicionais
 
 
+# fabricate form
 def fabricar_formulario(cid, renovar):
     if renovar:
         modelo_base = RenovarProcesso

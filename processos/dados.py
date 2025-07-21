@@ -124,7 +124,7 @@ def resgatar_prescricao(dados, processo):
     return dados
 
 
-# English: generate_prescription
+# generate prescription
 def gerar_prescricao(meds_ids, dados_formulario):
     """Constructs a structured prescription dictionary from form data.
 
@@ -181,7 +181,7 @@ def gerar_prescricao(meds_ids, dados_formulario):
     return prescricao
 
 
-# English: generate_medication_dosage
+# generate medication dosage
 def gera_med_dosagem(dados_formulario, ids_med_formulario):
     """Retrieves medication details and formats them for display.
 
@@ -221,7 +221,7 @@ def gera_med_dosagem(dados_formulario, ids_med_formulario):
     return dados_formulario, meds_ids
 
 
-# English: list_medications
+# list medications
 def listar_med(cid):
     """Retrieves medications associated with a protocol and returns a list of tuples.
 
@@ -261,7 +261,7 @@ def listar_med(cid):
     return tuple(lista_med)
 
 
-# English: associate_medications
+# associate medications
 def associar_med(processo, meds):
     """Synchronizes the medications associated with a process.
 
@@ -289,7 +289,7 @@ def associar_med(processo, meds):
                 processo.medicamentos.remove(med_cadastrado)
 
 
-# English: create_renewal_dictionary
+# create renewal dictionary
 def cria_dict_renovação(modelo):
     """Creates a dictionary with data for a renewal process.
 
@@ -346,6 +346,7 @@ def cria_dict_renovação(modelo):
 
 
 # English: generate_renewal_data
+# generate renewal data
 def gerar_dados_renovacao(primeira_data, processo_id):
     """Generates a complete data dictionary for a renewal process.
 
@@ -634,6 +635,7 @@ def transfere_dados_gerador(dados):
         return None
 
 
+# generate pdf stream
 def gerar_pdf_stream(dados):
     """Generates PDF entirely in memory and returns HttpResponse for streaming.
     

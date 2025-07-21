@@ -7,6 +7,7 @@ from crispy_forms.layout import Submit, Layout, Field, Row, Column, Fieldset
 import re
 
 
+# clinic form
 class ClinicaFormulario(ModelForm):
     """Form for managing clinic information.
 

@@ -3,6 +3,7 @@ from django import forms
 REPETIR_ESCOLHAS = [(True, "Sim"), (False, "Não")]
 
 
+# numeric choices generator
 def gerador_escolhas_numericas(min_n, max_n):
     ESCOLHAS = []
     while min_n <= max_n:
@@ -15,6 +16,7 @@ def gerador_escolhas_numericas(min_n, max_n):
 # Migrated protocols: esclerose_multipla, dor_cronica, doenca_de_alzheimer
 # Remaining protocols will be migrated to use dados_condicionais JSONField
 
+# field selector
 def seletor_campos(protocolo):
     """
     DEPRECATED: Legacy function for hardcoded conditional fields.

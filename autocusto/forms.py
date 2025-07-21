@@ -1,6 +1,7 @@
 from django import forms
 
 
+# error report form
 class ErrorReportForm(forms.Form):
     name = forms.CharField(
         label="Nome",
@@ -36,6 +37,7 @@ class ErrorReportForm(forms.Form):
     )
 
 
+# feature request form
 class FeatureRequestForm(forms.Form):
     name = forms.CharField(
         label="Nome",

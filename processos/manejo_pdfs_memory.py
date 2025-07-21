@@ -18,6 +18,7 @@ from processos.models import Protocolo, Medicamento
 from processos.pdf_strategies import DataDrivenStrategy
 
 
+# fill forms in memory
 def preencher_formularios_memory(lista_pdfs, dados_finais):
     """
     Fills PDF forms in memory using pypdftk with tmpfs (RAM disk) approach.
@@ -166,6 +167,7 @@ def generate_fdf_content(data_dict):
     return fdf_content
 
 
+# concatenate pdfs in memory
 def concatenar_pdfs_memory(pdf_ios):
     """
     Concatenate multiple PDFs stored in BytesIO objects using pypdftk with tmpfs approach.
@@ -256,12 +258,35 @@ def concatenar_pdfs_memory(pdf_ios):
         return None
 
 
+# date formatting
 def formatacao_data(dados):
     """
-    Format dates for PDF forms.
+    Formats and calculates sequential dates for medical prescription forms.
+    
+    This function takes an initial date and generates 6 sequential dates
+    spaced 30 days apart for medical prescription validity periods.
+    Brazilian medical prescriptions typically require multiple follow-up dates.
     
     Args:
-        dados (dict): Data dictionary with date fields
+        dados (dict): Data dictionary containing date fields
+                     Must contain 'data_1' as datetime object
+    
+    Side Effects:
+        Modifies dados dictionary in-place, adding data_2 through data_6
+        
+    Critique:
+    - Function modifies input dictionary in-place without clear indication
+    - Hardcoded 30-day intervals may not suit all prescription types
+    - Heavy debug logging in production code
+    - No input validation for required 'data_1' field
+    - Magic numbers (2, 6, 30) should be configurable constants
+    
+    Suggested Improvements:
+    - Add input validation to ensure 'data_1' exists and is datetime
+    - Make date intervals configurable per prescription type
+    - Return new dictionary instead of modifying input
+    - Remove debug print statements from production code
+    - Add error handling for date calculation edge cases
     """
     print(f"\n--- FORMATACAO_DATA START ---")
     print(f"DEBUG: Input data_1: {dados.get('data_1', 'NOT_FOUND')} (type: {type(dados.get('data_1'))})")
@@ -284,10 +309,36 @@ def formatacao_data(dados):
 
 def ajustar_campo_18(dados_lme):
     """
-    Adjust field 18 of the LME form.
+    Adjusts field 18 of the LME form based on who filled the prescription.
+    
+    Field 18 refers to specific patient information fields in Brazilian LME 
+    (Laudo para Solicitação, Avaliação e Autorização de Medicamentos) forms
+    that are only required when the form is filled by medical personnel rather
+    than the patient themselves. This includes sensitive data like CPF, phone
+    numbers, and ethnicity information.
     
     Args:
-        dados_lme (dict): LME form data
+        dados_lme (dict): LME form data dictionary containing prescription information
+                         Must include 'preenchido_por' field indicating form completion context
+    
+    Side Effects:
+        Modifies dados_lme dictionary in-place by removing patient data fields
+        when form is not filled by doctor
+        
+    Critique:
+    - Function modifies input dictionary without clear indication in name
+    - Hardcoded field names reduce maintainability and localization support
+    - No input validation for required 'preenchido_por' field
+    - Business logic is embedded rather than configurable
+    - Heavy debug logging suggests this was debugging code left in production
+    
+    Suggested Improvements:
+    - Add input validation to ensure 'preenchido_por' field exists
+    - Make field removal configurable via external configuration
+    - Return modified dictionary instead of in-place modification
+    - Add proper logging levels (INFO/DEBUG) instead of print statements
+    - Consider using enum for 'preenchido_por' values instead of strings
+    - Add documentation explaining Brazilian medical form regulations
     """
     print(f"\n--- AJUSTAR_CAMPO_18 START ---")
     preenchido_por = dados_lme.get("preenchido_por", "NOT_FOUND")
@@ -309,6 +360,7 @@ def ajustar_campo_18(dados_lme):
     print(f"--- AJUSTAR_CAMPO_18 END ---\n")
 
 
+# pdf generator
 class GeradorPDF:
     """
     Memory-based PDF generator that streams PDFs directly to browser.
@@ -320,14 +372,46 @@ class GeradorPDF:
     
     def generico_stream(self, dados_lme_base, path_lme_base):
         """
-        Generate PDF entirely in memory and return HttpResponse for streaming.
+        Generates comprehensive medical prescription PDFs entirely in memory and streams to browser.
+        
+        This method orchestrates the complete Brazilian medical prescription workflow by:
+        1. Processing base LME (Authorization Request) form data
+        2. Dynamically adding disease-specific and medication-specific PDFs using data-driven strategy
+        3. Including conditional documents (consent forms, reports, exams) based on prescription context
+        4. Generating final concatenated PDF entirely in memory using tmpfs approach
+        5. Returning streaming HTTP response for immediate browser display
+        
+        The method implements complex Brazilian SUS (Sistema Único de Saúde) compliance requirements
+        including proper document sequencing, medication consent forms, and examination requests.
         
         Args:
-            dados_lme_base (dict): Base LME form data
-            path_lme_base (str): Path to base LME template
+            dados_lme_base (dict): Base LME form data containing patient, doctor, and prescription info
+                                  Required fields: cpf_paciente, cid, consentimento, relatorio, exames
+            path_lme_base (str): Filesystem path to base LME PDF template
             
         Returns:
-            HttpResponse: PDF response ready for streaming
+            HttpResponse: PDF response with proper headers for inline browser display
+                         Content-Type: application/pdf
+                         Content-Disposition: inline with descriptive filename
+            
+        Critique:
+        - Extremely long method (100+ lines) that violates SRP and is hard to test
+        - Mixes PDF generation logic with HTTP response handling
+        - Heavy use of print debugging statements in production code
+        - Complex nested try/catch blocks make error handling unclear
+        - Hardcoded file paths and business logic reduce flexibility
+        - No input validation for required dictionary fields
+        - Strategy pattern implementation is mixed with legacy protocol handling
+        
+        Suggested Improvements:
+        - Extract PDF building logic to separate PDFBuilder class
+        - Create dedicated service classes for consent, report, and exam handling
+        - Implement proper logging framework instead of print statements
+        - Add comprehensive input validation with custom exceptions
+        - Use dependency injection for file path configuration
+        - Create separate HTTPResponseBuilder for streaming response creation
+        - Add unit tests for each logical component
+        - Consider implementing async processing for large PDF generation
         """
         print(f"\n=== GERADOR_PDF_MEMORY.GENERICO_STREAM START ===")
         

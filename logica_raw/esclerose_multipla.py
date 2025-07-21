@@ -17,12 +17,40 @@ from manejo_pdfs import (
 )
 
 
+# multiple sclerosis
 class EscleroseMultipla(GeradorPDF):
     def __init__(self, dados_lme_base, dados_condicionais, path_lme_base):
         GeradorPDF.__init__(self, dados_lme_base, dados_condicionais, path_lme_base)
         self.dados_condicionais = dados_condicionais
 
+    # renew
     def renovar(self, dados_lme_base, dados_condicionais, path_lme_base):
+        """Handles prescription renewal for multiple sclerosis patients.
+        
+        This method processes renewal requests for MS medications by merging
+        base prescription data with conditional fields and routing to specific
+        medication protocols based on the selected medication.
+        
+        Args:
+            dados_lme_base (dict): Base prescription data (patient, doctor, clinic info)
+            dados_condicionais (dict): Disease-specific conditional fields
+            path_lme_base (str): Path to base LME PDF template
+            
+        Returns:
+            str: Path to generated PDF file
+            
+        Critique:
+        - The function has complex nested logic that could be refactored
+        - Medication routing logic is hardcoded and not easily extensible
+        - Error handling is minimal - should validate medication types
+        - The function mixes data processing with PDF generation concerns
+        
+        Suggested Improvements:
+        - Extract medication routing to a separate strategy pattern
+        - Add input validation for required fields
+        - Consider using a medication registry instead of hardcoded if/elif
+        - Add logging for debugging prescription generation issues
+        """
         dados_lme_base.update(dados_condicionais)
         dados_finais = dados_lme_base
         medicamento = dados_finais["med1"].lower()
@@ -58,7 +86,32 @@ class EscleroseMultipla(GeradorPDF):
         remover_pdfs_intermediarios(*arquivos)
         return pdf_em
 
+    # first time
     def primeira_vez(self, dados_lme_base, dados_condicionais, path_lme_base):
+        """Handles first-time prescription for multiple sclerosis patients.
+        
+        This method processes initial prescription requests for MS medications,
+        typically requiring more extensive documentation and exam requirements
+        compared to renewals.
+        
+        Args:
+            dados_lme_base (dict): Base prescription data
+            dados_condicionais (dict): Disease-specific conditional fields  
+            path_lme_base (str): Path to base LME PDF template
+            
+        Returns:
+            str: Path to generated PDF file
+            
+        Critique:
+        - Similar routing complexity as renovar() method
+        - Duplicated medication handling logic between primeira_vez and renovar
+        - No clear separation between first-time vs renewal requirements
+        
+        Suggested Improvements:
+        - Create shared medication handler base class
+        - Define clear interfaces for first-time vs renewal differences
+        - Extract common PDF generation logic to parent class
+        """
         dados_lme_base.update(dados_condicionais)
         dados_finais = dados_lme_base
         medicamento = dados_finais["med1"].lower()
@@ -95,7 +148,32 @@ class EscleroseMultipla(GeradorPDF):
         return pdf_em
 
 
+# fingolimod first time
 def fingolimode_1vez(dados_finais):
+    """Generates fingolimod prescription documents for first-time patients.
+    
+    Fingolimod is a sphingosine 1-phosphate receptor modulator used for
+    multiple sclerosis treatment. First-time prescriptions require specific
+    monitoring protocols and cardiac evaluation forms.
+    
+    Args:
+        dados_finais (dict): Complete patient and prescription data
+        
+    Returns:
+        list: List of filled PDF file paths ready for concatenation
+        
+    Critique:
+    - Function duplicates exam handling logic with other medication functions
+    - Hardcoded path constants reduce flexibility
+    - No input validation for required fingolimod-specific fields
+    - Return type inconsistency (sometimes returns list, sometimes single file)
+    
+    Suggested Improvements:
+    - Create MedicationProtocol base class with standard interface
+    - Add validation for fingolimod contraindications
+    - Implement consistent return types across all medication functions
+    - Add dosing validation and drug interaction checks
+    """
     emitir_exames = dados_finais["exames"]
     dados_finais["relatorio"] = dados_finais.pop("relatorio_fingolimode_1vez")
     if emitir_exames:
