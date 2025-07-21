@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap4",
     "django_crontab",
+    "dbbackup",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -314,4 +315,26 @@ if not DEBUG:
 # Django-crontab configuration
 CRONJOBS = [
     ('0 3 * * *', 'django.core.management.call_command', ['cleanup_pdfs']),
+    ('0 2 * * *', 'django.core.management.call_command', ['dbbackup']),
 ]
+
+# Django-dbbackup configuration
+DBBACKUP_FILENAME_TEMPLATE = 'autocusto_db_{datetime}.{extension}'
+DBBACKUP_CLEANUP_KEEP = 7  # Keep 7 days of backups
+
+# Nextcloud backup storage
+NC_BACKUP_URL = os.environ.get('NC_BACKUP_URL')
+NC_BACKUP_USERNAME = os.environ.get('NC_BACKUP_USERNAME')
+NC_BACKUP_PASSWORD = os.environ.get('NC_BACKUP_PASSWORD')
+
+if NC_BACKUP_URL and NC_BACKUP_USERNAME and NC_BACKUP_PASSWORD:
+    DBBACKUP_STORAGE = 'storages.backends.webdav.WebDavStorage'
+    DBBACKUP_STORAGE_OPTIONS = {
+        'base_url': NC_BACKUP_URL,
+        'username': NC_BACKUP_USERNAME,
+        'password': NC_BACKUP_PASSWORD,
+    }
+else:
+    # Fallback to local storage if Nextcloud not configured
+    DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    DBBACKUP_STORAGE_OPTIONS = {'location': '/var/backups/autocusto/'}
