@@ -323,6 +323,9 @@ CRONJOBS = [
 DBBACKUP_FILENAME_TEMPLATE = 'autocusto_db_{datetime}.{extension}'
 DBBACKUP_CLEANUP_KEEP = 7  # Keep 7 days of backups
 
+# GPG encryption for backups
+DBBACKUP_GPG_RECIPIENT = 'lcsavb@gmail.com'
+
 # For now, use local storage - we'll set up custom Nextcloud upload separately
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': '/var/backups/autocusto/'}

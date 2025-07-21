@@ -58,6 +58,8 @@ RUN chmod +x /home/appuser/app/startup.sh
 # Fix ownership of copied files so appuser can write to static/tmp
 # Create log directory for Django
 RUN mkdir -p /var/log/django && chown -R appuser:appuser /var/log/django
+# Create backup directory with proper permissions
+RUN mkdir -p /var/backups/autocusto && chown -R appuser:appuser /var/backups/autocusto
 RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
