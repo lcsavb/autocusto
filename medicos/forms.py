@@ -147,8 +147,8 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         usuario.save()
         # English: doctor
         medico = Medico(
-            cns_medico="",
-            crm_medico="",
+            cns_medico=None,
+            crm_medico=None,
             nome_medico=self.cleaned_data["nome"],
         )
         medico.save()
@@ -402,8 +402,8 @@ class UserDoctorEditForm(forms.Form):
             if self.cleaned_data.get("name"):
                 medico = Medico(
                     nome_medico=self.cleaned_data["name"],
-                    crm_medico=self.cleaned_data.get("crm", ""),
-                    cns_medico=self.cleaned_data.get("cns", ""),
+                    crm_medico=self.cleaned_data.get("crm") or None,
+                    cns_medico=self.cleaned_data.get("cns") or None,
                 )
                 medico.save()
                 self.user.medicos.add(medico)

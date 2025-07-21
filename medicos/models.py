@@ -14,9 +14,9 @@ class Medico(models.Model):
     # doctor_name
     nome_medico = models.CharField(max_length=200)
     # doctor_crm (Brazilian medical license number)
-    crm_medico = models.CharField(max_length=10, unique=True)
+    crm_medico = models.CharField(max_length=10, unique=True, null=True, blank=True)
     # doctor_cns (Brazilian national health system registration)
-    cns_medico = models.CharField(max_length=15, unique=True)
+    cns_medico = models.CharField(max_length=15, unique=True, null=True, blank=True)
     # users (user accounts linked to this doctor)
     usuarios = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="MedicoUsuario", related_name="medicos"
