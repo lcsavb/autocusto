@@ -17,11 +17,14 @@ services:
       - "8001:8001"
     volumes:
       - .:/home/appuser/app
+      - ./backups:/var/backups/autocusto
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=100m
       - /dev/shm:rw,noexec,nosuid,size=100m
     depends_on:
       - db
+    env_file:
+      - .backupenv
     environment:
       - DEBUG=true
       - SECRET_KEY=jklahjkldfakjhKLJHADJKFHASDKHFJKLhadsfhjkladhOIUYHQ6516AS5DFASD65F48A6S1652asd1f3as2d
