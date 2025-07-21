@@ -16,12 +16,23 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.t
 # Stage 2: Final
 FROM python:3.11-slim
 
-# Install only runtime dependencies (pdftk with its Java runtime)
+# Install runtime dependencies (pdftk, Chrome for testing, PostgreSQL client)
 RUN apt-get update && apt-get install -y \
     pdftk \
     cron \
     wget \
     gnupg \
+    curl \
+    unzip \
+    # Chrome/Chromium dependencies
+    chromium \
+    chromium-driver \
+    # Google Chrome (more stable for Selenium)
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    # PostgreSQL client
     && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \

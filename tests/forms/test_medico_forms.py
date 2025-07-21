@@ -405,5 +405,5 @@ class MedicoCadastroFormularioTest(TestCase):
         self.assertIsNotNone(medico)
         self.assertEqual(user.email, 'test@example.com')
         self.assertEqual(medico.nome_medico, 'Test Doctor')
-        self.assertEqual(medico.crm_medico, '')  # Should be empty
-        self.assertEqual(medico.cns_medico, '')  # Should be empty
+        self.assertEqual(medico.crm_medico, None)  # Should be None (null=True)
+        self.assertEqual(medico.cns_medico, None)  # Should be None (null=True)

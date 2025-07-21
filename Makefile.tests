@@ -1,0 +1,196 @@
+# AutoCusto Testing Makefile
+# Comprehensive testing commands for development and CI/CD
+
+.PHONY: help test test-all test-backend test-frontend test-security test-auth test-forms test-integration test-coverage test-docker clean install-deps check-env
+
+# Default help command
+help:
+	@echo "🧪 AutoCusto Testing Commands"
+	@echo "============================="
+	@echo ""
+	@echo "📋 Main Commands:"
+	@echo "  make test-all         🚀 Run ALL tests (comprehensive)"
+	@echo "  make test-backend     ⚡ Run backend tests only (fast)"
+	@echo "  make test-frontend    🌐 Run frontend/Selenium tests"
+	@echo "  make test-docker      🐳 Run all tests in Docker"
+	@echo ""
+	@echo "🎯 Specific Test Categories:"
+	@echo "  make test-auth        🔐 Authentication & login tests"
+	@echo "  make test-security    🛡️  Security & authorization tests"
+	@echo "  make test-forms       📋 Form validation tests"
+	@echo "  make test-integration 🔗 Cross-app integration tests"
+	@echo ""
+	@echo "📊 Analysis & Maintenance:"
+	@echo "  make test-coverage    📈 Run with coverage report"
+	@echo "  make install-deps     📦 Install test dependencies"
+	@echo "  make clean           🧹 Clean test artifacts"
+	@echo "  make check-env       🔍 Check test environment"
+	@echo ""
+
+# Install test dependencies
+install-deps:
+	@echo "📦 Installing test dependencies..."
+	@if [ -d "venv" ]; then \
+		echo "   Using virtual environment"; \
+		source venv/bin/activate && pip install coverage selenium webdriver-manager; \
+	else \
+		echo "   Installing globally"; \
+		pip install coverage selenium webdriver-manager; \
+	fi
+
+# Check environment setup
+check-env:
+	@echo "🔍 Checking test environment..."
+	@echo "  🐳 Docker: $(command -v docker-compose >/dev/null && echo "✅ Available" || echo "❌ Not found")"
+	@echo "  🐍 Python: $(python --version 2>/dev/null || echo "❌ Not found")"
+	@echo "  📦 Virtual Environment: $([ -d "venv" ] && echo "✅ Found at ./venv" || echo "⚠️  Not found")"
+	@echo "  🌐 Chrome: $(command -v google-chrome >/dev/null || command -v chromium-browser >/dev/null || command -v chromium >/dev/null && echo "✅ Available" || echo "❌ Not found (needed for Selenium)")"
+	@echo "  📋 Test Settings: $([ -f "test_settings.py" ] && echo "✅ Found" || echo "❌ Missing")"
+
+# Master test command - runs everything
+test-all: check-docker-running
+	@echo "🚀 Running ALL AutoCusto tests..."
+	./tests/run_all_tests.sh
+
+# Check if docker is running
+check-docker-running:
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "Error: Docker is not running. Please start Docker and try again."; \
+		exit 1; \
+	fi
+
+# Backend tests only (no Selenium)
+test-backend:
+	@echo "⚡ Running backend tests (no Selenium)..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		echo "   Using Docker environment"; \
+		docker-compose exec web python manage.py test tests.forms tests.integration tests.session_functionality tests.views tests.test_authentication tests.test_security --settings=test_settings; \
+	elif [ -d "venv" ]; then \
+		echo "   Using virtual environment"; \
+		source venv/bin/activate && python manage.py test tests.forms tests.integration tests.session_functionality tests.views tests.test_authentication tests.test_security --settings=test_settings; \
+	else \
+		echo "   Using system Python"; \
+		python manage.py test tests.forms tests.integration tests.session_functionality tests.views tests.test_authentication tests.test_security --settings=test_settings; \
+	fi
+
+# Frontend/Selenium tests only
+test-frontend:
+	@echo "🌐 Running frontend/Selenium tests..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		echo "   Using Docker environment"; \
+		docker-compose exec web python manage.py test tests.test_login_frontend tests.test_user_registration tests.test_frontend_security tests.test_clinic_management tests.test_prescription_forms --settings=test_settings; \
+	elif [ -d "venv" ]; then \
+		echo "   Using virtual environment"; \
+		source venv/bin/activate && python manage.py test tests.test_login_frontend tests.test_user_registration tests.test_frontend_security tests.test_clinic_management tests.test_prescription_forms --settings=test_settings; \
+	else \
+		echo "   Using system Python"; \
+		python manage.py test tests.test_login_frontend tests.test_user_registration tests.test_frontend_security tests.test_clinic_management tests.test_prescription_forms --settings=test_settings; \
+	fi
+
+# Docker-specific testing
+test-docker:
+	@echo "🐳 Running tests in Docker environment..."
+	@if ! command -v docker-compose >/dev/null 2>&1; then \
+		echo "❌ Docker Compose not found"; \
+		exit 1; \
+	fi
+	@if ! docker-compose ps | grep -q "web.*Up"; then \
+		echo "🚀 Starting Docker containers..."; \
+		docker-compose up -d; \
+		sleep 5; \
+	fi
+	docker-compose exec web ./tests/run_all_tests.sh
+
+# Authentication tests specifically
+test-auth:
+	@echo "🔐 Running authentication tests..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		docker-compose exec web python manage.py test tests.test_authentication tests.test_login_frontend --settings=test_settings --verbosity=2; \
+	elif [ -d "venv" ]; then \
+		source venv/bin/activate && python manage.py test tests.test_authentication tests.test_login_frontend --settings=test_settings --verbosity=2; \
+	else \
+		python manage.py test tests.test_authentication tests.test_login_frontend --settings=test_settings --verbosity=2; \
+	fi
+
+# Security tests specifically  
+test-security:
+	@echo "🛡️  Running security tests..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		docker-compose exec web ./tests/run_security_tests.sh; \
+	else \
+		./tests/run_security_tests.sh; \
+	fi
+
+# Form validation tests
+test-forms:
+	@echo "📋 Running form validation tests..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		docker-compose exec web python manage.py test tests.forms --settings=test_settings --verbosity=2; \
+	elif [ -d "venv" ]; then \
+		source venv/bin/activate && python manage.py test tests.forms --settings=test_settings --verbosity=2; \
+	else \
+		python manage.py test tests.forms --settings=test_settings --verbosity=2; \
+	fi
+
+# Integration tests
+test-integration:
+	@echo "🔗 Running integration tests..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		docker-compose exec web python manage.py test tests.integration tests.session_functionality --settings=test_settings --verbosity=2; \
+	elif [ -d "venv" ]; then \
+		source venv/bin/activate && python manage.py test tests.integration tests.session_functionality --settings=test_settings --verbosity=2; \
+	else \
+		python manage.py test tests.integration tests.session_functionality --settings=test_settings --verbosity=2; \
+	fi
+
+# Coverage analysis
+test-coverage:
+	@echo "📈 Running tests with coverage analysis..."
+	@if ! command -v coverage >/dev/null 2>&1; then \
+		echo "Installing coverage..."; \
+		if [ -d "venv" ]; then source venv/bin/activate && pip install coverage; else pip install coverage; fi; \
+	fi
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		echo "   Using Docker environment"; \
+		docker-compose exec web bash -c "coverage run --source='.' manage.py test tests.forms tests.test_authentication tests.test_security --settings=test_settings && coverage report && coverage html"; \
+		echo "📊 Coverage report generated in htmlcov/"; \
+	elif [ -d "venv" ]; then \
+		echo "   Using virtual environment"; \
+		source venv/bin/activate && \
+		coverage run --source='.' manage.py test tests.forms tests.test_authentication tests.test_security --settings=test_settings && \
+		coverage report && \
+		coverage html; \
+		echo "📊 Coverage report generated in htmlcov/"; \
+	else \
+		echo "   Using system Python"; \
+		coverage run --source='.' manage.py test tests.forms tests.test_authentication tests.test_security --settings=test_settings && \
+		coverage report && \
+		coverage html; \
+		echo "📊 Coverage report generated in htmlcov/"; \
+	fi
+
+# Quick development test (fastest)
+test-quick:
+	@echo "⚡ Quick development test (authentication only)..."
+	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
+		docker-compose exec web python manage.py test tests.test_authentication.AuthenticationBackendTest --settings=test_settings --failfast; \
+	elif [ -d "venv" ]; then \
+		source venv/bin/activate && python manage.py test tests.test_authentication.AuthenticationBackendTest --settings=test_settings --failfast; \
+	else \
+		python manage.py test tests.test_authentication.AuthenticationBackendTest --settings=test_settings --failfast; \
+	fi
+
+# Clean test artifacts
+clean:
+	@echo "🧹 Cleaning test artifacts..."
+	rm -rf htmlcov/ .coverage
+	rm -rf tests/screenshots/*.png 2>/dev/null || true
+	rm -rf test_screenshots/ 2>/dev/null || true  
+	find . -name "*.pyc" -delete 2>/dev/null || true
+	find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@echo "   ✅ Cleaned test artifacts"
+
+# Backwards compatibility aliases
+test: test-backend
+security: test-security
+frontend: test-frontend

@@ -84,8 +84,8 @@ def custom_login(request):
     (registration/login for visitors, process forms for authenticated users).
     """
     
-    # English: username
-    username = request.POST.get('username', '').strip()
+    # English: username (email) - normalize to lowercase for case-insensitive authentication
+    username = request.POST.get('username', '').strip().lower()
     # English: password
     password = request.POST.get('password', '').strip()
     

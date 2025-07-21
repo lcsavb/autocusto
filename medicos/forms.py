@@ -118,22 +118,26 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
 
     # English: clean_email2
     def clean_email2(self):
-        """Validate that the two email entries match."""
+        """Validate that the two email entries match (case-insensitive)."""
         # English: email1
         email1 = self.cleaned_data.get("email")
         # English: email2
         email2 = self.cleaned_data.get("email2")
-        if email1 and email2 and email1 != email2:
-            raise forms.ValidationError("Os emails não coincidem.")
+        if email1 and email2:
+            email2 = email2.lower()  # Normalize to lowercase
+            if email1.lower() != email2:
+                raise forms.ValidationError("Os emails não coincidem.")
         return email2
 
     # English: clean_email
     def clean_email(self):
-        """Validate that the email is unique."""
+        """Validate that the email is unique and normalize to lowercase."""
         # English: email
         email = self.cleaned_data.get("email")
-        if email and Usuario.objects.filter(email=email).exists():
-            raise forms.ValidationError("Este email já está em uso.")
+        if email:
+            email = email.lower()  # Normalize to lowercase for case-insensitive comparison
+            if Usuario.objects.filter(email=email).exists():
+                raise forms.ValidationError("Este email já está em uso.")
         return email
 
 
@@ -207,10 +211,12 @@ class ProfileCompletionForm(forms.Form):
             medico = self.user.medicos.first()
             if medico:
                 if medico.crm_medico:
+                    self.initial['crm'] = medico.crm_medico
                     self.fields['crm'].disabled = True
                     self.fields['crm2'].disabled = True
                     self.fields['crm'].help_text = "CRM já definido e não pode ser alterado"
                 if medico.cns_medico:
+                    self.initial['cns'] = medico.cns_medico
                     self.fields['cns'].disabled = True
                     self.fields['cns2'].disabled = True
                     self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
@@ -344,10 +350,14 @@ class UserDoctorEditForm(forms.Form):
         if self.user:
             medico = self.user.medicos.first()
             if medico:
+                self.initial['name'] = medico.nome_medico
+                self.initial['email'] = self.user.email
                 if medico.crm_medico:
+                    self.initial['crm'] = medico.crm_medico
                     self.fields['crm'].disabled = True
                     self.fields['crm'].help_text = "CRM já definido e não pode ser alterado"
                 if medico.cns_medico:
+                    self.initial['cns'] = medico.cns_medico
                     self.fields['cns'].disabled = True
                     self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
         

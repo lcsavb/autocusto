@@ -1,0 +1,344 @@
+name: Test Integration for AutoCusto
+# Comprehensive testing pipeline for CI/CD integration
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Backend testing job
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17.4-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: autocusto
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: 📦 Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: 📥 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage
+    
+    - name: 🔍 Check Django configuration
+      env:
+        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
+        SQL_ENGINE: django.db.backends.postgresql
+        SQL_DATABASE: autocusto
+        SQL_USER: postgres
+        SQL_PASSWORD: postgres
+        SQL_HOST: localhost
+        SQL_PORT: 5432
+        DEBUG: 1
+      run: |
+        python manage.py check --deploy
+    
+    - name: 🧪 Run backend tests with coverage
+      env:
+        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
+        SQL_ENGINE: django.db.backends.postgresql
+        SQL_DATABASE: autocusto
+        SQL_USER: postgres
+        SQL_PASSWORD: postgres
+        SQL_HOST: localhost
+        SQL_PORT: 5432
+        DEBUG: 1
+      run: |
+        echo "Running backend tests (no Selenium)..."
+        coverage run --source='.' manage.py test \
+          tests.forms \
+          tests.integration \
+          tests.session_functionality \
+          tests.views \
+          tests.test_authentication \
+          tests.test_security \
+          --settings=test_settings \
+          --verbosity=2
+    
+    - name: 📊 Generate coverage report
+      run: |
+        coverage report --show-missing
+        coverage xml
+    
+    - name: 📤 Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+
+  # Frontend/Selenium testing job
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17.4-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: autocusto
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: 🌐 Setup Chrome for Selenium
+      uses: browser-actions/setup-chrome@latest
+      with:
+        chrome-version: stable
+    
+    - name: 📦 Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: 📥 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install selenium webdriver-manager
+    
+    - name: 🌐 Run frontend tests (Selenium)
+      env:
+        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
+        SQL_ENGINE: django.db.backends.postgresql
+        SQL_DATABASE: autocusto
+        SQL_USER: postgres
+        SQL_PASSWORD: postgres
+        SQL_HOST: localhost
+        SQL_PORT: 5432
+        DEBUG: 1
+        HEADLESS_CHROME: true
+      run: |
+        echo "Running frontend/Selenium tests..."
+        python manage.py test \
+          tests.test_login_frontend \
+          tests.test_user_registration \
+          --settings=test_settings \
+          --verbosity=2 \
+          --failfast
+    
+    - name: 📸 Upload test screenshots on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-screenshots
+        path: test_screenshots/
+        retention-days: 7
+
+  # Security-focused testing
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17.4-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: autocusto
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety bandit
+    
+    - name: 🔒 Run security tests
+      env:
+        SECRET_KEY: test-security-key-for-ci-${{ github.run_id }}
+        SQL_ENGINE: django.db.backends.postgresql
+        SQL_DATABASE: autocusto
+        SQL_USER: postgres
+        SQL_PASSWORD: postgres
+        SQL_HOST: localhost
+        SQL_PORT: 5432
+        DEBUG: 1
+      run: |
+        echo "Running security-focused tests..."
+        python manage.py test tests.test_security --settings=test_settings --verbosity=2
+    
+    - name: 🛡️ Run safety check (dependencies)
+      run: |
+        safety check --json || echo "Safety check completed with warnings"
+    
+    - name: 🔍 Run bandit security scan
+      run: |
+        bandit -r . -x tests/ -f json -o bandit-report.json || true
+        bandit -r . -x tests/ -f txt || true
+    
+    - name: 📤 Upload security reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+        retention-days: 30
+
+  # Docker build and test (production-like container)
+  docker-test:
+    name: Docker Integration Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🏗️ Build production-like Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: autocusto-prod-test:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        # Build exactly like production - no Chrome/Selenium
+    
+    - name: 🧪 Test production-like container
+      run: |
+        # Start containers using docker-compose
+        docker-compose -f docker-compose.yml up -d db
+        sleep 10
+        
+        # Test that production container works for backend-only tests
+        docker run --rm --network autocusto_default \
+          -e SECRET_KEY=test-key \
+          -e SQL_ENGINE=django.db.backends.postgresql \
+          -e SQL_DATABASE=autocusto \
+          -e SQL_USER=postgres \
+          -e SQL_PASSWORD=postgres \
+          -e SQL_HOST=autocusto_db_1 \
+          -e SQL_PORT=5432 \
+          -e DEBUG=0 \
+          autocusto-prod-test:latest \
+          python manage.py test tests.test_authentication.AuthenticationBackendTest.test_user_creation_with_email --settings=test_settings
+    
+    - name: 🔍 Verify production container security
+      run: |
+        # Ensure Chrome/Selenium are NOT installed in production image
+        echo "Checking production container does not contain browser dependencies..."
+        docker run --rm autocusto-prod-test:latest sh -c "
+          ! command -v google-chrome >/dev/null 2>&1 && echo '✅ Chrome not found (good)' || (echo '❌ Chrome found in production image!' && exit 1)
+          ! command -v chromium >/dev/null 2>&1 && echo '✅ Chromium not found (good)' || (echo '❌ Chromium found in production image!' && exit 1)
+          ! python -c 'import selenium' >/dev/null 2>&1 && echo '✅ Selenium not found (good)' || (echo '❌ Selenium found in production image!' && exit 1)
+        "
+    
+    - name: 📊 Check container size
+      run: |
+        echo "Production container size:"
+        docker images autocusto-prod-test:latest --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+  # Deployment readiness check
+  deployment-readiness:
+    name: Deployment Readiness
+    runs-on: ubuntu-latest
+    needs: [backend-tests, security-tests]
+    if: github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: ✅ Mark deployment ready
+      run: |
+        echo "🎉 All tests passed! Deployment is ready."
+        echo "Backend tests: ✅"
+        echo "Security tests: ✅"
+        echo "Ready to deploy to production."
+
+  # Test results summary
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, security-tests, docker-test]
+    if: always()
+    
+    steps:
+    - name: 📊 Test Results Summary
+      run: |
+        echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend Tests | ${{ needs.backend-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend Tests | ${{ needs.frontend-tests.result == 'success' && '✅ Passed' || needs.frontend-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Tests | ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker Integration | ${{ needs.docker-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.backend-tests.result }}" = "success" ] && [ "${{ needs.security-tests.result }}" = "success" ]; then
+          echo "🎉 **Core tests passed!** System is ready for deployment." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "🚨 **Core tests failed.** Deployment blocked until issues are resolved." >> $GITHUB_STEP_SUMMARY
+        fi

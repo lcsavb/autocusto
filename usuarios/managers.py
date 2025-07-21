@@ -27,8 +27,8 @@ class CustomUserManager(BaseUserManager):
         """
         if not email:
             raise ValueError(_("The Email must be set"))
-        # email (normalized email address)
-        email = self.normalize_email(email)
+        # email (normalized and lowercased email address for case-insensitive authentication)
+        email = self.normalize_email(email).lower()
         # user (new user instance)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)

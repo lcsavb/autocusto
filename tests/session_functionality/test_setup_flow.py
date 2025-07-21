@@ -320,7 +320,7 @@ class SetupFlowIntegrationTest(TestCase):
         response = self.client.get(reverse('processos-cadastro'))
         
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('processos-home'))
+        self.assertEqual(response.url, reverse('home'))
         
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any('Sessão expirada. Por favor, inicie o cadastro novamente.' in str(m) for m in messages))
@@ -334,7 +334,7 @@ class SetupFlowIntegrationTest(TestCase):
         response = self.client.get(reverse('processos-cadastro'))
         
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('processos-home'))
+        self.assertEqual(response.url, reverse('home'))
         
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any('CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.' in str(m) for m in messages))

@@ -3,9 +3,8 @@
 FOR EARLY DEPLOYMENT
 
 when the medicamento is nenhum it works
-dados condicionais not being saved and not being retrieved (symptom?
+feedback de proceessos na home e no modal
 
-database backup
 admin dashboard with stats
 add renovacao rapida progress bar
 in renovacao rapida the latest conditional data are not being loaded

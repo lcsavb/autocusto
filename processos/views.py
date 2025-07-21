@@ -537,11 +537,11 @@ def cadastro(request):
         # Check for required session variables
         if "paciente_existe" not in request.session:
             messages.error(request, "Sessão expirada. Por favor, inicie o cadastro novamente.")
-            return redirect("processos-home")
+            return redirect("home")
         
         if "cid" not in request.session:
             messages.error(request, "CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.")
-            return redirect("processos-home")
+            return redirect("home")
             
         # English: patient_exists
         paciente_existe = request.session["paciente_existe"]
@@ -554,7 +554,7 @@ def cadastro(request):
         ModeloFormulario = fabricar_formulario(cid, False)
     except Exception as e:
         messages.error(request, f"Erro ao carregar dados do cadastro: {e}")
-        return redirect("processos-home")
+        return redirect("home")
 
     if request.method == "POST":
         # Since the template ALWAYS sends AJAX requests, we ALWAYS return JSON
@@ -604,7 +604,7 @@ def cadastro(request):
                         })
                     else:
                         messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
-                        return redirect("processos-home")
+                        return redirect("home")
             else:
                 return JsonResponse({
                     'success': False,
@@ -640,7 +640,7 @@ def cadastro(request):
             formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
         except Exception as e:
             messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
-            return redirect("processos-home")
+            return redirect("home")
     
     # Setup context for template rendering (only for GET requests)
     try:
@@ -661,7 +661,7 @@ def cadastro(request):
         if paciente_existe:
             if "paciente_id" not in request.session:
                 messages.error(request, "ID do paciente não encontrado na sessão.")
-                return redirect("processos-home")
+                return redirect("home")
             # English: patient_id
             paciente_id = request.session["paciente_id"]
             # English: patient
@@ -685,7 +685,7 @@ def cadastro(request):
         return render(request, "processos/cadastro.html", contexto)
     except Exception as e:
         messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
-        return redirect("processos-home")
+        return redirect("home")
 
 
 # pdf
