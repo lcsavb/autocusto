@@ -2,10 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+import json
 from processos.forms import PreProcesso
 from pacientes.models import Paciente
 from medicos.forms import MedicoCadastroFormulario
-from .forms import ErrorReportForm, FeatureRequestForm
+from .forms import ErrorReportForm, FeatureRequestForm, ProcessFeedbackForm
 
 
 def home(request):
@@ -237,3 +240,65 @@ Descrição da Funcionalidade:
         form = FeatureRequestForm()
     
     return render(request, 'solicitar_funcionalidade.html', {'form': form})
+
+
+
+@require_http_methods(["POST"])
+def process_feedback_ajax(request):
+    """AJAX endpoint for process feedback"""
+    try:
+        # Create form with the POST data
+        form = ProcessFeedbackForm(request.POST)
+        
+        if form.is_valid():
+            # Determine user info
+            if request.user.is_authenticated:
+                user_info = f"User: {request.user.email}"
+            else:
+                name = form.cleaned_data.get('name', '')
+                email = form.cleaned_data.get('email', '')
+                user_info = f"Name: {name}\nEmail: {email}"
+            
+            # Get process information if provided
+            process_info = form.cleaned_data.get('processo_info', 'Not provided')
+            
+            # Send email
+            subject = f'Process Feedback - {form.cleaned_data["feedback_type"].title()} - CliqueReceita'
+            message = f'''
+Process Feedback Report
+
+Problem Type: {dict(form.fields['feedback_type'].choices)[form.cleaned_data['feedback_type']]}
+
+Process Information:
+{process_info}
+
+Problem Description:
+{form.cleaned_data['description']}
+
+{user_info}
+'''
+            
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                ['lcsavb@gmail.com'],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Feedback enviado com sucesso! Obrigado por nos ajudar a melhorar.'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Por favor, corrija os erros no formulário.',
+                'errors': form.errors
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': 'Erro interno do servidor. Tente novamente mais tarde.'
+        })

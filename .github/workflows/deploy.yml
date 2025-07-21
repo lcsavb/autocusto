@@ -73,6 +73,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        target: production
         push: true
         no-cache: true
         tags: |
@@ -102,12 +103,23 @@ jobs:
           mkdir -p /opt/autocusto
           cd /opt/autocusto
           
-          # Copy GPG public key for container use
+          # Copy GPG public key for container use (accessible by deploy user)
           echo "=== Setting up GPG key for backups ==="
-          if [ ! -f /root/lucas-backup-public.asc ]; then
+          GPG_KEY_PATH="/home/deploy/lucas-backup-public.asc"
+          if [ ! -f "$GPG_KEY_PATH" ]; then
             echo "Exporting GPG public key..."
-            gpg --export --armor lcsavb@gmail.com > /root/lucas-backup-public.asc
+            gpg --export --armor lcsavb@gmail.com > "$GPG_KEY_PATH".
+            sudo chown deploy:deploy "$GPG_KEY_PATH"
+            chmod 600 "$GPG_KEY_PATH"
           fi
+          
+          # Ensure .prodenv exists and is readable by deploy user
+          if [ ! -f .prodenv ]; then
+            echo "Warning: .prodenv file not found, creating minimal version"
+            touch .prodenv
+          fi
+          sudo chown deploy:deploy .prodenv
+          chmod 600 .prodenv
           
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin

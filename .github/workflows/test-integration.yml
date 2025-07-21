@@ -149,6 +149,16 @@ jobs:
         pip install -r requirements.txt
         pip install selenium webdriver-manager
     
+    - name: 🏗️ Build test Docker image (with browsers)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: test
+        push: false
+        tags: autocusto-test:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
     - name: 🌐 Run frontend tests (Selenium)
       env:
         SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
@@ -259,6 +269,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        target: production
         push: false
         tags: autocusto-prod-test:latest
         cache-from: type=gha

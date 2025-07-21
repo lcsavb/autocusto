@@ -112,6 +112,67 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Process Feedback Section -->
+            <div class="mt-4 text-center">
+                <button type="button" class="btn btn-outline-danger btn-sm" 
+                        onclick="toggleProcessFeedback()" id="feedback-toggle-btn">
+                    <i class="oi oi-warning mr-2"></i>
+                    Reportar processo incompleto ou incorreto
+                </button>
+                <p class="text-muted mt-2 mb-0">
+                    <small><strong>Juntos garantiremos que não falte nenhum documento!</strong></small>
+                </p>
+            </div>
+            
+            <!-- Feedback Form Card (Initially Hidden) -->
+            <div class="card shadow-sm mx-auto mt-3" id="process-feedback-card" style="max-width: 700px; display: none;">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="oi oi-warning mr-2"></i>
+                        Reportar Problema em Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="process-feedback-form" action="{% url 'process-feedback-ajax' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="processo_info">Informações do Processo (opcional)</label>
+                            <input type="text" class="form-control" id="processo_info" name="processo_info" 
+                                   placeholder="Ex: João Silva, CID M79.9, Data: 15/01/2024">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="feedback_type">Tipo de Problema</label>
+                            <select class="form-control" id="feedback_type" name="feedback_type" required>
+                                <option value="incompleto">Processo gerado incompleto</option>
+                                <option value="incorreto">Informações incorretas no processo</option>
+                                <option value="formato">Problema de formatação/layout</option>
+                                <option value="outros">Outros problemas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Descrição do Problema</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" 
+                                      placeholder="Descreva o problema encontrado no processo..." required></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="toggleProcessFeedback()">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-warning">
+                                <span class="submit-text">
+                                    <i class="oi oi-envelope-closed mr-2"></i>
+                                    Enviar Feedback
+                                </span>
+                                <span class="loading-text" style="display: none;">Enviando...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -381,6 +442,49 @@ document.addEventListener('alpine:init', () => {
     }
   }))
 });
+
+// Process Feedback Form Handler
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-open feedback form if ?feedback=true parameter is present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('feedback') === 'true') {
+        setTimeout(() => {
+            toggleProcessFeedback();
+        }, 500);
+    }
+    
+    new window.FormHandler.BaseFormHandler('#process-feedback-form')
+        .withLoadingText('Enviando...')
+        .withSuccessCallback((data) => {
+            // Show success message with Toast
+            if (window.Toast) {
+                Toast.success(data.message);
+            }
+            // Hide feedback form and reset
+            toggleProcessFeedback();
+            document.getElementById('process-feedback-form').reset();
+        })
+        .withErrorCallback((error) => {
+            // Error handling is done automatically by the form handler
+            console.log('Process feedback error:', error);
+        })
+        .init();
+});
+
+// Toggle function for feedback form
+function toggleProcessFeedback() {
+    const card = document.getElementById('process-feedback-card');
+    const button = document.getElementById('feedback-toggle-btn');
+    
+    if (card.style.display === 'none' || !card.style.display) {
+        card.style.display = 'block';
+        button.innerHTML = '<i class="oi oi-x mr-2"></i>Cancelar';
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        card.style.display = 'none';
+        button.innerHTML = '<i class="oi oi-warning mr-2"></i>Reportar processo incompleto ou incorreto';
+    }
+}
 </script>
 <!-- jQuery masks removed - using Alpine.js masks instead -->
 {% else %}

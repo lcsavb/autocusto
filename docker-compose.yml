@@ -11,7 +11,9 @@ services:
       - "5432:5432"
   
   web:
-    build: .
+    build:
+      context: .
+      target: test
     command: /home/appuser/app/startup.sh python manage.py runserver 0.0.0.0:8001
     ports:
       - "8001:8001"

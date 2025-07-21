@@ -13,10 +13,10 @@ COPY requirements.txt .
 RUN apt-get update && apt-get install -y build-essential
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
-# Stage 2: Final
-FROM python:3.11-slim
+# Stage 2: Base runtime (shared dependencies)
+FROM python:3.11-slim AS base
 
-# Install runtime dependencies (pdftk, Chrome for testing, PostgreSQL client)
+# Install core runtime dependencies (pdftk, PostgreSQL client)
 RUN apt-get update && apt-get install -y \
     pdftk \
     cron \
@@ -24,6 +24,18 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     curl \
     unzip \
+    # PostgreSQL client
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y postgresql-client-17 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Stage 3: Test image (with browsers for Selenium testing)
+FROM base AS test
+
+# Install Chrome/Chromium for testing
+RUN apt-get update && apt-get install -y \
     # Chrome/Chromium dependencies
     chromium \
     chromium-driver \
@@ -32,12 +44,49 @@ RUN apt-get update && apt-get install -y \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
-    # PostgreSQL client
-    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-    && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update \
-    && apt-get install -y postgresql-client-17 \
     && rm -rf /var/lib/apt/lists/*
+
+# Complete test image setup
+# Create a non-root user
+RUN useradd -m -d /home/appuser -s /bin/bash appuser
+USER appuser
+
+# Set work directory
+WORKDIR /home/appuser/app
+
+# Add the local bin to the path
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+# Copy and install Python wheels from builder
+COPY --from=builder /app/wheels /wheels
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache /wheels/*
+
+# Switch to root to clean up wheels, then back to appuser
+USER root
+RUN rm -rf /wheels
+USER appuser
+
+# Copy application code
+COPY . .
+
+# Make startup script executable and fix ownership
+USER root
+RUN chmod +x /home/appuser/app/startup.sh
+RUN mkdir -p /var/log/django && chown -R appuser:appuser /var/log/django
+RUN mkdir -p /var/backups/autocusto && chown -R appuser:appuser /var/backups/autocusto
+RUN chown -R appuser:appuser /home/appuser/app
+USER appuser
+
+# Expose port
+EXPOSE 8001
+
+# Use startup script as entrypoint
+ENTRYPOINT ["/home/appuser/app/startup.sh"]
+CMD ["uwsgi", "--ini", "uwsgi.ini"]
+
+# Stage 4: Production image (minimal, no browsers)
+FROM base AS production
 
 # Create a non-root user
 RUN useradd -m -d /home/appuser -s /bin/bash appuser

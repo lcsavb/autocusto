@@ -32,6 +32,7 @@ urlpatterns = [
     path("clinicas/", include("clinicas.urls")),
     path("reportar-erros/", views.reportar_erros, name="reportar-erros"),
     path("solicitar-funcionalidade/", views.solicitar_funcionalidade, name="solicitar-funcionalidade"),
+    path("process-feedback-ajax/", views.process_feedback_ajax, name="process-feedback-ajax"),
     
     # Password reset URLs using Django's built-in views
     path("password_reset/", auth_views.PasswordResetView.as_view(
