@@ -43,10 +43,16 @@ class ClinicSetupIntegrationTest(TestCase):
         session['data1'] = '01/01/2024'
         session.save()
 
-        # Complete clinic registration
+        # Complete clinic registration  
         clinic_data = {
             'nome_clinica': 'Test Clinic',
-            'cns_clinica': '1234567'
+            'cns_clinica': '1234567',
+            'logradouro': 'Test Street',
+            'logradouro_num': '123',
+            'cidade': 'Test City', 
+            'bairro': 'Test District',
+            'cep': '12345-678',
+            'telefone_clinica': '11999999999'
         }
         response = self.client.post(reverse('clinicas-cadastro'), data=clinic_data)
         
@@ -85,10 +91,16 @@ class ClinicSetupIntegrationTest(TestCase):
         session['metadata'] = {'key': 'value'}  # Dict
         session.save()
 
-        # Complete clinic registration
+        # Complete clinic registration  
         clinic_data = {
             'nome_clinica': 'Test Clinic',
-            'cns_clinica': '1234567'
+            'cns_clinica': '1234567',
+            'logradouro': 'Test Street',
+            'logradouro_num': '123',
+            'cidade': 'Test City', 
+            'bairro': 'Test District',
+            'cep': '12345-678',
+            'telefone_clinica': '11999999999'
         }
         self.client.post(reverse('clinicas-cadastro'), data=clinic_data)
 
@@ -167,7 +179,13 @@ class ClinicSetupIntegrationTest(TestCase):
         # Register clinic
         clinic_data = {
             'nome_clinica': 'Association Test Clinic',
-            'cns_clinica': '7654321'
+            'cns_clinica': '7654321',
+            'logradouro': 'Association Street',
+            'logradouro_num': '456',
+            'cidade': 'Association City', 
+            'bairro': 'Association District',
+            'cep': '54321-987',
+            'telefone_clinica': '11888888888'
         }
         response = self.client.post(reverse('clinicas-cadastro'), data=clinic_data)
         

@@ -9,7 +9,6 @@ const inputsCampoDezoito = $('.cond-campo-18');
 
 function mostrarCampoRadio(radioName, divAlvo, campoAlvo) {
     const selectedValue = $(`input[name="${radioName}"]:checked`).val();
-    console.log(`${radioName} changed to:`, selectedValue);
     
     if (selectedValue == 'True' || selectedValue == 'medico') {
         divAlvo.removeClass('d-none');

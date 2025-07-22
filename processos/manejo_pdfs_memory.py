@@ -7,6 +7,7 @@ Properly handles UTF-8 encoding for Portuguese characters.
 
 import os
 import time
+import logging
 from datetime import timedelta
 from io import BytesIO
 
@@ -16,6 +17,9 @@ from django.http import HttpResponse
 
 from processos.models import Protocolo, Medicamento
 from processos.pdf_strategies import DataDrivenStrategy
+
+pdf_logger = logging.getLogger('processos.pdf')
+logger = logging.getLogger('processos')
 
 
 # fill forms in memory
@@ -34,44 +38,22 @@ def preencher_formularios_memory(lista_pdfs, dados_finais):
     Returns:
         list: List of BytesIO objects containing filled PDFs
     """
-    import time
-    start_time = time.time()
-    print(f"\n=== PREENCHER_FORMULARIOS_MEMORY START ===")
-    print(f"DEBUG: Processing {len(lista_pdfs)} PDFs using tmpfs/RAM disk approach")
     
     filled_pdfs = []
     
     for i, pdf_path in enumerate(lista_pdfs):
-        print(f"\n--- Processing PDF {i+1}/{len(lista_pdfs)} ---")
-        print(f"DEBUG: Template: {pdf_path}")
-        
         if not os.path.exists(pdf_path):
-            print(f"ERROR: PDF template not found: {pdf_path}")
             continue
             
         try:
-            # Debug: Show UTF-8 fields being processed
-            utf8_fields = {k: v for k, v in dados_finais.items() 
-                          if v and any(char in str(v) for char in 'àáâãçéêíóôõúüÀÁÂÃÇÉÊÍÓÔÕÚÜ')}
-            if utf8_fields:
-                print(f"DEBUG: UTF-8 fields being processed: {utf8_fields}")
-            
             # CHEAT: Use /dev/shm (tmpfs - RAM filesystem) for pypdftk output
             # This way pypdftk thinks it's writing to disk, but it's actually RAM
-            print(f"DEBUG: Using tmpfs/RAM disk approach with /dev/shm")
             
             # Create a unique temporary file name in /dev/shm (RAM filesystem)
             ram_pdf_path = f"/dev/shm/pdf_temp_{os.getpid()}_{i}_{int(time.time())}.pdf"
             
-            print(f"DEBUG: Temporary RAM path: {ram_pdf_path}")
-            
             # Use pypdftk normally - it will write to RAM (tmpfs)
-            fill_start = time.time()
             filled_pdf_path = pypdftk.fill_form(pdf_path, dados_finais, ram_pdf_path)
-            fill_end = time.time()
-            
-            print(f"DEBUG: pypdftk.fill_form completed in {fill_end - fill_start:.3f}s")
-            print(f"DEBUG: pypdftk.fill_form returned: {filled_pdf_path}")
             
             # Check if PDF was created in RAM
             if filled_pdf_path and os.path.exists(filled_pdf_path):
@@ -79,34 +61,21 @@ def preencher_formularios_memory(lista_pdfs, dados_finais):
                 with open(filled_pdf_path, 'rb') as pdf_file:
                     pdf_bytes = pdf_file.read()
                 
-                print(f"DEBUG: PDF read from RAM: {len(pdf_bytes)} bytes")
-                
                 # Clean up RAM file immediately
                 os.unlink(filled_pdf_path)
-                print(f"DEBUG: Cleaned up RAM file: {filled_pdf_path}")
                 
                 # Verify PDF data
                 if pdf_bytes and pdf_bytes.startswith(b'%PDF-'):
-                    print(f"DEBUG: PDF generated successfully using tmpfs (RAM disk)")
                     pdf_io = BytesIO(pdf_bytes)
                     filled_pdfs.append(pdf_io)
                 else:
-                    print(f"ERROR: Invalid PDF generated - bad header: {pdf_bytes[:20] if pdf_bytes else 'No data'}")
                     continue
             else:
-                print(f"ERROR: PDF not created in RAM: {filled_pdf_path}")
                 continue
                 
         except Exception as e:
-            print(f"ERROR: Failed to process {pdf_path} with tmpfs approach: {e}")
-            import traceback
-            print(f"ERROR: Traceback: {traceback.format_exc()}")
             continue
     
-    end_time = time.time()
-    total_time = end_time - start_time
-    print(f"DEBUG: Successfully processed {len(filled_pdfs)} PDFs using tmpfs in {total_time:.3f}s")
-    print(f"=== PREENCHER_FORMULARIOS_MEMORY END ===\n")
     return filled_pdfs
 
 
@@ -134,10 +103,6 @@ def generate_fdf_content(data_dict):
             # Convert to string and handle UTF-8 properly
             value_str = str(field_value)
             
-            # Debug: Log fields with Portuguese characters
-            if any(char in value_str for char in 'àáâãçéêíóôõúüÀÁÂÃÇÉÊÍÓÔÕÚÜ'):
-                print(f"DEBUG: UTF-8 field '{field_name}': '{value_str}'")
-                print(f"DEBUG: UTF-8 bytes: {value_str.encode('utf-8')}")
             
             # Escape special characters for PDF/FDF format
             # Handle parentheses, backslashes, and other special chars
@@ -178,20 +143,13 @@ def concatenar_pdfs_memory(pdf_ios):
     Returns:
         bytes: Concatenated PDF bytes
     """
-    import time
-    start_time = time.time()
-    print(f"\n=== CONCATENAR_PDFS_MEMORY START ===")
-    print(f"DEBUG: Concatenating {len(pdf_ios)} PDFs using pypdftk with tmpfs")
-    
     if not pdf_ios:
-        print("ERROR: No PDFs to concatenate")
         return None
     
     if len(pdf_ios) == 1:
         # Single PDF, return as is
         pdf_ios[0].seek(0)
         result = pdf_ios[0].read()
-        print(f"DEBUG: Single PDF, returning {len(result)} bytes")
         return result
     
     try:
@@ -228,33 +186,22 @@ def concatenar_pdfs_memory(pdf_ios):
         if concatenated_pdf and os.path.exists(concatenated_pdf):
             with open(concatenated_pdf, 'rb') as output_file:
                 pdf_bytes = output_file.read()
-            print(f"DEBUG: Concatenated PDF bytes: {len(pdf_bytes)} bytes")
             
             # Clean up output file from RAM
             os.unlink(concatenated_pdf)
-            print(f"DEBUG: Cleaned up RAM output file: {concatenated_pdf}")
         else:
-            print(f"ERROR: Concatenated PDF not found: {concatenated_pdf}")
             pdf_bytes = None
         
         # Clean up temp files from RAM
         for temp_file in temp_files:
             try:
                 os.unlink(temp_file)
-                print(f"DEBUG: Cleaned up RAM temp file: {temp_file}")
             except Exception as cleanup_error:
-                print(f"DEBUG: Failed to cleanup RAM temp file {temp_file}: {cleanup_error}")
+                pass
         
-        end_time = time.time()
-        total_time = end_time - start_time
-        print(f"DEBUG: Total concatenation time: {total_time:.3f}s")
-        print(f"=== CONCATENAR_PDFS_MEMORY END ===\n")
         return pdf_bytes
         
     except Exception as e:
-        print(f"ERROR: Concatenation failed: {e}")
-        import traceback
-        print(f"ERROR: Traceback: {traceback.format_exc()}")
         return None
 
 
@@ -297,14 +244,10 @@ def formatacao_data(dados):
         new_date = dados["data_1"] + timedelta(days=dias)
         formatted_date = new_date.strftime("%d/%m/%Y")
         dados[f"data_{mes}"] = formatted_date
-        print(f"DEBUG: data_{mes} = {formatted_date}")
         dias += 30
         mes += 1
     
-    original_date = dados["data_1"]
     dados["data_1"] = dados["data_1"].strftime("%d/%m/%Y")
-    print(f"DEBUG: Formatted data_1 from {original_date} to {dados['data_1']}")
-    print(f"--- FORMATACAO_DATA END ---\n")
 
 
 def ajustar_campo_18(dados_lme):
@@ -340,9 +283,7 @@ def ajustar_campo_18(dados_lme):
     - Consider using enum for 'preenchido_por' values instead of strings
     - Add documentation explaining Brazilian medical form regulations
     """
-    print(f"\n--- AJUSTAR_CAMPO_18 START ---")
     preenchido_por = dados_lme.get("preenchido_por", "NOT_FOUND")
-    print(f"DEBUG: preenchido_por = {preenchido_por}")
     
     if preenchido_por != "medico":
         print(f"DEBUG: Not filled by doctor, adjusting field 18...")
@@ -351,13 +292,9 @@ def ajustar_campo_18(dados_lme):
         for field in fields_to_delete:
             if field in dados_lme:
                 del dados_lme[field]
-                print(f"DEBUG: Deleted field: {field}")
         
         dados_lme["etnia"] = ""
         dados_lme["escolha_documento"] = ""
-        print(f"DEBUG: Set etnia and escolha_documento to empty")
-    
-    print(f"--- AJUSTAR_CAMPO_18 END ---\n")
 
 
 # pdf generator
@@ -413,21 +350,12 @@ class GeradorPDF:
         - Add unit tests for each logical component
         - Consider implementing async processing for large PDF generation
         """
-        print(f"\n=== GERADOR_PDF_MEMORY.GENERICO_STREAM START ===")
-        
         cpf_paciente = dados_lme_base["cpf_paciente"]
         cid = dados_lme_base["cid"]
         nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
         primeira_vez = dados_lme_base["consentimento"]
         relatorio = dados_lme_base["relatorio"]
         exames = dados_lme_base["exames"]
-        
-        print(f"DEBUG: Patient CPF: {cpf_paciente}")
-        print(f"DEBUG: CID: {cid}")
-        print(f"DEBUG: Final PDF name: {nome_final_pdf}")
-        print(f"DEBUG: First time (consent): {primeira_vez}")
-        print(f"DEBUG: Include report: {relatorio}")
-        print(f"DEBUG: Include exams: {exames}")
         
         # Format dates
         formatacao_data(dados_lme_base)
@@ -438,29 +366,26 @@ class GeradorPDF:
         # Get protocol info and initialize strategy
         try:
             protocolo = Protocolo.objects.get(doenca__cid=cid)
-            print(f"DEBUG: Found protocol: {protocolo.nome}")
             
             # Initialize data-driven strategy
             strategy = DataDrivenStrategy(protocolo)
         except Protocolo.DoesNotExist:
-            print(f"ERROR: Protocol not found for CID: {cid}")
+            logger.error(f"Protocol not found for CID: {cid}")
             return HttpResponse("Protocol not found", status=404)
         
         # Add disease-specific PDFs using strategy
         try:
             disease_files = strategy.get_disease_specific_paths(dados_lme_base)
             arquivos_base.extend(disease_files)
-            print(f"DEBUG: Added {len(disease_files)} disease-specific PDFs via strategy")
         except Exception as e:
-            print(f"ERROR: Failed to add disease-specific PDFs: {e}")
+            pass
         
         # Add medication-specific PDFs using strategy
         try:
             medication_files = strategy.get_medication_specific_paths(dados_lme_base)
             arquivos_base.extend(medication_files)
-            print(f"DEBUG: Added {len(medication_files)} medication-specific PDFs via strategy")
         except Exception as e:
-            print(f"ERROR: Failed to add medication-specific PDFs: {e}")
+            pass
         
         # Add consent PDF if needed
         if primeira_vez == "True" or primeira_vez == True:
@@ -473,43 +398,35 @@ class GeradorPDF:
                     medicamento = Medicamento.objects.get(id=id_med)
                     dados_lme_base["consentimento_medicamento"] = medicamento.nome
                     arquivos_base.append(consentimento_pdf)
-                    print(f"DEBUG: Added consent PDF")
             except Exception as e:
-                print(f"ERROR: Failed to add consent PDF: {e}")
+                pass
         
         # Add report PDF if needed
         if relatorio and str(relatorio).strip() and str(relatorio).strip().lower() != "false":
             if os.path.exists(settings.PATH_RELATORIO):
                 arquivos_base.append(settings.PATH_RELATORIO)
-                print(f"DEBUG: Added report PDF")
         
         # Add exam PDF if needed
         if exames and str(exames).strip() and str(exames).strip().lower() != "false":
             if os.path.exists(settings.PATH_EXAMES):
                 arquivos_base.append(settings.PATH_EXAMES)
-                print(f"DEBUG: Added exam PDF")
         
         # Adjust field 18
         ajustar_campo_18(dados_lme_base)
-        
-        print(f"DEBUG: Processing {len(arquivos_base)} PDF templates")
         
         # Fill all PDFs in memory
         filled_pdfs = preencher_formularios_memory(arquivos_base, dados_lme_base)
         
         if not filled_pdfs:
-            print(f"ERROR: No PDFs were filled")
+            pdf_logger.error("No PDFs were filled during generation")
             return HttpResponse("PDF generation failed", status=500)
         
         # Concatenate PDFs in memory
         final_pdf_bytes = concatenar_pdfs_memory(filled_pdfs)
         
         if not final_pdf_bytes:
-            print(f"ERROR: PDF concatenation failed")
+            pdf_logger.error("PDF concatenation failed")
             return HttpResponse("PDF concatenation failed", status=500)
-        
-        print(f"DEBUG: Generated final PDF: {len(final_pdf_bytes)} bytes")
-        print(f"=== GERADOR_PDF_MEMORY.GENERICO_STREAM END ===\n")
         
         # Return HttpResponse with PDF bytes
         response = HttpResponse(

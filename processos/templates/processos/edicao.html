@@ -10,6 +10,7 @@
 
 <div class="container-fluid toast-enabled">
   <form method="POST" novalidate id="edicao-form">
+    {% csrf_token %}
 
     <div class="card rounded" style="padding: 1.5rem;">
 
@@ -34,11 +35,7 @@
               <!-- Protocol Consultation Link -->
               <div x-data class="mr-3">
                 <button type="button" class="protocol-link" 
-                        @click="console.log('[DEBUG] Consultar Protocolo clicked', {
-                          url: '{{ link_protocolo }}',
-                          title: 'Protocolo - {{ processo.doenca.cid }}',
-                          allowDownload: true
-                        }); $dispatch('open-pdf', { 
+                        @click="$dispatch('open-pdf', { 
                           url: '{{ link_protocolo }}', 
                           title: 'Protocolo - {{ processo.doenca.cid }}',
                           allowDownload: true 
@@ -193,15 +190,11 @@
 <script>
 // Initialize PdfFormHandler for Edicao form
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[EDICAO] Initializing PDF form handler');
-    
     new PdfFormHandler('#edicao-form')
         .withLoadingText('Enviando...')
         .withPdfModal(true)
         .withSuccessRedirect('/')
         .init();
-    
-    console.log('[EDICAO] PDF form handler initialized');
 });
 </script>
 

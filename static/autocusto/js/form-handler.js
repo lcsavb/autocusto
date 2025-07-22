@@ -7,10 +7,10 @@
 // Centralized Form Configuration
 const FORM_CONFIG = {
     debug: {
-        enabled: true,
-        performanceMetrics: true,
-        stateTracking: true,
-        eventTracking: true
+        enabled: false,
+        performanceMetrics: false,
+        stateTracking: false,
+        eventTracking: false
     },
     defaults: {
         loadingText: 'Enviando...',
@@ -37,16 +37,8 @@ window.FormHandler = (function() {
     
     // Private utilities
     function log(level, message, data = null, formId = 'unknown') {
-        if (!FORM_CONFIG.debug.enabled) return;
-        
-        const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
-        const prefix = `[FormHandler ${level.toUpperCase()}] ${timestamp} [${formId}]`;
-        
-        if (data) {
-            console.log(`${prefix} ${message}`, data);
-        } else {
-            console.log(`${prefix} ${message}`);
-        }
+        // Debug logging disabled
+        return;
     }
 
     function measurePerformance(operation, fn, formId) {

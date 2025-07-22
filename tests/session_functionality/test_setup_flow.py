@@ -55,9 +55,9 @@ class SetupFlowRedirectTest(TestCase):
 
         response = self.client.get(reverse('processos-cadastro'))
         
-        # Should redirect to complete-profile
+        # Should redirect to home (where profile completion is handled)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('complete-profile'))
+        self.assertEqual(response.url, '/')
         
         # Check info message
         messages = list(get_messages(response.wsgi_request))
@@ -79,9 +79,9 @@ class SetupFlowRedirectTest(TestCase):
 
         response = self.client.get(reverse('processos-cadastro'))
         
-        # Should redirect to clinic registration
+        # Should redirect to home (where clinic setup is handled)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('clinicas-cadastro'))
+        self.assertEqual(response.url, '/')
         
         # Check info message
         messages = list(get_messages(response.wsgi_request))

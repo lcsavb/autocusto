@@ -239,7 +239,6 @@
 
   <!-- Pass Django messages to Alpine.js toast system -->
   {% if messages %}
-  <!-- DEBUG: Django messages detected in base.html -->
   <script>
     window.djangoMessages = [
       {% for message in messages %}
@@ -249,11 +248,7 @@
         }{% if not forloop.last %},{% endif %}
       {% endfor %}
     ];
-    console.log('[DEBUG] window.djangoMessages:', window.djangoMessages);
   </script>
-  <script>console.log('[DEBUG] Django messages block executed in base.html');</script>
-  {% else %}
-  <script>console.log('[DEBUG] No Django messages found in base.html');</script>
   {% endif %}
 
     {%block content %}{% endblock %}

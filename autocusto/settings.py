@@ -92,13 +92,26 @@ WSGI_APPLICATION = "autocusto.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+# Auto-detect if running inside container for database host
+def get_default_db_host():
+    """Return 'db' if running in container, 'localhost' otherwise"""
+    import os
+    import socket
+    
+    # Check if we can resolve 'db' hostname (indicates we're in Docker network)
+    try:
+        socket.gethostbyname('db')
+        return 'db'
+    except socket.gaierror:
+        return 'localhost'
+
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
         "NAME": os.environ.get('SQL_DATABASE', 'autocusto'),
         "USER": os.environ.get('SQL_USER', 'lucas'),
         "PASSWORD": os.environ.get('SQL_PASSWORD', 'rraptnor'),
-        "HOST": os.environ.get('SQL_HOST', 'db'),
+        "HOST": os.environ.get('SQL_HOST', get_default_db_host()),
         "PORT": os.environ.get('SQL_PORT', '5432'),
     }
 }
@@ -210,27 +223,6 @@ PATH_PDF_DIR = get_static_path("protocolos")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Logging configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'processos': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
-}
 
 # Email settings for password reset
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Real email sending
@@ -253,6 +245,7 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True  # Fix: Prevent JS access to CSRF token
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -263,34 +256,191 @@ if not DEBUG:
     
     # Note: X_FRAME_OPTIONS handled by nginx for consistency
 
-# Enhanced Logging for Production
+# Enhanced Logging Configuration for Production Healthcare Application
 if not DEBUG:
+    # Create log directory if it doesn't exist
+    import os
+    os.makedirs('/var/log/django', exist_ok=True)
+    
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
-            'verbose': {
-                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'production': {
+                'format': '[{asctime}] {levelname} {name} {process:d}.{thread:d} | {message}',
                 'style': '{',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
             },
-            'simple': {
-                'format': '{levelname} {message}',
+            'security': {
+                'format': '[{asctime}] SECURITY {levelname} | {message}',
                 'style': '{',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
+            'performance': {
+                'format': '[{asctime}] PERF {levelname} | {message}',
+                'style': '{',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
+            'audit': {
+                'format': '[{asctime}] AUDIT | {message}',
+                'style': '{',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
+        },
+        'filters': {
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse',
             },
         },
         'handlers': {
-            'file': {
+            # Main application errors
+            'error_file': {
                 'level': 'ERROR',
                 'class': 'logging.handlers.RotatingFileHandler',
                 'filename': '/var/log/django/error.log',
-                'maxBytes': 1024*1024*10,  # 10 MB
-                'backupCount': 5,
-                'formatter': 'verbose',
+                'maxBytes': 1024*1024*50,  # 50 MB
+                'backupCount': 10,
+                'formatter': 'production',
+                'filters': ['require_debug_false'],
             },
-            'console': {
+            # General application info
+            'info_file': {
                 'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/django/info.log',
+                'maxBytes': 1024*1024*20,  # 20 MB
+                'backupCount': 7,
+                'formatter': 'production',
+                'filters': ['require_debug_false'],
+            },
+            # PDF generation specific
+            'pdf_file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/django/pdf.log',
+                'maxBytes': 1024*1024*20,  # 20 MB
+                'backupCount': 5,
+                'formatter': 'performance',
+                'filters': ['require_debug_false'],
+            },
+            # Security events
+            'security_file': {
+                'level': 'WARNING',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/django/security.log',
+                'maxBytes': 1024*1024*20,  # 20 MB
+                'backupCount': 30,  # Keep security logs longer
+                'formatter': 'security',
+                'filters': ['require_debug_false'],
+            },
+            # Database operations
+            'db_file': {
+                'level': 'WARNING',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/django/database.log',
+                'maxBytes': 1024*1024*20,  # 20 MB
+                'backupCount': 7,
+                'formatter': 'production',
+                'filters': ['require_debug_false'],
+            },
+            # Audit trail for healthcare compliance
+            'audit_file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/django/audit.log',
+                'maxBytes': 1024*1024*50,  # 50 MB
+                'backupCount': 365,  # Keep audit logs for 1 year
+                'formatter': 'audit',
+                'filters': ['require_debug_false'],
+            },
+            # Console output for container logs
+            'console': {
+                'level': 'WARNING',
                 'class': 'logging.StreamHandler',
-                'formatter': 'simple',
+                'formatter': 'production',
+            },
+        },
+        'root': {
+            'handlers': ['error_file', 'console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            # Django framework
+            'django': {
+                'handlers': ['error_file', 'console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'django.security': {
+                'handlers': ['security_file', 'error_file'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'django.db.backends': {
+                'handlers': ['db_file'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            # Application modules
+            'processos': {
+                'handlers': ['info_file', 'error_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'processos.pdf': {
+                'handlers': ['pdf_file', 'error_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'usuarios': {
+                'handlers': ['audit_file', 'security_file', 'info_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'medicos': {
+                'handlers': ['audit_file', 'info_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'pacientes': {
+                'handlers': ['audit_file', 'info_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'clinicas': {
+                'handlers': ['audit_file', 'info_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            # Security and audit
+            'security': {
+                'handlers': ['security_file', 'error_file', 'console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'audit': {
+                'handlers': ['audit_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
+else:
+    # Development logging - simpler and more verbose
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'dev': {
+                'format': '[{asctime}] {levelname} {name} | {message}',
+                'style': '{',
+                'datefmt': '%H:%M:%S',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'dev',
             },
         },
         'root': {
@@ -298,14 +448,14 @@ if not DEBUG:
             'level': 'INFO',
         },
         'loggers': {
-            'django': {
-                'handlers': ['file', 'console'],
-                'level': 'ERROR',
+            'processos': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
                 'propagate': False,
             },
-            'processos': {
-                'handlers': ['file', 'console'],
-                'level': 'INFO',
+            'django.db.backends': {
+                'handlers': ['console'],
+                'level': 'INFO',  # Show SQL queries in development
                 'propagate': False,
             },
         },

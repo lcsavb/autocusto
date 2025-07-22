@@ -351,4 +351,9 @@ docker-compose exec web bash
 - **Input Validation**: Extensive form validation
 - **Container Security**: Non-root execution, tmpfs isolation
 
+## Development Best Practices
+
+### Exception Handling
+- **Always add django messages**: When handling exceptions, use Django's messaging framework to provide user-friendly feedback
+
 Remember: This system handles sensitive data and must maintain high security, performance, and reliability standards. Always consider the memory-optimized PDF generation as the core technical challenge when making changes.

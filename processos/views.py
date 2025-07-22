@@ -433,23 +433,21 @@ def renovacao_rapida(request):
         try:
             import time
             start_time = time.time()
-            print(f"\n=== RENOVACAO_RAPIDA PDF GENERATION START ===")
-            print(f"DEBUG: processo_id: {processo_id}")
-            print(f"DEBUG: nova_data: {nova_data}")
+            pdf_logger.info(f"Starting PDF renewal generation for processo {processo_id}")
+            audit_logger.info(f"User {request.user.email} initiated renewal for processo {processo_id}")
             
             # English: data
             data_start = time.time()
             dados = gerar_dados_renovacao(nova_data, processo_id)
             data_end = time.time()
-            print(f"DEBUG: Generated renovation data successfully in {data_end - data_start:.3f}s")
+            pdf_logger.info(f"Renovation data generated in {data_end - data_start:.3f}s")
             
             # English: final_pdf_path
             pdf_start = time.time()
             path_pdf_final = transfere_dados_gerador(dados)
             pdf_end = time.time()
             total_time = pdf_end - start_time
-            print(f"DEBUG: transfere_dados_gerador returned: {path_pdf_final} in {pdf_end - pdf_start:.3f}s")
-            print(f"DEBUG: Total PDF generation time: {total_time:.3f}s")
+            pdf_logger.info(f"PDF generation completed in {total_time:.3f}s")
             
             if path_pdf_final:
                 # Check if this is an AJAX request
@@ -466,7 +464,8 @@ def renovacao_rapida(request):
                     messages.success(request, "Renovação processada com sucesso! PDF gerado.")
                     return redirect(path_pdf_final)
             else:
-                print("ERROR: Failed to generate PDF for renewal")
+                logger.error("Failed to generate PDF for renewal")
+                pdf_logger.error("PDF generation failed for renewal")
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({
                         'success': False,
@@ -475,7 +474,7 @@ def renovacao_rapida(request):
                 else:
                     messages.error(request, "Falha ao gerar PDF. Verifique os logs do sistema.")
         except Exception as e:
-            print(f"ERROR: Exception in renovacao_rapida: {e}")
+            logger.error(f"Exception in renovacao_rapida: {e}", exc_info=True)
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': False,

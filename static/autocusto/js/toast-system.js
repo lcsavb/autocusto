@@ -28,10 +28,10 @@ const TOAST_CONFIG = {
         removeDelay: 300
     },
     debug: {
-        enabled: true,
-        performanceMetrics: true,
-        domMutations: true,
-        timingAnalysis: true
+        enabled: false,
+        performanceMetrics: false,
+        domMutations: false,
+        timingAnalysis: false
     }
 };
 
@@ -55,16 +55,8 @@ window.Toast = (function() {
 
     // Private utility functions
     function log(level, message, data = null) {
-        if (!debugMode) return;
-        
-        const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
-        const prefix = `[Toast ${level.toUpperCase()}] ${timestamp}`;
-        
-        if (data) {
-            console.log(`${prefix} ${message}`, data);
-        } else {
-            console.log(`${prefix} ${message}`);
-        }
+        // Debug logging disabled
+        return;
     }
 
     function measurePerformance(operation, fn) {
@@ -574,12 +566,4 @@ window.Toast = (function() {
     };
 })();
 
-// Optional: Expose for debugging in console
-if (TOAST_CONFIG.debug.enabled) {
-    window.ToastDebug = {
-        getState: () => window.Toast.getState(),
-        getMetrics: () => window.Toast.getPerformanceMetrics(),
-        clearAll: () => window.Toast.clear(),
-        toggleDebug: (enabled) => window.Toast.setDebugMode(enabled)
-    };
-}
+// Debug tools disabled

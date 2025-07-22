@@ -1,3 +1,4 @@
+import logging
 from django import forms
 from django.db import transaction
 from processos.models import Processo, Protocolo, Doenca
@@ -13,6 +14,8 @@ from .dados import (
 # Legacy import no longer needed - migrated protocols use data-driven approach
 # from .seletor import seletor_campos
 from .pdf_strategies import get_conditional_fields
+
+logger = logging.getLogger('processos')
 
 # show medication
 def mostrar_med(mostrar, *args):
@@ -642,8 +645,8 @@ def fabricar_formulario(cid, renovar):
         # Legacy protocols without data-driven configuration will have no conditional fields
         # This maintains backward compatibility until all protocols are migrated
         campos = {}
-        print(f"DEBUG: No conditional fields configured for {protocolo.nome} - protocol needs migration to data-driven approach")
+        logger.debug(f"No conditional fields configured for {protocolo.nome} - protocol needs migration")
     else:
-        print(f"DEBUG: Using data-driven conditional fields for {protocolo.nome}")
+        logger.debug(f"Using data-driven conditional fields for {protocolo.nome}")
 
     return type("SuperForm", (modelo_base,), campos)

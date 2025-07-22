@@ -9,25 +9,6 @@ from .manejo_pdfs_memory import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
 
-# DEBUG: Print all PDF-related settings at module load
-print(f"\n=== PDF SETTINGS DEBUG ===")
-print(f"DEBUG: PATH_LME_BASE: {getattr(settings, 'PATH_LME_BASE', 'NOT_SET')}")
-print(f"DEBUG: PATH_LME_BASE exists: {os.path.exists(getattr(settings, 'PATH_LME_BASE', '')) if hasattr(settings, 'PATH_LME_BASE') else 'NOT_SET'}")
-print(f"DEBUG: PATH_RELATORIO: {getattr(settings, 'PATH_RELATORIO', 'NOT_SET')}")
-print(f"DEBUG: PATH_RELATORIO exists: {os.path.exists(getattr(settings, 'PATH_RELATORIO', '')) if hasattr(settings, 'PATH_RELATORIO') else 'NOT_SET'}")
-print(f"DEBUG: PATH_EXAMES: {getattr(settings, 'PATH_EXAMES', 'NOT_SET')}")
-print(f"DEBUG: PATH_EXAMES exists: {os.path.exists(getattr(settings, 'PATH_EXAMES', '')) if hasattr(settings, 'PATH_EXAMES') else 'NOT_SET'}")
-print(f"DEBUG: PATH_PDF_DIR: {getattr(settings, 'PATH_PDF_DIR', 'NOT_SET')}")
-print(f"DEBUG: PATH_PDF_DIR exists: {os.path.exists(getattr(settings, 'PATH_PDF_DIR', '')) if hasattr(settings, 'PATH_PDF_DIR') else 'NOT_SET'}")
-print(f"DEBUG: STATIC_ROOT: {getattr(settings, 'STATIC_ROOT', 'NOT_SET')}")
-print(f"DEBUG: STATIC_URL: {getattr(settings, 'STATIC_URL', 'NOT_SET')}")
-if hasattr(settings, 'PATH_PDF_DIR') and os.path.exists(settings.PATH_PDF_DIR):
-    try:
-        protocols_list = os.listdir(settings.PATH_PDF_DIR)
-        print(f"DEBUG: Available protocols: {protocols_list}")
-    except Exception as e:
-        print(f"DEBUG: Error listing protocols: {e}")
-print(f"=== PDF SETTINGS DEBUG END ===\n")
 
 
 # prepare_model
@@ -379,17 +360,8 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     Returns:
         dict: A complete dictionary of data for the new renewal process.
     """
-    import time
-    start_time = time.time()
-    print(f"\n=== GERAR_DADOS_RENOVACAO START ===")
-    print(f"DEBUG: primeira_data: {primeira_data}")
-    print(f"DEBUG: processo_id: {processo_id}")
-    
     # English: process
     processo = Processo.objects.get(id=processo_id)
-    print(f"DEBUG: Found process: {processo.id} for patient {processo.paciente.nome_paciente}")
-    print(f"DEBUG: Process CID: {processo.doenca.cid}")
-    print(f"DEBUG: Process diagnosis: {processo.doenca.nome}")
     
     # English: data
     dados = {}
@@ -404,7 +376,6 @@ def gerar_dados_renovacao(primeira_data, processo_id):
         # English: data
         dados.update(d)
     
-    print(f"DEBUG: Combined data keys: {list(dados.keys())}")
     
     # pdftk fails if input is not a string!
     # English: data
@@ -420,15 +391,12 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     
     # Validate and parse date
     if not primeira_data or primeira_data.strip() == "":
-        print(f"ERROR: Empty date provided for renewal")
         raise ValueError("Data de renovação não pode estar vazia")
     
     try:
         # English: data
         dados["data_1"] = datetime.strptime(primeira_data, "%d/%m/%Y")
-        print(f"DEBUG: Parsed renewal date: {dados['data_1']}")
     except ValueError as e:
-        print(f"ERROR: Invalid date format '{primeira_data}': {e}")
         raise ValueError(f"Formato de data inválido: {primeira_data}. Use DD/MM/AAAA")
     
     # English: data
@@ -448,12 +416,8 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     try:
         # English: protocol
         protocolo = processo.doenca.protocolo
-        print(f"DEBUG: Protocol name: {protocolo.nome}")
         
         if protocolo.nome == "dor_crônica":
-            print(f"DEBUG: Chronic pain protocol detected")
-            print(f"DEBUG: Original dados_condicionais: {processo.dados_condicionais}")
-            
             # For chronic pain, we need to include the LANNS/EVA assessment form
             # This will be picked up by the conditional PDFs glob pattern
             # English: data
@@ -464,30 +428,17 @@ def gerar_dados_renovacao(primeira_data, processo_id):
                 for key, value in processo.dados_condicionais.items():
                     # English: data
                     dados[key] = value
-                    print(f"DEBUG: Preserved conditional data: {key} = {value}")
-            
-            print(f"DEBUG: Set include_lanns_eva flag for chronic pain renewal")
             
     except Exception as e:
-        print(f"ERROR: Failed to check protocol for conditional requirements: {e}")
-    
-    print(f"DEBUG: Set conditional flags - consent: {dados['consentimento']}, report: {dados['relatorio']}, exams: {dados['exames']}")
+        pass
     
     resgatar_prescricao(dados, processo)
-    print(f"DEBUG: Retrieved prescription data")
     
     # English: medication_ids
     meds_ids = gerar_lista_meds_ids(dados)
-    print(f"DEBUG: Generated medication IDs: {meds_ids}")
     
     # English: data
     dados = gera_med_dosagem(dados, meds_ids)[0]
-    print(f"DEBUG: Generated medication dosage data")
-    
-    print(f"DEBUG: Final data keys before return: {list(dados.keys())}")
-    end_time = time.time()
-    print(f"DEBUG: Data generation completed in {end_time - start_time:.3f}s")
-    print(f"=== GERAR_DADOS_RENOVACAO END ===\n")
     return dados
 
 
@@ -559,79 +510,37 @@ def transfere_dados_gerador(dados):
         str: The path to the generated PDF file, or None if an error occurs.
     """
     try:
-        import time
-        start_time = time.time()
-        print(f"\n=== TRANSFERE_DADOS_GERADOR START ===")
-        print(f"DEBUG: Input data keys: {list(dados.keys())}")
-        print(f"DEBUG: Patient CPF: {dados.get('cpf_paciente', 'NOT_FOUND')}")
-        print(f"DEBUG: CID: {dados.get('cid', 'NOT_FOUND')}")
-        print(f"DEBUG: Consent flag: {dados.get('consentimento', 'NOT_FOUND')}")
-        print(f"DEBUG: Report flag: {dados.get('relatorio', 'NOT_FOUND')}")
-        print(f"DEBUG: Exams flag: {dados.get('exames', 'NOT_FOUND')}")
-        print(f"DEBUG: Data_1: {dados.get('data_1', 'NOT_FOUND')}")
-        print(f"DEBUG: Medication ID 1: {dados.get('id_med1', 'NOT_FOUND')}")
-        print(f"DEBUG: PATH_LME_BASE: {settings.PATH_LME_BASE}")
-        print(f"DEBUG: PATH_LME_BASE exists: {os.path.exists(settings.PATH_LME_BASE)}")
-        
         # Save CPF and CID before PDF generation (they might be modified during processing)
         cpf_paciente = dados.get('cpf_paciente', 'unknown')
         cid = dados.get('cid', 'unknown')
-        print(f"DEBUG: Saved CPF before PDF generation: '{cpf_paciente}'")
-        print(f"DEBUG: Saved CID before PDF generation: '{cid}'")
         
         # English: pdf
-        pdf_create_start = time.time()
         pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
-        pdf_create_end = time.time()
-        print(f"DEBUG: GeradorPDFMemory instance created in {pdf_create_end - pdf_create_start:.3f}s")
         
         # Generate PDF in memory and get HttpResponse
-        pdf_gen_start = time.time()
         response = pdf.generico_stream(dados, settings.PATH_LME_BASE)
-        pdf_gen_end = time.time()
-        print(f"DEBUG: generico_stream method returned response in {pdf_gen_end - pdf_gen_start:.3f}s")
         
         if response is None:
-            print(f"ERROR: PDF generation failed in transfere_dados_gerador")
             return None
         
         # Store the response in a cache or session for later serving
         # Use the saved CPF and CID (not from dados which might be modified)
         
-        print(f"DEBUG: Using saved CPF: '{cpf_paciente}' (type: {type(cpf_paciente)})")
-        print(f"DEBUG: Using saved CID: '{cid}' (type: {type(cid)})")
-        
-        # Check if CPF was saved correctly
-        if cpf_paciente == 'unknown':
-            print(f"DEBUG: CPF was not saved correctly! Checking all keys...")
-            for key, value in dados.items():
-                if 'cpf' in key.lower():
-                    print(f"DEBUG: Found CPF-related key: {key} = {value}")
-        
         nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
-        print(f"DEBUG: Final PDF name will be: {nome_final_pdf}")
         
         # Save PDF to /tmp for immediate serving
         tmp_pdf_path = f"/tmp/{nome_final_pdf}"
         with open(tmp_pdf_path, 'wb') as f:
             f.write(response.content)
-        print(f"DEBUG: PDF saved to: {tmp_pdf_path}")
         
         # Return the URL path as before
         from django.urls import reverse
         path_pdf_final = reverse('processos-serve-pdf', kwargs={'filename': nome_final_pdf})
         
-        end_time = time.time()
-        total_time = end_time - start_time
-        print(f"DEBUG: PDF generated successfully: {path_pdf_final}")
-        print(f"DEBUG: Total transfere_dados_gerador time: {total_time:.3f}s")
-        print(f"=== TRANSFERE_DADOS_GERADOR END ===\n")
         return path_pdf_final
         
     except Exception as e:
-        print(f"ERROR: Exception in transfere_dados_gerador: {e}")
-        import traceback
-        print(f"ERROR: Traceback: {traceback.format_exc()}")
+        pdf_logger.error(f"Exception in transfere_dados_gerador: {e}", exc_info=True)
         return None
 
 
@@ -650,27 +559,16 @@ def gerar_pdf_stream(dados):
         HttpResponse: PDF response ready for streaming, or None if error occurs.
     """
     try:
-        print(f"\n=== GERAR_PDF_STREAM START ===")
-        print(f"DEBUG: Input data keys: {list(dados.keys())}")
-        print(f"DEBUG: Patient CPF: {dados.get('cpf_paciente', 'NOT_FOUND')}")
-        print(f"DEBUG: CID: {dados.get('cid', 'NOT_FOUND')}")
-        print(f"DEBUG: Using in-memory PDF generation")
-        
         # Create memory-based PDF generator
         pdf_generator = GeradorPDFMemory(dados, settings.PATH_LME_BASE)
-        print(f"DEBUG: GeradorPDFMemory instance created")
         
         # Generate PDF and return HttpResponse
         response = pdf_generator.generico_stream(dados, settings.PATH_LME_BASE)
-        print(f"DEBUG: PDF stream generated successfully")
-        print(f"=== GERAR_PDF_STREAM END ===\n")
         
         return response
         
     except Exception as e:
-        print(f"ERROR: Exception in gerar_pdf_stream: {e}")
-        import traceback
-        print(f"ERROR: Traceback: {traceback.format_exc()}")
+        pdf_logger.error(f"Exception in gerar_pdf_stream: {e}", exc_info=True)
         return None
 
 

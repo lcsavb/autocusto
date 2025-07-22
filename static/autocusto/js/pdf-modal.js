@@ -13,7 +13,6 @@ document.addEventListener('alpine:init', () => {
     showEdit: false,
     
     openPdf(url, modalTitle = 'Documento PDF', allowDownload = true, allowEdit = false) {
-      console.log('[DEBUG] openPdf called', { url, modalTitle, allowDownload, allowEdit });
       this.pdfUrl = url;
       this.title = modalTitle;
       this.showDownload = allowDownload;
@@ -98,7 +97,6 @@ document.addEventListener('alpine:init', () => {
       
       // Validate date
       if (!this.isValidDate(dateValue)) {
-        console.log('Adding date validation error toast');
         // Date validation should be immediate - no delay needed
         Toast.error('Data inválida! Use o formato DD/MM/AAAA');
         return;
@@ -106,7 +104,6 @@ document.addEventListener('alpine:init', () => {
       
       // If editing is enabled, submit form normally to allow redirect
       if (isEditing) {
-        console.log('Edit mode enabled - submitting form normally for redirect');
         event.target.submit(); // Submit form normally, allowing backend redirect
         return;
       }
