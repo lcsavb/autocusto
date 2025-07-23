@@ -6,6 +6,19 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Which test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - backend
+        - frontend
+        - javascript
+        - security
 
 env:
   REGISTRY: ghcr.io
@@ -185,7 +198,7 @@ jobs:
     
     - name: 📸 Upload test screenshots on failure
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-screenshots
         path: test_screenshots/
@@ -225,7 +238,7 @@ jobs:
         npm run test:coverage
     
     - name: 📤 Upload JavaScript coverage
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: javascript-coverage
         path: static/autocusto/js/coverage/
@@ -290,7 +303,7 @@ jobs:
     
     - name: 📤 Upload security reports
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
