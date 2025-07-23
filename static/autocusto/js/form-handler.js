@@ -7,10 +7,10 @@
 // Centralized Form Configuration
 const FORM_CONFIG = {
     debug: {
-        enabled: false,
-        performanceMetrics: false,
-        stateTracking: false,
-        eventTracking: false
+        enabled: true,
+        performanceMetrics: true,
+        stateTracking: true,
+        eventTracking: true
     },
     defaults: {
         loadingText: 'Enviando...',

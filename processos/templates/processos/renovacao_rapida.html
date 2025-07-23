@@ -2,6 +2,91 @@
 {% load static %}
    
 {% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/processos.css' %}">
+
+<style>
+/* CSS to make div structure look exactly like Bootstrap table */
+.fake-table-header {
+    display: flex;
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.fake-th {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+}
+
+.fake-table-body {
+    display: block;
+}
+
+.fake-table-row {
+    display: flex;
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.fake-table-row:hover {
+    background-color: rgba(0,0,0,.075);
+}
+
+.fake-td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+}
+
+.fake-td.align-middle {
+    align-items: center;
+}
+
+/* Fix button height consistency during loading animation */
+.btn-submit-process {
+    min-height: 38px; /* Consistent height */
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-submit-process .progress-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+    animation: fillProgress 3s ease-out forwards;
+    z-index: 0;
+}
+
+.btn-submit-process span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure responsive behavior */
+@media (max-width: 768px) {
+    .fake-table-header,
+    .fake-table-row {
+        flex-direction: column;
+    }
+    
+    .fake-th,
+    .fake-td {
+        width: 100% !important;
+        border-left: none;
+        border-right: none;
+    }
+}
+</style>
 
 <!-- Include PDF Modal -->
 {% include 'components/pdf_modal.html' %}
@@ -28,94 +113,97 @@
                     </div>
                 </div>
 
-                <!-- Data Table -->
+                <!-- Data Table - CSS Grid Version -->
                 {% if busca_pacientes %}
                 <div class="table-responsive">
-                    <table class="table table-hover" id="patientsTable">
-                        <thead class="bg-light">
-                            <tr>
-                                <th style="width: 25%;">
-                                    <i class="oi oi-person mr-1"></i>
-                                    Paciente
-                                </th>
-                                <th style="width: 20%;">
-                                    <i class="oi oi-document mr-1"></i>
-                                    Processo
-                                </th>
-                                <th style="width: 20%;">
-                                    <i class="oi oi-calendar mr-1"></i>
-                                    Data
-                                </th>
-                                <th style="width: 15%;">
-                                    <i class="oi oi-cog mr-1"></i>
-                                    Opções
-                                </th>
-                                <th style="width: 20%;">
-                                    <i class="oi oi-reload mr-1"></i>
-                                    Ação
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for paciente in busca_pacientes %}
-                            <tr class="patient-row">
-                                <td class="align-middle">
-                                    <div class="d-flex flex-column">
-                                        <span class="font-weight-bold text-primary">{{ paciente.nome_paciente }}</span>
-                                        <small class="text-muted">{{ paciente.cpf_paciente }}</small>
+                    <!-- Table Header -->
+                    <div class="fake-table-header bg-light">
+                        <div class="fake-th" style="width: 25%;">
+                            <i class="oi oi-person mr-1"></i>
+                            Paciente
+                        </div>
+                        <div class="fake-th" style="width: 20%;">
+                            <i class="oi oi-document mr-1"></i>
+                            Processo
+                        </div>
+                        <div class="fake-th" style="width: 20%;">
+                            <i class="oi oi-calendar mr-1"></i>
+                            Data
+                        </div>
+                        <div class="fake-th" style="width: 15%;">
+                            <i class="oi oi-cog mr-1"></i>
+                            Opções
+                        </div>
+                        <div class="fake-th" style="width: 20%;">
+                            <i class="oi oi-reload mr-1"></i>
+                            Ação
+                        </div>
+                    </div>
+                    
+                    <!-- Table Body -->
+                    <div class="fake-table-body">
+                        {% for paciente in busca_pacientes %}
+                        <form method="POST" novalidate class="renovation-form fake-table-row" id="renovation-form-{{ paciente.id }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                            
+                            <div class="fake-td align-middle" style="width: 25%;">
+                                <div class="d-flex flex-column">
+                                    <span class="font-weight-bold text-primary">{{ paciente.nome_paciente }}</span>
+                                    <small class="text-muted">{{ paciente.cpf_paciente }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="fake-td align-middle" style="width: 20%;">
+                                <div class="process-radio-group">
+                                    <div class="row">
+                                        {% for processo in paciente.processos.all %}
+                                        {% if processo.usuario == usuario %}
+                                        <div class="col-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="processo_id" id="processo_{{ processo.id }}_{{ paciente.id }}" value="{{ processo.id }}" {% if forloop.first %}checked{% endif %}>
+                                                <label class="form-check-label" for="processo_{{ processo.id }}_{{ paciente.id }}">
+                                                    {{ processo.doenca.cid }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
                                     </div>
-                                </td>
-                                <td class="align-middle">
-                                    <form method="POST" novalidate style="overflow: visible;" x-data="renovacaoForm()" @submit.prevent="submitForm" class="renovation-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
-                                        
-                                        <div class="process-radio-group">
-                                            <div class="row">
-                                                {% for processo in paciente.processos.all %}
-                                                {% if processo.usuario == usuario %}
-                                                <div class="col-4">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="processo_id" id="processo_{{ processo.id }}_{{ paciente.id }}" value="{{ processo.id }}" {% if forloop.first %}checked{% endif %}>
-                                                        <label class="form-check-label" for="processo_{{ processo.id }}_{{ paciente.id }}">
-                                                            {{ processo.doenca.cid }}
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                </td>
-                                <td class="align-middle">
-                                        <div class="input-group input-group-sm">
-                                            <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA" @input="formatDate($event)">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary btn-sm today-btn" type="button" data-target="data_{{ paciente.id }}">
-                                                    <i class="oi oi-calendar"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                </td>
-                                <td class="align-middle">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="edicao" id="edicao_{{ paciente.id }}">
-                                            <label class="form-check-label" for="edicao_{{ paciente.id }}">
-                                                Permitir edição
-                                            </label>
-                                        </div>
-                                </td>
-                                <td class="align-middle">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="oi oi-reload mr-1"></i>
-                                            Renovar
+                                </div>
+                            </div>
+                            
+                            <div class="fake-td align-middle" style="width: 20%;">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control datas" name="data_1" id="data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary btn-sm today-btn" type="button" data-target="data_{{ paciente.id }}">
+                                            <i class="oi oi-calendar"></i>
                                         </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="fake-td align-middle" style="width: 15%;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="edicao" id="edicao_{{ paciente.id }}">
+                                    <label class="form-check-label" for="edicao_{{ paciente.id }}">
+                                        Permitir edição
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="fake-td align-middle" style="width: 20%;">
+                                <button type="submit" class="btn btn-submit-process">
+                                    <span class="oi oi-reload mr-2"></span>
+                                    <span class="submit-text">Renovar</span>
+                                    <span class="loading-text" style="display: none;">Processando...</span>
+                                    <div class="progress-bar-fill" style="display: none;"></div>
+                                </button>
+                            </div>
+                        </form>
+                        {% endfor %}
+                    </div>
                 </div>
                 {% else %}
                 <div class="text-center text-muted py-5">
@@ -129,19 +217,206 @@
     </div>
 </div>
 
+<!-- DEBUG: Test forms below table -->
+<div class="container mt-4">
+    <h5>Debug: Test Forms Below Table</h5>
+    {% for paciente in busca_pacientes %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h6>{{ paciente.nome_paciente }} - {{ paciente.cpf_paciente }}</h6>
+            <form method="POST" novalidate class="renovation-form debug-form" id="debug-form-{{ paciente.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Processo:</label>
+                        {% for processo in paciente.processos.all %}
+                        {% if processo.usuario == usuario %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="processo_id" id="debug_processo_{{ processo.id }}_{{ paciente.id }}" value="{{ processo.id }}" {% if forloop.first %}checked{% endif %}>
+                            <label class="form-check-label" for="debug_processo_{{ processo.id }}_{{ paciente.id }}">
+                                {{ processo.doenca.cid }}
+                            </label>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label>Data:</label>
+                        <input type="text" class="form-control datas" name="data_1" id="debug_data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="edicao" id="debug_edicao_{{ paciente.id }}">
+                            <label class="form-check-label" for="debug_edicao_{{ paciente.id }}">
+                                Permitir edição
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-submit-process position-relative overflow-hidden">
+                            <span class="oi oi-reload mr-2"></span>
+                            <span class="submit-text">Debug Renovar</span>
+                            <span class="loading-text" style="display: none;">Processando...</span>
+                            <div class="progress-bar-fill position-absolute" 
+                                 style="display: none; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3)); width: 0%; animation: fillProgress 3s ease-out forwards;">
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
 {% endblock content %}
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha256-Kg2zTcFO9LXOc7IwcBx1YeUBJmekycsnTsq2RuFHSZU=" crossorigin="anonymous"></script>
 <script src="{% static 'js/pdf-modal.js' %}"></script>
+<script src="{% static 'js/processo.js' %}"></script>
 <script>
+// Debug Alpine.js initialization
+console.log('=== RENOVACAO_RAPIDA: Scripts block start ===');
+console.log('Alpine.js loaded at script start?', typeof window.Alpine !== 'undefined');
+
+// Monitor Alpine initialization
+document.addEventListener('alpine:init', () => {
+    console.log('=== ALPINE:INIT event fired ===');
+    console.log('Alpine components:', Alpine.data);
+});
+
+document.addEventListener('alpine:initialized', () => {
+    console.log('=== ALPINE:INITIALIZED event fired ===');
+    const pdfModalEl = document.querySelector('[x-data*="pdfModal"]');
+    console.log('PDF Modal element after Alpine init:', pdfModalEl);
+    if (pdfModalEl && pdfModalEl._x_dataStack) {
+        console.log('PDF Modal Alpine data after init:', pdfModalEl._x_dataStack);
+    }
+});
+
+// Also check if form-handler.js debug is enabled
+if (window.FormHandler && window.FormHandler.getConfig) {
+    console.log('FormHandler config:', window.FormHandler.getConfig());
+}
 $('.datas').mask('00/00/0000');
 
+// Date validation function  
+function isValidDate(dateString) {
+    if (!dateString || dateString.length !== 10) return false;
+    const [day, month, year] = dateString.split('/');
+    const date = new Date(year, month - 1, day);
+    return Boolean(+date) && 
+           date.getDate() == day && 
+           date.getMonth() == month - 1 && 
+           date.getFullYear() == year;
+}
 
-</script>
-
-<script>
-// Date validation is now handled by Alpine.js renovacaoForm component
+// Initialize PdfFormHandler for each renovation form
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== RENOVACAO_RAPIDA: DOMContentLoaded ===');
+    console.log('Alpine.js loaded?', typeof window.Alpine !== 'undefined');
+    console.log('PdfFormHandler available?', typeof window.PdfFormHandler !== 'undefined');
+    console.log('PDF Modal element exists?', !!document.querySelector('[x-data*="pdfModal"]'));
+    
+    // Check for PDF modal component
+    const pdfModalEl = document.querySelector('[x-data*="pdfModal"]');
+    if (pdfModalEl) {
+        console.log('PDF Modal element found:', pdfModalEl);
+        console.log('PDF Modal Alpine data?', pdfModalEl._x_dataStack);
+    }
+    
+    // Find all renovation forms
+    const forms = document.querySelectorAll('.renovation-form');
+    console.log('Number of renovation forms found:', forms.length);
+    
+    forms.forEach((form, index) => {
+        console.log(`\n--- Initializing form ${index + 1} ---`);
+        console.log('Form element:', form);
+        console.log('Form ID:', form.id);
+        console.log('Form action:', form.action);
+        console.log('Form has id attribute?', form.hasAttribute('id'));
+        
+        if (!form.id) {
+            console.error('Form has no ID! Cannot initialize PdfFormHandler');
+            return;
+        }
+        
+        console.log('Looking for form with selector:', '#' + form.id);
+        console.log('Form element found by selector?', !!document.querySelector('#' + form.id));
+        console.log('Submit button within form?', !!form.querySelector('button[type="submit"]'));
+        console.log('Submit buttons found:', form.querySelectorAll('button[type="submit"]'));
+        console.log('Form innerHTML:', form.innerHTML);
+        console.log('All buttons in form:', form.querySelectorAll('button'));
+        console.log('All elements with type=submit:', form.querySelectorAll('[type="submit"]'));
+        
+        const handler = new PdfFormHandler('#' + form.id)
+            .withLoadingText('Processando...')
+            .withPdfModal(true)
+            .withSuccessRedirect(null) // Don't redirect immediately, wait for modal close
+            .withProgressDuration(3000)
+            .withCustomHeaders({
+                'X-Requested-With': 'XMLHttpRequest'
+            })
+            .withDebugMode(true) // Enable debug mode
+            .withBeforeSubmit(async (formEl) => {
+                console.log('=== BEFORE SUBMIT ===');
+                const formData = new FormData(formEl);
+                const dateValue = formData.get('data_1');
+                const isEditing = formData.get('edicao');
+                console.log('Date value:', dateValue);
+                console.log('Edit checkbox checked?', !!isEditing);
+                
+                // Validate date
+                if (!isValidDate(dateValue)) {
+                    console.log('Date validation failed');
+                    throw { error: 'Data inválida! Use o formato DD/MM/AAAA' };
+                }
+                
+                // If editing is enabled, submit form normally to allow redirect
+                if (isEditing) {
+                    console.log('Edit mode - submitting form normally');
+                    formEl.submit();
+                    return false; // Prevent AJAX submission
+                }
+                
+                console.log('Proceeding with AJAX submission');
+                return true; // Continue with AJAX submission
+            })
+            .withSuccessCallback((data) => {
+                console.log('=== SUCCESS CALLBACK ===');
+                console.log('Response data:', data);
+                console.log('PDF URL:', data.pdf_url);
+                console.log('Alpine.js available?', typeof window.Alpine !== 'undefined');
+                
+                // Check PDF modal state
+                const modalEl = document.querySelector('[x-data*="pdfModal"]');
+                console.log('PDF Modal element still exists?', !!modalEl);
+                if (modalEl && modalEl._x_dataStack) {
+                    console.log('PDF Modal Alpine component:', modalEl._x_dataStack[0]);
+                }
+            })
+            .init();
+            
+        console.log('Form handler initialized:', !!handler);
+    });
+    
+    // Listen for PDF modal events
+    document.addEventListener('open-pdf', (e) => {
+        console.log('=== DOCUMENT: open-pdf event received ===');
+        console.log('Event detail:', e.detail);
+    });
+    
+    window.addEventListener('open-pdf', (e) => {
+        console.log('=== WINDOW: open-pdf event received ===');
+        console.log('Event detail:', e.detail);
+    });
+});
 
 // Today button functionality
 $('.today-btn').on('click', function() {

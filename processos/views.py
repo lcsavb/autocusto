@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse, Http404
+import json
+from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
 from django.db import IntegrityError
 from django.core.cache import cache
@@ -15,6 +17,8 @@ import secrets
 import time
 
 logger = logging.getLogger(__name__)
+pdf_logger = logging.getLogger('processos.pdf')
+audit_logger = logging.getLogger('processos.audit')
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
 from processos.models import Processo, Doenca
@@ -274,6 +278,7 @@ def edicao(request):
                         return JsonResponse({
                             'success': True,
                             'pdf_url': path_pdf_final,
+                            'processo_id': processo_id,
                             'message': 'Processo atualizado com sucesso! PDF gerado.',
                             'filename': 'processo_atualizado.pdf'
                         })
@@ -457,6 +462,7 @@ def renovacao_rapida(request):
                     return JsonResponse({
                         'success': True,
                         'pdf_url': path_pdf_final,
+                        'processo_id': processo_id,
                         'message': 'Renovação processada com sucesso! PDF gerado.',
                         'filename': 'renovacao_processo.pdf'
                     })
@@ -593,6 +599,7 @@ def cadastro(request):
                     return JsonResponse({
                         'success': True,
                         'pdf_url': path_pdf_final,
+                        'processo_id': processo_id,
                         'message': 'Processo criado com sucesso! PDF gerado.',
                         'filename': filename
                     })
@@ -834,3 +841,35 @@ def serve_pdf(request, filename):
     except Exception as e:
         logger.error(f"Unexpected error in serve_pdf: {e}")
         raise Http404("Server error")
+
+
+@login_required
+@csrf_exempt
+def set_edit_session(request):
+    """Set processo_id in session for editing"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            processo_id = data.get('processo_id')
+            
+            if not processo_id:
+                return JsonResponse({'error': 'processo_id is required'}, status=400)
+            
+            # Verify user owns this process
+            try:
+                processo = Processo.objects.get(id=processo_id, usuario=request.user)
+                request.session["processo_id"] = str(processo_id)
+                request.session["cid"] = processo.doenca.cid
+                logger.info(f"Set edit session for processo {processo_id}, user {request.user}")
+                return JsonResponse({'success': True})
+            except Processo.DoesNotExist:
+                logger.warning(f"Process {processo_id} not found for user {request.user}")
+                return JsonResponse({'error': 'Process not found'}, status=404)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            logger.error(f"Error setting edit session: {e}")
+            return JsonResponse({'error': 'Server error'}, status=500)
+    
+    return JsonResponse({'error': 'Only POST method allowed'}, status=405)

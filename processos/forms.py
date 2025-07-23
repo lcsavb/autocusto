@@ -433,7 +433,13 @@ class NovoProcesso(forms.Form):
             med_id_field = f"id_med{i}"
             if med_id_field in submitted_fields:
                 med_id_value = self.data.get(med_id_field)
-                if med_id_value and med_id_value.strip() and med_id_value.strip().lower() != "nenhum":  # Non-empty value and not "nenhum"
+                # Check for various forms of "empty" medication selections
+                is_empty_medication = (
+                    not med_id_value or 
+                    not med_id_value.strip() or 
+                    med_id_value.strip().lower() in ["nenhum", "none", "", "null", "undefined"]
+                )
+                if not is_empty_medication:  # Non-empty value and not "nenhum" variants
                     submitted_med_ids.append(i)
                     logger.info(f"Found submitted medication {i}: {med_id_value}")
                 else:

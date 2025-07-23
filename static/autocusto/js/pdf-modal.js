@@ -11,12 +11,14 @@ document.addEventListener('alpine:init', () => {
     title: 'Documento PDF',
     showDownload: true,
     showEdit: false,
+    processoId: null,
     
-    openPdf(url, modalTitle = 'Documento PDF', allowDownload = true, allowEdit = false) {
+    openPdf(url, modalTitle = 'Documento PDF', allowDownload = true, allowEdit = false, processoId = null) {
       this.pdfUrl = url;
       this.title = modalTitle;
       this.showDownload = allowDownload;
       this.showEdit = allowEdit;
+      this.processoId = processoId;
       this.isOpen = true;
       document.body.style.overflow = 'hidden';
     },
@@ -29,9 +31,35 @@ document.addEventListener('alpine:init', () => {
       this.$dispatch('modal-closed');
     },
 
-    editProcess() {
-      // Redirect to edit page - the session should already have processo_id set
-      window.location.href = '/processos/edicao/';
+    async editProcess() {
+      // If we have a processo_id, set it in session before redirecting
+      if (this.processoId) {
+        try {
+          // Send AJAX request to set processo_id in session
+          const response = await fetch('/processos/set-edit-session/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            },
+            body: JSON.stringify({
+              processo_id: this.processoId
+            })
+          });
+          
+          if (response.ok) {
+            window.location.href = '/processos/edicao/';
+          } else {
+            Toast.error('Erro ao preparar edição. Tente novamente.');
+          }
+        } catch (error) {
+          console.error('Error setting edit session:', error);
+          Toast.error('Erro de conexão. Tente novamente.');
+        }
+      } else {
+        // Fallback: redirect directly (session should already have processo_id set)
+        window.location.href = '/processos/edicao/';
+      }
     },
     
     downloadPdf() {
@@ -111,6 +139,18 @@ document.addEventListener('alpine:init', () => {
       // Otherwise, use AJAX for PDF generation
       this.isSubmitting = true;
       
+      // Show progress bar elements
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const submitText = submitBtn.querySelector('.submit-text');
+        const loadingText = submitBtn.querySelector('.loading-text');
+        const progressBar = submitBtn.querySelector('.progress-bar-fill');
+        
+        if (submitText) submitText.style.display = 'none';
+        if (loadingText) loadingText.style.display = 'inline';
+        if (progressBar) progressBar.style.display = 'block';
+      }
+      
       try {
         const response = await fetch(event.target.action, {
           method: 'POST',
@@ -128,7 +168,9 @@ document.addEventListener('alpine:init', () => {
           this.$dispatch('open-pdf', {
             url: data.pdf_url,
             title: 'Renovação de Processo',
-            allowDownload: true
+            allowDownload: true,
+            allowEdit: true,
+            processoId: data.processo_id || null
           });
           
           Toast.success(data.message || 'PDF gerado com sucesso!');

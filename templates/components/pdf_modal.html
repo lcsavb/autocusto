@@ -4,7 +4,7 @@
      x-show="isOpen" 
      x-cloak 
      @keydown.escape="closePdf()" 
-     @open-pdf.window="openPdf($event.detail.url, $event.detail.title, $event.detail.allowDownload, $event.detail.allowEdit)"
+     @open-pdf.window="openPdf($event.detail.url, $event.detail.title, $event.detail.allowDownload, $event.detail.allowEdit, $event.detail.processoId)"
      class="pdf-modal-overlay">
   <div class="pdf-modal-container" @click.away="closePdf()">
     <div class="pdf-modal-header">

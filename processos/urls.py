@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import cadastro, busca_processos, renovacao_rapida, edicao, pdf, serve_pdf
+from .views import cadastro, busca_processos, renovacao_rapida, edicao, pdf, serve_pdf, set_edit_session
 from .ajax import busca_doencas, verificar_1_vez
 
 urlpatterns = [
@@ -9,6 +9,7 @@ urlpatterns = [
     path("edicao/", edicao, name="processos-edicao"),
     path("pdf/", pdf, name="processos-pdf"),
     path("serve-pdf/<str:filename>/", serve_pdf, name="processos-serve-pdf"),
+    path("set-edit-session/", set_edit_session, name="processos-set-edit-session"),
     path("ajax/doencas/", busca_doencas, name="busca-doencas"),
     path("ajax/verificar_1_vez/", verificar_1_vez, name="verificar_1_vez"),
 ]
