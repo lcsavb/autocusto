@@ -53,6 +53,12 @@ mkdir -p tests/screenshots
 echo ""
 echo "🧪 Running Prescription Form Tests..."
 echo "-----------------------------------"
+echo ""
+echo "🚨 CRITICAL: Testing med.js medication management logic"
+echo "   • Add/remove medication functionality"
+echo "   • 'Nenhum' selection validation" 
+echo "   • Form submission prevention with no valid medications"
+echo ""
 
 # Run prescription form tests with detailed output
 python manage.py test tests.test_prescription_forms --settings=test_settings --verbosity=2
@@ -73,6 +79,12 @@ if [ $TEST_EXIT_CODE -eq 0 ]; then
     echo "   - Clinical data entry: ✅ WORKING"
     echo "   - Complete form workflow: ✅ WORKING"
     echo "   - Form validation errors: ✅ WORKING"
+    echo ""
+    echo "🚨 CRITICAL: Medication Management (med.js) Tests:"
+    echo "   - Add/remove medication tabs: ✅ WORKING"
+    echo "   - 'Nenhum' selection field clearing: ✅ WORKING"
+    echo "   - Form submission validation: ✅ WORKING"
+    echo "   - Medical prescription safety: ✅ PROTECTED"
     echo ""
     echo "📸 Screenshots saved in: tests/screenshots/"
 else

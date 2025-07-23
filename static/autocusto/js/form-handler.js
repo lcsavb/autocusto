@@ -7,10 +7,10 @@
 // Centralized Form Configuration
 const FORM_CONFIG = {
     debug: {
-        enabled: true,
-        performanceMetrics: true,
-        stateTracking: true,
-        eventTracking: true
+        enabled: false,
+        performanceMetrics: false,
+        stateTracking: false,
+        eventTracking: false
     },
     defaults: {
         loadingText: 'Enviando...',
@@ -288,6 +288,12 @@ window.FormHandler = (function() {
 
         async handleSubmit(event) {
             event.preventDefault();
+            
+            // Check if medication validation failed (from med.js)
+            if (this.form.getAttribute('data-medication-validation-failed') === 'true') {
+                log('VALIDATION', 'Medication validation failed - aborting form submission', null, this.formId);
+                return; // Exit early - don't process the form
+            }
             
             const submitStartTime = performance.now();
             this.metrics.submitCount++;

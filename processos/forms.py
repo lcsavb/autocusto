@@ -447,6 +447,12 @@ class NovoProcesso(forms.Form):
         
         logger.info(f"Total submitted medications: {submitted_med_ids}")
         
+        # CRITICAL CHECK: At least one medication must be submitted
+        if not submitted_med_ids:
+            self.add_error(None, "Pelo menos um medicamento deve ser selecionado.")
+            logger.info("VALIDATION ERROR: No medications submitted - form is invalid")
+            return cleaned_data  # Exit early - form is invalid
+        
         # THEN: For each submitted med_id, validate ALL required fields are filled
         for i in submitted_med_ids:
             logger.info(f"Validating all fields for submitted medication {i}")

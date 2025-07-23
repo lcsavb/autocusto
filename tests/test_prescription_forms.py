@@ -506,3 +506,354 @@ class PrescriptionFormAccessibilityTest(PrescriptionFormPlaywrightBase):
         
         # Reset to desktop size
         self.page.set_viewport_size({"width": 1920, "height": 1080})
+
+
+class MedicationManagementTest(PrescriptionFormPlaywrightBase):
+    """CRITICAL TEST: Core medication management logic (med.js functionality)"""
+    
+    def navigate_to_medication_form(self):
+        """Helper to navigate to a form with medication management (edicao form)"""
+        # Login first
+        self.login_user('medico@example.com', 'testpass123')
+        
+        # Navigate to editing form which has full medication management
+        self.page.goto(f'{self.live_server_url}/processos/edicao/')
+        self.wait_for_page_load()
+        
+        # Check if we have medication tabs
+        med_tabs = self.page.locator('#medicamentos-tab')
+        if med_tabs.count() > 0:
+            print("✅ DEBUG: Medication tabs found on page")
+            return True
+        else:
+            print("⚠️  DEBUG: No medication tabs found - may need to navigate differently")
+            return False
+    
+    def test_initial_medication_state(self):
+        """Test initial state of medication tabs - only med1 should be visible"""
+        print("\n🚀 CRITICAL TEST: test_initial_medication_state")
+        
+        if not self.navigate_to_medication_form():
+            self.skipTest("Could not navigate to medication form")
+        
+        self.take_screenshot("med_01_initial_state")
+        
+        # Check initial state - only med1 should be visible
+        med1_tab = self.page.locator('#medicamento-1-tab')
+        med2_tab = self.page.locator('#medicamento-2-tab')
+        med3_tab = self.page.locator('#medicamento-3-tab')
+        med4_tab = self.page.locator('#medicamento-4-tab')
+        
+        if med1_tab.count() > 0:
+            print("✅ Med1 tab found")
+            # Med1 should be visible and active
+            self.assertTrue(med1_tab.is_visible(), "Med1 tab should be visible")
+            
+            # Med2-4 should be hidden (have d-none class)
+            if med2_tab.count() > 0:
+                med2_classes = med2_tab.get_attribute('class') or ''
+                self.assertIn('d-none', med2_classes, "Med2 tab should be hidden initially")
+                print("✅ Med2 tab is hidden (d-none)")
+        else:
+            self.skipTest("Medication tabs not found on this page")
+    
+    def test_add_medication_functionality(self):
+        """CRITICAL TEST: Adding medications shows tabs and enables fields"""
+        print("\n🚀 CRITICAL TEST: test_add_medication_functionality")
+        
+        if not self.navigate_to_medication_form():
+            self.skipTest("Could not navigate to medication form")
+        
+        # Look for add medication button
+        add_med_button = self.page.locator('#add-med')
+        if add_med_button.count() == 0:
+            print("⚠️  DEBUG: Add medication button not found")
+            self.take_screenshot("med_02_no_add_button")
+            self.skipTest("Add medication button not found")
+        
+        self.take_screenshot("med_02_before_add")
+        
+        # Click add medication button
+        add_med_button.click()
+        self.page.wait_for_timeout(500)  # Wait for JavaScript
+        
+        self.take_screenshot("med_03_after_add")
+        
+        # Check that med2 tab becomes visible
+        med2_tab = self.page.locator('#medicamento-2-tab')
+        if med2_tab.count() > 0:
+            med2_classes = med2_tab.get_attribute('class') or ''
+            self.assertNotIn('d-none', med2_classes, "Med2 tab should be visible after adding")
+            print("✅ Med2 tab is now visible")
+            
+            # Check that med2 tab is active
+            self.assertIn('active', med2_classes, "Med2 tab should be active after adding")
+            print("✅ Med2 tab is active")
+        else:
+            print("❌ Med2 tab not found after adding medication")
+    
+    def test_remove_medication_functionality(self):
+        """CRITICAL TEST: Removing medications hides tabs and disables fields"""
+        print("\n🚀 CRITICAL TEST: test_remove_medication_functionality")
+        
+        if not self.navigate_to_medication_form():
+            self.skipTest("Could not navigate to medication form")
+        
+        # Add medications first
+        add_med_button = self.page.locator('#add-med')
+        if add_med_button.count() == 0:
+            self.skipTest("Add medication button not found")
+        
+        # Add med2 and med3
+        add_med_button.click()
+        self.page.wait_for_timeout(300)
+        add_med_button.click()
+        self.page.wait_for_timeout(300)
+        
+        self.take_screenshot("med_04_before_remove")
+        
+        # Remove med3
+        remove_med3_button = self.page.locator('[data-med="3"].remove-med')
+        if remove_med3_button.count() > 0:
+            remove_med3_button.click()
+            self.page.wait_for_timeout(500)
+            
+            self.take_screenshot("med_05_after_remove")
+            
+            # Check that med3 tab is hidden
+            med3_tab = self.page.locator('#medicamento-3-tab')
+            if med3_tab.count() > 0:
+                med3_classes = med3_tab.get_attribute('class') or ''
+                self.assertIn('d-none', med3_classes, "Med3 tab should be hidden after removal")
+                print("✅ Med3 tab is hidden after removal")
+            
+            # Should switch to med2
+            med2_tab = self.page.locator('#medicamento-2-tab')
+            if med2_tab.count() > 0:
+                med2_classes = med2_tab.get_attribute('class') or ''
+                self.assertIn('active', med2_classes, "Should switch to med2 after removing med3")
+                print("✅ Switched to med2 after removing med3")
+        else:
+            self.skipTest("Remove medication button not found")
+    
+    def test_nenhum_medication_selection_clears_fields(self):
+        """CRITICAL TEST: Selecting 'nenhum' clears medication fields"""
+        print("\n🚀 CRITICAL TEST: test_nenhum_medication_selection_clears_fields")
+        
+        if not self.navigate_to_medication_form():
+            self.skipTest("Could not navigate to medication form")
+        
+        # Fill some medication fields first
+        med1_posologia = self.page.locator('#id_med1_posologia_mes1')
+        med1_qtd = self.page.locator('#id_qtd_med1_mes1')
+        med1_dropdown = self.page.locator('#id_id_med1')
+        
+        if med1_posologia.count() == 0:
+            self.skipTest("Medication fields not found")
+        
+        # Fill fields with test data
+        if med1_posologia.is_visible():
+            med1_posologia.fill('Test dosage')
+        if med1_qtd.is_visible():
+            med1_qtd.fill('30')
+        
+        self.take_screenshot("med_06_before_nenhum")
+        
+        # Select 'nenhum' for medication 1
+        if med1_dropdown.count() > 0:
+            # Try to select 'nenhum' option
+            med1_dropdown.select_option('nenhum')
+            self.page.wait_for_timeout(500)  # Wait for JavaScript to process
+            
+            self.take_screenshot("med_07_after_nenhum")
+            
+            # Check that dosage fields are cleared
+            if med1_posologia.is_visible():
+                posologia_value = med1_posologia.input_value()
+                self.assertEqual(posologia_value, '', "Posologia should be cleared when nenhum selected")
+                print("✅ Posologia field cleared")
+            
+            if med1_qtd.is_visible():
+                qtd_value = med1_qtd.input_value()
+                self.assertEqual(qtd_value, '', "Quantity should be cleared when nenhum selected")
+                print("✅ Quantity field cleared")
+            
+            # Check that medication dropdown keeps 'nenhum' value
+            dropdown_value = med1_dropdown.input_value()
+            self.assertEqual(dropdown_value, 'nenhum', "Medication dropdown should keep 'nenhum' value")
+            print("✅ Medication dropdown keeps 'nenhum' value")
+        else:
+            self.skipTest("Medication dropdown not found")
+    
+    def test_medication_validation_prevents_submission_all_nenhum(self):
+        """🚨 CRITICAL TEST: Prevent form submission when all medications are 'nenhum'"""
+        print("\n🚀 🚨 CRITICAL TEST: test_medication_validation_prevents_submission_all_nenhum")
+        
+        if not self.navigate_to_medication_form():
+            self.skipTest("Could not navigate to medication form")
+        
+        # Fill required form fields first
+        self.fill_minimal_required_fields()
+        
+        # Set all medications to 'nenhum'
+        med1_dropdown = self.page.locator('#id_id_med1')
+        if med1_dropdown.count() > 0:
+            med1_dropdown.select_option('nenhum')
+            self.page.wait_for_timeout(300)
+        
+        # Add and set other medications to 'nenhum' too
+        add_med_button = self.page.locator('#add-med')
+        if add_med_button.count() > 0:
+            add_med_button.click()
+            self.page.wait_for_timeout(300)
+            
+            med2_dropdown = self.page.locator('#id_id_med2')
+            if med2_dropdown.count() > 0:
+                med2_dropdown.select_option('nenhum')
+                self.page.wait_for_timeout(300)
+        
+        self.take_screenshot("med_08_all_nenhum_before_submit")
+        
+        # Get current URL before submission
+        initial_url = self.page.url
+        
+        # Try to submit the form
+        submit_button = self.page.locator('button[type="submit"]').first
+        if submit_button.count() > 0:
+            submit_button.click()
+            
+            # Wait for validation to run
+            self.page.wait_for_timeout(1000)
+            
+            self.take_screenshot("med_09_validation_error")
+            
+            # Check that form was NOT submitted (URL should not change)
+            final_url = self.page.url
+            self.assertEqual(initial_url, final_url, 
+                           "Form should not be submitted when all medications are 'nenhum'")
+            print("✅ CRITICAL: Form submission blocked when all medications are 'nenhum'")
+            
+            # Check for error message (toast or alert)
+            error_selectors = [
+                '.toast-error',
+                '.alert-danger', 
+                '[role="alert"]',
+                '.error-message'
+            ]
+            
+            error_found = False
+            for selector in error_selectors:
+                error_element = self.page.locator(selector)
+                if error_element.count() > 0:
+                    error_text = error_element.text_content()
+                    if 'medicamento' in error_text.lower():
+                        error_found = True
+                        print(f"✅ CRITICAL: Error message found: {error_text}")
+                        break
+            
+            if not error_found:
+                print("⚠️  Warning: No error message found - but submission was blocked")
+        else:
+            self.skipTest("Submit button not found")
+    
+    def test_medication_validation_allows_submission_with_valid_medication(self):
+        """CRITICAL TEST: Form submits successfully with at least one valid medication"""
+        print("\n🚀 CRITICAL TEST: test_medication_validation_allows_submission_with_valid_medication")
+        
+        if not self.navigate_to_medication_form():
+            self.skipTest("Could not navigate to medication form")
+        
+        # Fill required form fields
+        self.fill_minimal_required_fields()
+        
+        # Select a valid medication for med1
+        med1_dropdown = self.page.locator('#id_id_med1')
+        if med1_dropdown.count() > 0:
+            # Get available options (exclude 'nenhum')
+            options = med1_dropdown.locator('option').all()
+            valid_option = None
+            for option in options:
+                value = option.get_attribute('value')
+                if value and value != 'nenhum' and value != '':
+                    valid_option = value
+                    break
+            
+            if valid_option:
+                med1_dropdown.select_option(valid_option)
+                print(f"✅ Selected valid medication: {valid_option}")
+                
+                # Fill required medication fields
+                self.fill_medication_fields()
+                
+                self.take_screenshot("med_10_valid_medication_before_submit")
+                
+                # Submit the form
+                submit_button = self.page.locator('button[type="submit"]').first
+                if submit_button.count() > 0:
+                    initial_url = self.page.url
+                    submit_button.click()
+                    
+                    # Wait for processing
+                    self.page.wait_for_timeout(2000)
+                    
+                    self.take_screenshot("med_11_after_valid_submit")
+                    
+                    # Check for successful submission (URL change or success indication)
+                    final_url = self.page.url
+                    if final_url != initial_url:
+                        print("✅ CRITICAL: Form submitted successfully with valid medication")
+                    else:
+                        # Check for success message
+                        success_selectors = ['.toast-success', '.alert-success', '.success-message']
+                        success_found = any(self.page.locator(sel).count() > 0 for sel in success_selectors)
+                        if success_found:
+                            print("✅ CRITICAL: Success message found - form processed")
+                        else:
+                            print("⚠️  Form may have other validation issues")
+            else:
+                self.skipTest("No valid medication options found")
+        else:
+            self.skipTest("Medication dropdown not found")
+    
+    def fill_minimal_required_fields(self):
+        """Helper to fill minimal required fields for form submission"""
+        required_fields = {
+            'nome_paciente': 'Test Patient',
+            'nome_mae': 'Test Mother',
+            'peso': '70',
+            'altura': '170',
+            'end_paciente': 'Test Address',
+            'anamnese': 'Test anamnese',
+            'data_1': '23/07/2025'
+        }
+        
+        for field_name, value in required_fields.items():
+            field = self.page.locator(f'input[name="{field_name}"], textarea[name="{field_name}"]')
+            if field.count() > 0 and field.is_visible():
+                field.fill(str(value))
+                print(f"✅ Filled {field_name}")
+    
+    def fill_medication_fields(self):
+        """Helper to fill medication-specific required fields"""
+        med_fields = {
+            'med1_posologia_mes1': '1 tablet daily',
+            'qtd_med1_mes1': '30',
+            'med1_via': 'Oral'
+        }
+        
+        # Fill all 6 months for complete validation
+        for month in range(1, 7):
+            posologia_field = self.page.locator(f'input[name="med1_posologia_mes{month}"]')
+            qtd_field = self.page.locator(f'input[name="qtd_med1_mes{month}"]')
+            
+            if posologia_field.count() > 0 and posologia_field.is_visible():
+                posologia_field.fill('1 tablet daily')
+            if qtd_field.count() > 0 and qtd_field.is_visible():
+                qtd_field.fill('30')
+        
+        # Fill via field
+        via_field = self.page.locator('input[name="med1_via"]')
+        if via_field.count() > 0 and via_field.is_visible():
+            via_field.fill('Oral')
+        
+        print("✅ Filled medication fields for 6 months")

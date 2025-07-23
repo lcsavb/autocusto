@@ -298,6 +298,12 @@ $(document).ready(function() {
                 return; // Skip this field
             }
             
+            // Skip the medication dropdown itself - keep it so backend sees "nenhum" value
+            if (fieldName === `id_med${medNumber}`) {
+                console.log(`Skipping medication dropdown field: ${originalName}`);
+                return; // Skip this field
+            }
+            
             // Clear value
             if (this.tagName === 'SELECT') {
                 this.selectedIndex = 0;
@@ -363,10 +369,11 @@ $(document).ready(function() {
         });
     }
     
-    // Option 2: Enhanced form submission handler - ONLY for forms with medication fields
+    // Option 2: Enhanced form submission handler with VALIDATION - ONLY for forms with medication fields
     $('form:has(#id_id_med1, #id_id_med2, #id_id_med3, #id_id_med4)').on('submit', function(event) {
-        // Do NOT prevent default - let FormHandler take over
-        console.log('Form submitting - checking for blank medications');
+        console.log('Form submitting - checking for blank medications and validating');
+        
+        let hasValidMedication = false;
         
         // Check all medications 1-4 (enhanced to include med 1)
         for (let i = 1; i <= 4; i++) {
@@ -376,7 +383,7 @@ $(document).ready(function() {
             if (!medValue || medValue === 'nenhum' || medValue === '' || medValue === 'none') {
                 console.log(`Medication ${i} is blank/nenhum (${medValue}), removing all fields from submission`);
                 
-                // Remove name attribute from all fields for this medication (except via field)
+                // Remove name attribute from all fields for this medication (except medication dropdown and via field)
                 $(`#medicamento-${i} input, #medicamento-${i} select, #medicamento-${i} textarea`).each(function() {
                     const originalName = $(this).attr('name');
                     const fieldName = $(this).attr('name') || $(this).attr('id') || '';
@@ -387,13 +394,45 @@ $(document).ready(function() {
                         return; // Skip this field
                     }
                     
+                    // Keep the medication dropdown field itself so backend knows it was set to "nenhum"
+                    if (fieldName === `id_med${i}`) {
+                        console.log(`Form submit: Keeping medication dropdown field: ${originalName}`);
+                        return; // Skip removing name from medication dropdown
+                    }
+                    
                     $(this).removeAttr('name');
                     console.log(`Form submit: Removed name attribute from ${originalName}`);
                 });
+            } else {
+                // This medication has a valid value
+                hasValidMedication = true;
+                console.log(`Medication ${i} has valid value: ${medValue}`);
             }
         }
         
-        console.log('Med.js processing complete - allowing form submission to continue');
+        // VALIDATION: Prevent submission if no valid medications
+        if (!hasValidMedication) {
+            event.preventDefault();
+            event.stopImmediatePropagation(); // Stop other event handlers from running
+            console.log('VALIDATION FAILED: No valid medications selected - preventing form submission');
+            
+            // Set a flag on the form to indicate validation failed
+            $(this).attr('data-medication-validation-failed', 'true');
+            
+            // Show error message to user
+            if (window.Toast) {
+                Toast.error('Pelo menos um medicamento deve ser selecionado.');
+            } else {
+                alert('Pelo menos um medicamento deve ser selecionado.');
+            }
+            
+            return false; // Prevent form submission
+        } else {
+            // Clear any previous validation failure flag
+            $(this).removeAttr('data-medication-validation-failed');
+        }
+        
+        console.log('VALIDATION PASSED: At least one valid medication found - allowing form submission to continue');
     });
     
     // Initialize the change listeners

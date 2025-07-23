@@ -217,62 +217,6 @@
     </div>
 </div>
 
-<!-- DEBUG: Test forms below table -->
-<div class="container mt-4">
-    <h5>Debug: Test Forms Below Table</h5>
-    {% for paciente in busca_pacientes %}
-    <div class="card mb-3">
-        <div class="card-body">
-            <h6>{{ paciente.nome_paciente }} - {{ paciente.cpf_paciente }}</h6>
-            <form method="POST" novalidate class="renovation-form debug-form" id="debug-form-{{ paciente.id }}">
-                {% csrf_token %}
-                <input type="hidden" name="paciente_id" value="{{ paciente.id }}">
-                
-                <div class="row">
-                    <div class="col-md-3">
-                        <label>Processo:</label>
-                        {% for processo in paciente.processos.all %}
-                        {% if processo.usuario == usuario %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="processo_id" id="debug_processo_{{ processo.id }}_{{ paciente.id }}" value="{{ processo.id }}" {% if forloop.first %}checked{% endif %}>
-                            <label class="form-check-label" for="debug_processo_{{ processo.id }}_{{ paciente.id }}">
-                                {{ processo.doenca.cid }}
-                            </label>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <label>Data:</label>
-                        <input type="text" class="form-control datas" name="data_1" id="debug_data_{{ paciente.id }}" placeholder="DD/MM/AAAA">
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="edicao" id="debug_edicao_{{ paciente.id }}">
-                            <label class="form-check-label" for="debug_edicao_{{ paciente.id }}">
-                                Permitir edição
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-submit-process position-relative overflow-hidden">
-                            <span class="oi oi-reload mr-2"></span>
-                            <span class="submit-text">Debug Renovar</span>
-                            <span class="loading-text" style="display: none;">Processando...</span>
-                            <div class="progress-bar-fill position-absolute" 
-                                 style="display: none; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3)); width: 0%; animation: fillProgress 3s ease-out forwards;">
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-    {% endfor %}
-</div>
 
 {% endblock content %}
 
@@ -281,29 +225,6 @@
 <script src="{% static 'js/pdf-modal.js' %}"></script>
 <script src="{% static 'js/processo.js' %}"></script>
 <script>
-// Debug Alpine.js initialization
-console.log('=== RENOVACAO_RAPIDA: Scripts block start ===');
-console.log('Alpine.js loaded at script start?', typeof window.Alpine !== 'undefined');
-
-// Monitor Alpine initialization
-document.addEventListener('alpine:init', () => {
-    console.log('=== ALPINE:INIT event fired ===');
-    console.log('Alpine components:', Alpine.data);
-});
-
-document.addEventListener('alpine:initialized', () => {
-    console.log('=== ALPINE:INITIALIZED event fired ===');
-    const pdfModalEl = document.querySelector('[x-data*="pdfModal"]');
-    console.log('PDF Modal element after Alpine init:', pdfModalEl);
-    if (pdfModalEl && pdfModalEl._x_dataStack) {
-        console.log('PDF Modal Alpine data after init:', pdfModalEl._x_dataStack);
-    }
-});
-
-// Also check if form-handler.js debug is enabled
-if (window.FormHandler && window.FormHandler.getConfig) {
-    console.log('FormHandler config:', window.FormHandler.getConfig());
-}
 $('.datas').mask('00/00/0000');
 
 // Date validation function  
@@ -319,43 +240,11 @@ function isValidDate(dateString) {
 
 // Initialize PdfFormHandler for each renovation form
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== RENOVACAO_RAPIDA: DOMContentLoaded ===');
-    console.log('Alpine.js loaded?', typeof window.Alpine !== 'undefined');
-    console.log('PdfFormHandler available?', typeof window.PdfFormHandler !== 'undefined');
-    console.log('PDF Modal element exists?', !!document.querySelector('[x-data*="pdfModal"]'));
-    
-    // Check for PDF modal component
-    const pdfModalEl = document.querySelector('[x-data*="pdfModal"]');
-    if (pdfModalEl) {
-        console.log('PDF Modal element found:', pdfModalEl);
-        console.log('PDF Modal Alpine data?', pdfModalEl._x_dataStack);
-    }
-    
     // Find all renovation forms
-    const forms = document.querySelectorAll('.renovation-form');
-    console.log('Number of renovation forms found:', forms.length);
-    
-    forms.forEach((form, index) => {
-        console.log(`\n--- Initializing form ${index + 1} ---`);
-        console.log('Form element:', form);
-        console.log('Form ID:', form.id);
-        console.log('Form action:', form.action);
-        console.log('Form has id attribute?', form.hasAttribute('id'));
+    document.querySelectorAll('.renovation-form').forEach(form => {
+        if (!form.id) return; // Skip forms without IDs
         
-        if (!form.id) {
-            console.error('Form has no ID! Cannot initialize PdfFormHandler');
-            return;
-        }
-        
-        console.log('Looking for form with selector:', '#' + form.id);
-        console.log('Form element found by selector?', !!document.querySelector('#' + form.id));
-        console.log('Submit button within form?', !!form.querySelector('button[type="submit"]'));
-        console.log('Submit buttons found:', form.querySelectorAll('button[type="submit"]'));
-        console.log('Form innerHTML:', form.innerHTML);
-        console.log('All buttons in form:', form.querySelectorAll('button'));
-        console.log('All elements with type=submit:', form.querySelectorAll('[type="submit"]'));
-        
-        const handler = new PdfFormHandler('#' + form.id)
+        new PdfFormHandler('#' + form.id)
             .withLoadingText('Processando...')
             .withPdfModal(true)
             .withSuccessRedirect(null) // Don't redirect immediately, wait for modal close
@@ -363,58 +252,25 @@ document.addEventListener('DOMContentLoaded', function() {
             .withCustomHeaders({
                 'X-Requested-With': 'XMLHttpRequest'
             })
-            .withDebugMode(true) // Enable debug mode
             .withBeforeSubmit(async (formEl) => {
-                console.log('=== BEFORE SUBMIT ===');
                 const formData = new FormData(formEl);
                 const dateValue = formData.get('data_1');
                 const isEditing = formData.get('edicao');
-                console.log('Date value:', dateValue);
-                console.log('Edit checkbox checked?', !!isEditing);
                 
                 // Validate date
                 if (!isValidDate(dateValue)) {
-                    console.log('Date validation failed');
                     throw { error: 'Data inválida! Use o formato DD/MM/AAAA' };
                 }
                 
                 // If editing is enabled, submit form normally to allow redirect
                 if (isEditing) {
-                    console.log('Edit mode - submitting form normally');
                     formEl.submit();
                     return false; // Prevent AJAX submission
                 }
                 
-                console.log('Proceeding with AJAX submission');
                 return true; // Continue with AJAX submission
             })
-            .withSuccessCallback((data) => {
-                console.log('=== SUCCESS CALLBACK ===');
-                console.log('Response data:', data);
-                console.log('PDF URL:', data.pdf_url);
-                console.log('Alpine.js available?', typeof window.Alpine !== 'undefined');
-                
-                // Check PDF modal state
-                const modalEl = document.querySelector('[x-data*="pdfModal"]');
-                console.log('PDF Modal element still exists?', !!modalEl);
-                if (modalEl && modalEl._x_dataStack) {
-                    console.log('PDF Modal Alpine component:', modalEl._x_dataStack[0]);
-                }
-            })
             .init();
-            
-        console.log('Form handler initialized:', !!handler);
-    });
-    
-    // Listen for PDF modal events
-    document.addEventListener('open-pdf', (e) => {
-        console.log('=== DOCUMENT: open-pdf event received ===');
-        console.log('Event detail:', e.detail);
-    });
-    
-    window.addEventListener('open-pdf', (e) => {
-        console.log('=== WINDOW: open-pdf event received ===');
-        console.log('Event detail:', e.detail);
     });
 });
 
