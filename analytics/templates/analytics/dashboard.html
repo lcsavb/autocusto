@@ -1,0 +1,647 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Match app's design language */
+.analytics-header {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0.5rem;
+}
+
+.metric-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.metric-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.metric-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 0;
+    background: white;
+    border-radius: 0;
+    padding: 1rem;
+}
+
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: white;
+}
+
+.time-filter {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.btn-filter {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.last-updated {
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-align: right;
+    font-style: italic;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-success { background-color: #28a745; }
+.status-warning { background-color: #ffc107; }
+.status-danger { background-color: #dc3545; }
+
+/* Loading states */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 350px;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Overview Metrics with Integrated Header -->
+    <div class="card mb-4 mt-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 text-white"><i class="fas fa-chart-bar"></i> Analytics Dashboard</h4>
+                    <small class="text-white-50">Métricas gerais do sistema</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'analytics:system_health' %}" class="btn btn-outline-light btn-sm mr-2">
+                        <i class="fas fa-heartbeat"></i> Performance Real-Time
+                    </a>
+                    {% if last_updated %}
+                    <div class="text-right">
+                        <small class="text-white-50">
+                            <i class="fas fa-sync-alt"></i> {{ last_updated|date:"d/m H:i" }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center py-2">
+                        <div class="d-flex justify-content-center align-items-center mb-1">
+                            <h4 class="text-primary mb-0 mr-2">{{ total_users }}</h4>
+                            <span class="trend-indicator" id="users-trend">
+                                <i class="fas fa-spinner fa-spin text-muted" style="font-size: 0.8rem;"></i>
+                            </span>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-users"></i> Usuários</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center py-2">
+                        <div class="d-flex justify-content-center align-items-center mb-1">
+                            <h4 class="text-info mb-0 mr-2">{{ total_patients }}</h4>
+                            <span class="trend-indicator" id="patients-trend">
+                                <i class="fas fa-spinner fa-spin text-muted" style="font-size: 0.8rem;"></i>
+                            </span>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-user-injured"></i> Pacientes</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center py-2">
+                        <div class="d-flex justify-content-center align-items-center mb-1">
+                            <h4 class="text-success mb-0 mr-2">{{ total_processes }}</h4>
+                            <span class="trend-indicator" id="processes-trend">
+                                <i class="fas fa-spinner fa-spin text-muted" style="font-size: 0.8rem;"></i>
+                            </span>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-file-medical"></i> Processos</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center py-2">
+                        <div class="d-flex justify-content-center align-items-center mb-1">
+                            <h4 class="text-danger mb-0 mr-2">{{ total_clinics }}</h4>
+                            <span class="trend-indicator" id="clinics-trend">
+                                <i class="fas fa-minus text-muted" style="font-size: 0.8rem;"></i>
+                            </span>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-hospital"></i> Clínicas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-white"><i class="fas fa-chart-line"></i> Tendências Diárias</h5>
+                        <div class="d-flex align-items-center">
+                            <div class="btn-group btn-group-sm mr-2" role="group">
+                                <button class="btn btn-outline-light btn-sm btn-filter active" data-days="7">7d</button>
+                                <button class="btn btn-outline-light btn-sm btn-filter" data-days="30">30d</button>
+                                <button class="btn btn-outline-light btn-sm btn-filter" data-days="90">90d</button>
+                            </div>
+                            <span class="status-indicator status-success"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div id="dailyTrendsLoading" class="chart-loading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            Carregando dados...
+                        </div>
+                        <canvas id="dailyTrendsChart" style="display: none;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white"><i class="fas fa-file-pdf"></i> Análise de PDFs</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div id="pdfAnalyticsLoading" class="chart-loading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            Carregando dados...
+                        </div>
+                        <canvas id="pdfAnalyticsChart" style="display: none;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white"><i class="fas fa-procedures"></i> Doenças Mais Comuns</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div id="healthcareLoading" class="chart-loading">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            Carregando dados...
+                        </div>
+                        <canvas id="healthcareChart" style="display: none;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Chart configurations
+let dailyTrendsChart, pdfAnalyticsChart, healthcareChart;
+let currentDays = 7; // Default to 7 days
+
+
+// Initialize charts when page loads with proper timing
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("📊 Analytics Dashboard DOM loaded");
+    
+    // Small delay to ensure all elements are rendered
+    setTimeout(() => {
+        console.log("🚀 Initializing analytics components...");
+        setupTimeFilters();
+        loadAllCharts();
+    }, 500);
+});
+
+function setupTimeFilters() {
+    // Time period filter functionality
+    document.querySelectorAll('.btn-filter').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active state
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update current period
+            currentDays = parseInt(this.dataset.days);
+            
+            // Reload all charts
+            loadAllCharts();
+        });
+    });
+}
+
+function loadAllCharts() {
+    loadDailyTrends();
+    loadPdfAnalytics();
+    loadHealthcareInsights();
+    loadTrendIndicators();
+}
+
+
+function handleChartError(chartType, error) {
+    console.error(`❌ ${chartType} chart failed:`, error);
+    
+    // Show user-friendly error message
+    const loadingEl = document.getElementById(chartType + 'Loading');
+    if (loadingEl) {
+        loadingEl.innerHTML = `
+            <div class="text-danger text-center">
+                <i class="fas fa-exclamation-triangle mb-2"></i><br>
+                <strong>Erro ao carregar dados</strong><br>
+                <small>Verifique a conexão e tente novamente</small><br>
+                <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadAllCharts()">
+                    🔄 Tentar Novamente
+                </button>
+            </div>
+        `;
+    }
+}
+
+function showChartLoading(chartId) {
+    const loadingEl = document.getElementById(chartId + 'Loading');
+    const chartEl = document.getElementById(chartId + 'Chart');
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (chartEl) chartEl.style.display = 'none';
+}
+
+function hideChartLoading(chartId) {
+    const loadingEl = document.getElementById(chartId + 'Loading');
+    const chartEl = document.getElementById(chartId + 'Chart');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (chartEl) chartEl.style.display = 'block';
+}
+
+function showChartError(loadingId, message) {
+    const loadingEl = document.getElementById(loadingId);
+    loadingEl.innerHTML = `
+        <div class="text-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            ${message}
+        </div>
+    `;
+}
+
+function loadDailyTrends() {
+    console.log("🔍 Loading daily trends for", currentDays, "days");
+    showChartLoading('dailyTrends');
+    
+    fetch(`{% url "analytics:api_daily_trends" %}?days=${currentDays}`)
+        .then(response => {
+            console.log("📡 Daily trends API response:", response.status, response.statusText);
+            return response;
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            hideChartLoading('dailyTrends');
+            
+            const ctx = document.getElementById('dailyTrendsChart').getContext('2d');
+            
+            if (dailyTrendsChart) dailyTrendsChart.destroy();
+            
+            dailyTrendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'PDFs Gerados',
+                            data: data.pdfs_generated,
+                            borderColor: '#495057',
+                            backgroundColor: 'rgba(73, 80, 87, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Usuários Ativos',
+                            data: data.active_users,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Novos Pacientes',
+                            data: data.new_patients,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error("❌ Daily trends error:", error);
+            showChartError('dailyTrendsLoading', 'Erro ao carregar tendências diárias');
+        });
+}
+
+function loadPdfAnalytics() {
+    console.log("🔍 Loading PDF analytics for", currentDays, "days");
+    showChartLoading('pdfAnalytics');
+    
+    fetch(`{% url "analytics:api_pdf_analytics" %}?days=${currentDays}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            hideChartLoading('pdfAnalytics');
+            
+            const ctx = document.getElementById('pdfAnalyticsChart').getContext('2d');
+            
+            if (pdfAnalyticsChart) pdfAnalyticsChart.destroy();
+            
+            const typeLabels = {
+                'prescription': 'Prescrições',
+                'protocol': 'Protocolos', 
+                'renewal': 'Renovações',
+                'served': 'Visualizações',
+                'other': 'Outros'
+            };
+            
+            pdfAnalyticsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.pdf_by_type.map(item => typeLabels[item.pdf_type] || item.pdf_type),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: data.pdf_by_type.map(item => item.count),
+                        backgroundColor: [
+                            '#495057',
+                            '#28a745',
+                            '#007bff',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading PDF analytics:', error);
+            showChartError('pdfAnalyticsLoading', 'Erro ao carregar análise de PDFs');
+        });
+}
+
+function loadHealthcareInsights() {
+    console.log("🔍 Loading healthcare insights for", currentDays, "days");
+    showChartLoading('healthcare');
+    
+    fetch(`{% url "analytics:api_healthcare_insights" %}?days=${currentDays}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            hideChartLoading('healthcare');
+            
+            const ctx = document.getElementById('healthcareChart').getContext('2d');
+            
+            if (healthcareChart) healthcareChart.destroy();
+            
+            healthcareChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.top_diseases.map(item => {
+                        const name = item.disease__nome || 'N/A';
+                        return name.length > 20 ? name.substring(0, 20) + '...' : name;
+                    }),
+                    datasets: [{
+                        label: 'Processos',
+                        data: data.top_diseases.map(item => item.total_processes),
+                        backgroundColor: '#495057',
+                        borderColor: '#343a40',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading healthcare insights:', error);
+            showChartError('healthcareLoading', 'Erro ao carregar insights médicos');
+        });
+}
+
+function loadTrendIndicators() {
+    // Load trend data from daily metrics to show 7-day vs previous 7-day comparison
+    fetch(`{% url "analytics:api_daily_trends" %}?days=14`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.dates && data.dates.length >= 14) {
+                // Split data into current 7 days vs previous 7 days
+                const mid = Math.floor(data.dates.length / 2);
+                
+                // Calculate trends for different metrics
+                const trends = {
+                    users: calculateTrend(data.active_users.slice(0, mid), data.active_users.slice(mid)),
+                    patients: calculateTrend(data.new_patients.slice(0, mid), data.new_patients.slice(mid)),
+                    processes: calculateTrend(data.pdfs_generated.slice(0, mid), data.pdfs_generated.slice(mid))
+                };
+                
+                // Update trend indicators
+                updateTrendIndicator('users-trend', trends.users);
+                updateTrendIndicator('patients-trend', trends.patients);
+                updateTrendIndicator('processes-trend', trends.processes);
+                
+                // Clinics trend is static (no daily change)
+                document.getElementById('clinics-trend').innerHTML = '<i class="fas fa-minus text-muted" style="font-size: 0.8rem;"></i>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading trend indicators:', error);
+            // Show neutral indicators on error
+            ['users-trend', 'patients-trend', 'processes-trend', 'clinics-trend'].forEach(id => {
+                document.getElementById(id).innerHTML = '<i class="fas fa-minus text-muted" style="font-size: 0.8rem;"></i>';
+            });
+        });
+}
+
+function calculateTrend(currentPeriod, previousPeriod) {
+    const currentSum = currentPeriod.reduce((a, b) => a + b, 0);
+    const previousSum = previousPeriod.reduce((a, b) => a + b, 0);
+    
+    if (previousSum === 0) return 0;
+    
+    const percentChange = ((currentSum - previousSum) / previousSum) * 100;
+    return percentChange;
+}
+
+function updateTrendIndicator(elementId, trendPercent) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    let icon, color, title;
+    
+    if (trendPercent > 5) {
+        icon = 'fas fa-arrow-up';
+        color = 'text-success';
+        title = `+${trendPercent.toFixed(1)}% vs período anterior`;
+    } else if (trendPercent < -5) {
+        icon = 'fas fa-arrow-down';
+        color = 'text-danger';
+        title = `${trendPercent.toFixed(1)}% vs período anterior`;
+    } else {
+        icon = 'fas fa-minus';
+        color = 'text-muted';
+        title = 'Estável vs período anterior';
+    }
+    
+    element.innerHTML = `<i class="${icon} ${color}" style="font-size: 0.8rem;" title="${title}"></i>`;
+    element.setAttribute('title', title);
+}
+
+function refreshData() {
+    loadAllCharts();
+}
+</script>
+{% endblock %}

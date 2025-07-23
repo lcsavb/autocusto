@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "clinicas.apps.ClinicasConfig",
     "pacientes.apps.PacientesConfig",
     "usuarios.apps.UsuariosConfig",
+    "analytics.apps.AnalyticsConfig",
     "crispy_forms",
     "crispy_bootstrap4",
     "django_crontab",
@@ -467,6 +468,7 @@ CRONJOBS = [
     ('0 3 * * *', 'django.core.management.call_command', ['cleanup_pdfs']),
     ('0 2 * * *', 'django.core.management.call_command', ['dbbackup']),
     ('15 2 * * *', 'django.core.management.call_command', ['upload_backup']),
+    ('30 1 * * *', 'django.core.management.call_command', ['calculate_daily_metrics']),
 ]
 
 # Django-dbbackup configuration

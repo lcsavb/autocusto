@@ -53,6 +53,12 @@
       <li class="nav-item">
         <a class="nav-link" href="/admin">Admin</a>
       </li>
+
+            <li class="nav-item">
+        <a class="nav-link" href="{% url 'analytics:dashboard' %}" title="Analytics Dashboard" data-toggle="tooltip" data-placement="bottom">
+          <i class="fas fa-chart-bar text-white"></i>Analytics
+        </a>
+      </li>
       {% endif %}
 
     </ul>
@@ -69,6 +75,7 @@
           <span class="oi oi-lightbulb text-white"></span>
         </a>
       </li>
+
 
             <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

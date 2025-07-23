@@ -4,7 +4,15 @@ from pathlib import Path
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import override_settings, TransactionTestCase
 from django.db import transaction
+from django.contrib.auth import get_user_model
 from playwright.sync_api import sync_playwright, Browser, BrowserContext, Page
+from medicos.models import Medico
+from clinicas.models import Clinica, Emissor
+from pacientes.models import Paciente
+from processos.models import Doenca, Medicamento, Processo
+import datetime
+
+User = get_user_model()
 
 # Fix for Django async context issues with Playwright
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
@@ -97,13 +105,98 @@ class PlaywrightTestBase(StaticLiveServerTestCase):
         self.page.fill('input[name="email"]', email)
         self.page.fill('input[name="password"]', password)
         self.page.click('button[type="submit"]')
-        self.wait_for_page_load()
     
-    def create_test_user(self, email: str = "testuser@example.com", password: str = "testpass123"):
-        """Create a test user for authentication tests."""
-        from usuarios.models import Usuario
-        user = Usuario.objects.create_user(email=email, password=password)
-        return user
+    # Common test data creation methods
+    def create_test_user(self, email="test@example.com", password="testpass123"):
+        """Create a test user with the given credentials."""
+        return User.objects.create_user(
+            email=email,
+            password=password,
+            nome_usuario="Test User"
+        )
+    
+    def create_test_medico(self, user=None, crm="123456", cns="111111111111111"):
+        """Create a test medical professional."""
+        if not user:
+            user = self.create_test_user()
+        
+        return Medico.objects.create(
+            usuario=user,
+            nome_medico="Dr. Test Silva",
+            crm_medico=crm,
+            cns_medico=cns,
+            uf_medico="SP",
+            cidade_medico="São Paulo",
+            status_aprovacao_medico=True
+        )
+    
+    def create_test_clinica(self, cnes="1234567"):
+        """Create a test clinic."""
+        return Clinica.objects.create(
+            nome_clinica="Test Clinic",
+            cnpj_clinica="12345678901234",
+            cnes_clinica=cnes,
+            endereco_clinica="Test Street, 123",
+            cidade_clinica="São Paulo",
+            uf_clinica="SP",
+            cep_clinica="12345678",
+            telefone_clinica="1134567890"
+        )
+    
+    def create_test_emissor(self, medico=None, clinica=None):
+        """Create a test emissor (doctor-clinic relationship)."""
+        if not medico:
+            medico = self.create_test_medico()
+        if not clinica:
+            clinica = self.create_test_clinica()
+            
+        return Emissor.objects.create(
+            medico=medico,
+            clinica=clinica
+        )
+    
+    def create_test_paciente(self, cpf="12345678901"):
+        """Create a test patient."""
+        return Paciente.objects.create(
+            nome_paciente="Test Patient",
+            cpf_paciente=cpf,
+            data_nascimento_paciente=datetime.date(1990, 1, 1),
+            sexo_paciente="M",
+            endereco_paciente="Test Address",
+            cidade_paciente="São Paulo",
+            uf_paciente="SP",
+            cep_paciente="12345678",
+            telefone_paciente="1198765432"
+        )
+    
+    def create_test_doenca(self, nome="Test Disease", codigo="T01"):
+        """Create a test disease."""
+        return Doenca.objects.create(
+            nome_doenca=nome,
+            codigo_doenca=codigo
+        )
+    
+    def create_test_medicamento(self, nome="Test Medicine"):
+        """Create a test medication."""
+        return Medicamento.objects.create(
+            nome_medicamento=nome,
+            forma_farmaceutica="Comprimido",
+            concentracao="100mg",
+            laboratorio="Test Lab"
+        )
+    
+    def create_complete_test_setup(self):
+        """Create a complete test setup with user, medico, clinic, and emissor."""
+        user = self.create_test_user()
+        medico = self.create_test_medico(user=user)
+        clinica = self.create_test_clinica()
+        emissor = self.create_test_emissor(medico=medico, clinica=clinica)
+        return {
+            'user': user,
+            'medico': medico,
+            'clinica': clinica,
+            'emissor': emissor
+        }
 
 
 class PlaywrightSecurityTestBase(PlaywrightTestBase):
@@ -112,15 +205,8 @@ class PlaywrightSecurityTestBase(PlaywrightTestBase):
     def setUp(self):
         super().setUp()
         # Create test users for security testing
-        from usuarios.models import Usuario
-        self.user1 = Usuario.objects.create_user(
-            email='user1@test.com',
-            password='testpass123'
-        )
-        self.user2 = Usuario.objects.create_user(
-            email='user2@test.com', 
-            password='testpass123'
-        )
+        self.user1 = self.create_test_user(email='user1@test.com')
+        self.user2 = self.create_test_user(email='user2@test.com')
     
     def assert_redirected_to_login(self):
         """Assert that the page redirected to login."""

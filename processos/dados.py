@@ -8,6 +8,7 @@ from datetime import datetime
 from .manejo_pdfs_memory import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
+from analytics.signals import track_pdf_generation
 
 
 
@@ -487,6 +488,7 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
 
 
 # English: transfer_data_to_generator
+@track_pdf_generation(pdf_type='prescription')
 def transfere_dados_gerador(dados):
     """Transfers the final process data to the PDF generator.
 

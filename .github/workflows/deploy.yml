@@ -41,7 +41,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Run tests
+    - name: Run backend test suite (deployment-ready)
       env:
         SECRET_KEY: test-secret-key
         SQL_ENGINE: django.db.backends.postgresql
@@ -51,9 +51,11 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
+        ENVIRONMENT: container
       run: |
-        echo "Skipping tests temporarily - fix test failures first"
-        # python manage.py test
+        # Make script executable and run backend-only tests (no browser dependencies)
+        chmod +x tests/run_backend_tests.sh
+        ./tests/run_backend_tests.sh
 
   build:
     runs-on: ubuntu-latest
@@ -203,6 +205,19 @@ jobs:
           # Import GPG key into container
           echo "=== Setting up GPG in container ==="
           docker-compose exec -T web bash -c "gpg --import /dev/stdin" < /root/lucas-backup-public.asc
+          
+          # Create pre-deployment database backup (CRITICAL - stop deployment if fails)
+          echo "=== Creating pre-deployment database backup ==="
+          if ! docker-compose exec -T web python manage.py dbbackup --clean; then
+            echo "❌ Database backup failed! Deployment STOPPED for safety."
+            exit 1
+          fi
+          
+          echo "✅ Database backup completed successfully"
+          
+          # Upload backup (can fail - network issues are acceptable)
+          echo "=== Uploading backup to remote storage ==="
+          docker-compose exec -T web python manage.py upload_backup || echo "⚠️  Backup upload failed (network issue) - continuing with local backup"
           
           # Run migrations
           docker-compose exec -T web python manage.py migrate

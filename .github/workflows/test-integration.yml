@@ -130,10 +130,10 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: 🌐 Setup Chrome for Selenium
-      uses: browser-actions/setup-chrome@latest
-      with:
-        chrome-version: stable
+    - name: 🎭 Setup Playwright browsers
+      run: |
+        pip install playwright
+        playwright install chromium
     
     - name: 📦 Cache pip dependencies
       uses: actions/cache@v3
@@ -147,7 +147,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install selenium webdriver-manager
+        pip install playwright pytest-playwright
     
     - name: 🏗️ Build test Docker image (with browsers)
       uses: docker/build-push-action@v5
@@ -159,7 +159,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
-    - name: 🌐 Run frontend tests (Selenium)
+    - name: 🎭 Run frontend tests (Playwright)
       env:
         SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
         SQL_ENGINE: django.db.backends.postgresql
@@ -169,12 +169,16 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
-        HEADLESS_CHROME: true
+        PLAYWRIGHT_HEADLESS: true
       run: |
-        echo "Running frontend/Selenium tests..."
+        echo "Running frontend/Playwright tests..."
         python manage.py test \
           tests.test_login_frontend \
           tests.test_user_registration \
+          tests.test_clinic_management \
+          tests.test_prescription_forms \
+          tests.test_navigation_comprehensive \
+          tests.test_frontend_security \
           --settings=test_settings \
           --verbosity=2 \
           --failfast
@@ -274,7 +278,7 @@ jobs:
         tags: autocusto-prod-test:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        # Build exactly like production - no Chrome/Selenium
+        # Build exactly like production - no browser dependencies
     
     - name: 🧪 Test production-like container
       run: |
@@ -297,12 +301,12 @@ jobs:
     
     - name: 🔍 Verify production container security
       run: |
-        # Ensure Chrome/Selenium are NOT installed in production image
+        # Ensure browser dependencies are NOT installed in production image
         echo "Checking production container does not contain browser dependencies..."
         docker run --rm autocusto-prod-test:latest sh -c "
           ! command -v google-chrome >/dev/null 2>&1 && echo '✅ Chrome not found (good)' || (echo '❌ Chrome found in production image!' && exit 1)
           ! command -v chromium >/dev/null 2>&1 && echo '✅ Chromium not found (good)' || (echo '❌ Chromium found in production image!' && exit 1)
-          ! python -c 'import selenium' >/dev/null 2>&1 && echo '✅ Selenium not found (good)' || (echo '❌ Selenium found in production image!' && exit 1)
+          ! python -c 'import playwright' >/dev/null 2>&1 && echo '✅ Playwright not found (good)' || (echo '❌ Playwright found in production image!' && exit 1)
         "
     
     - name: 📊 Check container size

@@ -30,6 +30,7 @@ urlpatterns = [
     path("pacientes/", include("pacientes.urls")),
     path("processos/", include("processos.urls")),
     path("clinicas/", include("clinicas.urls")),
+    path("analytics/", include("analytics.urls")),
     path("reportar-erros/", views.reportar_erros, name="reportar-erros"),
     path("solicitar-funcionalidade/", views.solicitar_funcionalidade, name="solicitar-funcionalidade"),
     path("process-feedback-ajax/", views.process_feedback_ajax, name="process-feedback-ajax"),

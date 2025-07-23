@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 from medicos.seletor import medico as seletor_medico
 from pacientes.models import Paciente
 from processos.models import Processo, Doenca
+from analytics.models import PDFGenerationLog
 from .forms import (
     mostrar_med,
     ajustar_campos_condicionais,
@@ -802,6 +803,21 @@ def serve_pdf(request, filename):
                 response['X-Frame-Options'] = 'SAMEORIGIN'
                 
                 logger.info(f"Successfully served PDF {filename} to user {request.user.email}")
+                
+                # Track PDF serving analytics
+                try:
+                    PDFGenerationLog.objects.create(
+                        user=request.user,
+                        pdf_type='served',
+                        success=True,
+                        generation_time_ms=0,  # No generation time for serving
+                        file_size_bytes=len(pdf_content),
+                        ip_address=request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] if request.META.get('HTTP_X_FORWARDED_FOR') else request.META.get('REMOTE_ADDR'),
+                        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                        error_message=''
+                    )
+                except Exception as analytics_error:
+                    logger.error(f"Error tracking PDF serving analytics: {analytics_error}")
                 
                 return response
             else:
