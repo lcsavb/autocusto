@@ -77,8 +77,9 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
+        DJANGO_SETTINGS_MODULE: test_settings
       run: |
-        python manage.py check --deploy
+        python manage.py check --deploy --settings=test_settings
     
     - name: 🧪 Run backend tests with coverage
       env:
@@ -90,6 +91,7 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
+        DJANGO_SETTINGS_MODULE: test_settings
       run: |
         echo "Running backend tests (no Selenium)..."
         coverage run --source='.' manage.py test \
@@ -169,8 +171,6 @@ jobs:
         target: test
         push: false
         tags: autocusto-test:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
     
     - name: 🎭 Run frontend tests (Playwright)
       env:
@@ -182,6 +182,7 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
+        DJANGO_SETTINGS_MODULE: test_settings
         PLAYWRIGHT_HEADLESS: true
       run: |
         echo "Running frontend/Playwright tests..."
@@ -288,6 +289,7 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
+        DJANGO_SETTINGS_MODULE: test_settings
       run: |
         echo "Running security-focused tests..."
         python manage.py test tests.test_security --settings=test_settings --verbosity=2
@@ -329,8 +331,6 @@ jobs:
         target: production
         push: false
         tags: autocusto-prod-test:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
         # Build exactly like production - no browser dependencies
     
     - name: 🧪 Test production-like container

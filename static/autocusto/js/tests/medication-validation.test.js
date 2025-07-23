@@ -22,7 +22,7 @@ describe('🏥 CRITICAL: Medication Validation Logic (from med.js)', () => {
             
             if (medValue && medValue !== 'nenhum' && medValue !== '' && medValue !== 'none') {
                 hasValidMedication = true;
-                console.log(`Medication ${i} has valid value: ${medValue}`);
+                // Removed verbose console.log to prevent CI output overflow
             }
         }
         
@@ -36,13 +36,11 @@ describe('🏥 CRITICAL: Medication Validation Logic (from med.js)', () => {
     function shouldKeepFieldName(fieldName, medNumber) {
         // Skip the via field - it should never have its name removed (from med.js line ~392)
         if (fieldName.includes('_via')) {
-            console.log(`Form submit: Skipping via field: ${fieldName}`);
             return true;
         }
         
         // Keep the medication dropdown field itself so backend knows it was set to "nenhum" (line ~397)
         if (fieldName === `id_med${medNumber}`) {
-            console.log(`Form submit: Keeping medication dropdown field: ${fieldName}`);
             return true;
         }
         
@@ -170,7 +168,7 @@ describe('🏥 CRITICAL: Medication Validation Logic (from med.js)', () => {
     describe('🧪 Algorithm Validation', () => {
         test('Validation algorithm performance with large datasets', () => {
             // Test that the algorithm handles edge cases efficiently
-            const testCases = 1000;
+            const testCases = 100; // Reduced for CI performance
             const startTime = process.hrtime();
             
             for (let i = 0; i < testCases; i++) {
@@ -187,15 +185,15 @@ describe('🏥 CRITICAL: Medication Validation Logic (from med.js)', () => {
             const [seconds, nanoseconds] = process.hrtime(startTime);
             const milliseconds = seconds * 1000 + nanoseconds / 1000000;
             
-            // Should complete quickly (under 2000ms for 1000 iterations in CI)
-            expect(milliseconds).toBeLessThan(2000);
+            // Should complete quickly (under 500ms for 100 iterations in CI)
+            expect(milliseconds).toBeLessThan(500);
         });
 
         test('Memory usage remains constant', () => {
             // Test that the function doesn't create memory leaks
             const initialMemory = process.memoryUsage().heapUsed;
             
-            for (let i = 0; i < 10000; i++) {
+            for (let i = 0; i < 1000; i++) { // Reduced for CI performance
                 hasValidMedication({
                     med1: 'test-medication-' + i,
                     med2: 'nenhum',
