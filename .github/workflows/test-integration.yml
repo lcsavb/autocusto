@@ -336,8 +336,8 @@ jobs:
     
     - name: 🧪 Test production-like container
       run: |
-        # Start containers using docker-compose
-        docker-compose -f docker-compose.yml up -d db
+        # Start containers using docker compose (v2)
+        docker compose -f docker-compose.yml up -d db
         sleep 10
         
         # Test that production container works for backend-only tests

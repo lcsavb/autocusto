@@ -28,8 +28,14 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
 ]
 
-# Disable debug for tests
+# Disable debug for tests  
 DEBUG = False
+
+# Disable SSL-related settings for tests (allow HTTP)
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_HSTS_SECONDS = 0
 
 # Use simple cache for tests
 CACHES = {
