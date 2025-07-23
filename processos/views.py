@@ -535,6 +535,12 @@ def cadastro(request):
         usuario = request.user
         # English: doctor
         medico = seletor_medico(usuario)
+        
+        # Check if medico exists (configuration issue fix)
+        if not medico:
+            messages.error(request, "Erro: perfil médico não encontrado. Contate o suporte.")
+            return redirect("home")
+            
         # English: clinics
         clinicas = medico.clinicas.all()
         # English: choices

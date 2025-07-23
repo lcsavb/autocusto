@@ -291,8 +291,8 @@ class RegistrationFormSimplificationTest(TestCase):
         
         self.assertIsNotNone(medico)
         self.assertEqual(medico.nome_medico, 'Test Doctor')
-        self.assertEqual(medico.crm_medico, '')
-        self.assertEqual(medico.cns_medico, '')
+        self.assertEqual(medico.crm_medico, None)
+        self.assertEqual(medico.cns_medico, None)
 
 
 class EditProfileFormTest(TestCase):

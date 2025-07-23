@@ -44,6 +44,10 @@ CACHES = {
     }
 }
 
+# Test-specific configuration flag
+# This will be used by models to handle test-specific behavior
+TEST_ENVIRONMENT = True
+
 # Disable logging during tests
 LOGGING = {
     'version': 1,
