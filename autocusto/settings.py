@@ -259,9 +259,15 @@ if not DEBUG:
 
 # Enhanced Logging Configuration for Production Healthcare Application
 if not DEBUG:
-    # Create log directory if it doesn't exist
+    # Create log directory if it doesn't exist (skip in CI environments)
     import os
-    os.makedirs('/var/log/django', exist_ok=True)
+    try:
+        os.makedirs('/var/log/django', exist_ok=True)
+        LOG_DIR = '/var/log/django'
+    except PermissionError:
+        # In CI/testing environments, use a local log directory
+        LOG_DIR = os.path.join(BASE_DIR, 'logs')
+        os.makedirs(LOG_DIR, exist_ok=True)
     
     LOGGING = {
         'version': 1,
@@ -298,7 +304,7 @@ if not DEBUG:
             'error_file': {
                 'level': 'ERROR',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/django/error.log',
+                'filename': os.path.join(LOG_DIR, 'error.log'),
                 'maxBytes': 1024*1024*50,  # 50 MB
                 'backupCount': 10,
                 'formatter': 'production',
@@ -308,7 +314,7 @@ if not DEBUG:
             'info_file': {
                 'level': 'INFO',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/django/info.log',
+                'filename': os.path.join(LOG_DIR, 'info.log'),
                 'maxBytes': 1024*1024*20,  # 20 MB
                 'backupCount': 7,
                 'formatter': 'production',
@@ -318,7 +324,7 @@ if not DEBUG:
             'pdf_file': {
                 'level': 'INFO',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/django/pdf.log',
+                'filename': os.path.join(LOG_DIR, 'pdf.log'),
                 'maxBytes': 1024*1024*20,  # 20 MB
                 'backupCount': 5,
                 'formatter': 'performance',
@@ -328,7 +334,7 @@ if not DEBUG:
             'security_file': {
                 'level': 'WARNING',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/django/security.log',
+                'filename': os.path.join(LOG_DIR, 'security.log'),
                 'maxBytes': 1024*1024*20,  # 20 MB
                 'backupCount': 30,  # Keep security logs longer
                 'formatter': 'security',
@@ -338,7 +344,7 @@ if not DEBUG:
             'db_file': {
                 'level': 'WARNING',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/django/database.log',
+                'filename': os.path.join(LOG_DIR, 'database.log'),
                 'maxBytes': 1024*1024*20,  # 20 MB
                 'backupCount': 7,
                 'formatter': 'production',
@@ -348,7 +354,7 @@ if not DEBUG:
             'audit_file': {
                 'level': 'INFO',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/django/audit.log',
+                'filename': os.path.join(LOG_DIR, 'audit.log'),
                 'maxBytes': 1024*1024*50,  # 50 MB
                 'backupCount': 365,  # Keep audit logs for 1 year
                 'formatter': 'audit',
