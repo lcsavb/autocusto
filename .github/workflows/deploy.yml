@@ -99,11 +99,23 @@ jobs:
         key: ${{ secrets.KINGHOST_SSH_KEY }}
         script: |
           echo "=== REGISTRY-ONLY DEPLOYMENT START ==="
+
+          
           
           # Setup deployment directory
           sudo chown $USER:$USER /opt/autocusto
           mkdir -p /opt/autocusto
           cd /opt/autocusto
+
+          # Create pre-deployment database backup (CRITICAL - stop deployment if fails)
+          echo "=== Creating pre-deployment database backup ==="
+          if ! docker-compose exec -T web python manage.py dbbackup --clean; then
+            echo "❌ Database backup failed! Deployment STOPPED for safety."
+            exit 1
+          fi
+          
+          echo "✅ Database backup completed successfully"
+
           
           # Copy GPG public key for container use (accessible by deploy user)
           echo "=== Setting up GPG key for backups ==="
@@ -205,15 +217,7 @@ jobs:
           # Import GPG key into container
           echo "=== Setting up GPG in container ==="
           docker-compose exec -T web bash -c "gpg --import /dev/stdin" < /root/lucas-backup-public.asc
-          
-          # Create pre-deployment database backup (CRITICAL - stop deployment if fails)
-          echo "=== Creating pre-deployment database backup ==="
-          if ! docker-compose exec -T web python manage.py dbbackup --clean; then
-            echo "❌ Database backup failed! Deployment STOPPED for safety."
-            exit 1
-          fi
-          
-          echo "✅ Database backup completed successfully"
+        
           
           # Upload backup (can fail - network issues are acceptable)
           echo "=== Uploading backup to remote storage ==="

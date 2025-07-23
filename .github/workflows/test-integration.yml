@@ -191,6 +191,46 @@ jobs:
         path: test_screenshots/
         retention-days: 7
 
+  # JavaScript unit tests (Node.js - no browser dependencies)
+  javascript-tests:
+    name: JavaScript Unit Tests (Critical Medication Logic)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🟢 Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: static/autocusto/js/package.json
+    
+    - name: 📦 Install JavaScript test dependencies
+      working-directory: ./static/autocusto/js
+      run: |
+        npm install
+    
+    - name: 🧪 Run JavaScript unit tests
+      working-directory: ./static/autocusto/js
+      run: |
+        echo "🚨 CRITICAL: Testing medication validation logic from med.js"
+        echo "Testing core business logic that prevents invalid medical prescriptions"
+        npm test -- --verbose
+    
+    - name: 📊 Generate JavaScript test coverage
+      working-directory: ./static/autocusto/js
+      run: |
+        npm run test:coverage
+    
+    - name: 📤 Upload JavaScript coverage
+      uses: actions/upload-artifact@v3
+      with:
+        name: javascript-coverage
+        path: static/autocusto/js/coverage/
+        retention-days: 7
+
   # Security-focused testing
   security-tests:
     name: Security Tests
@@ -318,7 +358,7 @@ jobs:
   deployment-readiness:
     name: Deployment Readiness
     runs-on: ubuntu-latest
-    needs: [backend-tests, security-tests]
+    needs: [backend-tests, javascript-tests, security-tests]
     if: github.ref == 'refs/heads/master'
     
     steps:
@@ -329,6 +369,7 @@ jobs:
       run: |
         echo "🎉 All tests passed! Deployment is ready."
         echo "Backend tests: ✅"
+        echo "JavaScript tests (Critical Medication Logic): ✅"
         echo "Security tests: ✅"
         echo "Ready to deploy to production."
 
@@ -336,7 +377,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, security-tests, docker-test]
+    needs: [backend-tests, frontend-tests, javascript-tests, security-tests, docker-test]
     if: always()
     
     steps:
@@ -348,12 +389,18 @@ jobs:
         echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
         echo "| Backend Tests | ${{ needs.backend-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Frontend Tests | ${{ needs.frontend-tests.result == 'success' && '✅ Passed' || needs.frontend-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🚨 JavaScript Tests (Critical) | ${{ needs.javascript-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Security Tests | ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Docker Integration | ${{ needs.docker-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ "${{ needs.backend-tests.result }}" = "success" ] && [ "${{ needs.security-tests.result }}" = "success" ]; then
+        if [ "${{ needs.backend-tests.result }}" = "success" ] && [ "${{ needs.javascript-tests.result }}" = "success" ] && [ "${{ needs.security-tests.result }}" = "success" ]; then
           echo "🎉 **Core tests passed!** System is ready for deployment." >> $GITHUB_STEP_SUMMARY
         else
           echo "🚨 **Core tests failed.** Deployment blocked until issues are resolved." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Critical Requirements:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Tests: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- JavaScript Tests (Medication Safety): ${{ needs.javascript-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security Tests: ${{ needs.security-tests.result }}" >> $GITHUB_STEP_SUMMARY
         fi
