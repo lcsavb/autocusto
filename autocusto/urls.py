@@ -20,6 +20,7 @@ from . import views
 from django.conf.urls.static import static
 from django.conf import settings
 from django.contrib.auth import views as auth_views
+from usuarios.forms import CustomPasswordResetForm, CustomSetPasswordForm
 
 # English: url_patterns
 urlpatterns = [
@@ -42,7 +43,8 @@ urlpatterns = [
         email_template_name="registration/password_reset_email.txt",
         html_email_template_name="registration/password_reset_email.html",
         subject_template_name="registration/password_reset_subject.txt",
-        success_url="/password_reset/done/"
+        success_url="/password_reset/done/",
+        form_class=CustomPasswordResetForm
     ), name="password_reset"),
     
     path("password_reset/done/", auth_views.PasswordResetDoneView.as_view(
@@ -51,7 +53,8 @@ urlpatterns = [
     
     path("reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(
         template_name="registration/password_reset_confirm.html",
-        success_url="/reset/done/"
+        success_url="/reset/done/",
+        form_class=CustomSetPasswordForm
     ), name="password_reset_confirm"),
     
     path("reset/done/", auth_views.PasswordResetCompleteView.as_view(
