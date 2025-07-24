@@ -164,6 +164,16 @@ def beneficios(request):
     return render(request, "beneficios.html")
 
 
+def beneficios_de(request):
+    """Financial benefits analysis page - German version"""
+    return render(request, "beneficios_de.html")
+
+
+def beneficios_en(request):
+    """Financial benefits analysis page - English version"""
+    return render(request, "beneficios_en.html")
+
+
 def reportar_erros(request):
     """Report errors page"""
     if request.method == 'POST':

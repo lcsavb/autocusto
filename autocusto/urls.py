@@ -27,6 +27,8 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("privacidade/", views.privacy, name="privacy"),
     path("beneficios/", views.beneficios, name="beneficios"),
+    path("beneficios/de/", views.beneficios_de, name="beneficios-de"),
+    path("beneficios/en/", views.beneficios_en, name="beneficios-en"),
     path("admin/", admin.site.urls),
     path("medicos/", include("medicos.urls")),
     path("pacientes/", include("pacientes.urls")),
