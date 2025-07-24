@@ -278,8 +278,9 @@ after setup completion it should redirect to processos/cadastro and if the user 
   Actual User Journey:
   1. User fills CPF + CID on home page (PreProcesso form)
   2. Home view checks if user has complete setup (CRM/CNS + clinics)
-  3. If setup incomplete → redirects to setup completion
-  4. After setup completion → redirects back to /processos/cadastro/
+  3. If setup incomplete → redirects to setup completion (if not crm -> http://127.0.0.1:8001/medicos/editar-perfil/, if not clinicas 
+  -> http://127.0.0.1:8001/clinicas/cadastro/), if does not have both to http://127.0.0.1:8001/medicos/editar-perfil/
+  4. After setup completion → redirects back to /processos/cadastro/ with the original filled CPF + CID
   5. Since user filled the PreProcesso form, they're logged in and session is properly set
 
   So the test expecting 200 status code for /processos/cadastro/ when setup is complete is correct. The issue is that the view is still redirecting to home instead of rendering the form.

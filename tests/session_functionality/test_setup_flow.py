@@ -16,7 +16,7 @@ from django.contrib.messages import get_messages
 from medicos.models import Medico
 from usuarios.models import Usuario
 from clinicas.models import Clinica
-from processos.models import Doenca
+from processos.models import Doenca, Protocolo
 
 
 class SetupFlowRedirectTest(TestCase):
@@ -32,17 +32,24 @@ class SetupFlowRedirectTest(TestCase):
         )
         self.medico = Medico.objects.create(
             nome_medico='Test Doctor',
-            crm_medico='',
-            cns_medico=''
+            crm_medico=None,
+            cns_medico=None
         )
         self.user.medicos.add(self.medico)
         self.client.login(username='test@example.com', password='testpass123')
 
-        # Create test disease for process creation
+        # Create test protocol and disease for process creation
+        self.protocolo = Protocolo.objects.create(
+            nome='Test Protocol',
+            arquivo='test.pdf',
+            dados_condicionais={}
+        )
         self.doenca = Doenca.objects.create(
             cid='M79.0',
             nome='Test Disease'
         )
+        self.doenca.protocolo = self.protocolo
+        self.doenca.save()
 
     def test_redirect_to_profile_when_missing_crm_cns(self):
         """Test redirect to complete-profile when CRM/CNS are missing."""
@@ -102,11 +109,36 @@ class SetupFlowRedirectTest(TestCase):
         clinica.usuarios.add(self.user)
         clinica.medicos.add(self.medico)
 
+        # Create a real patient for the test
+        from pacientes.models import Paciente
+        paciente = Paciente.objects.create(
+            nome_paciente='Test Patient',
+            cpf_paciente='821.331.660-68',
+            sexo='M',
+            idade='30',
+            nome_mae='Test Mother',
+            incapaz=False,
+            nome_responsavel='',
+            rg='123456789',
+            peso='70kg',
+            altura='1,75m',
+            escolha_etnia='Branco',
+            cns_paciente='123456789012345',
+            email_paciente='test@example.com',
+            cidade_paciente='Test City',
+            end_paciente='Test Address',
+            cep_paciente='12345-678',
+            telefone1_paciente='11999999999',
+            telefone2_paciente='',
+            etnia='Branco'
+        )
+        paciente.usuarios.add(self.user)
+
         # Set up session data for process creation
         session = self.client.session
         session['paciente_existe'] = True
         session['cid'] = 'M79.0'
-        session['paciente_id'] = '123'
+        session['paciente_id'] = str(paciente.id)
         session.save()
 
         response = self.client.get(reverse('processos-cadastro'))
@@ -151,11 +183,24 @@ class SessionPreservationTest(TestCase):
         )
         self.medico = Medico.objects.create(
             nome_medico='Test Doctor',
-            crm_medico='',
-            cns_medico=''
+            crm_medico=None,
+            cns_medico=None
         )
         self.user.medicos.add(self.medico)
         self.client.login(username='test@example.com', password='testpass123')
+
+        # Create test protocol and disease for process creation
+        self.protocolo = Protocolo.objects.create(
+            nome='Test Protocol',
+            arquivo='test.pdf',
+            dados_condicionais={}
+        )
+        self.doenca = Doenca.objects.create(
+            cid='M79.0',
+            nome='Test Disease'
+        )
+        self.doenca.protocolo = self.protocolo
+        self.doenca.save()
 
     def test_session_preserved_during_profile_completion(self):
         """Test that session data is preserved during profile completion."""
@@ -261,11 +306,24 @@ class SetupFlowIntegrationTest(TestCase):
         )
         self.medico = Medico.objects.create(
             nome_medico='Test Doctor',
-            crm_medico='',
-            cns_medico=''
+            crm_medico=None,
+            cns_medico=None
         )
         self.user.medicos.add(self.medico)
         self.client.login(username='test@example.com', password='testpass123')
+
+        # Create test protocol and disease for process creation
+        self.protocolo = Protocolo.objects.create(
+            nome='Test Protocol',
+            arquivo='test.pdf',
+            dados_condicionais={}
+        )
+        self.doenca = Doenca.objects.create(
+            cid='M79.0',
+            nome='Test Disease'
+        )
+        self.doenca.protocolo = self.protocolo
+        self.doenca.save()
 
     def test_profile_completion_redirects_correctly(self):
         """Test profile completion redirects based on clinic existence."""
@@ -290,8 +348,8 @@ class SetupFlowIntegrationTest(TestCase):
         clinica.medicos.add(self.medico)
 
         # Reset medico for second test
-        self.medico.crm_medico = ''
-        self.medico.cns_medico = ''
+        self.medico.crm_medico = None
+        self.medico.cns_medico = None
         self.medico.save()
 
         response = self.client.post(reverse('complete-profile'), data=form_data)
