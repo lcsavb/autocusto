@@ -206,7 +206,7 @@ MESSAGE_TAGS = {
 
 # Login
 LOGIN_REDIRECT_URL = "home"
-LOGIN_URL = "login"
+LOGIN_URL = "login-redirect"
 
 # PDFs
 

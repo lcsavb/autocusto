@@ -122,6 +122,14 @@ def custom_logout(request):
     return redirect("home")
 
 
+def login_required_redirect(request):
+    """Redirect unauthenticated users to home with message"""
+    print("DEBUG: login_required_redirect called")  # Debug line
+    messages.warning(request, "Você precisa fazer login para acessar essa página.")
+    print("DEBUG: message added")  # Debug line
+    return redirect("home")
+
+
 @login_required
 @transaction.atomic
 def complete_profile(request):

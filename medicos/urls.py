@@ -18,4 +18,9 @@ urlpatterns = [
         views.custom_logout,
         name="logout",
     ),
+    path(
+        "login-redirect/",
+        views.login_required_redirect,
+        name="login-redirect",
+    ),
 ]
