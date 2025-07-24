@@ -6,7 +6,6 @@
 
     $(document).on('change', 'input[name="emitir_relatorio"]', function() {
         let escolha = $('input[name="emitir_relatorio"]:checked').val();
-        console.log('Emitir relatório changed:', escolha);
         escolha = escolha == 'True'
         if (escolha) {
             divRelatorio.removeClass('d-none');
@@ -19,7 +18,6 @@
 
     $(document).on('change', 'input[name="consentimento"]', function() {
         let escolha = $('input[name="consentimento"]:checked').val();
-        console.log('Consentimento changed:', escolha);
         escolha = escolha == 'True';
         if (escolha) {
             $.ajax ( {

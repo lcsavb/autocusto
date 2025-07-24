@@ -39,6 +39,10 @@
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
 
     <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'beneficios' %}">Benefícios</a>
+      </li>
+      
       {% if user.is_authenticated %}
       <li class="nav-item">
           <!-- Quick patient search for authenticated users -->
@@ -107,7 +111,7 @@
       {% csrf_token %}
       <div class="d-flex flex-column d-lg-flex flex-lg-row align-items-center">
         <input name="username" type="email" class="form-control mr-sm-2 mb-1 mb-lg-0" placeholder="Email" aria-label="Email" style="max-width: 150px;">
-        <input name="password" type="password" class="form-control mr-sm-2 mb-1 mb-lg-0" placeholder="Senha" aria-label="Password" style="max-width: 120px;">
+        <input name="password" type="password" class="form-control mr-sm-2 mb-1 mb-lg-0" placeholder="Senha" aria-label="Password" autocomplete="current-password" style="max-width: 120px;">
         <button class="btn btn-outline-light" type="submit">
           <span class="oi oi-account-login"></span> Login
         </button>

@@ -159,6 +159,11 @@ def privacy(request):
     return render(request, "privacy.html")
 
 
+def beneficios(request):
+    """Financial benefits analysis page"""
+    return render(request, "beneficios.html")
+
+
 def reportar_erros(request):
     """Report errors page"""
     if request.method == 'POST':

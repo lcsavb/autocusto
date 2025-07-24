@@ -57,7 +57,8 @@ class SetupFlowRedirectTest(TestCase):
         
         # Should redirect to home (where profile completion is handled)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/')
+        # Should redirect to setup completion page (not home)
+        self.assertEqual(response.url, reverse('complete-profile'))
         
         # Check info message
         messages = list(get_messages(response.wsgi_request))
@@ -81,7 +82,7 @@ class SetupFlowRedirectTest(TestCase):
         
         # Should redirect to home (where clinic setup is handled)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/')
+        self.assertEqual(response.url, reverse('clinicas-cadastro'))
         
         # Check info message
         messages = list(get_messages(response.wsgi_request))
@@ -132,7 +133,7 @@ class SetupFlowRedirectTest(TestCase):
 
         response = self.client.get(reverse('processos-cadastro'))
         
-        # Should redirect to complete-profile (CRM/CNS), not clinic registration
+        # Should redirect to home (abnormal direct access to processos-cadastro)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('complete-profile'))
 

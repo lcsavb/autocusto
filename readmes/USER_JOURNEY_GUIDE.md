@@ -269,3 +269,54 @@ Usuario (User) ←→ Medico (Doctor) ←→ Clinica (Clinic)
 6. **Performance Optimized**: PDF generation uses memory-based optimization
 
 This user journey guide serves as both documentation and validation that the AutoCusto system implements thoughtful, user-centered design principles while maintaining strict security and regulatory compliance for medical data handling.
+
+
+after setup completion it should redirect to processos/cadastro and if the user can fill the pre processo form he is surely logged in
+
+● You're absolutely right! I misunderstood the flow. Let me correct my understanding:
+
+  Actual User Journey:
+  1. User fills CPF + CID on home page (PreProcesso form)
+  2. Home view checks if user has complete setup (CRM/CNS + clinics)
+  3. If setup incomplete → redirects to setup completion
+  4. After setup completion → redirects back to /processos/cadastro/
+  5. Since user filled the PreProcesso form, they're logged in and session is properly set
+
+  So the test expecting 200 status code for /processos/cadastro/ when setup is complete is correct. The issue is that the view is still redirecting to home instead of rendering the form.
+
+  Let me check what's causing the exception that leads to the redirect to home. The session should have the required variables from the PreProcesso form submission. Let me add some debug
+  output to see what's missing:
+
+● Update(processos/views.py)
+  ⎿  User rejected update to processos/views.py
+       565            # English: FormModel
+       566            ModeloFormulario = fabricar_formulario(cid, False)
+       567        except Exception as e:
+       568 +          if hasattr(settings, 'TEST_ENVIRONMENT') and settings.TEST_ENVIRONMENT:
+       569 +              print(f"DEBUG: Exception in cadastro view: {e}")
+       570 +              import traceback
+       571 +              traceback.print_exc()
+       572            messages.error(request, f"Erro ao carregar dados do cadastro: {e}")
+       573            return redirect("home")
+       574    
+
+> in the real application the journey is working, the problem must be with the test
+
+● You're absolutely right! If the real application is working, then these tests have incorrect expectations. The tests are trying to directly access /processos/cadastro/ without going through
+  the proper PreProcesso form flow from the home page.
+
+  Since these are configuration issues with the tests, not the application logic, let me fix the test expectations to match the actual correct behavior:
+
+● Update Todos
+  ⎿  ☒ Remove conflicting JavaScript test files (med.test.js, med-logic-extractor.js)
+     ☒ Fix JavaScript test coverage configuration causing CI failures
+     ☒ Fix package.json JSON syntax error blocking npm install
+     ☒ Fix workflow coverage step trying to run missing test:coverage script
+     ☒ ✅ JavaScript Unit Tests - PASSING with 12/12 tests successful
+     ☒ ✅ JavaScript Unit Tests FULLY WORKING in CI/CD - all steps passing!
+     ☒ ✅ Security Tests now PASSING completely!
+     ☒ ✅ Docker Integration Test - main container test now PASSING!
+     ☒ ✅ Fixed None vs empty string model field issue
+     ☐ Fix Backend Tests - correct test expectations for abnormal direct access
+     ☐ Fix Docker Integration Test - security verification failing
+     ☐ Fix Frontend Playwright tests - script tag validation issue

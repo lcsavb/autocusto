@@ -1,0 +1,38 @@
+{
+  "name": "autocusto-js-tests",
+  "version": "1.0.0",
+  "description": "Node.js unit tests for AutoCusto JavaScript code",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:med": "jest tests/med.test.js",
+    "test:verbose": "jest --verbose"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/tests/**",
+      "!**/mocks/**"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "keywords": [
+    "testing",
+    "medical",
+    "prescription",
+    "validation",
+    "javascript"
+  ],
+  "author": "AutoCusto Development Team",
+  "license": "PROPRIETARY"
+}
