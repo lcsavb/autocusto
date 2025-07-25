@@ -109,9 +109,33 @@ def list_clinics(request):
     try:
         # English: user
         user = request.user
-        # English: clinics
-        clinics = Clinica.objects.filter(usuarios=user).values('id', 'nome_clinica', 'cns_clinica')
-        return JsonResponse(list(clinics), safe=False)
+        # Security fix: Use versioned clinic data instead of direct .values() query
+        clinics_data = []
+        skipped_count = 0
+        
+        user_clinics = Clinica.objects.filter(usuarios=user)
+        
+        for clinic in user_clinics:
+            # Get versioned clinic data - no fallback to master record
+            version = clinic.get_version_for_user(user)
+            if version:
+                clinics_data.append({
+                    'id': clinic.id,
+                    'nome_clinica': version.nome_clinica,  # Always use versioned name
+                    'cns_clinica': clinic.cns_clinica      # CNS from master record (immutable)
+                })
+            else:
+                # Log security event: clinic skipped due to missing version
+                skipped_count += 1
+                logger.warning(
+                    f"Security: Clinic CNS {clinic.cns_clinica} skipped for user {user.email} "
+                    f"- no version access (potential data leak prevented)"
+                )
+        
+        if skipped_count > 0:
+            logger.info(f"Clinic listing: {len(clinics_data)} returned, {skipped_count} skipped for user {user.email}")
+        
+        return JsonResponse(clinics_data, safe=False)
     except Exception as e:
         logger.error(f"Error listing clinics for user {request.user.id}: {e}")
         return JsonResponse({'error': 'Erro ao carregar clínicas'}, status=500)
@@ -127,7 +151,7 @@ def get_clinic(request, clinic_id):
         # English: clinic
         clinic = get_object_or_404(Clinica, id=clinic_id, usuarios=user)
         
-        # Try to get user's version first
+        # Security fix: Only return versioned data - no fallback to master record
         version = clinic.get_version_for_user(user)
         
         if version:
@@ -135,7 +159,7 @@ def get_clinic(request, clinic_id):
             data = {
                 'id': clinic.id,
                 'nome_clinica': version.nome_clinica,
-                'cns_clinica': clinic.cns_clinica,
+                'cns_clinica': clinic.cns_clinica,  # CNS from master record (immutable)
                 'logradouro': version.logradouro,
                 'logradouro_num': version.logradouro_num,
                 'cidade': version.cidade,
@@ -143,21 +167,17 @@ def get_clinic(request, clinic_id):
                 'cep': version.cep,
                 'telefone_clinica': version.telefone_clinica,
             }
+            return JsonResponse(data)
         else:
-            # Fallback to original data for backward compatibility
-            data = {
-                'id': clinic.id,
-                'nome_clinica': clinic.nome_clinica,
-                'cns_clinica': clinic.cns_clinica,
-                'logradouro': clinic.logradouro,
-                'logradouro_num': clinic.logradouro_num,
-                'cidade': clinic.cidade,
-                'bairro': clinic.bairro,
-                'cep': clinic.cep,
-                'telefone_clinica': clinic.telefone_clinica,
-            }
-        
-        return JsonResponse(data)
+            # Security: No fallback - return 404 as if clinic doesn't exist
+            # This prevents the user from knowing the clinic exists if they don't have version access
+            logger.warning(
+                f"Security: Clinic {clinic_id} (CNS: {clinic.cns_clinica}) returned 404 "
+                f"for user {user.email} - no version access (data leak prevented)"
+            )
+            # Return 404 to make it appear as if the clinic doesn't exist
+            from django.http import Http404
+            raise Http404("Clínica não encontrada")
     except Exception as e:
         logger.error(f"Error getting clinic {clinic_id} for user {request.user.id}: {e}")
         return JsonResponse({'error': 'Erro ao carregar dados da clínica'}, status=500)

@@ -61,18 +61,38 @@ class Paciente(models.Model):
         return f"{self.nome_paciente}"
     
     def get_name_for_user(self, user):
-        """Get the patient name as seen by a specific user (from their version)"""
+        """
+        Get the patient name as seen by a specific user (from their version).
+        
+        Security: Only returns data if user has version access - no fallback to master record.
+        """
         version = self.get_version_for_user(user)
-        return version.nome_paciente if version else self.nome_paciente
+        if version:
+            return version.nome_paciente
+        else:
+            # Security: No fallback to master record - return None if no version access
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Security: Model method access denied to patient CPF {self.cpf_paciente} "
+                f"for user {user.email} - no version access"
+            )
+            return None
     
     @classmethod
     def get_patients_for_user_search(cls, user, search_term=None):
         """
         Get patients for a user with their versioned data, optionally filtered by search term.
         Returns a list of tuples: (patient, version) where version contains the user's data.
+        
+        Security: Only returns patients where the user has version access - no fallback to master records.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         user_patients = user.pacientes.all()
         results = []
+        skipped_count = 0
         
         for patient in user_patients:
             version = patient.get_version_for_user(user)
@@ -85,50 +105,139 @@ class Paciente(models.Model):
                 else:
                     results.append((patient, version))
             else:
-                # Fallback to master record data
-                if search_term:
-                    if (search_term.lower() in patient.nome_paciente.lower() or 
-                        search_term in patient.cpf_paciente):
-                        results.append((patient, None))
-                else:
-                    results.append((patient, None))
+                # Security fix: No fallback to master record - skip patients without version access
+                skipped_count += 1
+                logger.warning(
+                    f"Security: Patient CPF {patient.cpf_paciente} skipped in search for user {user.email} "
+                    f"- no version access (potential data leak prevented)"
+                )
+        
+        if skipped_count > 0:
+            logger.info(f"Patient search: {len(results)} returned, {skipped_count} skipped for user {user.email}")
         
         return results
     
     def get_version_for_user(self, user):
-        """Get the appropriate version of this patient for a specific user"""
+        """
+        Get the appropriate version of this patient for a specific user.
+        
+        Security: Logs when fallback is used to detect potential assignment issues.
+        """
+        import logging
+        logger = logging.getLogger('pacientes.versioning')
+        
         try:
             # Check if user has a specific version assigned
             patient_usuario = self.usuarios.through.objects.get(paciente=self, usuario=user)
             if hasattr(patient_usuario, 'active_version'):
-                return patient_usuario.active_version.version
+                version = patient_usuario.active_version.version
+                logger.debug(f"User {user.email} accessing assigned version {version.version_number} for patient {self.cpf_paciente}")
+                return version
         except self.usuarios.through.DoesNotExist:
-            pass
+            logger.warning(f"No relationship exists between user {user.email} and patient {self.cpf_paciente}")
         
-        # Return latest active version as fallback
-        return self.versions.filter(status='active').order_by('-version_number').first()
+        # Security warning: Using fallback mechanism
+        fallback_version = self.versions.filter(status='active').order_by('-version_number').first()
+        
+        if fallback_version:
+            logger.warning(
+                f"🚨 SECURITY: Fallback version access detected!\n"
+                f"   User: {user.email}\n"
+                f"   Patient: {self.cpf_paciente}\n"
+                f"   Fallback Version: {fallback_version.version_number} ('{fallback_version.nome_paciente}')\n"
+                f"   Created By: {fallback_version.created_by.email if fallback_version.created_by else 'Unknown'}\n"
+                f"   This may indicate missing version assignment or unauthorized access attempt!"
+            )
+            
+            # Check if this is a legitimate case (new patient creation) or security issue
+            user_relationships = self.usuarios.filter(id=user.id).exists()
+            if not user_relationships:
+                logger.error(
+                    f"🚨 POTENTIAL SECURITY BREACH: User {user.email} has no relationship "
+                    f"with patient {self.cpf_paciente} but is accessing via fallback!"
+                )
+            else:
+                logger.warning(
+                    f"⚠️  Missing version assignment: User {user.email} has relationship "
+                    f"with patient {self.cpf_paciente} but no assigned version - using fallback"
+                )
+        else:
+            logger.warning(f"No versions available for patient {self.cpf_paciente}")
+            
+        return fallback_version
     
     def create_new_version(self, user, data):
-        """Create a new version of this patient"""
+        """Create a new version of this patient with comprehensive logging"""
+        import logging
+        from django.db import transaction
+        
+        logger = logging.getLogger('pacientes.versioning')
+        
+        logger.info(f"Creating new version for patient CPF {self.cpf_paciente} by user {user.email}")
+        
+        # Get version number
         latest_version = self.versions.order_by('-version_number').first()
         new_version_number = (latest_version.version_number + 1) if latest_version else 1
         
-        version = PacienteVersion.objects.create(
-            paciente=self,
-            version_number=new_version_number,
-            created_by=user,
-            **data
-        )
+        logger.info(f"New version number will be: {new_version_number}")
         
-        # Automatically assign this version to the user who created it
-        patient_usuario = self.usuarios.through.objects.filter(paciente=self, usuario=user).first()
-        if patient_usuario:
-            PacienteUsuarioVersion.objects.update_or_create(
-                paciente_usuario=patient_usuario,
-                defaults={'version': version}
-            )
-        
-        return version
+        try:
+            with transaction.atomic():
+                # Create the version
+                logger.info(f"Creating PacienteVersion record...")
+                version = PacienteVersion.objects.create(
+                    paciente=self,
+                    version_number=new_version_number,
+                    created_by=user,
+                    **data
+                )
+                logger.info(f"✅ Version {new_version_number} created successfully with ID {version.id}")
+                
+                # Find user relationship
+                logger.info(f"Looking for patient-user relationship...")
+                patient_usuario = self.usuarios.through.objects.filter(paciente=self, usuario=user).first()
+                
+                if patient_usuario:
+                    logger.info(f"✅ Found patient_usuario relationship: ID {patient_usuario.id}")
+                    
+                    # Create/update assignment
+                    logger.info(f"Creating version assignment...")
+                    assignment, created = PacienteUsuarioVersion.objects.update_or_create(
+                        paciente_usuario=patient_usuario,
+                        defaults={'version': version}
+                    )
+                    
+                    if created:
+                        logger.info(f"✅ New assignment created: {assignment}")
+                    else:
+                        logger.info(f"✅ Assignment updated: {assignment}")
+                        
+                    # Verify assignment worked
+                    verification = PacienteUsuarioVersion.objects.filter(
+                        paciente_usuario=patient_usuario,
+                        version=version
+                    ).exists()
+                    
+                    if verification:
+                        logger.info(f"✅ Assignment verification successful")
+                    else:
+                        logger.error(f"❌ Assignment verification FAILED!")
+                        raise Exception("Version assignment verification failed")
+                        
+                else:
+                    logger.error(f"❌ No patient_usuario relationship found for patient {self.cpf_paciente} and user {user.email}")
+                    raise Exception("No patient-user relationship exists")
+                    
+            logger.info(f"✅ Version creation and assignment completed successfully")
+            return version
+            
+        except Exception as e:
+            logger.error(f"❌ Version creation failed: {e}")
+            logger.error(f"   Patient: {self.cpf_paciente}")
+            logger.error(f"   User: {user.email}")
+            logger.error(f"   Version number: {new_version_number}")
+            logger.error(f"   Data keys: {list(data.keys()) if data else 'None'}")
+            raise
 
     @classmethod
     def create_or_update_for_user(cls, user, patient_data):
@@ -168,10 +277,10 @@ class Paciente(models.Model):
                 'change_summary': f'Atualização por {user.email}'
             }
             
-            existing_patient.create_new_version(user, version_data)
-            
-            # Ensure user is connected to patient
+            # Ensure user is connected to patient FIRST (required for create_new_version)
             existing_patient.usuarios.add(user)
+            
+            existing_patient.create_new_version(user, version_data)
             
             existing_patient.was_created = False
             return existing_patient

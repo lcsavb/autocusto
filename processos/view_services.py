@@ -185,8 +185,8 @@ class PrescriptionViewSetupService:
                 primeira_data = date.today().strftime("%d/%m/%Y")
                 self.logger.info(f"Using default primeira_data: {primeira_data}")
             
-            # Create initial data from existing process
-            dados_iniciais = cria_dict_renovação(processo)
+            # Create initial data from existing process with user's versioned data
+            dados_iniciais = cria_dict_renovação(processo, user=common_result.usuario)
             dados_iniciais["data_1"] = primeira_data
             dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
             dados_iniciais = resgatar_prescricao(dados_iniciais, processo)

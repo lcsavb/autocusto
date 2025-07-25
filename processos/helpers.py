@@ -23,7 +23,6 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from django.core.cache import cache
 from datetime import datetime
-from .manejo_pdfs_memory import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
 from analytics.signals import track_pdf_generation
@@ -293,7 +292,7 @@ def associar_med(processo, meds):
 
 
 # create renewal dictionary
-def cria_dict_renovação(modelo):
+def cria_dict_renovação(modelo, user=None):
     """Creates a dictionary with data for a renewal process.
 
     This function takes a `Processo` model instance and extracts the necessary
@@ -312,25 +311,41 @@ def cria_dict_renovação(modelo):
     Args:
         # English: model
         modelo (Processo): The Django model instance to get the data from.
+        user: The user to get versioned patient data for (required for patient data)
 
     Returns:
         dict: A dictionary containing the data for the renewal process.
+    
+    Raises:
+        ValueError: If user is not provided or if user has no version for the patient
     """
+    if not user:
+        raise ValueError("User parameter is required for accessing patient data")
+    
+    # Get versioned patient data - no fallback to prevent data breach
+    paciente_version = modelo.paciente.get_version_for_user(user)
+    if not paciente_version:
+        raise ValueError(f"User {user.email} has no access to patient {modelo.paciente.cpf_paciente}")
+    
+    # Use versioned data
+    patient_data = {
+        "nome_paciente": paciente_version.nome_paciente,
+        "cpf_paciente": modelo.paciente.cpf_paciente,  # Keep master CPF
+        "peso": paciente_version.peso,
+        "altura": paciente_version.altura,
+        "nome_mae": paciente_version.nome_mae,
+        "incapaz": paciente_version.incapaz,
+        "nome_responsavel": paciente_version.nome_responsavel,
+        "etnia": paciente_version.etnia,
+        "telefone1_paciente": paciente_version.telefone1_paciente,
+        "telefone2_paciente": paciente_version.telefone2_paciente,
+        "email_paciente": paciente_version.email_paciente,
+        "end_paciente": paciente_version.end_paciente,
+    }
+    
     # English: dictionary
     dicionario = {
-        # Patient data
-        "nome_paciente": modelo.paciente.nome_paciente,
-        "cpf_paciente": modelo.paciente.cpf_paciente,
-        "peso": modelo.paciente.peso,
-        "altura": modelo.paciente.altura,
-        "nome_mae": modelo.paciente.nome_mae,
-        "incapaz": modelo.paciente.incapaz,
-        "nome_responsavel": modelo.paciente.nome_responsavel,
-        "etnia": modelo.paciente.etnia,
-        "telefone1_paciente": modelo.paciente.telefone1_paciente,
-        "telefone2_paciente": modelo.paciente.telefone2_paciente,
-        "email_paciente": modelo.paciente.email_paciente,
-        "end_paciente": modelo.paciente.end_paciente,
+        **patient_data,  # Unpack patient data
         # Process data
         "prescricao": modelo.prescricao,
         "cid": modelo.doenca.cid,
@@ -583,33 +598,6 @@ def transfere_dados_gerador(dados):
         pdf_logger.error(f"Exception in transfere_dados_gerador: {e}", exc_info=True)
         return None
 
-
-# generate pdf stream
-def gerar_pdf_stream(dados):
-    """Generates PDF entirely in memory and returns HttpResponse for streaming.
-    
-    This function replaces the disk-based PDF generation with in-memory operations.
-    It uses the new GeradorPDFMemory class to generate PDFs directly in RAM and
-    returns an HttpResponse that streams the PDF to the browser.
-    
-    Args:
-        dados (dict): The complete data dictionary for the process.
-        
-    Returns:
-        HttpResponse: PDF response ready for streaming, or None if error occurs.
-    """
-    try:
-        # Create memory-based PDF generator
-        pdf_generator = GeradorPDFMemory(dados, settings.PATH_LME_BASE)
-        
-        # Generate PDF and return HttpResponse
-        response = pdf_generator.generico_stream(dados, settings.PATH_LME_BASE)
-        
-        return response
-        
-    except Exception as e:
-        pdf_logger.error(f"Exception in gerar_pdf_stream: {e}", exc_info=True)
-        return None
 
 
 # English: generate_medication_ids_list
