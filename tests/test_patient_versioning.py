@@ -474,7 +474,7 @@ class PatientVersioningIntegrationTest(TestCase):
     
     def test_process_creation_uses_versioning(self):
         """Test that process creation integrates with patient versioning."""
-        from processos.dados import registrar_db
+        from processos.helpers import registrar_db
         from datetime import datetime
         
         # Prepare process data
@@ -628,7 +628,7 @@ class PatientVersioningFormTest(TestCase):
     
     def test_renewal_data_uses_versioned_patient(self):
         """Test that renewal data generation uses versioned patient data."""
-        from processos.dados import gerar_dados_renovacao
+        from processos.helpers import gerar_dados_renovacao
         from processos.models import Processo, Doenca
         from medicos.models import Medico
         from clinicas.models import Clinica, Emissor

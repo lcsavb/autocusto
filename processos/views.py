@@ -29,7 +29,7 @@ from .forms import (
     extrair_campos_condicionais,
     fabricar_formulario,
 )
-from .dados import (
+from .helpers import (
     cria_dict_renovação,
     gerar_dados_renovacao,
     vincula_dados_emissor,
@@ -167,94 +167,28 @@ def edicao(request):
     """
     Handles editing of existing medical prescription processes.
     
-    This view implements a complex workflow for Brazilian medical prescription renewals:
-    1. Validates session state and user permissions
-    2. Dynamically constructs form based on disease protocol
-    3. Handles both GET (form display) and POST (form processing) requests
-    4. Manages medication data and PDF generation
-    
-    The view includes extensive error handling and logging due to the critical nature
-    of medical prescription data and the complexity of the Brazilian SUS system requirements.
-
-    Critique:
-    - This view is very long and complex. It would be better to split it into
-      smaller, more focused functions. For example, the form processing logic
-      could be moved to a separate function.
-    - The error handling is very broad. It catches any exception and returns
-      a generic error message. It would be better to catch specific exceptions
-      and log them properly to make debugging easier.
+    Clean view that delegates setup logic to PrescriptionViewSetupService.
+    Focuses only on HTTP concerns and coordination.
     """
-    try:
-        logger.info(f"Edicao view started - User: {request.user}, Method: {request.method}")
-        
-        # English: user
-        usuario = request.user
-        logger.info(f"Usuario: {usuario}")
-        
-        # Get doctor record associated with current user
-        # English: doctor
-        medico = seletor_medico(usuario)
-        logger.info(f"Medico: {medico}")
-        
-        # Get clinics available to this doctor for prescription issuance
-        # English: clinics
-        clinicas = medico.clinicas.all()
-        logger.info(f"Clinicas count: {clinicas.count()}")
-        
-        # Create choices tuple for clinic selection dropdown - use versioned clinic names
-        # English: choices
-        escolhas = []
-        for c in clinicas:
-            version = c.get_version_for_user(usuario)
-            clinic_name = version.nome_clinica if version else c.nome_clinica
-            escolhas.append((c.id, clinic_name))
-        escolhas = tuple(escolhas)
-        logger.info(f"Escolhas: {escolhas}")
-        
-        # Get disease CID from session (set by home view workflow)
-        cid = request.session["cid"]
-        logger.info(f"CID from session: {cid}")
-        
-        # Get medications approved for this specific disease
-        # English: medications
-        medicamentos = listar_med(cid)
-        logger.info(f"Medicamentos count: {len(medicamentos) if medicamentos else 0}")
-        
-        # Dynamically construct form class based on disease protocol
-        # This is crucial because different diseases have different required fields
-        # English: FormModel
-        ModeloFormulario = fabricar_formulario(cid, True)  # True = renewal form
-        logger.info(f"ModeloFormulario created: {ModeloFormulario}")
-        
-    except Exception as e:
-        logger.error(f"Error in edicao view initialization: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        messages.error(request, f"Erro na inicialização: {str(e)}")
-        return redirect("processos-busca")
-
-    try:
-        # English: process_id
-        processo_id = request.session["processo_id"]
-        logger.info(f"Processo ID from session: {processo_id}")
-        
-        # Verify user owns this process
-        # English: process
-        processo = Processo.objects.get(id=processo_id, usuario=usuario)
-        logger.info(f"Processo found: {processo}")
-        
-    except (KeyError, Processo.DoesNotExist) as e:
-        logger.error(f"Error getting processo: {str(e)}")
-        messages.error(request, "Processo não encontrado ou você não tem permissão para acessá-lo.")
-        return redirect("processos-busca")
-
-    try:
-        # English: first_date
-        primeira_data = request.session["data1"]
-        logger.info(f"Primeira data from session: {primeira_data}")
-    except KeyError:
-        # English: first_date
-        primeira_data = date.today().strftime("%d/%m/%Y")
-        logger.info(f"Using default primeira_data: {primeira_data}")
+    # Setup all view data using service
+    from processos.view_services import PrescriptionViewSetupService
+    
+    setup_service = PrescriptionViewSetupService()
+    setup = setup_service.setup_for_edit_prescription(request)
+    
+    # Handle setup errors
+    if not setup.success:
+        messages.error(request, setup.error_message)
+        return redirect(setup.error_redirect)
+    
+    # Extract setup data
+    usuario = setup.usuario
+    medico = setup.medico
+    escolhas = setup.escolhas
+    medicamentos = setup.medicamentos
+    ModeloFormulario = setup.ModeloFormulario
+    processo = setup.processo
+    processo_id = setup.processo_id
 
     if request.method == "POST":
         logger.info("Processing POST request")
@@ -278,28 +212,50 @@ def edicao(request):
                 clinica = medico.clinicas.get(id=id_clin)
                 logger.info(f"Clinica found: {clinica}")
                 try:
-                    ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
-                    logger.info(f"Medication IDs generated: {ids_med_cadastrados}")
-                    dados_formulario, meds_ids = gera_med_dosagem(dados_formulario, ids_med_cadastrados)
-                    logger.info(f"Medication dosage generated, meds_ids: {meds_ids}")
-                    dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
-                    logger.info(f"Emissor data linked successfully")
-                    formulario.save(usuario, medico, processo_id, meds_ids)
-                    logger.info(f"Formulario saved successfully")
-                    path_pdf_final = transfere_dados_gerador(dados)
-                    logger.info(f"PDF path generated: {path_pdf_final}")
-                    if path_pdf_final:
-                        request.session["path_pdf_final"] = path_pdf_final
-                        request.session["processo_id"] = processo_id
-                        return JsonResponse({
-                            'success': True,
-                            'pdf_url': path_pdf_final,
-                            'processo_id': processo_id,
-                            'message': 'Processo atualizado com sucesso! PDF gerado.',
-                            'filename': 'processo_atualizado.pdf'
-                        })
+                    # Use new PrescriptionService for clean business logic
+                    from processos.prescription_services import PrescriptionService
+                    
+                    # Use service to handle complete prescription update workflow
+                    prescription_service = PrescriptionService()
+                    pdf_response, updated_processo_id = prescription_service.create_or_update_prescription(
+                        form_data=dados_formulario,
+                        user=usuario,
+                        medico=medico,
+                        clinica=clinica,
+                        patient_exists=True,  # For edit, patient always exists
+                        process_id=processo_id  # Update existing prescription
+                    )
+
+                    if pdf_response and updated_processo_id:
+                        # View layer handles file I/O operations
+                        pdf_url = _save_pdf_for_serving(pdf_response, dados_formulario)
+                        
+                        if pdf_url:
+                            # Extract filename from URL path for response
+                            import os
+                            filename = os.path.basename(pdf_url.rstrip('/'))
+                            
+                            request.session["path_pdf_final"] = pdf_url
+                            request.session["processo_id"] = updated_processo_id
+                            logger.info(f"Prescription updated successfully: Process {updated_processo_id}")
+                            
+                            return JsonResponse({
+                                'success': True,
+                                'pdf_url': pdf_url,
+                                'processo_id': updated_processo_id,
+                                'message': 'Processo atualizado com sucesso! PDF gerado.',
+                                'filename': filename
+                            })
+                        else:
+                            error_msg = 'Falha ao salvar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                            logger.error(f"PDF saving failed for user {usuario.email}")
+                            
+                            return JsonResponse({
+                                'success': False,
+                                'error': error_msg
+                            })
                     else:
-                        logger.error("Failed to generate PDF path")
+                        logger.error("Failed to update prescription or generate PDF")
                         return JsonResponse({
                             'success': False,
                             'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
@@ -327,22 +283,14 @@ def edicao(request):
             })
 
     else:
-        # English: initial_data
-        dados_iniciais = cria_dict_renovação(processo)
-        # English: initial_data
-        dados_iniciais["data_1"] = primeira_data
-        # English: initial_data
-        dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
-        # English: initial_data
-        dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
-        # English: form
-        formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+        # GET request - use setup data for form initialization
+        formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.dados_iniciais)
     
     # Set up variables needed for template rendering (for both GET and POST with validation errors)
     # English: conditional_fields
     campos_condicionais = extrair_campos_condicionais(formulario)
     # English: protocol_link
-    link_protocolo = gerar_link_protocolo(cid)
+    link_protocolo = gerar_link_protocolo(setup.cid)
 
     # English: context
     contexto = {
@@ -420,6 +368,8 @@ def renovacao_rapida(request):
             raise
 
     else:
+        # English: user
+        usuario = request.user
         # English: process_id
         processo_id = request.POST.get("processo_id")
         # English: new_date
@@ -458,34 +408,51 @@ def renovacao_rapida(request):
             pdf_logger.info(f"Starting PDF renewal generation for processo {processo_id}")
             audit_logger.info(f"User {request.user.email} initiated renewal for processo {processo_id}")
             
-            # English: data
-            data_start = time.time()
-            dados = gerar_dados_renovacao(nova_data, processo_id, usuario)
-            data_end = time.time()
-            pdf_logger.info(f"Renovation data generated in {data_end - data_start:.3f}s")
+            # Use new RenewalService for clean business logic
+            from processos.prescription_services import RenewalService
             
-            # English: final_pdf_path
-            pdf_start = time.time()
-            path_pdf_final = transfere_dados_gerador(dados)
-            pdf_end = time.time()
-            total_time = pdf_end - start_time
+            renewal_service = RenewalService()
+            pdf_response = renewal_service.process_renewal(nova_data, int(processo_id), usuario)
+            
+            total_time = time.time() - start_time
             pdf_logger.info(f"PDF generation completed in {total_time:.3f}s")
             
-            if path_pdf_final:
-                # Check if this is an AJAX request
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    # Return JSON response for AJAX
-                    return JsonResponse({
-                        'success': True,
-                        'pdf_url': path_pdf_final,
-                        'processo_id': processo_id,
-                        'message': 'Renovação processada com sucesso! PDF gerado.',
-                        'filename': 'renovacao_processo.pdf'
-                    })
+            if pdf_response:
+                # View layer handles file I/O operations - need to generate data for filename
+                from processos.helpers import gerar_dados_renovacao
+                dados_renovacao = gerar_dados_renovacao(nova_data, int(processo_id), usuario)
+                pdf_url = _save_pdf_for_serving(pdf_response, dados_renovacao)
+                
+                if pdf_url:
+                    # Extract filename from URL path
+                    import os
+                    filename = os.path.basename(pdf_url.rstrip('/'))
+                    
+                    # Check if this is an AJAX request
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        # Return JSON response for AJAX
+                        return JsonResponse({
+                            'success': True,
+                            'pdf_url': pdf_url,
+                            'processo_id': processo_id,
+                            'message': 'Renovação processada com sucesso! PDF gerado.',
+                            'filename': filename
+                        })
+                    else:
+                        # Traditional redirect for non-AJAX requests
+                        messages.success(request, "Renovação processada com sucesso! PDF gerado.")
+                        return redirect(pdf_url)
                 else:
-                    # Traditional redirect for non-AJAX requests
-                    messages.success(request, "Renovação processada com sucesso! PDF gerado.")
-                    return redirect(path_pdf_final)
+                    error_msg = 'Falha ao salvar PDF de renovação.'
+                    logger.error(f"PDF saving failed for renewal")
+                    
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'error': error_msg
+                        })
+                    else:
+                        messages.error(request, error_msg)
             else:
                 logger.error("Failed to generate PDF for renewal")
                 pdf_logger.error("PDF generation failed for renewal")
@@ -513,10 +480,17 @@ def renovacao_rapida(request):
         usuario = request.user
         # English: user_patients
         pacientes_usuario = usuario.pacientes.all()
-        # Use versioned patient search
-        from pacientes.models import Paciente
-        patient_results = Paciente.get_patients_for_user_search(usuario, busca)
-        busca_pacientes = [patient for patient, version in patient_results]
+        
+        # Use versioned patient search if busca exists
+        if busca:
+            from pacientes.models import Paciente
+            patient_results = Paciente.get_patients_for_user_search(usuario, busca)
+            # English: search_patients  
+            busca_pacientes = [patient for patient, version in patient_results]
+        else:
+            # English: search_patients
+            busca_pacientes = []
+            
         # English: context
         contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
         return render(request, "processos/renovacao_rapida.html", contexto)
@@ -525,69 +499,30 @@ def renovacao_rapida(request):
 # registration
 @login_required
 def cadastro(request):
-    """Handles the registration of new medical prescription processes.
-
-    This view implements a complex workflow for creating new Brazilian medical
-    prescriptions:
-    1. Validates session state and user permissions
-    2. Dynamically constructs form based on disease protocol
-    3. Handles both GET (form display) and POST (form processing) requests
-    4. Manages medication data and PDF generation
-
-    The view includes extensive error handling and logging due to the critical
-    nature of medical prescription data and the complexity of the Brazilian SUS
-    system requirements.
-
-    Critique:
-    - This view is very long and complex. It would be better to split it into
-      smaller, more focused functions. For example, the form processing logic
-      could be moved to a separate function.
-    - The error handling is very broad. It catches any exception and returns
-      a generic error message. It would be better to catch specific exceptions
-      and log them properly to make debugging easier.
     """
-    try:
-        # English: user
-        usuario = request.user
-        # English: doctor
-        medico = seletor_medico(usuario)
-        
-        # Check if medico exists (configuration issue fix)
-        if not medico:
-            messages.error(request, "Erro: perfil médico não encontrado. Contate o suporte.")
-            return redirect("home")
-            
-        # English: clinics
-        clinicas = medico.clinicas.all()
-        # English: choices - use versioned clinic names
-        escolhas = []
-        for c in clinicas:
-            version = c.get_version_for_user(usuario)
-            clinic_name = version.nome_clinica if version else c.nome_clinica
-            escolhas.append((c.id, clinic_name))
-        escolhas = tuple(escolhas)
-        
-        # Check for required session variables
-        if "paciente_existe" not in request.session:
-            messages.error(request, "Sessão expirada. Por favor, inicie o cadastro novamente.")
-            return redirect("home")
-        
-        if "cid" not in request.session:
-            messages.error(request, "CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.")
-            return redirect("home")
-            
-        # English: patient_exists
-        paciente_existe = request.session["paciente_existe"]
-        # English: first_date
-        primeira_data = date.today().strftime("%d/%m/%Y")
-        cid = request.session["cid"]
-        # English: medications
-        medicamentos = listar_med(cid)
-        # English: FormModel
-        ModeloFormulario = fabricar_formulario(cid, False)
-    except Exception as e:
-        messages.error(request, f"Erro ao carregar dados do cadastro: {e}")
-        return redirect("home")
+    Handles the registration of new medical prescription processes.
+    
+    Clean view that delegates setup logic to PrescriptionViewSetupService.
+    Focuses only on HTTP concerns and coordination.
+    """
+    # Setup all view data using service
+    from processos.view_services import PrescriptionViewSetupService
+    
+    setup_service = PrescriptionViewSetupService()
+    setup = setup_service.setup_for_new_prescription(request)
+    
+    # Handle setup errors
+    if not setup.success:
+        messages.error(request, setup.error_message)
+        return redirect(setup.error_redirect)
+    
+    # Extract setup data
+    usuario = setup.usuario
+    medico = setup.medico
+    escolhas = setup.escolhas
+    paciente_existe = setup.paciente_existe
+    medicamentos = setup.medicamentos
+    ModeloFormulario = setup.ModeloFormulario
 
     if request.method == "POST":
         # Since the template ALWAYS sends AJAX requests, we ALWAYS return JSON
@@ -596,48 +531,65 @@ def cadastro(request):
             formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
 
             if formulario.is_valid():
+                # Use new PrescriptionService for clean business logic
+                from processos.prescription_services import PrescriptionService
+                
                 # English: form_data
                 dados_formulario = formulario.cleaned_data
                 # English: clinic_id
                 id_clin = dados_formulario["clinicas"]
                 # English: clinic
                 clinica = medico.clinicas.get(id=id_clin)
-
-                # English: registered_medication_ids
-                ids_med_cadastrados = gerar_lista_meds_ids(dados_formulario)
-                # English: form_data, medication_ids
-                dados_formulario, meds_ids = gera_med_dosagem(
-                    dados_formulario, ids_med_cadastrados
+                
+                # Use service to handle complete prescription workflow
+                prescription_service = PrescriptionService()
+                pdf_response, processo_id = prescription_service.create_or_update_prescription(
+                    form_data=dados_formulario,
+                    user=usuario,
+                    medico=medico,
+                    clinica=clinica,
+                    patient_exists=paciente_existe,
+                    process_id=None  # New prescription
                 )
-                # English: data
-                dados = vincula_dados_emissor(usuario, medico, clinica, dados_formulario)
-                # English: process_id
-                processo_id = formulario.save(usuario, medico, meds_ids)
-                # English: final_pdf_path
-                path_pdf_final = transfere_dados_gerador(dados)
 
-                if path_pdf_final:
-                    import os
-                    filename = os.path.basename(path_pdf_final)
-                    from django.urls import reverse
-                    #pdf_url = reverse('processos-serve-pdf', args=[filename])
-                    #request.session["path_pdf_final"] = path_pdf_final
-                    request.session["processo_id"] = processo_id
-                    return JsonResponse({
-                        'success': True,
-                        'pdf_url': path_pdf_final,
-                        'processo_id': processo_id,
-                        'message': 'Processo criado com sucesso! PDF gerado.',
-                        'filename': filename
-                    })
+                if pdf_response and processo_id:
+                    # View layer handles file I/O operations
+                    pdf_url = _save_pdf_for_serving(pdf_response, dados_formulario)
+                    
+                    if pdf_url:
+                        # Extract filename from URL path for response
+                        import os
+                        filename = os.path.basename(pdf_url.rstrip('/'))
+                        
+                        request.session["processo_id"] = processo_id
+                        logger.info(f"Prescription created successfully: Process {processo_id}")
+                        
+                        return JsonResponse({
+                            'success': True,
+                            'pdf_url': pdf_url,
+                            'processo_id': processo_id,
+                            'message': 'Processo criado com sucesso! PDF gerado.',
+                            'filename': filename
+                        })
+                    else:
+                        error_msg = 'Falha ao salvar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                        logger.error(f"PDF saving failed for user {usuario.email}")
+                        
+                        return JsonResponse({
+                            'success': False,
+                            'error': error_msg
+                        })
                 else:
+                    error_msg = 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                    logger.error(f"Prescription creation failed for user {usuario.email}")
+                    
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return JsonResponse({
                             'success': False,
-                            'error': 'Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.'
+                            'error': error_msg
                         })
                     else:
-                        messages.error(request, "Falha ao gerar PDF. Verifique se todos os arquivos necessários estão disponíveis.")
+                        messages.error(request, error_msg)
                         return redirect("home")
             else:
                 return JsonResponse({
@@ -668,10 +620,8 @@ def cadastro(request):
             if not usuario.clinicas.exists():
                 messages.info(request, "Cadastre uma clínica antes de criar processos.")
                 return redirect("clinicas-cadastro")
-            # English: initial_data
-            dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
-            # English: form
-            formulario = ModeloFormulario(escolhas, medicamentos, initial=dados_iniciais)
+            # English: form - use setup data
+            formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.dados_iniciais)
         except Exception as e:
             messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
             return redirect("home")
@@ -681,7 +631,7 @@ def cadastro(request):
         # English: conditional_fields
         campos_condicionais = extrair_campos_condicionais(formulario)
         # English: protocol_link
-        link_protocolo = gerar_link_protocolo(cid)
+        link_protocolo = gerar_link_protocolo(setup.cid)
         
         # English: context
         contexto = {
@@ -718,11 +668,11 @@ def cadastro(request):
                 # Fallback to master record if no version found
                 dados_paciente = model_to_dict(paciente)
             # English: patient_data
-            dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+            dados_paciente["diagnostico"] = Doenca.objects.get(cid=setup.cid).nome
             # English: patient_data
-            dados_paciente["cid"] = cid
+            dados_paciente["cid"] = setup.cid
             # English: patient_data
-            dados_paciente["data_1"] = primeira_data
+            dados_paciente["data_1"] = setup.primeira_data
             # English: adjusted_fields
             campos_ajustados, _ = ajustar_campos_condicionais(dados_paciente)
             contexto.update(campos_ajustados)
@@ -912,3 +862,40 @@ def set_edit_session(request):
             return JsonResponse({'error': 'Server error'}, status=500)
     
     return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+
+
+def _save_pdf_for_serving(pdf_response, data):
+    """
+    Save PDF to filesystem for serving and return URL path.
+    
+    This is view-layer infrastructure logic, handling HTTP response processing
+    and file system operations.
+    
+    Args:
+        pdf_response: HttpResponse containing PDF data
+        data: Prescription data for filename generation
+        
+    Returns:
+        str: URL path for accessing the PDF, or None if save fails
+    """
+    try:
+        # Generate filename
+        cpf_paciente = data.get('cpf_paciente', 'unknown')
+        cid = data.get('cid', 'unknown')
+        filename = f"pdf_final_{cpf_paciente}_{cid}.pdf"
+        
+        # Save to /tmp for serving
+        tmp_pdf_path = f"/tmp/{filename}"
+        with open(tmp_pdf_path, 'wb') as f:
+            f.write(pdf_response.content)
+        
+        # Generate URL path
+        from django.urls import reverse
+        pdf_url = reverse('processos-serve-pdf', kwargs={'filename': filename})
+        
+        logger.info(f"View layer: PDF saved to {tmp_pdf_path}")
+        return pdf_url
+        
+    except Exception as e:
+        logger.error(f"View layer: Failed to save PDF: {e}")
+        return None

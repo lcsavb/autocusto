@@ -1,6 +1,24 @@
+"""
+Helper Functions for Prescription Processing
+
+This module contains utility and helper functions for prescription data processing,
+model operations, and data transformations. These functions provide reusable
+building blocks for the prescription workflow system.
+
+Main Categories:
+- Model preparation and database operations
+- Prescription data transformation and formatting  
+- Medication data processing and validation
+- Patient data management helpers
+- PDF generation coordination (legacy bridge)
+
+All functions maintain English translation comments for international development.
+"""
+
 import os
 import secrets
 import time
+import logging
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.core.cache import cache
@@ -9,6 +27,9 @@ from .manejo_pdfs_memory import GeradorPDF
 from processos.models import Processo, Protocolo, Medicamento
 from pacientes.models import Paciente
 from analytics.signals import track_pdf_generation
+
+# Configure logging
+pdf_logger = logging.getLogger('processos.pdf')
 
 
 
@@ -508,17 +529,12 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
 def transfere_dados_gerador(dados):
     """Transfers the final process data to the PDF generator.
 
-    This function takes the complete data dictionary for a process, passes it
-    to the `GeradorPDFMemory` class, and returns the path to the generated PDF file.
-    The PDF is generated in memory and cached for serving.
+    This function maintains backward compatibility while using the new
+    application service architecture. It delegates PDF generation to the
+    PrescriptionPDFService and handles file system operations for serving.
 
-    Critique:
-    - The function has a lot of debugging prints, which should be removed
-      in a production environment. Using Python's `logging` module would be
-      a better way to handle debugging information.
-    - The error handling is very broad. It catches any exception and returns
-      None. It would be better to catch specific exceptions and log them
-      properly to make debugging easier.
+    This function will be eventually deprecated in favor of direct service usage,
+    but is maintained for compatibility during the migration period.
 
     Args:
         # English: data
@@ -528,33 +544,38 @@ def transfere_dados_gerador(dados):
         str: The path to the generated PDF file, or None if an error occurs.
     """
     try:
+        pdf_logger.info("transfere_dados_gerador: Starting with new service architecture")
+        
         # Save CPF and CID before PDF generation (they might be modified during processing)
         cpf_paciente = dados.get('cpf_paciente', 'unknown')
         cid = dados.get('cid', 'unknown')
         
-        # English: pdf
-        pdf = GeradorPDF(dados, settings.PATH_LME_BASE)
+        # Use new PrescriptionPDFService for PDF generation
+        from processos.prescription_services import PrescriptionPDFService
+        pdf_service = PrescriptionPDFService()
         
-        # Generate PDF in memory and get HttpResponse
-        response = pdf.generico_stream(dados, settings.PATH_LME_BASE)
+        # Generate PDF using the service
+        response = pdf_service.generate_prescription_pdf(dados)
         
         if response is None:
+            pdf_logger.error("transfere_dados_gerador: PDF generation returned None")
             return None
         
-        # Store the response in a cache or session for later serving
-        # Use the saved CPF and CID (not from dados which might be modified)
-        
+        # Infrastructure concern: Save PDF to filesystem for serving
+        # This will eventually be moved to a separate infrastructure service
         nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
-        
-        # Save PDF to /tmp for immediate serving
         tmp_pdf_path = f"/tmp/{nome_final_pdf}"
+        
         with open(tmp_pdf_path, 'wb') as f:
             f.write(response.content)
+        
+        pdf_logger.info(f"transfere_dados_gerador: PDF saved to {tmp_pdf_path}")
         
         # Return the URL path as before
         from django.urls import reverse
         path_pdf_final = reverse('processos-serve-pdf', kwargs={'filename': nome_final_pdf})
         
+        pdf_logger.info(f"transfere_dados_gerador: Returning URL {path_pdf_final}")
         return path_pdf_final
         
     except Exception as e:
@@ -791,12 +812,21 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
     Returns:
         int: The ID of the saved process.
     """
+    # Add comprehensive logging for debugging transaction rollbacks
+    import logging
+    logger = logging.getLogger('processos.database')
+    
     # English: patient_exists
     paciente_existe = kwargs.pop("paciente_existe")
     # English: patient_data
     dados_paciente = gerar_dados_paciente(dados)
     # English: patient_cpf
     cpf_paciente = dados["cpf_paciente"]
+    
+    logger.info(f"registrar_db: Starting registration for CPF {cpf_paciente}, user {usuario.email}")
+    logger.info(f"registrar_db: Patient exists: {bool(paciente_existe)}")
+    logger.info(f"registrar_db: Disease: {doenca.cid} - {doenca.nome}")
+    logger.info(f"registrar_db: Medications count: {len(meds_ids)}")
 
     if paciente_existe:
         # Use versioned patient system - create or update version for this user
@@ -821,7 +851,7 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
         else:
             # Creating new process - check if one already exists for this patient-disease-user combination
             for p in paciente_existe.processos.all():
-                if p.doenca.cid == cid:
+                if p.doenca.cid == cid and p.usuario == usuario:
                     # English: process_exists
                     processo_existe = True
                     # English: process_data
@@ -841,22 +871,68 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
         associar_med(processo, meds_ids)
         emissor.pacientes.add(versioned_patient)
     else:
-        # Use versioned patient system - create new patient with initial version
-        new_patient = Paciente.create_or_update_for_user(usuario, dados_paciente)
+        # NEW PATIENT CREATION PATH
+        logger.info(f"registrar_db: Creating NEW patient for CPF {cpf_paciente}")
         
-        # English: process_data
-        dados_processo = gerar_dados_processo(
-            dados, meds_ids, doenca, emissor, new_patient, usuario
-        )
-        # English: process
-        processo = preparar_modelo(Processo, **dados_processo)
-        processo.save()
-        # Increment user's process count for new processes
-        usuario.process_count += 1
-        usuario.save(update_fields=['process_count'])
-        associar_med(processo, meds_ids)
-        emissor.pacientes.add(new_patient)
+        try:
+            # Use versioned patient system - create new patient with initial version
+            logger.info(f"registrar_db: Calling create_or_update_for_user for new patient")
+            new_patient = Paciente.create_or_update_for_user(usuario, dados_paciente)
+            logger.info(f"registrar_db: New patient created with ID {new_patient.id}")
+            
+            # English: process_data
+            logger.info(f"registrar_db: Generating process data for new patient")
+            dados_processo = gerar_dados_processo(
+                dados, meds_ids, doenca, emissor, new_patient, usuario
+            )
+            logger.info(f"registrar_db: Process data generated successfully")
+            
+            # English: process
+            logger.info(f"registrar_db: Creating process model instance")
+            processo = preparar_modelo(Processo, **dados_processo)
+            logger.info(f"registrar_db: Process model created, attempting save")
+            
+            try:
+                processo.save()
+                logger.info(f"registrar_db: Process saved successfully with ID {processo.id}")
+            except Exception as save_error:
+                logger.error(f"registrar_db: CRITICAL ERROR saving process: {save_error}")
+                logger.error(f"registrar_db: Process data: {dados_processo}")
+                raise
+            
+            # Increment user's process count for new processes
+            logger.info(f"registrar_db: Incrementing user process count")
+            try:
+                usuario.process_count += 1
+                usuario.save(update_fields=['process_count'])
+                logger.info(f"registrar_db: User process count updated to {usuario.process_count}")
+            except Exception as user_save_error:
+                logger.error(f"registrar_db: Error updating user process count: {user_save_error}")
+                # Don't fail the whole transaction for this
+            
+            logger.info(f"registrar_db: Associating medications with process")
+            try:
+                associar_med(processo, meds_ids)
+                logger.info(f"registrar_db: Medications associated successfully")
+            except Exception as med_error:
+                logger.error(f"registrar_db: Error associating medications: {med_error}")
+                raise
+            
+            logger.info(f"registrar_db: Adding patient to emissor")
+            try:
+                emissor.pacientes.add(new_patient)
+                logger.info(f"registrar_db: Patient added to emissor successfully")
+            except Exception as emissor_error:
+                logger.error(f"registrar_db: Error adding patient to emissor: {emissor_error}")
+                raise
+                
+        except Exception as e:
+            logger.error(f"registrar_db: CRITICAL ERROR in new patient creation: {e}")
+            logger.error(f"registrar_db: Patient data: {dados_paciente}")
+            logger.error(f"registrar_db: Full traceback:", exc_info=True)
+            raise
 
+    logger.info(f"registrar_db: Successfully completed registration, returning process ID {processo.pk}")
     return processo.pk
 
 
@@ -898,113 +974,3 @@ def gerar_link_protocolo(cid):
     link = os.path.join(settings.STATIC_URL, "protocolos", arquivo)
     return link
 
-
-# ############################### Path pdf_final
-
-# PATH_PDF_FINAL = 'pdf_final_{}_{}.pdf'.format(dados_paciente['cpf_paciente'],dados_processo['cid'])
-
-
-# ############################### DADOS CONDICIONAIS - deverá haver opção do médico defini-los
-# #### ou selecionar os padrões como descritos abaixo.
-
-# dados_condicionais = {}
-
-# ### DOENÇA DE ALZHEIMER
-
-# exames1vez = '''
-# Hemograma,sódio, potássio, cálcio total, creatinina, uréia, Glicemia de jejum,
-# TSH (Hormônio Tireoestimulante), ácido fólico, vitamina B12, VDRL, TGO, TGP
-# '''
-
-# #### ARTRITE REUMATÓIDE
-
-
-# med_ar_grupo_1 = [ 'azatioprina', 'ciclosporina', 'cloroquina', 'hidroxicloroquina', 'leflunomida',
-#                     'metotrexato', 'naproxeno', 'sulfassalazina' ]
-
-# exames_ar_grupo_1 = ['VHS', 'Fator reumatóide']
-
-# exames_ar_grupo_2 = ['Hemograma', 'TGO', 'TGP', 'VHS', 'HbsAg', 'Anti-HCV', 'Fator reumatóide',
-#                     'Prova de Mantoux - PPD']
-
-# meds_relatorio_ar = ['abatacepte', 'etanercepte', 'golimumabe', 'rituximabe', 'tocilizumabe']
-
-
-# aviso_ar = '''
-#         Acrescentar laudo ou relatório médico da radiografia de tórax. Descrever critérios
-#         diagnósticos na LME
-#         '''
-
-
-# dados_ar = {
-#     'exames_ar_grupo_1': exames_ar_grupo_1,
-#     'exames_ar_grupo_2': exames_ar_grupo_2,
-#     'aviso_ar': aviso_ar
-# }
-
-
-# #### ESCLEROSE MÚLTIPLA
-
-# relatorio_nata = '''
-# Relatório médico contendo:
-# 1. Falha terapêutica ou contraindicação ao fingolimode; 2. Se o paciente está sem receber imunomodulador
-# por pelo menos 45 dias ou azatioprina por 3 meses; 3. Se paciente não foi diagnosticado com micose sistêmica
-# nos últimos 6 meses, herpes grave nos últimos 3 meses, infecção por HIV, qualquer outra infecção oportunista nos últimos
-# 3 meses ou infecção atual ativa.
-# '''
-
-# relatorio_fingo = '''
-# Relatório médico, contendo: A. Justificativa para interrupção do uso ou motivo da não utilização de primeira linha:
-# 1. Falha terapêutica à betainterferona ou ao glatirâmer ou ao teriflunomida
-# 2. Ausência de contraindicação ao uso do fingolimode'
-# '''
-
-# relatorio_fumarato = '''
-# 1. Em casos de intolerância, reações adversas ou falta de adesão à Betainterferon ou ao Glatiramer ou à
-# Teriflunomida;
-# 2. Em casos de falha terapêutica ou resposta sub-ótima à Betainterferon ou ao Glatiramer ou à
-# Teriflunomida.
-# '''
-
-# dados_esclerose_multipla = {
-#     'edss': '3',
-#     'exames_em_1vez': 'Hemograma, TGO, TGP, FA, GGT, Vitamina B12, Sorologia HIV, VDRL, Bilirrubinas total e frações, TSH',
-#     'exames_em_renova': 'Hemograma, TGO, TGP, FA, GGT, Bilirrubinas total e frações, TSH',
-#     'relatorio_fingolimode_1vez': relatorio_fingo,
-#     'relatorio_natalizumabe_1vez': relatorio_nata,
-#     'relatorio_fumarato_1vez': relatorio_fumarato,
-#     'exames_nata_renova': 'Hemograma'}
-
-
-# ##### Epilepsia
-
-# relatorio_epilepsia_1vez = '''
-#     Relatar características das crises, se há risco de recorrência superior a 60%, se apresentaram duas
-#     crises com intervalo superior a 24 horas e se tem diagnóstico de síndrome epiléptica específica '''
-
-# dados_epilepsia = {
-#     'relatorio_epilepsia_1vez': relatorio_epilepsia_1vez,
-#     'exames_solicitados': 'Não são obrigatórios exames, a critério do médico prescritor'
-# }
-
-
-# ############# Dislipidemia
-
-
-# dislipidemia_1vez_exames = ['TGO', 'TGP', 'CPK', 'TSH', 'Colesterol total e frações (HDL e LDL)', 'Triglicerídeos']
-
-
-# fibratos_1vez_exames = ['TGO', 'TGP', 'CPK', 'TSH', 'Triglicérides']
-
-# dados_dislipidemia = {
-#     'ac_nicotinico_trat_previo': 'Contraindicação ao uso de estatinas',
-#     'dislipidemia_1vez_exames': dislipidemia_1vez_exames,
-#     'fibratos_1vez_exames': fibratos_1vez_exames
-# }
-
-# ############# Dor crônica
-
-# dados_dor = {
-#     'eva': '5', ## de 4 a 10
-#     'lanns_escore': '24' ## depois completar com as categorias individuais
-# }

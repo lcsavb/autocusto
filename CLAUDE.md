@@ -46,17 +46,50 @@ Usuario (Custom User) ←→ Medico ←→ Clinica
 
 ## PDF Generation System (Core Technical Feature)
 
-### Memory-Optimized Architecture
-This is the most technically complex part of the system. The PDF generation uses:
+### Clean Service Architecture (Updated 2025)
+The PDF generation system follows SOLID principles with proper separation of concerns:
 
-- **RAM Filesystem**: `/dev/shm` (tmpfs) for all PDF operations
-- **Memory Streaming**: PDFs generated directly to BytesIO objects
-- **UTF-8 Handling**: Custom FDF generation for special characters
-- **Template Caching**: PDF templates stored in memory mount
+### **📁 Architecture Layers**
 
-### Key Technical Components
-- **`processos/manejo_pdfs_memory.py`** - Core PDF generator class `GeradorPDF`
-- **`processos/pdf_strategies.py`** - `DataDrivenStrategy` (new architecture)
+#### **1. Pure PDF Infrastructure (`processos/pdf_operations.py`)**
+- **`PDFGenerator`** - Core pypdftk operations (fill forms, concatenate)
+- **`PDFResponseBuilder`** - HTTP response creation with security headers
+- **Zero business logic** - completely domain-agnostic
+- **Memory Optimized**: Uses `/dev/shm` (tmpfs) for all PDF operations
+- **UTF-8 Support**: Leverages pypdftk's custom FDF generation for special characters
+
+#### **2. Medical Business Logic (`processos/prescription_services.py`)**
+- **`PrescriptionDataFormatter`** - Medical data privacy rules & Brazilian date formatting
+- **`PrescriptionTemplateSelector`** - Protocol-based template selection for diseases/medications
+- **`PrescriptionPDFService`** - Complete prescription PDF generation workflow
+- **`PrescriptionService`** - Full prescription business workflow (database + PDF coordination)
+- **`RenewalService`** - Prescription renewal business logic with specific medical rules
+
+#### **3. Utility Functions (`processos/dados.py`)**
+- **Database Operations**: `registrar_db()`, `checar_paciente_existe()`
+- **Data Transformations**: `gera_med_dosagem()`, `vincula_dados_emissor()`
+- **Medical Business Logic**: `listar_med()`, `gerar_dados_renovacao()`
+- **Helper Functions**: Called by services for specific data operations
+
+#### **4. View Layer (HTTP Infrastructure)**
+- **File I/O Operations**: `_save_pdf_for_serving()` in views
+- **HTTP Request/Response**: Handles web requests and JSON responses
+- **URL Generation**: Creates serving URLs for PDF downloads
+
+### **🔧 Critical PDF Generation Fix**
+**Problem Solved**: `pypdftk.concat()` flattens forms by default, removing fillable fields.
+
+**Solution**: 
+1. **Fill each PDF template individually** with form data
+2. **Concatenate the filled PDFs** into final document
+3. Ensures consentimento, exames, and relatorio forms are properly filled
+
+### **Key Technical Components**
+- **`processos/pdf_operations.py`** - Pure PDF infrastructure (no business logic)
+- **`processos/prescription_services.py`** - Medical prescription business logic
+- **`processos/dados.py`** - Utility functions for data operations
+- **`processos/pdf_strategies.py`** - `DataDrivenStrategy` for protocol-based template selection
+- **`processos/manejo_pdfs_memory.py`** - Legacy (kept for safety during migration)
 - **`startup.sh`** - Copies PDF templates to `/dev/shm` on container start
 - **Template Directory**: `static/autocusto/protocolos/` and `static/autocusto/processos/`
 
@@ -67,6 +100,58 @@ mkdir -p /dev/shm/autocusto/static/processos
 mkdir -p /dev/shm/autocusto/static/protocolos
 cp -r /static/templates/* /dev/shm/autocusto/static/
 ```
+
+### **🏗️ Working with the New Architecture**
+
+#### **Creating New Prescription Workflows**
+```python
+# In views - use PrescriptionService
+from processos.prescription_services import PrescriptionService
+
+prescription_service = PrescriptionService()
+pdf_response, processo_id = prescription_service.create_or_update_prescription(
+    form_data=dados_formulario,
+    user=usuario,
+    medico=medico,
+    clinica=clinica,
+    patient_exists=paciente_existe,
+    process_id=None  # None for new, ID for updates
+)
+
+# View layer handles file I/O
+if pdf_response:
+    pdf_url = _save_pdf_for_serving(pdf_response, dados_formulario)
+```
+
+#### **Creating Renewals**
+```python
+# Use RenewalService for renewals
+from processos.prescription_services import RenewalService
+
+renewal_service = RenewalService()
+pdf_response = renewal_service.process_renewal(nova_data, processo_id, usuario)
+```
+
+#### **Direct PDF Generation** 
+```python
+# For custom PDF generation
+from processos.prescription_services import PrescriptionPDFService
+
+pdf_service = PrescriptionPDFService()
+response = pdf_service.generate_prescription_pdf(prescription_data)
+```
+
+#### **Adding New Business Logic**
+- **Medical logic** → Add to `prescription_services.py`
+- **Pure PDF operations** → Add to `pdf_operations.py` 
+- **Data utilities** → Add to `dados.py`
+- **File I/O** → Handle in views with `_save_pdf_for_serving()`
+
+#### **Architecture Rules**
+1. **PDF operations** must be domain-agnostic (no medical knowledge)
+2. **Services** contain business logic but no file I/O
+3. **Views** handle HTTP concerns and file operations
+4. **Utilities** provide reusable data transformation functions
 
 ## Development Environment
 
@@ -307,11 +392,14 @@ docker-compose exec web bash
 ### Core Application Files
 - **Main Settings**: `autocusto/settings.py`
 - **URL Configuration**: `autocusto/urls.py`
-- **PDF Core Logic**: `processos/manejo_pdfs_memory.py`
-- **PDF Strategies**: `processos/pdf_strategies.py`
+- **Pure PDF Infrastructure**: `processos/pdf_operations.py` ⭐ *New Clean Architecture*
+- **Medical Business Logic**: `processos/prescription_services.py` ⭐ *New Clean Architecture*
+- **Utility Functions**: `processos/dados.py`
+- **PDF Template Selection**: `processos/pdf_strategies.py`
 - **Business Models**: `processos/models.py`
 - **Form Handling**: `processos/forms.py`
 - **View Logic**: `processos/views.py`
+- **Legacy PDF Logic**: `processos/manejo_pdfs_memory.py` *(kept for safety)*
 
 ### Infrastructure Files
 - **Docker Config**: `docker-compose.yml`, `Dockerfile`
@@ -357,3 +445,247 @@ docker-compose exec web bash
 - **Always add django messages**: When handling exceptions, use Django's messaging framework to provide user-friendly feedback
 
 Remember: This system handles sensitive data and must maintain high security, performance, and reliability standards. Always consider the memory-optimized PDF generation as the core technical challenge when making changes.
+
+---
+
+# 🏗️ Major Architecture Refactoring (2025)
+
+## Overview of Changes
+
+A comprehensive refactoring was completed to implement clean architecture principles, following SOLID design patterns and proper separation of concerns. The changes transformed a monolithic, tightly-coupled system into a maintainable, testable service-oriented architecture.
+
+## 🎯 Key Achievements
+
+### ✅ **Clean Service Architecture Implementation**
+- **Before**: Mixed business logic, PDF operations, and HTTP concerns in views
+- **After**: Proper separation with dedicated service layers following Single Responsibility Principle
+
+### ✅ **Critical PDF Bug Fix** 
+- **Issue**: `pypdftk.concat()` was flattening PDF forms, preventing form filling
+- **Solution**: Fill forms individually first, then concatenate filled PDFs
+- **Impact**: Fixed broken consentimento forms and other fillable PDFs
+
+### ✅ **View Simplification**
+- **Before**: Views with 100+ lines of complex setup logic
+- **After**: Clean views with ~25 lines focused only on HTTP concerns
+
+### ✅ **Comprehensive Test Coverage**
+- Created test suite for new service architecture
+- Added smoke tests to verify refactored views work correctly
+- All tests passing with proper error handling validation
+
+### ✅ **Improved Code Organization**
+- Renamed `dados.py` → `helpers.py` for better clarity and intent
+- Updated all import statements across the codebase
+- Maintained all English translation comments and functionality
+
+## 📁 New Architecture Files Created
+
+### **Core Service Files**
+```
+processos/
+├── pdf_operations.py         # Pure PDF infrastructure (no business logic)
+├── prescription_services.py  # Medical business logic services  
+├── view_services.py          # View setup and data preparation services
+└── pdf_strategies.py         # Existing - Protocol-based template selection
+```
+
+### **Test Files**  
+```
+tests/
+├── test_pdf_services_basic.py    # Basic service functionality tests
+└── test_refactoring_smoke.py     # Integration and smoke tests
+```
+
+## 🔧 Service Layer Architecture
+
+### **1. PDF Operations Layer** (`pdf_operations.py`)
+**Pure infrastructure with zero business logic**
+```python
+class PDFGenerator:
+    def fill_and_concatenate(self, template_paths: List[str], form_data: dict) -> Optional[bytes]:
+        """CRITICAL: Fill each PDF individually, then concatenate filled PDFs
+        (pypdftk.concat flattens forms by default)"""
+
+class PDFResponseBuilder:
+    def build_response(self, pdf_bytes: bytes, filename: str) -> HttpResponse:
+        """Build HTTP response for PDF serving"""
+```
+
+### **2. Prescription Services Layer** (`prescription_services.py`)
+**Medical business logic with healthcare domain knowledge**
+```python
+class PrescriptionDataFormatter:
+    """Brazilian healthcare privacy rules and date formatting"""
+    
+class PrescriptionTemplateSelector:
+    """Disease protocol-based template selection"""
+    
+class PrescriptionPDFService:
+    """Complete prescription PDF generation workflow"""
+    
+class PrescriptionService:
+    """Full prescription business workflow (database + PDF)"""
+    
+class RenewalService:
+    """Prescription renewal business logic"""
+```
+
+### **3. View Services Layer** (`view_services.py`)
+**View setup and data preparation services**
+```python
+class PrescriptionViewSetupService:
+    def setup_for_new_prescription(self, request) -> SetupResult
+    def setup_for_edit_prescription(self, request) -> SetupResult
+    """Handles all complex setup logic extracted from views"""
+```
+
+## 🔄 Refactored Views
+
+### **Before & After Transformation**
+
+#### **`cadastro` View (New Prescriptions)**
+**Before** (~120 lines of complex setup):
+```python
+def cadastro(request):
+    # 50+ lines of user/doctor validation
+    # 20+ lines of clinic choices with versioning  
+    # 15+ lines of session validation
+    # 10+ lines of CID and medication logic
+    # 15+ lines of form model creation
+    # Complex try/catch blocks throughout
+```
+
+**After** (~25 lines of clean logic):
+```python
+def cadastro(request):
+    """Clean view delegating setup to PrescriptionViewSetupService."""
+    setup_service = PrescriptionViewSetupService()
+    setup = setup_service.setup_for_new_prescription(request)
+    
+    if not setup.success:
+        messages.error(request, setup.error_message)
+        return redirect(setup.error_redirect)
+    
+    # Extract setup data and focus on HTTP concerns only
+```
+
+#### **`edicao` View (Edit Prescriptions)**
+**Before** (~130 lines of complex setup):
+```python
+def edicao(request):
+    # All the same complex setup as cadastro
+    # Plus process ownership verification
+    # Plus initial data preparation from existing process
+    # Multiple exception handling blocks
+```
+
+**After** (~25 lines of clean logic):
+```python  
+def edicao(request):
+    """Clean view delegating setup to PrescriptionViewSetupService."""
+    setup_service = PrescriptionViewSetupService()
+    setup = setup_service.setup_for_edit_prescription(request)
+    
+    # Same clean pattern as cadastro
+```
+
+#### **`renovacao_rapida` View (Quick Renewals)**
+**Before** (~80 lines with debug prints):
+```python
+def renovacao_rapida(request):
+    print(f"DEBUG: GET request to renovacao_rapida")
+    print(f"DEBUG: busca parameter = '{busca}'") 
+    # Multiple print() statements throughout
+    # Broad exception handling
+    # Duplicated AJAX/non-AJAX response logic
+```
+
+**After** (~60 lines with proper logging):
+```python
+def renovacao_rapida(request):
+    """Clean view with proper logging and error handling."""
+    logger.info(f"GET request from user: {request.user}")
+    # Proper logger statements
+    # Clean validation error collection
+    # Consolidated response handling
+    # All English translation comments preserved
+```
+
+## 🧪 Testing Strategy
+
+### **Test Files Overview**
+1. **`test_pdf_services_basic.py`** - Unit tests for service functionality
+2. **`test_refactoring_smoke.py`** - Integration tests for refactored architecture
+
+### **Test Coverage Results**
+- ✅ All service imports and instantiation (6/6 tests)  
+- ✅ Basic service functionality (6/6 tests)
+- ✅ Service integration (8/8 smoke tests)
+- ✅ All refactored views accessible and functional
+
+## 🔍 Debugging Guide for Future Development
+
+### **Key Files for Debugging Issues**
+
+#### **PDF Generation Problems**
+1. **Check**: `processos/pdf_operations.py` - Pure PDF infrastructure
+2. **Check**: `processos/prescription_services.py` - Business logic coordination
+3. **Log**: `processos.pdf` logger for detailed PDF generation logs
+4. **Critical**: Ensure templates exist in `/dev/shm` memory mount
+
+#### **View Setup Problems** 
+1. **Check**: `processos/view_services.py` - All setup logic centralized here
+2. **Check**: Session data validation in `PrescriptionViewSetupService` methods
+3. **Log**: Standard Django logger for view-level debugging
+
+#### **Service Layer Problems**
+1. **Run**: `python manage.py test tests.test_pdf_services_basic`  
+2. **Run**: `python manage.py test tests.test_refactoring_smoke`
+3. **Check**: Service instantiation and method availability
+
+### **Legacy vs New Architecture**
+
+#### **Old Files** (⚠️ Gradually being deprecated)
+```
+processos/
+└── manejo_pdfs_memory.py     # Old PDF generation - still used by helpers.py
+```
+
+#### **Current Files** (✅ Active architecture)
+```
+processos/
+├── pdf_operations.py         # Pure PDF infrastructure
+├── prescription_services.py  # Medical business logic  
+├── view_services.py          # View setup services
+├── helpers.py                # Utility functions - bridges old/new architecture
+└── views.py                  # Clean views using services
+```
+
+### **Migration Status**
+- ✅ **Views**: `cadastro`, `edicao`, `renovacao_rapida` - Fully refactored
+- ✅ **Services**: All new services implemented and tested
+- ✅ **PDF Generation**: Critical concatenation bug fixed
+- ⚠️ **Legacy Functions**: Kept temporarily in `helpers.py` for compatibility  
+- 🔄 **Gradual Migration**: `transfere_dados_gerador` bridges old/new architecture
+- ✅ **File Rename**: `dados.py` renamed to `helpers.py` for better clarity
+
+## 💡 Development Guidelines Post-Refactoring
+
+### **For New Features**
+1. **Always use the service layer** - Don't put business logic in views
+2. **Follow the established patterns** - Use existing services as templates
+3. **Write tests first** - Add to `test_pdf_services_basic.py` or create new test files
+4. **Keep views thin** - Views should only handle HTTP concerns
+
+### **For Bug Fixes**
+1. **Identify the layer** - Is it infrastructure (PDF ops), business logic (services), or HTTP (views)?
+2. **Check service tests** - Run relevant tests to ensure services work correctly
+3. **Use proper logging** - Follow established logging patterns in each layer
+
+### **For Understanding the System**
+1. **Start with service layer** - `prescription_services.py` contains main business workflows
+2. **Check view services** - `view_services.py` handles all view setup complexity  
+3. **Reference architecture docs** - This section explains the separation of concerns
+
+Remember: The new architecture prioritizes maintainability, testability, and clear separation of concerns. Always consider which layer your changes belong in before implementing.

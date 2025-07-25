@@ -4,7 +4,7 @@ from django.db import transaction
 from processos.models import Processo, Protocolo, Doenca
 from clinicas.models import Emissor
 from autocusto.validation import isCpfValid
-from .dados import (
+from .helpers import (
     gerar_dados_edicao_parcial,
     associar_med,
     registrar_db,

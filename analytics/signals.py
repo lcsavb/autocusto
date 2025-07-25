@@ -145,21 +145,25 @@ def track_pdf_generation(pdf_type='prescription'):
                 try:
                     generation_time_ms = int((time.time() - start_time) * 1000)
                     
-                    log_entry = PDFGenerationLog.objects.create(
-                        user=user,
-                        processo=processo,
-                        paciente=processo.paciente if processo else None,
-                        doenca=processo.doenca if processo else None,
-                        clinica=processo.emissor.clinica if processo and processo.emissor else None,
-                        generation_time_ms=generation_time_ms,
-                        success=success,
-                        error_message=error_message or '',
-                        pdf_type=pdf_type,
-                        ip_address=get_client_ip(request) if request else '',
-                        user_agent=get_user_agent(request) if request else ''
-                    )
-                    
-                    # Note: Daily PDF metrics updated via management command, not real-time
+                    # Only log if we have a user (required field)
+                    if user:
+                        log_entry = PDFGenerationLog.objects.create(
+                            user=user,
+                            processo=processo,
+                            paciente=processo.paciente if processo else None,
+                            doenca=processo.doenca if processo else None,
+                            clinica=processo.emissor.clinica if processo and processo.emissor else None,
+                            generation_time_ms=generation_time_ms,
+                            success=success,
+                            error_message=error_message or '',
+                            pdf_type=pdf_type,
+                            ip_address=get_client_ip(request) if request else '',
+                            user_agent=get_user_agent(request) if request else ''
+                        )
+                        
+                        # Note: Daily PDF metrics updated via management command, not real-time
+                    else:
+                        logger.warning(f"PDF generation tracking skipped - no user found for {pdf_type}")
                     
                 except Exception as e:
                     logger.error(f"Error tracking PDF generation: {e}")
