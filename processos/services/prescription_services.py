@@ -25,9 +25,9 @@ from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
 
-from processos.pdf_operations import PDFGenerator, PDFResponseBuilder
+from processos.services.pdf_operations import PDFGenerator, PDFResponseBuilder
 from processos.models import Processo, Protocolo, Doenca
-from processos.pdf_strategies import DataDrivenStrategy
+from processos.services.pdf_strategies import DataDrivenStrategy
 from clinicas.models import Emissor
 from analytics.signals import track_pdf_generation
 
@@ -425,13 +425,10 @@ class PrescriptionService:
         db_logger.info(f"PrescriptionService: Patient exists: {patient_exists}, Process ID: {process_id}")
         
         try:
-            # Import here to avoid circular imports
-            from processos.helpers import (
-                gerar_lista_meds_ids,
-                gera_med_dosagem,
-                vincula_dados_emissor,
-                registrar_db
-            )
+            # Import services directly to avoid circular imports
+            from processos.repositories.medication_repository import MedicationRepository
+            from processos.utils.data_utils import link_issuer_data
+            from processos.services.registration_service import ProcessRegistrationService
             
             self.logger.info(
                 f"PrescriptionService: Processing prescription for "
@@ -440,9 +437,10 @@ class PrescriptionService:
             
             # Step 1: Prepare prescription data
             db_logger.info("PrescriptionService: Step 1 - Preparing prescription data")
-            medication_ids = gerar_lista_meds_ids(form_data)
-            form_data, meds_ids = gera_med_dosagem(form_data, medication_ids)
-            final_data = vincula_dados_emissor(user, medico, clinica, form_data)
+            med_repo = MedicationRepository()
+            medication_ids = med_repo.extract_medication_ids_from_form(form_data)
+            form_data, meds_ids = med_repo.format_medication_dosages(form_data, medication_ids)
+            final_data = link_issuer_data(user, medico, clinica, form_data)
             db_logger.info(f"PrescriptionService: Data prepared, medications: {len(meds_ids)}")
             
             # Step 2: Validate business rules
@@ -471,19 +469,21 @@ class PrescriptionService:
             # Step 4: Register prescription in database
             db_logger.info("PrescriptionService: Step 4 - Registering in database")
             # Get actual patient object if exists, not just boolean
-            from processos.helpers import checar_paciente_existe
+            from processos.repositories.patient_repository import PatientRepository
+            patient_repo = PatientRepository()
             cpf_paciente = final_data.get('cpf_paciente')
-            paciente_obj = checar_paciente_existe(cpf_paciente) if patient_exists else False
+            paciente_obj = patient_repo.check_patient_exists(cpf_paciente) if patient_exists else False
             
             db_logger.info(f"PrescriptionService: CPF: {cpf_paciente}, Patient object: {type(paciente_obj)}")
             
             try:
-                processo_id = registrar_db(
-                    final_data,
-                    meds_ids,
-                    doenca,
-                    emissor,
-                    user,
+                registration_service = ProcessRegistrationService()
+                processo_id = registration_service.register_process(
+                    dados=final_data,
+                    meds_ids=meds_ids,
+                    doenca=doenca,
+                    emissor=emissor,
+                    usuario=user,
                     paciente_existe=paciente_obj,
                     cid=cid,
                     processo_id=process_id
@@ -572,8 +572,7 @@ class RenewalService:
         - Preserves original prescription data with new dates
         """
         try:
-            # Import here to avoid circular imports
-            from processos.helpers import gerar_dados_renovacao
+            # Use internal method instead of facade import
             
             self.logger.info(
                 f"RenewalService: Processing renewal for process {process_id} "
@@ -586,7 +585,7 @@ class RenewalService:
                 return None
             
             # Generate renewal data following renewal rules
-            renewal_data = gerar_dados_renovacao(renewal_date, process_id, user)
+            renewal_data = self.generate_renewal_data(renewal_date, process_id, user)
             
             # Generate PDF with user for analytics tracking
             pdf_response = self.pdf_service.generate_prescription_pdf(renewal_data, user=user)
@@ -632,3 +631,176 @@ class RenewalService:
         except Processo.DoesNotExist:
             self.logger.error(f"RenewalService: Process {process_id} not found")
             return False
+    
+    def generate_renewal_data(self, renewal_date: str, process_id: int, user=None) -> dict:
+        """
+        Generate complete data dictionary for a renewal process.
+        
+        This method creates a full data dictionary that can be used to create a new process,
+        preserving most of the original data but with the updated date and renewal-specific
+        modifications.
+        
+        Args:
+            renewal_date: The new start date for the renewal, in DD/MM/YYYY format
+            process_id: The ID of the process to be renewed
+            user: The user requesting the renewal (for patient versioning)
+            
+        Returns:
+            dict: Complete dictionary of data for the new renewal process
+            
+        Raises:
+            ValueError: If renewal date is invalid or empty
+            Processo.DoesNotExist: If process not found
+        """
+        from datetime import datetime
+        from django.forms.models import model_to_dict
+        from processos.services.prescription_data_service import PrescriptionDataService
+        from processos.repositories.medication_repository import MedicationRepository
+        
+        self.logger.info(f"RenewalService: Generating renewal data for process {process_id}")
+        
+        processo = Processo.objects.get(id=process_id)
+        dados = {}
+        
+        # Get versioned patient data if user is provided
+        if user:
+            paciente_version = processo.paciente.get_version_for_user(user)
+            if paciente_version:
+                paciente_data = model_to_dict(paciente_version)
+                # Keep master record fields that aren't versioned
+                paciente_data['id'] = processo.paciente.id
+                paciente_data['cpf_paciente'] = processo.paciente.cpf_paciente
+                paciente_data['usuarios'] = processo.paciente.usuarios.all()
+            else:
+                paciente_data = model_to_dict(processo.paciente)
+        else:
+            # Fallback to master record if no user provided
+            paciente_data = model_to_dict(processo.paciente)
+        
+        # Collect all related data
+        data_sources = [
+            model_to_dict(processo),
+            paciente_data,
+            model_to_dict(processo.medico),
+            model_to_dict(processo.clinica),
+        ]
+        
+        for data_source in data_sources:
+            dados.update(data_source)
+        
+        # pdftk requires string inputs, not object references
+        dados["medicos"] = ""
+        dados["usuarios"] = ""
+        dados["medicamentos"] = ""
+        
+        # Build clinic address
+        end_clinica = dados["logradouro"] + ", " + dados["logradouro_num"]
+        dados["end_clinica"] = end_clinica
+        
+        # Validate and parse renewal date
+        if not renewal_date or renewal_date.strip() == "":
+            raise ValueError("Data de renovação não pode estar vazia")
+        
+        try:
+            dados["data_1"] = datetime.strptime(renewal_date, "%d/%m/%Y")
+        except ValueError as e:
+            raise ValueError(f"Formato de data inválido: {renewal_date}. Use DD/MM/AAAA")
+        
+        # Set disease information
+        dados["cid"] = processo.doenca.cid
+        dados["diagnostico"] = processo.doenca.nome
+        
+        # CRITICAL: Setting conditional PDF flags for renovation
+        dados["consentimento"] = False  # No consent for renewals
+        dados["relatorio"] = False      # No report for renewals 
+        dados["exames"] = False         # No exams for renewals
+        
+        # Handle chronic pain special logic
+        try:
+            protocolo = processo.doenca.protocolo
+            
+            if protocolo.nome == "dor_crônica":
+                # For chronic pain, include the LANNS/EVA assessment form
+                dados["include_lanns_eva"] = True
+                
+                # Preserve any conditional data from original process
+                if processo.dados_condicionais:
+                    for key, value in processo.dados_condicionais.items():
+                        dados[key] = value
+        except Exception:
+            # Silently handle any protocol-related errors
+            pass
+        
+        # Retrieve prescription data from original process
+        prescription_service = PrescriptionDataService()
+        dados = prescription_service.retrieve_prescription_data(dados, processo)
+        
+        # Generate medication information
+        med_repo = MedicationRepository()
+        meds_ids = med_repo.extract_medication_ids_from_form(dados)
+        dados, _ = med_repo.format_medication_dosages(dados, meds_ids)
+        
+        self.logger.info(f"RenewalService: Generated renewal data with {len(meds_ids)} medications")
+        return dados
+    
+    def create_renewal_dictionary(self, processo: Processo, user=None) -> dict:
+        """
+        Create a dictionary with data for a renewal process.
+        
+        This method extracts necessary data from a Processo model instance to create
+        a new renewal process, handling patient versioning appropriately.
+        
+        Args:
+            processo: The Django model instance to get the data from
+            user: The user to get versioned patient data for (required for patient data)
+            
+        Returns:
+            dict: Dictionary containing the data for the renewal process
+            
+        Raises:
+            ValueError: If user is not provided or has no access to patient
+        """
+        from django.forms.models import model_to_dict
+        
+        if not user:
+            raise ValueError("User parameter is required for accessing patient data")
+        
+        # Get versioned patient data - no fallback to prevent data breach
+        paciente_version = processo.paciente.get_version_for_user(user)
+        if not paciente_version:
+            raise ValueError(f"User {user.email} has no access to patient {processo.paciente.cpf_paciente}")
+        
+        # Use Django's model_to_dict with field filtering for maintainability
+        needed_fields = [
+            'nome_paciente', 'peso', 'altura', 'nome_mae', 'incapaz', 
+            'nome_responsavel', 'etnia', 'telefone1_paciente', 
+            'telefone2_paciente', 'email_paciente', 'end_paciente'
+        ]
+        patient_data = model_to_dict(paciente_version, fields=needed_fields)
+        # Override with master CPF (security requirement)
+        patient_data['cpf_paciente'] = processo.paciente.cpf_paciente
+        
+        # Use model_to_dict for process data as well
+        process_fields = [
+            'prescricao', 'anamnese', 'tratou', 'tratamentos_previos', 'preenchido_por'
+        ]
+        process_data = model_to_dict(processo, fields=process_fields)
+        
+        # Add related field data manually (foreign keys need special handling)
+        process_data.update({
+            "cid": processo.doenca.cid,
+            "diagnostico": processo.doenca.nome,
+            "clinica": processo.clinica,
+        })
+        
+        # Combine patient and process data
+        dicionario = {
+            **patient_data,  # Unpack patient data
+            **process_data,  # Unpack process data
+        }
+        
+        # Add conditional data from the process
+        if processo.dados_condicionais:
+            dicionario.update(processo.dados_condicionais)
+            
+        return dicionario

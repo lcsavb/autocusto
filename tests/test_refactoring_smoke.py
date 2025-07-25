@@ -11,15 +11,15 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from processos.pdf_operations import PDFGenerator, PDFResponseBuilder
-from processos.prescription_services import (
+from processos.services.pdf_operations import PDFGenerator, PDFResponseBuilder
+from processos.services.prescription_services import (
     PrescriptionDataFormatter, 
     PrescriptionTemplateSelector,
     PrescriptionPDFService,
     PrescriptionService,
     RenewalService
 )
-from processos.view_services import PrescriptionViewSetupService
+from processos.services.view_services import PrescriptionViewSetupService
 from processos.models import Doenca, Protocolo
 
 

@@ -20,7 +20,7 @@ from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from django import forms
 
-from processos.pdf_strategies import DataDrivenStrategy, get_conditional_fields
+from processos.services.pdf_strategies import DataDrivenStrategy, get_conditional_fields
 from processos.models import Protocolo, Doenca
 
 

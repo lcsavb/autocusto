@@ -19,7 +19,9 @@ from django.db.models import QuerySet
 
 from medicos.seletor import medico as seletor_medico
 from processos.models import Processo, Doenca
-from processos.helpers import listar_med, cria_dict_renovação, resgatar_prescricao
+from processos.repositories.medication_repository import MedicationRepository
+from processos.services.prescription_services import RenewalService
+from processos.services.prescription_data_service import PrescriptionDataService
 from processos.forms import fabricar_formulario
 from processos.views import _get_initial_data
 
@@ -100,7 +102,8 @@ class PrescriptionViewSetupService:
             cid = request.session["cid"]
             
             # Step 4: Get medications and form for new prescription
-            medicamentos = listar_med(cid)
+            med_repo = MedicationRepository()
+            medicamentos = med_repo.list_medications_by_cid(cid)
             ModeloFormulario = fabricar_formulario(cid, False)  # False = new prescription
             
             # Step 5: Prepare initial data based on patient existence
@@ -179,7 +182,8 @@ class PrescriptionViewSetupService:
             processo = session_result.processo
             
             # Step 4: Get medications and form for edit
-            medicamentos = listar_med(cid)
+            med_repo = MedicationRepository()
+            medicamentos = med_repo.list_medications_by_cid(cid)
             ModeloFormulario = fabricar_formulario(cid, True)  # True = edit/renewal form
             
             # Step 5: Get first date and prepare initial data from existing process
@@ -190,10 +194,12 @@ class PrescriptionViewSetupService:
                 self.logger.info(f"Using default primeira_data: {primeira_data}")
             
             # Create initial data from existing process with user's versioned data
-            dados_iniciais = cria_dict_renovação(processo, user=common_result.usuario)
+            renewal_service = RenewalService()
+            dados_iniciais = renewal_service.create_renewal_dictionary(processo, user=common_result.usuario)
             dados_iniciais["data_1"] = primeira_data
             dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
-            dados_iniciais = resgatar_prescricao(dados_iniciais, processo)
+            prescription_service = PrescriptionDataService()
+            dados_iniciais = prescription_service.retrieve_prescription_data(dados_iniciais, processo)
             
             self.logger.info(f"Successfully set up edit prescription view for process: {processo_id}")
             

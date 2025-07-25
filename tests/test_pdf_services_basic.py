@@ -8,8 +8,8 @@ from django.test import TestCase
 from django.http import HttpResponse
 from datetime import datetime
 
-from processos.pdf_operations import PDFGenerator, PDFResponseBuilder
-from processos.prescription_services import PrescriptionDataFormatter, PrescriptionPDFService
+from processos.services.pdf_operations import PDFGenerator, PDFResponseBuilder
+from processos.services.prescription_services import PrescriptionDataFormatter, PrescriptionPDFService
 from processos.models import Doenca, Protocolo
 
 
@@ -99,11 +99,11 @@ class TestServicesImport(TestCase):
     def test_import_services(self):
         """Test importing all service modules."""
         try:
-            from processos.pdf_operations import (
+            from processos.services.pdf_operations import (
                 PDFGenerator,
                 PDFResponseBuilder
             )
-            from processos.prescription_services import (
+            from processos.services.prescription_services import (
                 PrescriptionDataFormatter,
                 PrescriptionTemplateSelector,
                 PrescriptionPDFService,

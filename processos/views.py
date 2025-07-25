@@ -29,17 +29,8 @@ from .forms import (
     extrair_campos_condicionais,
     fabricar_formulario,
 )
-from .helpers import (
-    cria_dict_renovação,
-    gerar_dados_renovacao,
-    vincula_dados_emissor,
-    transfere_dados_gerador,
-    listar_med,
-    gera_med_dosagem,
-    resgatar_prescricao,
-    gerar_lista_meds_ids,
-    gerar_link_protocolo,
-)
+from processos.utils.url_utils import generate_protocol_link
+from processos.services.prescription_services import RenewalService
 
 
 # English: _get_initial_data
@@ -171,7 +162,7 @@ def edicao(request):
     Focuses only on HTTP concerns and coordination.
     """
     # Setup all view data using service
-    from processos.view_services import PrescriptionViewSetupService
+    from processos.services.view_services import PrescriptionViewSetupService
     
     setup_service = PrescriptionViewSetupService()
     setup = setup_service.setup_for_edit_prescription(request)
@@ -213,7 +204,7 @@ def edicao(request):
                 logger.info(f"Clinica found: {clinica}")
                 try:
                     # Use new PrescriptionService for clean business logic
-                    from processos.prescription_services import PrescriptionService
+                    from processos.services.prescription_services import PrescriptionService
                     
                     # Use service to handle complete prescription update workflow
                     prescription_service = PrescriptionService()
@@ -290,7 +281,7 @@ def edicao(request):
     # English: conditional_fields
     campos_condicionais = extrair_campos_condicionais(formulario)
     # English: protocol_link
-    link_protocolo = gerar_link_protocolo(setup.cid)
+    link_protocolo = generate_protocol_link(setup.cid)
 
     # English: context
     contexto = {
@@ -409,7 +400,7 @@ def renovacao_rapida(request):
             audit_logger.info(f"User {request.user.email} initiated renewal for processo {processo_id}")
             
             # Use new RenewalService for clean business logic
-            from processos.prescription_services import RenewalService
+            from processos.services.prescription_services import RenewalService
             
             renewal_service = RenewalService()
             pdf_response = renewal_service.process_renewal(nova_data, int(processo_id), usuario)
@@ -419,8 +410,8 @@ def renovacao_rapida(request):
             
             if pdf_response:
                 # View layer handles file I/O operations - need to generate data for filename
-                from processos.helpers import gerar_dados_renovacao
-                dados_renovacao = gerar_dados_renovacao(nova_data, int(processo_id), usuario)
+                renewal_service = RenewalService()
+                dados_renovacao = renewal_service.generate_renewal_data(nova_data, int(processo_id), usuario)
                 pdf_url = _save_pdf_for_serving(pdf_response, dados_renovacao)
                 
                 if pdf_url:
@@ -512,7 +503,7 @@ def cadastro(request):
     print(f"DEBUG CADASTRO: Session keys: {list(request.session.keys())}")
     
     # Setup all view data using service
-    from processos.view_services import PrescriptionViewSetupService
+    from processos.services.view_services import PrescriptionViewSetupService
     
     print(f"DEBUG CADASTRO: About to call setup service")
     setup_service = PrescriptionViewSetupService()
@@ -550,7 +541,7 @@ def cadastro(request):
 
             if formulario.is_valid():
                 # Use new PrescriptionService for clean business logic
-                from processos.prescription_services import PrescriptionService
+                from processos.services.prescription_services import PrescriptionService
                 
                 # English: form_data
                 dados_formulario = formulario.cleaned_data
@@ -657,7 +648,7 @@ def cadastro(request):
         # English: conditional_fields
         campos_condicionais = extrair_campos_condicionais(formulario)
         # English: protocol_link
-        link_protocolo = gerar_link_protocolo(setup.cid)
+        link_protocolo = generate_protocol_link(setup.cid)
         
         # English: context
         contexto = {

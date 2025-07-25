@@ -13,7 +13,7 @@ from .helpers import (
 )
 # Legacy import no longer needed - migrated protocols use data-driven approach
 # from .seletor import seletor_campos
-from .pdf_strategies import get_conditional_fields
+from .services.pdf_strategies import get_conditional_fields
 
 logger = logging.getLogger('processos')
 
