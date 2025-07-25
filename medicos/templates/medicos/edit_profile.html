@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load static %}
+
    
 {% block content %}
 
@@ -18,7 +19,42 @@
             <div class="card-body p-6 toast-enabled">
                 <!-- Form section -->
                 <div class="mb-4">
-                    {% crispy form %}
+                    <form method="POST" novalidate>
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.name|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.crm|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.estado|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.especialidade|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.cns|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary float-right">Atualizar Perfil</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 <div class="clearfix"></div>
                 <div style="height: 0.5rem;"></div>
@@ -29,6 +65,13 @@
 {% endblock content %}
 
 {% block scripts %}
+<style>
+select.form-control {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    padding: 0.375rem 0.75rem !important;
+}
+</style>
+
 <script src="{% static 'js/mascaras.js' %}"></script>
 
 <script>

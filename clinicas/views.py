@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.core.exceptions import ValidationError
 from .forms import ClinicaFormulario
 from medicos.seletor import medico as seletor_medico
-from clinicas.models import Clinica
+from clinicas.models import Clinica, ClinicaVersion, ClinicaUsuario, ClinicaUsuarioVersion
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,11 @@ def cadastro(request):
     """
     usuario = request.user
     medico = seletor_medico(usuario)
+    
+    # Check if user has a valid medico profile
+    if not medico:
+        messages.error(request, "Erro: perfil médico não encontrado. Contate o suporte.")
+        return redirect("home")
 
     if request.method == "POST":
         f_clinica = ClinicaFormulario(request.POST)
@@ -38,56 +43,24 @@ def cadastro(request):
             dados = f_clinica.cleaned_data
 
             try:
-                # Check if clinic already exists based on CNS (National Health Service) code
-                # CNS is unique identifier for medical facilities in Brazil
-                clinica_existe = Clinica.objects.filter(
-                    cns_clinica__exact=dados["cns_clinica"]
+                # Let the model handle whether to create new clinic or version
+                clinic = Clinica.create_or_update_for_user(
+                    user=usuario,
+                    doctor=medico,
+                    clinic_data=dados
                 )
-
-                if clinica_existe:
-                    # Clinic exists - this is an update operation
-                    # Multiple doctors can update the same clinic (shared facilities)
-                    instance = f_clinica.save(commit=False)
-                    instance.pk = clinica_existe[0].pk  # Use existing clinic's primary key
-                    
-                    # For updates, validate without unique constraints since we're updating existing record
-                    # This prevents false positive validation errors on fields that are already unique
-                    instance.full_clean(exclude=['id'])
-                    instance.save(force_update=True)  # Explicitly update existing record
-                    
-                    # Add current user and doctor to clinic's associations
-                    # This allows multiple doctors to access the same clinic
-                    instance.usuarios.add(usuario)
-                    instance.medicos.add(medico)
-                    
-                    messages.success(
-                        request, f'Clínica {dados["nome_clinica"]} atualizada com sucesso!'
-                    )
-                    # Check if coming from setup flow - if session has process data, redirect back
-                    if "paciente_existe" in request.session and "cid" in request.session:
-                        return redirect("processos-cadastro")
-                    else:
-                        return redirect("home")
+                
+                # Success message
+                if clinic.was_created:
+                    messages.success(request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!')
                 else:
-                    # New clinic - create fresh record
-                    instance = f_clinica.save(commit=False)
-                    
-                    # For new records, validate everything including unique constraints
-                    instance.full_clean()
-                    instance.save()
-                    
-                    # Associate clinic with current user and doctor
-                    instance.usuarios.add(usuario)
-                    instance.medicos.add(medico)
-                    
-                    messages.success(
-                        request, f'Clínica {dados["nome_clinica"]} cadastrada com sucesso!'
-                    )
-                    # Check if coming from setup flow - if session has process data, redirect back
-                    if "paciente_existe" in request.session and "cid" in request.session:
-                        return redirect("processos-cadastro")
-                    else:
-                        return redirect("home")
+                    messages.success(request, f'Clínica {dados["nome_clinica"]} atualizada com sucesso!')
+                
+                # Check if coming from setup flow
+                if "paciente_existe" in request.session and "cid" in request.session:
+                    return redirect("processos-cadastro")
+                else:
+                    return redirect("home")
                     
             except ValidationError as e:
                 # Handle model validation errors
@@ -154,18 +127,35 @@ def get_clinic(request, clinic_id):
         # English: clinic
         clinic = get_object_or_404(Clinica, id=clinic_id, usuarios=user)
         
-        # English: data
-        data = {
-            'id': clinic.id,
-            'nome_clinica': clinic.nome_clinica,
-            'cns_clinica': clinic.cns_clinica,
-            'logradouro': clinic.logradouro,
-            'logradouro_num': clinic.logradouro_num,
-            'cidade': clinic.cidade,
-            'bairro': clinic.bairro,
-            'cep': clinic.cep,
-            'telefone_clinica': clinic.telefone_clinica,
-        }
+        # Try to get user's version first
+        version = clinic.get_version_for_user(user)
+        
+        if version:
+            # Use versioned data
+            data = {
+                'id': clinic.id,
+                'nome_clinica': version.nome_clinica,
+                'cns_clinica': clinic.cns_clinica,
+                'logradouro': version.logradouro,
+                'logradouro_num': version.logradouro_num,
+                'cidade': version.cidade,
+                'bairro': version.bairro,
+                'cep': version.cep,
+                'telefone_clinica': version.telefone_clinica,
+            }
+        else:
+            # Fallback to original data for backward compatibility
+            data = {
+                'id': clinic.id,
+                'nome_clinica': clinic.nome_clinica,
+                'cns_clinica': clinic.cns_clinica,
+                'logradouro': clinic.logradouro,
+                'logradouro_num': clinic.logradouro_num,
+                'cidade': clinic.cidade,
+                'bairro': clinic.bairro,
+                'cep': clinic.cep,
+                'telefone_clinica': clinic.telefone_clinica,
+            }
         
         return JsonResponse(data)
     except Exception as e:

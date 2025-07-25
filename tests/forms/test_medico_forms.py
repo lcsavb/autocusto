@@ -53,6 +53,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': 'ABC123',
             'crm2': 'ABC123',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',
             'cns2': '123456789012345'
         }
@@ -66,6 +68,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',
             'crm2': '123456',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '12345',  # Too short
             'cns2': '12345'
         }
@@ -79,6 +83,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',
             'crm2': '654321',  # Different CRM
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',
             'cns2': '123456789012345'
         }
@@ -92,6 +98,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',
             'crm2': '123456',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',
             'cns2': '543210987654321'  # Different CNS
         }
@@ -101,8 +109,8 @@ class ProfileCompletionFormTest(TestCase):
         self.assertEqual(form.errors['cns2'], ['Os CNSs não coincidem.'])
 
     def test_crm_uniqueness_validation(self):
-        """Test that CRM uniqueness is validated."""
-        # Create another user with existing CRM
+        """Test that CRM+Estado uniqueness is validated."""
+        # Create another user with existing CRM+Estado combination
         other_user = Usuario.objects.create_user(
             email='other@example.com',
             password='testpass123',
@@ -110,7 +118,8 @@ class ProfileCompletionFormTest(TestCase):
         )
         other_medico = Medico.objects.create(
             nome_medico='Other Doctor',
-            crm_medico='123456',  # This CRM is already taken
+            crm_medico='123456',  # This CRM+Estado combination is already taken
+            estado='SP',  # Same state as in the test form data
             cns_medico='999999999999999'
         )
         other_user.medicos.add(other_medico)
@@ -118,13 +127,16 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',  # Trying to use existing CRM
             'crm2': '123456',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',
             'cns2': '123456789012345'
         }
         form = ProfileCompletionForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
-        self.assertIn('crm', form.errors)
-        self.assertEqual(form.errors['crm'], ['Este CRM já está sendo usado por outro médico.'])
+        self.assertTrue(form.non_field_errors())  # Should have non-field validation errors
+        # The error should be about CRM+State combination being used (state name is "São Paulo", not "SP")
+        self.assertIn('Este CRM já está sendo usado por outro médico no estado São Paulo.', form.non_field_errors())
 
     def test_cns_uniqueness_validation(self):
         """Test that CNS uniqueness is validated."""
@@ -144,6 +156,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',
             'crm2': '123456',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',  # Trying to use existing CNS
             'cns2': '123456789012345'
         }
@@ -197,6 +211,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',
             'crm2': '123456',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',
             'cns2': '123456789012345'
         }
@@ -208,6 +224,8 @@ class ProfileCompletionFormTest(TestCase):
         form_data = {
             'crm': '123456',
             'crm2': '123456',
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA',
             'cns': '123456789012345',
             'cns2': '123456789012345'
         }
@@ -224,15 +242,19 @@ class ProfileCompletionFormTest(TestCase):
         # Set existing values
         self.medico.crm_medico = '999999'
         self.medico.cns_medico = '999999999999999'
+        self.medico.estado = 'RJ'  # Set different state
         self.medico.save()
 
         form_data = {
-            'crm': '123456',
-            'crm2': '123456',
-            'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'crm': '999999',  # Use existing CRM (should be ignored due to immutability)
+            'crm2': '999999',
+            'estado': 'RJ',  # Use existing estado (should be ignored due to immutability)
+            'especialidade': 'CARDIOLOGIA',
+            'cns': '999999999999999',  # Use existing CNS (should be ignored due to immutability)
+            'cns2': '999999999999999'
         }
         form = ProfileCompletionForm(data=form_data, user=self.user)
+        self.assertTrue(form.is_valid())
         form.save()
         
         self.medico.refresh_from_db()

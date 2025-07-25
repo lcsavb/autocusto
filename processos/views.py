@@ -83,9 +83,20 @@ def _get_initial_data(request, paciente_existe, primeira_data, cid):
         # English: patient
         paciente = Paciente.objects.get(id=paciente_id)
         
-        # Convert patient model to dictionary for form initialization
-        # English: patient_data
-        dados_paciente = model_to_dict(paciente)
+        # Get user's versioned data for form initialization
+        user = request.user
+        version = paciente.get_version_for_user(user)
+        
+        if version:
+            # Use versioned data for form initialization
+            dados_paciente = model_to_dict(version)
+            # Keep master record fields that aren't versioned
+            dados_paciente['id'] = paciente.id
+            dados_paciente['cpf_paciente'] = paciente.cpf_paciente
+            dados_paciente['usuarios'] = paciente.usuarios.all()
+        else:
+            # Fallback to master record if no version found
+            dados_paciente = model_to_dict(paciente)
         
         # Add prescription-specific data not stored in patient model
         # English: patient_data
@@ -190,9 +201,14 @@ def edicao(request):
         clinicas = medico.clinicas.all()
         logger.info(f"Clinicas count: {clinicas.count()}")
         
-        # Create choices tuple for clinic selection dropdown
+        # Create choices tuple for clinic selection dropdown - use versioned clinic names
         # English: choices
-        escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+        escolhas = []
+        for c in clinicas:
+            version = c.get_version_for_user(usuario)
+            clinic_name = version.nome_clinica if version else c.nome_clinica
+            escolhas.append((c.id, clinic_name))
+        escolhas = tuple(escolhas)
         logger.info(f"Escolhas: {escolhas}")
         
         # Get disease CID from session (set by home view workflow)
@@ -381,15 +397,15 @@ def renovacao_rapida(request):
             print(f"DEBUG: pacientes_usuario count = {pacientes_usuario.count()}")
             
             if busca:
-                # English: search_patients
-                busca_pacientes = pacientes_usuario.filter(
-                    (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
-                )
+                # Use versioned patient search
+                from pacientes.models import Paciente
+                patient_results = Paciente.get_patients_for_user_search(usuario, busca)
+                busca_pacientes = [patient for patient, version in patient_results]
             else:
-                # English: search_patients
-                busca_pacientes = pacientes_usuario.none()  # Empty queryset if no search
+                # Empty list if no search
+                busca_pacientes = []
             
-            print(f"DEBUG: busca_pacientes count = {busca_pacientes.count()}")
+            print(f"DEBUG: busca_pacientes count = {len(busca_pacientes)}")
 
             # English: context
             contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
@@ -444,7 +460,7 @@ def renovacao_rapida(request):
             
             # English: data
             data_start = time.time()
-            dados = gerar_dados_renovacao(nova_data, processo_id)
+            dados = gerar_dados_renovacao(nova_data, processo_id, usuario)
             data_end = time.time()
             pdf_logger.info(f"Renovation data generated in {data_end - data_start:.3f}s")
             
@@ -497,10 +513,10 @@ def renovacao_rapida(request):
         usuario = request.user
         # English: user_patients
         pacientes_usuario = usuario.pacientes.all()
-        # English: search_patients
-        busca_pacientes = pacientes_usuario.filter(
-            (Q(nome_paciente__icontains=busca) | Q(cpf_paciente__icontains=busca))
-        )
+        # Use versioned patient search
+        from pacientes.models import Paciente
+        patient_results = Paciente.get_patients_for_user_search(usuario, busca)
+        busca_pacientes = [patient for patient, version in patient_results]
         # English: context
         contexto = {"busca_pacientes": busca_pacientes, "usuario": usuario}
         return render(request, "processos/renovacao_rapida.html", contexto)
@@ -543,8 +559,13 @@ def cadastro(request):
             
         # English: clinics
         clinicas = medico.clinicas.all()
-        # English: choices
-        escolhas = tuple([(c.id, c.nome_clinica) for c in clinicas])
+        # English: choices - use versioned clinic names
+        escolhas = []
+        for c in clinicas:
+            version = c.get_version_for_user(usuario)
+            clinic_name = version.nome_clinica if version else c.nome_clinica
+            escolhas.append((c.id, clinic_name))
+        escolhas = tuple(escolhas)
         
         # Check for required session variables
         if "paciente_existe" not in request.session:
@@ -681,9 +702,21 @@ def cadastro(request):
             paciente = Paciente.objects.get(id=paciente_id)
             contexto["paciente"] = paciente
             
-            # Add conditional fields for existing patient
-            # English: patient_data
-            dados_paciente = model_to_dict(paciente)
+            # Add conditional fields for existing patient using versioned data
+            # Get user's versioned data
+            user = request.user
+            version = paciente.get_version_for_user(user)
+            
+            if version:
+                # Use versioned data for conditional fields
+                dados_paciente = model_to_dict(version)
+                # Keep master record fields that aren't versioned
+                dados_paciente['id'] = paciente.id
+                dados_paciente['cpf_paciente'] = paciente.cpf_paciente
+                dados_paciente['usuarios'] = paciente.usuarios.all()
+            else:
+                # Fallback to master record if no version found
+                dados_paciente = model_to_dict(paciente)
             # English: patient_data
             dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
             # English: patient_data

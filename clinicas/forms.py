@@ -31,9 +31,16 @@ class ClinicaFormulario(ModelForm):
       across different forms.
     """
     def __init__(self, *args, **kwargs):
+        # Extract user from kwargs for validation
+        self.user = kwargs.pop('user', None)
         super(ClinicaFormulario, self).__init__(*args, **kwargs)
         # English: helper
         self.helper = FormHelper()
+        
+        # Make CNS read-only if editing existing clinic
+        if self.instance and self.instance.pk:
+            self.fields['cns_clinica'].disabled = True
+            self.fields['cns_clinica'].help_text = "CNS não pode ser alterado após cadastro"
         self.helper.form_id = "clinica-cadastro"
         self.helper.form_method = "POST"
         self.helper.form_action = ""
@@ -137,6 +144,16 @@ class ClinicaFormulario(ModelForm):
             )
         
         return cep
+
+    def validate_unique(self):
+        """Skip CNS uniqueness validation - handled by versioning system in model layer"""
+        exclude = self._get_validation_exclusions()
+        if 'cns_clinica' not in exclude:
+            exclude.add('cns_clinica')  # Don't validate CNS uniqueness at form level
+        try:
+            self.instance.validate_unique(exclude)
+        except ValidationError as e:
+            self._update_errors(e)
 
     class Meta:
         # English: model

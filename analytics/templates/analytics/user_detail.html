@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics - {{ user.email }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Análise de Usuário</h1>
+                <div>
+                    <a href="{% url 'analytics:user_list' %}" class="btn btn-outline-secondary mr-2">
+                        <i class="fas fa-arrow-left"></i> Voltar à Lista
+                    </a>
+                    <a href="{% url 'analytics:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-bar"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- User Info Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-user"></i> 
+                        {{ medico.nome_medico|default:user.email }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                            {% if medico %}
+                            <p><strong>Nome:</strong> {{ medico.nome_medico }}</p>
+                            <p><strong>CRM:</strong> {{ medico.crm_medico }}/{{ medico.estado }}</p>
+                            <p><strong>Especialidade:</strong> <span class="badge badge-secondary">{{ specialty }}</span></p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Cadastro:</strong> {{ user.date_joined|date:"d/m/Y H:i" }}</p>
+                            {% if last_login %}
+                            <p><strong>Último Login:</strong> {{ last_login.timestamp|date:"d/m/Y H:i" }}</p>
+                            {% else %}
+                            <p><strong>Último Login:</strong> <span class="text-muted">Nunca</span></p>
+                            {% endif %}
+                            <p><strong>Status:</strong> 
+                                {% if user.is_active %}
+                                <span class="badge badge-success">Ativo</span>
+                                {% else %}
+                                <span class="badge badge-danger">Inativo</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Pacientes</h5>
+                            <h2 class="text-primary">{{ total_patients }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Processos</h5>
+                            <h2 class="text-success">{{ total_processes }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">PDFs Gerados</h5>
+                            <h2 class="text-info">{{ pdf_stats.total_pdfs|default:0 }}</h2>
+                            <small class="text-muted">
+                                Últimos 30 dias: {{ pdf_stats.recent_pdfs|default:0 }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Tempo Médio PDF</h5>
+                            <h2 class="text-warning">
+                                {% if pdf_stats.avg_generation_time %}
+                                {{ pdf_stats.avg_generation_time|floatformat:0 }}ms
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </h2>
+                            <small class="text-muted">
+                                Erros: {{ pdf_stats.error_rate|default:0 }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disease Breakdown -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0 text-white">
+                                <i class="fas fa-virus"></i> Doenças Tratadas
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if disease_breakdown %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>Doença</th>
+                                            <th>CID</th>
+                                            <th class="text-center">Processos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for disease in disease_breakdown %}
+                                        <tr>
+                                            <td>{{ disease.doenca__nome }}</td>
+                                            <td><code>{{ disease.doenca__cid }}</code></td>
+                                            <td class="text-center">
+                                                <span class="badge badge-primary">{{ disease.process_count }}</span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted text-center">Nenhuma doença tratada ainda.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0 text-white">
+                                <i class="fas fa-sign-in-alt"></i> Atividade Recente
+                            </h5>
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            {% if login_activity %}
+                            {% for activity in login_activity %}
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom">
+                                <div>
+                                    <i class="fas fa-{% if activity.activity_type == 'login' %}sign-in-alt text-success{% elif activity.activity_type == 'logout' %}sign-out-alt text-danger{% else %}user text-info{% endif %}"></i>
+                                    {{ activity.get_activity_type_display }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ activity.timestamp|date:"d/m H:i" }}
+                                </small>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p class="text-muted text-center">Nenhuma atividade recente.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

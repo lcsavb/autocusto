@@ -618,6 +618,7 @@ class RenovarProcesso(NovoProcesso):
                 usuario,
                 paciente_existe=paciente_existe,
                 cid=dados["cid"],
+                processo_id=processo_id,  # Pass the specific process being edited
             )
         else:
             dados_modificados, campos_modificados = gerar_dados_edicao_parcial(

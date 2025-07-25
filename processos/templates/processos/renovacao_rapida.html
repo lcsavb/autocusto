@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load patient_tags %}
    
 {% block content %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/processos.css' %}">
@@ -149,7 +150,7 @@
                             
                             <div class="fake-td align-middle" style="width: 25%;">
                                 <div class="d-flex flex-column">
-                                    <span class="font-weight-bold text-primary">{{ paciente.nome_paciente }}</span>
+                                    <span class="font-weight-bold text-primary">{{ paciente|patient_name_for_user:usuario }}</span>
                                     <small class="text-muted">{{ paciente.cpf_paciente }}</small>
                                 </div>
                             </div>

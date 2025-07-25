@@ -16,6 +16,7 @@ sqlparse==0.5.3
 substring==0.2
 whitenoise==5.0.1
 uwsgi==2.0.26
+psutil==7.0.0
 
 # Testing dependencies
 playwright==1.40.0

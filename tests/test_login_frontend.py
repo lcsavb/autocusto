@@ -340,8 +340,17 @@ class LoginSecurityTest(PlaywrightLoginTestBase):
             # Check that script was not executed
             page_content = self.page.content()
             
-            # Script should be escaped or not present in dangerous form
-            self.assertNotIn('<script>', page_content.lower())
+            # Check that the malicious script content is properly escaped or not present
+            # We shouldn't find the exact malicious script unescaped in the page
+            self.assertNotIn(script, page_content)
+            
+            # For script tags specifically, ensure they're escaped if present in form values
+            if '<script>' in script.lower():
+                # The malicious script should be HTML-escaped if it appears in the page
+                escaped_script = script.replace('<', '&lt;').replace('>', '&gt;')
+                # Either the script is completely absent or it's properly escaped
+                if script.lower() in page_content.lower():
+                    self.assertIn(escaped_script, page_content)
             
             # Page should handle gracefully
             current_url = self.page.url

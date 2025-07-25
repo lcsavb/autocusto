@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% load patient_tags %}
 
 {% block content %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/processos.css' %}">
@@ -25,7 +26,7 @@
             </h4>
             <p class="subtitle">
               <span class="oi oi-person mr-1"></span>
-              {{ paciente.nome_paciente }}
+              {{ paciente|patient_name_for_user:user }}
             </p>
             {% else %}
             <h4>

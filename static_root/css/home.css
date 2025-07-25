@@ -69,6 +69,11 @@ body {
   transition: all 0.3s ease;
 }
 
+.auth-process-card select.form-control {
+  padding: 0.95rem 1rem;
+  min-height: 2.5rem;
+}
+
 .auth-process-card .form-control:focus {
   border-color: var(--secondary-color);
   box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);

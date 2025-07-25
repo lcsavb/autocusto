@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics - Usuários{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Análise de Usuários</h1>
+                <div>
+                    <a href="{% url 'analytics:dashboard' %}" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-chart-bar"></i> Dashboard
+                    </a>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-info dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-download"></i> Exportar Dados
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{% url 'analytics:api_user_analytics' %}" target="_blank">
+                                <i class="fas fa-users"></i> JSON - Todos os Usuários
+                            </a>
+                            <a class="dropdown-item" href="{% url 'analytics:api_disease_analytics' %}" target="_blank">
+                                <i class="fas fa-virus"></i> JSON - Estatísticas de Doenças
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total de Usuários</h5>
+                            <h2 class="text-primary">{{ total_users }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Ativos (30 dias)</h5>
+                            <h2 class="text-success">{{ active_users_30d }}</h2>
+                            <small class="text-muted">
+                                {{ active_users_30d|floatformat:0 }}/{{ total_users }} 
+                                ({% widthratio active_users_30d total_users 100 %}%)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total de Processos</h5>
+                            <h2 class="text-info">{{ total_processes }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Analytics Table -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0 text-white">Detalhes dos Usuários</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Especialidade</th>
+                                    <th>Estado</th>
+                                    <th>CRM</th>
+                                    <th>Processos</th>
+                                    <th>Doença Principal</th>
+                                    <th>Logins (30d)</th>
+                                    <th>Último Login</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_data in user_analytics %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ user_data.medico.nome_medico|default:user_data.user.email }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ user_data.user.email }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-secondary">{{ user_data.specialty }}</span>
+                                    </td>
+                                    <td>{{ user_data.state }}</td>
+                                    <td>
+                                        <code>{{ user_data.crm }}</code>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-primary badge-lg">{{ user_data.process_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user_data.top_disease %}
+                                            <div>
+                                                <strong>{{ user_data.top_disease.doenca__nome }}</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    {{ user_data.top_disease.count }} processo{{ user_data.top_disease.count|pluralize:"s" }}
+                                                </small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">Nenhuma</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <span class="badge {% if user_data.recent_logins > 0 %}badge-success{% else %}badge-secondary{% endif %}">
+                                                {{ user_data.recent_logins }}
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">
+                                                Total: {{ user_data.login_count }}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user_data.last_login %}
+                                            <div>
+                                                <strong>{{ user_data.last_login.timestamp|date:"d/m/Y" }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ user_data.last_login.timestamp|time:"H:i" }}</small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">Nunca</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'analytics:user_detail' user_data.user.id %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> Detalhes
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted">
+                                        Nenhum usuário encontrado.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disease Statistics -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0 text-white">Doenças Mais Tratadas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for user_data in user_analytics %}
+                                    {% for disease in user_data.disease_stats|slice:":1" %}
+                                        {% if disease %}
+                                        <div class="col-md-3 mb-2">
+                                            <div class="card border-left-primary">
+                                                <div class="card-body py-2">
+                                                    <h6 class="card-title mb-1">{{ disease.doenca__nome }}</h6>
+                                                    <p class="card-text mb-0">
+                                                        <small class="text-muted">
+                                                            CID: {{ disease.doenca__cid }} | 
+                                                            {{ disease.count }} processo{{ disease.count|pluralize:"s" }}
+                                                        </small>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.border-left-primary {
+    border-left: 4px solid #007bff;
+}
+
+.card-body.py-2 {
+    padding: 0.5rem 1rem;
+}
+</style>
+{% endblock %}

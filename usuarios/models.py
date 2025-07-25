@@ -42,6 +42,8 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_medico = models.BooleanField("Status de Médico", default=False)
     # is_clinic (Clinic Status)
     is_clinica = models.BooleanField("Status de Clínica", default=False)
+    # process_count (Number of processes created by this user)
+    process_count = models.PositiveIntegerField("Número de Processos Criados", default=0)
 
     USERNAME_FIELD = "email"
 

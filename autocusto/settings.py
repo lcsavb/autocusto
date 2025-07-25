@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "analytics.middleware.SystemHealthMiddleware",
 ]
 
 ROOT_URLCONF = "autocusto.urls"
@@ -475,6 +476,8 @@ CRONJOBS = [
     ('0 2 * * *', 'django.core.management.call_command', ['dbbackup']),
     ('15 2 * * *', 'django.core.management.call_command', ['upload_backup']),
     ('30 1 * * *', 'django.core.management.call_command', ['calculate_daily_metrics']),
+    ('*/15 * * * *', 'django.core.management.call_command', ['collect_health_metrics']),  # Every 15 minutes
+    ('0 4 * * *', 'django.core.management.call_command', ['collect_health_metrics', '--cleanup']),  # Daily cleanup
 ]
 
 # Django-dbbackup configuration

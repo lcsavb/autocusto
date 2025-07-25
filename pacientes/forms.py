@@ -1,8 +1,5 @@
 from django import forms
-from .models import Paciente
-
-
-from django import forms
+from django.core.exceptions import ValidationError
 from .models import Paciente
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
@@ -39,6 +36,16 @@ class PacienteCadastroFormulario(forms.ModelForm):
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect, forms.ClearableFileInput)):
                 field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+
+    def validate_unique(self):
+        """Skip CPF uniqueness validation - handled by versioning system in model layer"""
+        exclude = self._get_validation_exclusions()
+        if 'cpf_paciente' not in exclude:
+            exclude.add('cpf_paciente')  # Don't validate CPF uniqueness at form level
+        try:
+            self.instance.validate_unique(exclude)
+        except ValidationError as e:
+            self._update_errors(e)
 
     class Meta:
         # English: model

@@ -329,7 +329,7 @@ def cria_dict_renovação(modelo):
 
 # English: generate_renewal_data
 # generate renewal data
-def gerar_dados_renovacao(primeira_data, processo_id):
+def gerar_dados_renovacao(primeira_data, processo_id, user=None):
     """Generates a complete data dictionary for a renewal process.
 
     This function is used for the "quick renewal" feature. It takes an
@@ -366,10 +366,26 @@ def gerar_dados_renovacao(primeira_data, processo_id):
     
     # English: data
     dados = {}
+    
+    # Get versioned patient data if user is provided
+    if user:
+        paciente_version = processo.paciente.get_version_for_user(user)
+        if paciente_version:
+            paciente_data = model_to_dict(paciente_version)
+            # Keep master record fields that aren't versioned
+            paciente_data['id'] = processo.paciente.id
+            paciente_data['cpf_paciente'] = processo.paciente.cpf_paciente
+            paciente_data['usuarios'] = processo.paciente.usuarios.all()
+        else:
+            paciente_data = model_to_dict(processo.paciente)
+    else:
+        # Fallback to master record if no user provided
+        paciente_data = model_to_dict(processo.paciente)
+    
     # English: data_list
     lista_dados = [
         model_to_dict(processo),
-        model_to_dict(processo.paciente),
+        paciente_data,
         model_to_dict(processo.medico),
         model_to_dict(processo.clinica),
     ]
@@ -783,26 +799,34 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
     cpf_paciente = dados["cpf_paciente"]
 
     if paciente_existe:
-        # English: patient_data
-        dados_paciente["id"] = paciente_existe.pk
-        # English: patient
-        paciente = preparar_modelo(Paciente, **dados_paciente)
+        # Use versioned patient system - create or update version for this user
+        versioned_patient = Paciente.create_or_update_for_user(usuario, dados_paciente)
+        
         # English: process_data
         dados_processo = gerar_dados_processo(
-            dados, meds_ids, doenca, emissor, paciente, usuario
+            dados, meds_ids, doenca, emissor, versioned_patient, usuario
         )
         # English: process_data
-        dados_processo["paciente"] = paciente_existe
+        dados_processo["paciente"] = versioned_patient
         cid = kwargs.pop("cid", None)
+        processo_id = kwargs.pop("processo_id", None)
+        
         # English: process_exists
         processo_existe = False
-        for p in paciente_existe.processos.all():
-            if p.doenca.cid == cid:
-                # English: process_exists
-                processo_existe = True
-                # English: process_data
-                dados_processo["id"] = p.id
-                break
+        
+        if processo_id:
+            # Editing existing process - use the specific process ID
+            processo_existe = True
+            dados_processo["id"] = processo_id
+        else:
+            # Creating new process - check if one already exists for this patient-disease-user combination
+            for p in paciente_existe.processos.all():
+                if p.doenca.cid == cid:
+                    # English: process_exists
+                    processo_existe = True
+                    # English: process_data
+                    dados_processo["id"] = p.id
+                    break
 
         # English: process
         processo = preparar_modelo(Processo, **dados_processo)
@@ -811,26 +835,27 @@ def registrar_db(dados, meds_ids, doenca, emissor, usuario, **kwargs):
             processo.save(force_update=True)
         else:
             processo.save()
-        paciente.save(force_update=True)
+            # Increment user's process count for new processes
+            usuario.process_count += 1
+            usuario.save(update_fields=['process_count'])
         associar_med(processo, meds_ids)
-        paciente.usuarios.add(usuario)
-        emissor.pacientes.add(paciente_existe)
+        emissor.pacientes.add(versioned_patient)
     else:
-        # English: patient
-        paciente = preparar_modelo(Paciente, **dados_paciente)
-        paciente.save()
-        # English: patient
-        paciente = Paciente.objects.get(cpf_paciente=cpf_paciente)
+        # Use versioned patient system - create new patient with initial version
+        new_patient = Paciente.create_or_update_for_user(usuario, dados_paciente)
+        
         # English: process_data
         dados_processo = gerar_dados_processo(
-            dados, meds_ids, doenca, emissor, paciente, usuario
+            dados, meds_ids, doenca, emissor, new_patient, usuario
         )
         # English: process
         processo = preparar_modelo(Processo, **dados_processo)
         processo.save()
+        # Increment user's process count for new processes
+        usuario.process_count += 1
+        usuario.save(update_fields=['process_count'])
         associar_med(processo, meds_ids)
-        usuario.pacientes.add(paciente)
-        emissor.pacientes.add(paciente)
+        emissor.pacientes.add(new_patient)
 
     return processo.pk
 

@@ -165,6 +165,8 @@ def complete_profile(request):
             initial_data = {
                 'crm': medico.crm_medico,
                 'cns': medico.cns_medico,
+                'estado': medico.estado,
+                'especialidade': medico.especialidade,
             }
         form = ProfileCompletionForm(initial=initial_data, user=request.user)
     
@@ -200,6 +202,8 @@ def edit_profile(request):
                 'name': medico.nome_medico,
                 'crm': medico.crm_medico,
                 'cns': medico.cns_medico,
+                'estado': medico.estado,
+                'especialidade': medico.especialidade,
             }
         initial_data['email'] = request.user.email
         form = UserDoctorEditForm(initial=initial_data, user=request.user)

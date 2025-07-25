@@ -1,17 +1,10 @@
 from django import forms
-from .models import Medico
-from usuarios.models import Usuario
-from usuarios.forms import CustomUserCreationForm
-from django.db import transaction
-
-
-from django import forms
-from .models import Medico
+from .models import Medico, BRAZILIAN_STATES, MEDICAL_SPECIALTIES
 from usuarios.models import Usuario
 from usuarios.forms import CustomUserCreationForm
 from django.db import transaction
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Submit, Layout, Row, Column
 
 
 # doctor registration form
@@ -167,7 +160,7 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
 
 
 class ProfileCompletionForm(forms.Form):
-    """Simple form for completing CRM and CNS data."""
+    """Form for completing CRM, CNS, specialty and state data."""
     
     crm = forms.CharField(
         max_length=10, 
@@ -183,6 +176,22 @@ class ProfileCompletionForm(forms.Form):
         error_messages={
             'required': 'Confirmação de CRM é obrigatória.',
             'max_length': 'CRM deve ter no máximo 10 caracteres.'
+        }
+    )
+    estado = forms.ChoiceField(
+        choices=BRAZILIAN_STATES,
+        label="Estado do CRM",
+        error_messages={
+            'required': 'Estado do CRM é obrigatório.',
+            'invalid_choice': 'Selecione um estado válido.'
+        }
+    )
+    especialidade = forms.ChoiceField(
+        choices=MEDICAL_SPECIALTIES,
+        label="Especialidade Médica",
+        error_messages={
+            'required': 'Especialidade médica é obrigatória.',
+            'invalid_choice': 'Selecione uma especialidade válida.'
         }
     )
     cns = forms.CharField(
@@ -220,6 +229,13 @@ class ProfileCompletionForm(forms.Form):
                     self.fields['cns'].disabled = True
                     self.fields['cns2'].disabled = True
                     self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
+                if medico.estado:
+                    self.initial['estado'] = medico.estado
+                    if medico.crm_medico:  # Only disable if CRM is also set
+                        self.fields['estado'].disabled = True
+                        self.fields['estado'].help_text = "Estado do CRM já definido e não pode ser alterado"
+                if medico.especialidade:
+                    self.initial['especialidade'] = medico.especialidade
         
         # Configure Crispy Forms helper
         self.helper = FormHelper()
@@ -228,28 +244,62 @@ class ProfileCompletionForm(forms.Form):
         self.helper.form_show_errors = False
         self.helper.error_text_inline = False
         self.helper.help_text_inline = True
+        self.helper.layout = Layout(
+            Row(
+                Column('name', css_class='form-group col-md-12 mb-0'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('email', css_class='form-group col-md-12 mb-0'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('crm', css_class='form-group col-md-12 mb-0'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('estado', css_class='form-group col-md-6 mb-0'),
+                Column('especialidade', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('cns', css_class='form-group col-md-12 mb-0'),
+                css_class='form-row'
+            ),
+        )
         self.helper.add_input(Submit("submit", "Continuar para Clínicas", css_class="btn btn-primary float-right mt-3"))
 
-        # Apply form-control to all fields
+        # Apply form-control to all fields except certain widgets
         for field_name, field in self.fields.items():
-            field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+            if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect, forms.ClearableFileInput)):
+                field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
 
     def clean_crm(self):
-        """Validate CRM format and uniqueness."""
+        """Validate CRM format and uniqueness with state."""
         crm = self.cleaned_data.get("crm")
         if crm and not crm.isdigit():
             raise forms.ValidationError("CRM deve conter apenas números.")
+        return crm
+    
+    def clean(self):
+        """Validate CRM+State uniqueness together."""
+        cleaned_data = super().clean()
+        crm = cleaned_data.get("crm")
+        estado = cleaned_data.get("estado")
         
-        # Check if CRM already exists for another medico
-        if crm and self.user:
+        # Check if CRM+State combination already exists for another medico
+        if crm and estado and self.user:
             current_medico = self.user.medicos.first()
-            existing_medico = Medico.objects.filter(crm_medico=crm).exclude(
+            existing_medico = Medico.objects.filter(
+                crm_medico=crm, 
+                estado=estado
+            ).exclude(
                 id=current_medico.id if current_medico else None
             ).first()
             if existing_medico:
-                raise forms.ValidationError("Este CRM já está sendo usado por outro médico.")
+                raise forms.ValidationError(f"Este CRM já está sendo usado por outro médico no estado {dict(BRAZILIAN_STATES)[estado]}.")
         
-        return crm
+        return cleaned_data
 
     def clean_cns(self):
         """Validate CNS format and uniqueness."""
@@ -287,7 +337,7 @@ class ProfileCompletionForm(forms.Form):
 
     @transaction.atomic
     def save(self):
-        """Update medico with CRM and CNS data."""
+        """Update medico with CRM, CNS, specialty and state data."""
         if not self.user:
             raise ValueError("User is required")
             
@@ -298,6 +348,10 @@ class ProfileCompletionForm(forms.Form):
                 medico.crm_medico = self.cleaned_data["crm"]
             if not medico.cns_medico:
                 medico.cns_medico = self.cleaned_data["cns"]
+            if not medico.estado:
+                medico.estado = self.cleaned_data["estado"]
+            # Specialty can be updated even if already set
+            medico.especialidade = self.cleaned_data["especialidade"]
             medico.save()
         
         return self.user
@@ -333,6 +387,22 @@ class UserDoctorEditForm(forms.Form):
             'max_length': 'CRM deve ter no máximo 10 caracteres.'
         }
     )
+    estado = forms.ChoiceField(
+        choices=BRAZILIAN_STATES,
+        label="Estado do CRM",
+        required=False,
+        error_messages={
+            'invalid_choice': 'Selecione um estado válido.'
+        }
+    )
+    especialidade = forms.ChoiceField(
+        choices=MEDICAL_SPECIALTIES,
+        label="Especialidade Médica",
+        required=False,
+        error_messages={
+            'invalid_choice': 'Selecione uma especialidade válida.'
+        }
+    )
     cns = forms.CharField(
         max_length=15, 
         label="Cartão Nacional de Saúde (CNS)",
@@ -360,6 +430,13 @@ class UserDoctorEditForm(forms.Form):
                     self.initial['cns'] = medico.cns_medico
                     self.fields['cns'].disabled = True
                     self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
+                if medico.estado:
+                    self.initial['estado'] = medico.estado
+                    if medico.crm_medico:  # Only disable if CRM is also set
+                        self.fields['estado'].disabled = True
+                        self.fields['estado'].help_text = "Estado do CRM já definido e não pode ser alterado"
+                if medico.especialidade:
+                    self.initial['especialidade'] = medico.especialidade
         
         # Configure Crispy Forms helper
         self.helper = FormHelper()
@@ -377,6 +454,8 @@ class UserDoctorEditForm(forms.Form):
             Div('name', css_class="mb-4"),
             Div('email', css_class="mb-4"), 
             Div('crm', css_class="mb-4"),
+            Div('estado', css_class="mb-4"),
+            Div('especialidade', css_class="mb-4"),
             Div('cns', css_class="mb-4"),
         )
 
@@ -414,6 +493,8 @@ class UserDoctorEditForm(forms.Form):
                     nome_medico=self.cleaned_data["name"],
                     crm_medico=self.cleaned_data.get("crm") or None,
                     cns_medico=self.cleaned_data.get("cns") or None,
+                    estado=self.cleaned_data.get("estado") or None,
+                    especialidade=self.cleaned_data.get("especialidade") or None,
                 )
                 medico.save()
                 self.user.medicos.add(medico)
@@ -421,11 +502,16 @@ class UserDoctorEditForm(forms.Form):
             # Update existing medico with provided fields
             if self.cleaned_data.get("name"):
                 medico.nome_medico = self.cleaned_data["name"]
-            # Only update CRM/CNS if not already set (immutable once set)
+            # Only update CRM/CNS/State if not already set (immutable once set)
             if self.cleaned_data.get("crm") and not medico.crm_medico:
                 medico.crm_medico = self.cleaned_data["crm"]
             if self.cleaned_data.get("cns") and not medico.cns_medico:
                 medico.cns_medico = self.cleaned_data["cns"]
+            if self.cleaned_data.get("estado") and not medico.estado:
+                medico.estado = self.cleaned_data["estado"]
+            # Specialty can be updated even if already set
+            if self.cleaned_data.get("especialidade"):
+                medico.especialidade = self.cleaned_data["especialidade"]
             medico.save()
         
         return self.user

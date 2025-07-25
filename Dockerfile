@@ -10,8 +10,12 @@ WORKDIR /app
 
 # Install build dependencies
 COPY requirements.txt .
+COPY requirements-production.txt .
 RUN apt-get update && apt-get install -y build-essential
+# Build all wheels for test stage
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+# Build production-only wheels for production stage
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/prod-wheels -r requirements-production.txt
 
 # Stage 2: Base runtime (shared dependencies)
 FROM python:3.11-slim AS base
@@ -98,9 +102,9 @@ WORKDIR /home/appuser/app
 # Add the local bin to the path
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
-# Copy and install Python wheels from builder (no build tools needed)
-COPY --from=builder /app/wheels /wheels
-COPY --from=builder /app/requirements.txt .
+# Copy and install only production Python wheels (no test dependencies)
+COPY --from=builder /app/prod-wheels /wheels
+COPY --from=builder /app/requirements-production.txt .
 RUN pip install --no-cache /wheels/*
 
 # Switch to root to clean up wheels, then back to appuser

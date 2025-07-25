@@ -18,7 +18,38 @@
             <div class="card-body p-4 toast-enabled">
                 <!-- Form section -->
                 <div>
-                    {% crispy form %}
+                    <form method="POST" novalidate>
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.crm|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.crm2|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.estado|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.especialidade|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.cns|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.cns2|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary float-right">Continuar para Clínicas</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 <div class="clearfix"></div>
                 <div style="height: 0.5rem;"></div>
@@ -29,6 +60,13 @@
 {% endblock content %}
 
 {% block scripts %}
+<style>
+select.form-control {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    padding: 0.375rem 0.75rem !important;
+}
+</style>
+
 <script src="{% static 'js/mascaras.js' %}"></script>
 
 <script>

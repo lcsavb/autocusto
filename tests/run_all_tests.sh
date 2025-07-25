@@ -183,13 +183,20 @@ run_test_category "Security" "tests.test_security" "Backend Security Tests"
 # 4. Session Functionality Tests
 run_test_category "Session" "tests.session_functionality" "Session Functionality Tests"
 
-# 5. Integration Tests
+# 5. Versioning System Tests (NEW)
+print_status $BLUE "🔄 Data Versioning System Tests"
+echo "==============================="
+print_status $YELLOW "   Testing patient and clinic versioning for multi-tenancy"
+run_test_category "Patient-Versioning" "tests.test_patient_versioning.PatientVersioningModelTest tests.test_patient_versioning.PatientVersioningTemplateTest" "Patient Data Versioning Tests"
+run_test_category "Clinic-Versioning" "tests.test_clinic_versioning.ClinicVersioningModelTest.test_create_new_clinic_with_version tests.test_clinic_versioning.ClinicVersioningModelTest.test_update_existing_clinic_creates_version" "Clinic Data Versioning Tests"
+
+# 6. Integration Tests
 run_test_category "Integration" "tests.integration" "Cross-App Integration Tests"
 
-# 6. Views Tests
+# 7. Views Tests
 run_test_category "Views" "tests.views" "View Logic Tests"
 
-# 7. Frontend Tests (Selenium - may fail without Chrome)
+# 8. Frontend Tests (Selenium - may fail without Chrome)
 print_status $BLUE "🌐 Frontend Tests (Selenium-based)"
 echo "================================="
 print_status $YELLOW "   Note: These tests require Chrome/Chromium and may be skipped if not available"

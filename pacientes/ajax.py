@@ -6,18 +6,20 @@ from .models import Paciente
 
 @login_required
 def busca_pacientes(request):
-    paciente = request.GET.get("palavraChave", None)
-    # Only search patients associated with the current user
-    b = Paciente.objects.filter(
-        usuarios=request.user
-    ).filter(
-        Q(cpf_paciente__icontains=paciente) | Q(nome_paciente__icontains=paciente)
-    )
+    search_term = request.GET.get("palavraChave", None)
+    user = request.user
+    
+    # Use versioned patient search - handles both search_term and None cases
+    patient_version_pairs = Paciente.get_patients_for_user_search(user, search_term)
+    
     pacientes = []
-    for r in b:
+    for patient, version in patient_version_pairs:
+        # Use versioned name if available, fallback to master record
+        patient_name = version.nome_paciente if version else patient.nome_paciente
+        
         novo_paciente = {
-            "nome_paciente": r.nome_paciente,
-            "cpf_paciente": r.cpf_paciente,
+            "nome_paciente": patient_name,  # Versioned name
+            "cpf_paciente": patient.cpf_paciente,  # CPF always from master record
         }
         pacientes.append(novo_paciente)
 
