@@ -127,9 +127,15 @@ def track_pdf_generation(pdf_type='prescription'):
                     processo = arg
                     user = processo.usuario
             
-            # Also check kwargs
+            # Also check kwargs for explicit user parameter
             request = kwargs.get('request', request)
             processo = kwargs.get('processo', processo)
+            user = kwargs.get('user', user)  # Explicit user parameter
+            
+            # If no user found yet, try to extract from prescription data
+            if not user and args and len(args) > 1 and isinstance(args[1], dict):
+                prescription_data = args[1]
+                user = prescription_data.get('usuario')
             
             success = True
             error_message = ''

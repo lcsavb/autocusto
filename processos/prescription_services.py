@@ -277,7 +277,7 @@ class PrescriptionPDFService:
         self.pdf_logger = logging.getLogger('processos.pdf')
     
     @track_pdf_generation(pdf_type='prescription')
-    def generate_prescription_pdf(self, prescription_data: dict) -> Optional[HttpResponse]:
+    def generate_prescription_pdf(self, prescription_data: dict, user=None) -> Optional[HttpResponse]:
         """
         Generate a medical prescription PDF following Brazilian regulations.
         
@@ -497,7 +497,8 @@ class PrescriptionService:
             # Step 5: Generate PDF
             db_logger.info("PrescriptionService: Step 5 - Generating PDF")
             try:
-                pdf_response = self.pdf_service.generate_prescription_pdf(final_data)
+                # Pass user to PDF service for analytics tracking
+                pdf_response = self.pdf_service.generate_prescription_pdf(final_data, user=user)
                 
                 if pdf_response:
                     db_logger.info(
@@ -587,8 +588,8 @@ class RenewalService:
             # Generate renewal data following renewal rules
             renewal_data = gerar_dados_renovacao(renewal_date, process_id, user)
             
-            # Generate PDF
-            pdf_response = self.pdf_service.generate_prescription_pdf(renewal_data)
+            # Generate PDF with user for analytics tracking
+            pdf_response = self.pdf_service.generate_prescription_pdf(renewal_data, user=user)
             
             if pdf_response:
                 self.logger.info(

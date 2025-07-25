@@ -554,8 +554,9 @@ def transfere_dados_gerador(dados):
         from processos.prescription_services import PrescriptionPDFService
         pdf_service = PrescriptionPDFService()
         
-        # Generate PDF using the service
-        response = pdf_service.generate_prescription_pdf(dados)
+        # Generate PDF using the service (pass user from dados if available)
+        user = dados.get('usuario')
+        response = pdf_service.generate_prescription_pdf(dados, user=user)
         
         if response is None:
             pdf_logger.error("transfere_dados_gerador: PDF generation returned None")
