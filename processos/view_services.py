@@ -78,10 +78,14 @@ class PrescriptionViewSetupService:
             SetupResult: Contains all setup data or error information
         """
         try:
+            print(f"DEBUG SETUP: ============= SETUP SERVICE CALLED =============")
+            print(f"DEBUG SETUP: Starting setup_for_new_prescription for user: {request.user}")
             self.logger.info(f"Setting up new prescription view for user: {request.user}")
             
             # Step 1: Common setup (user, doctor, clinics)
+            print(f"DEBUG SETUP: Calling _setup_common_data")
             common_result = self._setup_common_data(request)
+            print(f"DEBUG SETUP: Common setup result: success={common_result.success}")
             if not common_result.success:
                 return common_result
             
@@ -226,12 +230,15 @@ class PrescriptionViewSetupService:
     def _setup_common_data(self, request) -> SetupResult:
         """Set up data common to both cadastro and edicao views."""
         try:
+            print(f"DEBUG COMMON: Starting common setup for user: {request.user}")
             # Get user and doctor
             usuario = request.user
             medico = seletor_medico(usuario)
+            print(f"DEBUG COMMON: Got medico: {medico}")
             
             # Check if medico exists
             if not medico:
+                print(f"DEBUG COMMON: No medico found, redirecting to home")
                 self.logger.error(f"No doctor profile found for user: {usuario}")
                 return SetupResult(
                     success=False,

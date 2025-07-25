@@ -505,14 +505,27 @@ def cadastro(request):
     Clean view that delegates setup logic to PrescriptionViewSetupService.
     Focuses only on HTTP concerns and coordination.
     """
+    print(f"DEBUG CADASTRO: ============= CADASTRO VIEW CALLED =============")
+    print(f"DEBUG CADASTRO: User: {request.user}")
+    print(f"DEBUG CADASTRO: Request method: {request.method}")
+    print(f"DEBUG CADASTRO: Request path: {request.path}")
+    print(f"DEBUG CADASTRO: Session keys: {list(request.session.keys())}")
+    
     # Setup all view data using service
     from processos.view_services import PrescriptionViewSetupService
     
+    print(f"DEBUG CADASTRO: About to call setup service")
     setup_service = PrescriptionViewSetupService()
     setup = setup_service.setup_for_new_prescription(request)
     
+    print(f"DEBUG CADASTRO: Setup completed")
+    print(f"DEBUG CADASTRO: Setup success: {setup.success}")
+    print(f"DEBUG CADASTRO: Setup error_redirect: {setup.error_redirect}")
+    print(f"DEBUG CADASTRO: Setup error_message: {setup.error_message}")
+    
     # Handle setup errors
     if not setup.success:
+        print(f"DEBUG CADASTRO: Setup failed, redirecting to: {setup.error_redirect}")
         messages.error(request, setup.error_message)
         return redirect(setup.error_redirect)
     
@@ -523,6 +536,11 @@ def cadastro(request):
     paciente_existe = setup.paciente_existe
     medicamentos = setup.medicamentos
     ModeloFormulario = setup.ModeloFormulario
+    
+    print(f"DEBUG CADASTRO: Extracted data - usuario: {usuario}, medico: {medico}")
+    if medico:
+        print(f"DEBUG CADASTRO: medico.crm_medico: {repr(medico.crm_medico)}")
+        print(f"DEBUG CADASTRO: medico.cns_medico: {repr(medico.cns_medico)}")
 
     if request.method == "POST":
         # Since the template ALWAYS sends AJAX requests, we ALWAYS return JSON
@@ -611,8 +629,16 @@ def cadastro(request):
     # If this is a GET request, create a fresh form
     elif request.method == "GET":
         try:
+            print(f"DEBUG CADASTRO: GET request - checking medico data")
+            print(f"DEBUG CADASTRO: medico.crm_medico = {repr(medico.crm_medico)}")
+            print(f"DEBUG CADASTRO: medico.cns_medico = {repr(medico.cns_medico)}")
+            print(f"DEBUG CADASTRO: not medico.crm_medico = {not medico.crm_medico}")
+            print(f"DEBUG CADASTRO: not medico.cns_medico = {not medico.cns_medico}")
+            print(f"DEBUG CADASTRO: condition result = {not medico.crm_medico or not medico.cns_medico}")
+            
             # Check if doctor has CRM and CNS first
             if not medico.crm_medico or not medico.cns_medico:
+                print(f"DEBUG CADASTRO: Missing CRM/CNS, redirecting to complete-profile")
                 messages.info(request, "Complete seus dados médicos antes de criar processos.")
                 return redirect("complete-profile")
             

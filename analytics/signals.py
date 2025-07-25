@@ -36,7 +36,7 @@ def log_user_login(sender, request, user, **kwargs):
             activity_type='login',
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
-            session_key=request.session.session_key if hasattr(request, 'session') else ''
+            session_key=request.session.session_key if hasattr(request, 'session') and request.session.session_key else ''
         )
         
         # Note: Daily metrics updated via management command, not real-time
@@ -55,7 +55,7 @@ def log_user_logout(sender, request, user, **kwargs):
                 activity_type='logout',
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
-                session_key=request.session.session_key if hasattr(request, 'session') else ''
+                session_key=request.session.session_key if hasattr(request, 'session') and request.session.session_key else ''
             )
     except Exception as e:
         logger.error(f"Error logging user logout: {e}")

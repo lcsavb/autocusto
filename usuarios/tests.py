@@ -20,13 +20,13 @@ class CustomUserCreationFormTest(TestCase):
     def test_form_valid_data(self):
         form = CustomUserCreationForm(data={
             'email': 'newuser@example.com',
-            'password': 'password123',
-            'password2': 'password123',
+            'password1': 'ComplexPassword789!',
+            'password2': 'ComplexPassword789!',
         })
         self.assertTrue(form.is_valid())
         user = form.save()
         self.assertEqual(user.email, 'newuser@example.com')
-        self.assertTrue(user.check_password('password123'))
+        self.assertTrue(user.check_password('ComplexPassword789!'))
 
     def test_form_invalid_data_mismatched_passwords(self):
         form = CustomUserCreationForm(data={

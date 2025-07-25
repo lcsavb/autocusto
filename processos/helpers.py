@@ -327,34 +327,33 @@ def cria_dict_renovação(modelo, user=None):
     if not paciente_version:
         raise ValueError(f"User {user.email} has no access to patient {modelo.paciente.cpf_paciente}")
     
-    # Use versioned data
-    patient_data = {
-        "nome_paciente": paciente_version.nome_paciente,
-        "cpf_paciente": modelo.paciente.cpf_paciente,  # Keep master CPF
-        "peso": paciente_version.peso,
-        "altura": paciente_version.altura,
-        "nome_mae": paciente_version.nome_mae,
-        "incapaz": paciente_version.incapaz,
-        "nome_responsavel": paciente_version.nome_responsavel,
-        "etnia": paciente_version.etnia,
-        "telefone1_paciente": paciente_version.telefone1_paciente,
-        "telefone2_paciente": paciente_version.telefone2_paciente,
-        "email_paciente": paciente_version.email_paciente,
-        "end_paciente": paciente_version.end_paciente,
-    }
+    # Use Django's model_to_dict with field filtering for maintainability
+    needed_fields = [
+        'nome_paciente', 'peso', 'altura', 'nome_mae', 'incapaz', 
+        'nome_responsavel', 'etnia', 'telefone1_paciente', 
+        'telefone2_paciente', 'email_paciente', 'end_paciente'
+    ]
+    patient_data = model_to_dict(paciente_version, fields=needed_fields)
+    # Override with master CPF (security requirement)
+    patient_data['cpf_paciente'] = modelo.paciente.cpf_paciente
+    
+    # Use model_to_dict for process data as well
+    process_fields = [
+        'prescricao', 'anamnese', 'tratou', 'tratamentos_previos', 'preenchido_por'
+    ]
+    process_data = model_to_dict(modelo, fields=process_fields)
+    
+    # Add related field data manually (foreign keys need special handling)
+    process_data.update({
+        "cid": modelo.doenca.cid,
+        "diagnostico": modelo.doenca.nome,
+        "clinica": modelo.clinica,
+    })
     
     # English: dictionary
     dicionario = {
         **patient_data,  # Unpack patient data
-        # Process data
-        "prescricao": modelo.prescricao,
-        "cid": modelo.doenca.cid,
-        "diagnostico": modelo.doenca.nome,
-        "anamnese": modelo.anamnese,
-        "tratou": modelo.tratou,
-        "tratamentos_previos": modelo.tratamentos_previos,
-        "preenchido_por": modelo.preenchido_por,
-        "clinica": modelo.clinica,
+        **process_data,  # Unpack process data
     }
     
     # Add conditional data from the process
@@ -518,20 +517,21 @@ def vincula_dados_emissor(usuario, medico, clinica, dados_formulario):
     Returns:
         dict: The updated `dados_formulario` dictionary.
     """
-    # English: clinic_address
+    # Use model_to_dict for cleaner field extraction
+    medico_fields = ['nome_medico', 'cns_medico', 'crm_medico']
+    medico_data = model_to_dict(medico, fields=medico_fields)
+    
+    clinica_fields = ['nome_clinica', 'cns_clinica', 'cidade', 'bairro', 'cep', 'telefone_clinica']
+    clinica_data = model_to_dict(clinica, fields=clinica_fields)
+    
+    # English: clinic_address (custom computed field)
     end_clinica = clinica.logradouro + ", " + clinica.logradouro_num
+    clinica_data["end_clinica"] = end_clinica
+    
     # English: additional_data
     dados_adicionais = {
-        "nome_medico": medico.nome_medico,
-        "cns_medico": medico.cns_medico,
-        "crm_medico": medico.crm_medico,
-        "nome_clinica": clinica.nome_clinica,
-        "cns_clinica": clinica.cns_clinica,
-        "end_clinica": end_clinica,
-        "cidade": clinica.cidade,
-        "bairro": clinica.bairro,
-        "cep": clinica.cep,
-        "telefone_clinica": clinica.telefone_clinica,
+        **medico_data,
+        **clinica_data,
         "usuario": usuario,
     }
     # English: form_data
@@ -577,22 +577,11 @@ def transfere_dados_gerador(dados):
             pdf_logger.error("transfere_dados_gerador: PDF generation returned None")
             return None
         
-        # Infrastructure concern: Save PDF to filesystem for serving
-        # This will eventually be moved to a separate infrastructure service
-        nome_final_pdf = f"pdf_final_{cpf_paciente}_{cid}.pdf"
-        tmp_pdf_path = f"/tmp/{nome_final_pdf}"
+        # Use I/O service for file operations (separation of concerns)
+        from processos.io_services import PDFFileService
         
-        with open(tmp_pdf_path, 'wb') as f:
-            f.write(response.content)
-        
-        pdf_logger.info(f"transfere_dados_gerador: PDF saved to {tmp_pdf_path}")
-        
-        # Return the URL path as before
-        from django.urls import reverse
-        path_pdf_final = reverse('processos-serve-pdf', kwargs={'filename': nome_final_pdf})
-        
-        pdf_logger.info(f"transfere_dados_gerador: Returning URL {path_pdf_final}")
-        return path_pdf_final
+        file_service = PDFFileService()
+        return file_service.save_pdf_and_get_url(response, cpf_paciente, cid)
         
     except Exception as e:
         pdf_logger.error(f"Exception in transfere_dados_gerador: {e}", exc_info=True)
