@@ -284,13 +284,13 @@ def edicao(request):
 
     else:
         # GET request - use setup data for form initialization
-        formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.dados_iniciais)
+        formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.specific.dados_iniciais)
     
     # Set up variables needed for template rendering (for both GET and POST with validation errors)
     # English: conditional_fields
     campos_condicionais = extrair_campos_condicionais(formulario)
     # English: protocol_link
-    link_protocolo = generate_protocol_link(setup.cid)
+    link_protocolo = generate_protocol_link(setup.form.cid)
 
     # English: context
     contexto = {
@@ -663,7 +663,7 @@ def cadastro(request):
                 messages.info(request, "Cadastre uma clínica antes de criar processos.")
                 return redirect("clinicas-cadastro")
             # English: form - use setup data
-            formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.dados_iniciais)
+            formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.specific.dados_iniciais)
         except Exception as e:
             messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
             return redirect("home")
@@ -673,7 +673,7 @@ def cadastro(request):
         # English: conditional_fields
         campos_condicionais = extrair_campos_condicionais(formulario)
         # English: protocol_link
-        link_protocolo = generate_protocol_link(setup.cid)
+        link_protocolo = generate_protocol_link(setup.form.cid)
         
         # English: context
         contexto = {
@@ -710,11 +710,11 @@ def cadastro(request):
                 # Fallback to master record if no version found
                 dados_paciente = model_to_dict(paciente)
             # English: patient_data
-            dados_paciente["diagnostico"] = Doenca.objects.get(cid=setup.cid).nome
+            dados_paciente["diagnostico"] = Doenca.objects.get(cid=setup.form.cid).nome
             # English: patient_data
-            dados_paciente["cid"] = setup.cid
+            dados_paciente["cid"] = setup.form.cid
             # English: patient_data
-            dados_paciente["data_1"] = setup.primeira_data
+            dados_paciente["data_1"] = setup.specific.primeira_data
             # English: adjusted_fields
             campos_ajustados, _ = ajustar_campos_condicionais(dados_paciente)
             contexto.update(campos_ajustados)

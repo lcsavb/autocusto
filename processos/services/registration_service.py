@@ -232,10 +232,7 @@ class ProcessRegistrationService:
         usuario: Usuario
     ) -> Dict[str, Any]:
         """Generate process data dictionary from form data."""
-        from processos.services.prescription_data_service import PrescriptionDataService
-        
-        prescription_service = PrescriptionDataService()
-        prescricao = prescription_service.generate_prescription_structure(meds_ids, dados)
+        prescricao = self._generate_prescription_structure(meds_ids, dados)
         
         dados_processo = {
             'prescricao': prescricao,
@@ -283,3 +280,42 @@ class ProcessRegistrationService:
         for med_cadastrado in current_meds:
             if str(med_cadastrado.id) not in meds_ids:
                 processo.medicamentos.remove(med_cadastrado)
+    
+    def _generate_prescription_structure(self, meds_ids: List[str], form_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Construct a structured prescription dictionary from form data.
+        
+        This method builds the nested dictionary structure that represents the prescription
+        as stored in the Processo model. It organizes dosage and quantity for each
+        medication over a six-month period.
+        
+        Args:
+            meds_ids: List of medication IDs to include in the prescription
+            form_data: Flat dictionary containing form data with medication details
+            
+        Returns:
+            dict: Nested prescription structure ready for Processo.prescricao field
+        """
+        logger.debug(f"ProcessRegistrationService: Generating prescription for {len(meds_ids)} medications")
+        
+        prescricao = {}
+        
+        for med_index, med_id in enumerate(meds_ids, 1):
+            med_prescricao = {'id_med{}'.format(med_index): med_id}
+            
+            # Generate prescription data for 6-month period
+            for month in range(1, 7):
+                posologia_key = f"med{med_index}_posologia_mes{month}"
+                quantity_key = f"qtd_med{med_index}_mes{month}"
+                
+                med_prescricao[posologia_key] = form_data[posologia_key]
+                med_prescricao[quantity_key] = form_data[quantity_key]
+            
+            # Add administration route for first medication
+            if med_index == 1:
+                med_prescricao["med1_via"] = form_data["med1_via"]
+            
+            prescricao[med_index] = med_prescricao
+        
+        logger.debug(f"ProcessRegistrationService: Generated prescription structure with {len(prescricao)} medications")
+        return prescricao

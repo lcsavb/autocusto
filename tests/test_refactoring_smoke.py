@@ -73,7 +73,7 @@ class RefactoringSmokeTet(TestCase):
             'preenchido_por': 'medico'
         }
         
-        result = formatter.format_prescription_data(test_data)
+        result = formatter.format_prescription_date(test_data)
         
         # Should return a dictionary
         self.assertIsInstance(result, dict)
@@ -171,7 +171,7 @@ class ServiceIntegrationSmokeTest(TestCase):
         }
         
         # Format data
-        formatted_data = formatter.format_prescription_data(test_data)
+        formatted_data = formatter.format_prescription_date(test_data)
         
         # Should be able to select templates with formatted data
         # This will not find actual files, but should not crash

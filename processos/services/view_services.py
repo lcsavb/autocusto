@@ -21,7 +21,6 @@ from medicos.seletor import medico as seletor_medico
 from processos.models import Processo, Doenca
 from processos.repositories.medication_repository import MedicationRepository
 from processos.services.prescription_services import RenewalService
-from processos.services.prescription_data_service import PrescriptionDataService
 from processos.forms import fabricar_formulario
 from processos.views import _get_initial_data
 from processos.services.view_setup_models import (
@@ -108,7 +107,8 @@ class PrescriptionViewSetupService:
                 ),
                 specific=NewPrescriptionData(
                     paciente_existe=paciente_existe,
-                    primeira_data=primeira_data
+                    primeira_data=primeira_data,
+                    dados_iniciais=dados_iniciais
                 )
             )
             
@@ -164,8 +164,7 @@ class PrescriptionViewSetupService:
             dados_iniciais = renewal_service.create_renewal_dictionary(processo, user=common_result.usuario)
             dados_iniciais["data_1"] = primeira_data
             dados_iniciais["clinicas"] = dados_iniciais["clinica"].id
-            prescription_service = PrescriptionDataService()
-            dados_iniciais = prescription_service.retrieve_prescription_data(dados_iniciais, processo)
+            dados_iniciais = renewal_service._retrieve_prescription_data(dados_iniciais, processo)
             
             self.logger.info(f"Successfully set up edit prescription view for process: {processo_id}")
             

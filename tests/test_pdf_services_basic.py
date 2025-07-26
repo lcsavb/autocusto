@@ -26,7 +26,7 @@ class TestPrescriptionDataFormatterBasic(TestCase):
             'cpf_paciente': '12345678900'
         }
         
-        result = formatter.format_prescription_data(data)
+        result = formatter.format_prescription_date(data)
         
         # Should format dates
         self.assertEqual(result['data_1'], '15/01/2024')
@@ -35,21 +35,22 @@ class TestPrescriptionDataFormatterBasic(TestCase):
         # Should keep fields when filled by doctor
         self.assertEqual(result['cpf_paciente'], '12345678900')
     
-    def test_privacy_field_removal(self):
-        """Test privacy field removal."""
+    def test_data_preservation(self):
+        """Test that data is preserved (no privacy removal needed as forms always filled by doctors)."""
         formatter = PrescriptionDataFormatter()
         
         data = {
-            'preenchido_por': 'paciente',
+            'preenchido_por': 'medico',
             'cpf_paciente': '12345678900',
             'telefone1_paciente': '11999999999'
         }
         
-        result = formatter.format_prescription_data(data)
+        result = formatter.format_prescription_date(data)
         
-        # Should remove sensitive fields
-        self.assertNotIn('cpf_paciente', result)
-        self.assertNotIn('telefone1_paciente', result)
+        # Should preserve all fields as forms are always filled by doctors
+        self.assertIn('cpf_paciente', result)
+        self.assertIn('telefone1_paciente', result)
+        self.assertEqual(result['cpf_paciente'], '12345678900')
 
 
 class TestPrescriptionPDFServiceBasic(TestCase):

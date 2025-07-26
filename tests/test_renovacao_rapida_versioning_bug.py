@@ -14,7 +14,8 @@ from processos.models import Processo, Doenca, Protocolo, Medicamento
 from pacientes.models import Paciente
 from medicos.models import Medico
 from clinicas.models import Clinica, Emissor
-from processos.helpers import registrar_db, gerar_dados_paciente
+from processos.services.registration_service import ProcessRegistrationService
+from processos.repositories.patient_repository import PatientRepository
 
 
 User = get_user_model()
@@ -127,7 +128,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
         processes are not appearing in renovacao_rapida patient search.
         """
         # Step 1: Create a new process using the same workflow as the app
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         # Process the prescription data like the app does
         medication_ids = gerar_lista_meds_ids(self.prescription_data)
@@ -181,7 +182,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
         self.assertEqual(initial_patients.count(), 0)
         
         # Create process using helpers like the app does
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         medication_ids = gerar_lista_meds_ids(self.prescription_data)
         self.prescription_data, meds_ids = gera_med_dosagem(self.prescription_data, medication_ids)
@@ -210,7 +211,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
     def test_renovacao_rapida_view_shows_newly_created_patients(self):
         """Integration test: Test that renovacao_rapida view actually returns the new patient."""
         # Create a process first
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         medication_ids = gerar_lista_meds_ids(self.prescription_data)
         self.prescription_data, meds_ids = gera_med_dosagem(self.prescription_data, medication_ids)
@@ -255,7 +256,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
     def test_newly_created_process_appears_in_template_context(self):
         """CRITICAL TEST: Test that newly created processes appear in template context for user."""
         # Create a process first
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         medication_ids = gerar_lista_meds_ids(self.prescription_data)
         self.prescription_data, meds_ids = gera_med_dosagem(self.prescription_data, medication_ids)
@@ -303,7 +304,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
     def test_multi_user_process_scenario_real_world_bug(self):
         """CRITICAL TEST: Reproduce real-world scenario with multiple users and same patient."""
         # Step 1: User1 creates a process for a patient
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         medication_ids = gerar_lista_meds_ids(self.prescription_data)
         self.prescription_data, meds_ids = gera_med_dosagem(self.prescription_data, medication_ids)
@@ -415,7 +416,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
     
     def test_immediate_process_visibility_after_creation(self):
         """CRITICAL TEST: Test that processes are immediately visible after creation - exact user scenario."""
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         # STEP 1: Create the first process (this should work fine)
         medication_ids = gerar_lista_meds_ids(self.prescription_data)
@@ -516,7 +517,7 @@ class RenovacaoRapidaVersioningBugTest(TestCase):
     
     def test_critical_bug_fix_user_process_isolation(self):
         """CRITICAL TEST: Verify the bug fix prevents users from overwriting each other's processes."""
-        from processos.helpers import gerar_lista_meds_ids, gera_med_dosagem, vincula_dados_emissor
+        from processos.repositories.medication_repository import MedicationRepository
         
         # STEP 1: User1 creates a process for a patient with disease G40.6
         medication_ids = gerar_lista_meds_ids(self.prescription_data)

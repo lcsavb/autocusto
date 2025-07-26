@@ -4,13 +4,8 @@ from django.db import transaction
 from processos.models import Processo, Protocolo, Doenca
 from clinicas.models import Emissor
 from autocusto.validation import isCpfValid
-from .helpers import (
-    gerar_dados_edicao_parcial,
-    associar_med,
-    registrar_db,
-    preparar_modelo,
-    checar_paciente_existe,
-)
+from .repositories.patient_repository import PatientRepository
+from .services.registration_service import ProcessRegistrationService
 # Legacy import no longer needed - migrated protocols use data-driven approach
 # from .seletor import seletor_campos
 from .services.pdf_strategies import get_conditional_fields
@@ -579,9 +574,11 @@ class NovoProcesso(forms.Form):
 
         emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
 
-        paciente_existe = checar_paciente_existe(cpf_paciente)
+        patient_repo = PatientRepository()
+        paciente_existe = patient_repo.check_patient_exists(cpf_paciente)
 
-        processo_id = registrar_db(
+        registration_service = ProcessRegistrationService()
+        processo_id = registration_service.register_process(
             dados, meds_ids, doenca, emissor, usuario, paciente_existe=paciente_existe
         )
 
@@ -610,7 +607,8 @@ class RenovarProcesso(NovoProcesso):
             doenca = Doenca.objects.get(cid=dados["cid"])
             emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
 
-            registrar_db(
+            registration_service = ProcessRegistrationService()
+            registration_service.register_process(
                 dados,
                 meds_ids,
                 doenca,
@@ -621,17 +619,13 @@ class RenovarProcesso(NovoProcesso):
                 processo_id=processo_id,  # Pass the specific process being edited
             )
         else:
-            dados_modificados, campos_modificados = gerar_dados_edicao_parcial(
-                dados, processo_id
-            )
-            processo = preparar_modelo(Processo, **dados_modificados)
+            # Partial renewal - update only the date
+            processo = Processo.objects.get(id=processo_id)
+            processo.prescricao[1]['data_1'] = dados['data_1'] 
+            processo.save(update_fields=['prescricao'])
             
-            # Update conditional data for partial edits
-            processo.dados_condicionais = {k: v for k, v in dados.items() if k.startswith("opt_")}
-            campos_modificados.append('dados_condicionais')
-            
-            processo.save(update_fields=campos_modificados)
-            associar_med(Processo.objects.get(id=processo_id), meds_ids)
+            registration_service = ProcessRegistrationService()
+            registration_service._associate_medications(processo, meds_ids)
 
 
 # extract conditional fields

@@ -7,7 +7,9 @@ from medicos.models import Medico
 from clinicas.models import Clinica, Emissor
 from usuarios.models import Usuario
 from datetime import date
-from processos.helpers import checar_paciente_existe, gerar_lista_meds_ids, gerar_prescricao, resgatar_prescricao, gera_med_dosagem, listar_med
+from processos.repositories.patient_repository import PatientRepository
+from processos.repositories.medication_repository import MedicationRepository
+from processos.services.prescription.renewal_service import RenewalService
 from processos.forms import PreProcesso, NovoProcesso, RenovarProcesso # Import the forms
 import tempfile
 import os

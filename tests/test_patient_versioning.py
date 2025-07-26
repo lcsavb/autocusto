@@ -474,7 +474,7 @@ class PatientVersioningIntegrationTest(TestCase):
     
     def test_process_creation_uses_versioning(self):
         """Test that process creation integrates with patient versioning."""
-        from processos.helpers import registrar_db
+        from processos.services.registration_service import ProcessRegistrationService
         from datetime import datetime
         
         # Prepare process data
@@ -489,7 +489,8 @@ class PatientVersioningIntegrationTest(TestCase):
         })
         
         # Create process with versioned patient
-        processo_id = registrar_db(
+        registration_service = ProcessRegistrationService()
+        processo_id = registration_service.register_process(
             dados=process_data,
             meds_ids=[],
             doenca=self.doenca,
@@ -514,7 +515,8 @@ class PatientVersioningIntegrationTest(TestCase):
         updated_data = process_data.copy()
         updated_data['nome_paciente'] = 'João Santos'  # Different version
         
-        processo_id2 = registrar_db(
+        registration_service2 = ProcessRegistrationService()
+        processo_id2 = registration_service2.register_process(
             dados=updated_data,
             meds_ids=[],
             doenca=self.doenca,
@@ -628,7 +630,7 @@ class PatientVersioningFormTest(TestCase):
     
     def test_renewal_data_uses_versioned_patient(self):
         """Test that renewal data generation uses versioned patient data."""
-        from processos.helpers import gerar_dados_renovacao
+        from processos.services.prescription.renewal_service import RenewalService
         from processos.models import Processo, Doenca
         from medicos.models import Medico
         from clinicas.models import Clinica, Emissor
@@ -667,12 +669,13 @@ class PatientVersioningFormTest(TestCase):
         Paciente.create_or_update_for_user(self.user2, updated_data)
         
         # Test renewal data for user1
-        renewal_data1 = gerar_dados_renovacao('01/02/2024', processo.id, self.user1)
+        renewal_service = RenewalService()
+        renewal_data1 = renewal_service.generate_renewal_data('01/02/2024', processo.id, self.user1)
         self.assertEqual(renewal_data1['nome_paciente'], 'João Silva')
         self.assertEqual(renewal_data1['altura'], '1,75m')
         
         # Test renewal data for user2
-        renewal_data2 = gerar_dados_renovacao('01/02/2024', processo.id, self.user2)
+        renewal_data2 = renewal_service.generate_renewal_data('01/02/2024', processo.id, self.user2)
         self.assertEqual(renewal_data2['nome_paciente'], 'João Santos')
         self.assertEqual(renewal_data2['altura'], '1,80m')
         

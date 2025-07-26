@@ -8,7 +8,6 @@ Available Services:
 
 Business Logic Services:
 - RegistrationService: Process and patient registration logic
-- PrescriptionDataService: Prescription data manipulation and validation
 - PrescriptionService: Complete prescription workflow management
 - RenewalService: Prescription renewal business logic
 - PrescriptionPDFService: PDF generation coordination

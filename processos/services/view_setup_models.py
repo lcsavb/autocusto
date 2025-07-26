@@ -40,6 +40,7 @@ class NewPrescriptionData:
     """Data specific to new prescription creation (cadastro view)."""
     paciente_existe: bool  # Whether patient already exists
     primeira_data: Optional[str]  # Initial prescription date
+    dados_iniciais: dict  # Initial form data for new prescription
 
 
 @dataclass
