@@ -18,16 +18,19 @@ Successfully audited and transformed the entire Django application from monolith
 │   ├── data_formatting.py          # Medical date formatting
 │   ├── template_selection.py       # Protocol-based templates
 │   ├── pdf_generation.py           # PDF coordination
-│   ├── workflow_service.py         # Prescription workflows
+│   ├── workflow_service.py         # Prescription workflows (PrescriptionService)
 │   └── renewal_service.py          # Renewal business logic
-├── registration_service.py         # Process registration
-├── view_services.py                # View setup services
+├── registration_service.py         # Process registration (ProcessRegistrationService)
+├── view_services.py                # View setup services (PrescriptionViewSetupService)
 ├── pdf_operations.py               # Pure PDF infrastructure
 └── prescription_services.py        # Backward compatibility
 
 📁 processos/repositories/
 ├── patient_repository.py           # Patient data access
 └── medication_repository.py        # Medication data access
+
+📁 processos/utils/
+└── pdf_json_response_helper.py     # JSON response standardization
 ```
 
 #### Legacy Elimination:
@@ -156,17 +159,52 @@ def perfil(request):
 
 ### **Service Communication Patterns**
 
-#### **Repository → Service → Form Flow**
+#### **Layered Service Architecture Pattern**
 ```python
-# 1. Repository handles data access
+# Layer 1: Repository handles data access
 patient = PatientRepository().check_patient_exists(cpf)
+medications = MedicationRepository().list_medications_by_cid(cid)
 
-# 2. Service handles business logic
-process_id = ProcessRegistrationService().register_process(data)
+# Layer 2: Database services handle persistence
+registration_service = ProcessRegistrationService()
+process_id = registration_service.register_process(data)
 
-# 3. Form delegates to service
-def save(self):
-    return RegistrationService().register_new_doctor(self.cleaned_data)
+# Layer 3: Workflow services handle complete business workflows
+prescription_service = PrescriptionService()  # Uses ProcessRegistrationService internally
+pdf_response, process_id = prescription_service.create_or_update_prescription(data)
+
+# Layer 4: View setup services handle presentation preparation
+setup_service = PrescriptionViewSetupService()
+setup_result = setup_service.setup_for_new_prescription(request)
+```
+
+#### **Service Composition Pattern**
+```python
+# High-level services compose lower-level services
+class PrescriptionService:
+    def create_or_update_prescription(self, data):
+        # Step 1: Use registration service for database operations
+        registration_service = ProcessRegistrationService()
+        process_id = registration_service.register_process(data)
+        
+        # Step 2: Use PDF service for document generation
+        pdf_service = PrescriptionPDFService()
+        pdf_response = pdf_service.generate_prescription_pdf(data)
+        
+        return pdf_response, process_id
+```
+
+#### **Form vs View Service Usage Pattern**
+```python
+# Forms use database-only services (data persistence)
+def save(self):  # NovoProcesso form
+    registration_service = ProcessRegistrationService()  # Database only
+    return registration_service.register_process(self.cleaned_data)
+
+# Views use complete workflow services (business logic + PDF)
+def cadastro(request):  # View
+    prescription_service = PrescriptionService()  # Complete workflow
+    pdf_response, process_id = prescription_service.create_or_update_prescription(data)
 ```
 
 #### **Error Handling Patterns**
@@ -196,6 +234,21 @@ self.logger.error(f"ServiceName: Operation failed: {error}")
 - **processos**: 802-line monolith → 5 focused services (60-280 lines each)
 - **medicos**: 3 complex form methods → 2 focused services + 1 repository
 - **Total**: ~1200 lines of business logic properly organized
+
+### **Service Integration Analysis (Current State)**
+
+#### **Excellent Service Adoption:**
+- ✅ **Views**: Use high-level workflow services (`PrescriptionService`, `PrescriptionViewSetupService`)
+- ✅ **Forms**: Use appropriate database services (`ProcessRegistrationService`)
+- ✅ **Service Composition**: High-level services delegate to specialized services
+- ✅ **Layered Architecture**: Clear separation between data access, persistence, workflows, and presentation
+- ✅ **JSON Response Standardization**: `PDFJsonResponseHelper` eliminates duplicate response logic
+
+#### **Validated Architecture Patterns:**
+- **Repository Layer** → **Database Services** → **Workflow Services** → **View Services**
+- **Forms** use database-only services (appropriate scope)
+- **Views** use complete workflow services (appropriate scope) 
+- **Service composition** follows dependency injection patterns
 
 ### **Architectural Quality Metrics**
 
@@ -271,4 +324,64 @@ The AutoCusto application has been successfully transformed from a monolithic, h
 ### **Key Achievement**
 **Complete elimination of technical debt** while **maintaining backward compatibility** and **improving code quality** across the most critical business domains of the healthcare application.
 
-The application now serves as a **reference implementation** of clean service-oriented architecture in Django, ready for future scaling and feature development.
+## Recent Enhancements (2025)
+
+### **Service Integration Validation & Improvements**
+
+#### **✅ Completed Refactoring:**
+1. **Fixed View Services Architecture**:
+   - Moved `_get_initial_data()` from views to `PrescriptionViewSetupService._prepare_initial_form_data()`
+   - Eliminated backwards dependency (service importing from view)
+   - Improved separation of concerns
+
+2. **Validated Service Usage Patterns**:
+   - **Forms** correctly use `ProcessRegistrationService` (database-only operations)
+   - **Views** correctly use `PrescriptionService` (complete workflows with PDF)
+   - **Service composition** properly implemented (`PrescriptionService` → `ProcessRegistrationService`)
+
+3. **Enhanced JSON Response Handling**:
+   - Created `PDFJsonResponseHelper` utility class
+   - Eliminated duplicated JSON response logic across 3 views
+   - Standardized error messages and response formats
+
+#### **Architecture Validation Results:**
+- ✅ **Layered service architecture** functioning correctly
+- ✅ **Service composition patterns** properly implemented  
+- ✅ **Django patterns** maintained (validation in forms, business logic in services)
+- ✅ **No anti-patterns detected** in current implementation
+
+#### **Key Django Pattern Rules (For Future Reference):**
+
+**✅ VALIDATION MUST STAY IN FORMS:**
+```python
+# ✅ CORRECT: Validation in form clean() methods
+class MyForm(forms.Form):
+    def clean_field(self):
+        # Field validation logic here
+        
+    def clean(self):
+        # Cross-field validation logic here
+```
+
+**❌ WRONG: Validation in views or services:**
+```python
+# ❌ ANTI-PATTERN: Don't move form validation to services
+if not field_value:
+    return ValidationError("Field required")  # This belongs in forms!
+```
+
+**What SHOULD be abstracted to services:**
+- Complex business workflows
+- Database operations (through repositories)
+- PDF generation and file operations
+- Email sending and external API calls
+- Multi-model coordination
+- Authorization logic (beyond simple field validation)
+
+**What MUST stay in forms:**
+- Field validation (required, format, length checks)
+- Cross-field validation
+- Data cleaning and normalization
+- Form-specific business rules
+
+The application now serves as a **reference implementation** of clean service-oriented architecture in Django, with validated patterns and comprehensive service integration ready for future scaling and feature development.

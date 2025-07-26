@@ -20,9 +20,11 @@ from django.db.models import QuerySet
 from medicos.seletor import medico as seletor_medico
 from processos.models import Processo, Doenca
 from processos.repositories.medication_repository import MedicationRepository
+from processos.repositories.process_repository import ProcessRepository
 from processos.services.prescription_services import RenewalService
 from processos.forms import fabricar_formulario
-from processos.views import _get_initial_data
+from django.forms.models import model_to_dict
+from pacientes.models import Paciente
 from processos.services.view_setup_models import (
     ViewSetupResult, SetupError, ViewSetupSuccess,
     CommonSetupData, PrescriptionFormData, 
@@ -88,7 +90,7 @@ class PrescriptionViewSetupService:
             
             # Step 5: Prepare initial data based on patient existence
             try:
-                dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
+                dados_iniciais = self._prepare_initial_form_data(request, paciente_existe, primeira_data, cid)
             except KeyError as e:
                 self.logger.error(f"Missing session data for initial data: {e}")
                 return SetupError(
@@ -227,6 +229,75 @@ class PrescriptionViewSetupService:
                 redirect_to="home"
             )
     
+    def _prepare_initial_form_data(self, request, paciente_existe: bool, primeira_data: str, cid: str) -> dict:
+        """
+        Constructs initial form data based on patient existence and session context.
+        
+        This method handles two distinct scenarios in Brazilian medical prescription workflow:
+        1. Existing patient: Pre-populate form with patient data from database
+        2. New patient: Initialize form with minimal data from session (CPF + disease info)
+        
+        The function bridges the gap between session-based workflow state and form initialization,
+        ensuring data consistency across the multi-step prescription process.
+        
+        Args:
+            request: HTTP request containing session data
+            paciente_existe (bool): Whether patient exists in doctor's database
+            primeira_data (str): Default date for prescription
+            cid (str): Disease CID code
+        
+        Returns:
+            dict: Form initial data dictionary
+        
+        Raises:
+            KeyError: If required session data is missing (indicates broken workflow)
+        """
+        if paciente_existe:
+            # Patient exists - load full patient data from database
+            if "paciente_id" not in request.session:
+                raise KeyError("ID do paciente não encontrado na sessão.")
+            
+            paciente_id = request.session["paciente_id"]
+            paciente = Paciente.objects.get(id=paciente_id)
+            
+            # Get user's versioned data for form initialization
+            user = request.user
+            version = paciente.get_version_for_user(user)
+            
+            if version:
+                # Use versioned data for form initialization
+                dados_paciente = model_to_dict(version)
+                # Keep master record fields that aren't versioned
+                dados_paciente['id'] = paciente.id
+                dados_paciente['cpf_paciente'] = paciente.cpf_paciente
+                dados_paciente['usuarios'] = paciente.usuarios.all()
+            else:
+                # Fallback to master record if no version found
+                dados_paciente = model_to_dict(paciente)
+            
+            # Add prescription-specific data not stored in patient model
+            dados_paciente["diagnostico"] = Doenca.objects.get(cid=cid).nome
+            dados_paciente["cid"] = cid
+            dados_paciente["data_1"] = primeira_data
+            
+            self.logger.debug(f"Prepared initial data for existing patient {paciente_id}")
+            return dados_paciente
+        else:
+            # New patient - minimal form initialization with session data
+            if "cpf_paciente" not in request.session:
+                raise KeyError("CPF do paciente não encontrado na sessão.")
+            
+            # Return minimal data structure for new patient form
+            dados_iniciais = {
+                "cpf_paciente": request.session["cpf_paciente"],
+                "data_1": primeira_data,
+                "cid": cid,
+                "diagnostico": Doenca.objects.get(cid=cid).nome,
+            }
+            
+            self.logger.debug(f"Prepared initial data for new patient with CPF {request.session['cpf_paciente']}")
+            return dados_iniciais
+    
     def _create_clinic_choices(self, clinicas: QuerySet, usuario) -> Tuple:
         """Create clinic choices tuple with versioned names."""
         escolhas = []
@@ -285,3 +356,310 @@ class PrescriptionViewSetupService:
                 message="Processo não encontrado ou você não tem permissão para acessá-lo.",
                 redirect_to="processos-busca"
             )
+    
+    def setup_process_for_editing(self, process_id: str, user, request) -> ViewSetupResult:
+        """
+        Set up process selection for editing workflow.
+        
+        Handles the business logic of selecting a process for editing, including:
+        - Process authorization validation
+        - Session state setup
+        - Data preparation for edicao view
+        
+        Args:
+            process_id: The process ID to select
+            user: The user attempting to select the process
+            request: Django request object (for session management)
+            
+        Returns:
+            ViewSetupResult: Success with redirect data or error information
+        """
+        try:
+            self.logger.info(f"Setting up process {process_id} for editing by user {user.email}")
+            
+            # Use repository to get process with authorization check
+            process_repo = ProcessRepository()
+            processo, cid = process_repo.get_process_with_disease_info(int(process_id), user)
+            
+            if not processo:
+                self.logger.warning(f"Process {process_id} not found or unauthorized for user {user.email}")
+                return SetupError(
+                    message="Processo não encontrado ou você não tem permissão para acessá-lo.",
+                    redirect_to="processos-busca"
+                )
+            
+            # Set up session state for editing workflow
+            request.session["processo_id"] = process_id
+            request.session["cid"] = cid
+            
+            self.logger.info(f"Successfully set up process {process_id} for editing")
+            
+            # Return success with process information
+            return ViewSetupSuccess(
+                common=None,  # Not needed for this workflow
+                form=None,    # Not needed for this workflow  
+                specific={
+                    'processo': processo,
+                    'success_message': f"Processo selecionado: {processo.doenca.nome}",
+                    'redirect_to': "processos-edicao"
+                }
+            )
+            
+        except ValueError as e:
+            self.logger.error(f"Invalid process ID {process_id}: {e}")
+            return SetupError(
+                message="ID do processo inválido.",
+                redirect_to="processos-busca"
+            )
+        except Exception as e:
+            self.logger.error(f"Error setting up process {process_id} for editing: {e}", exc_info=True)
+            return SetupError(
+                message="Erro interno ao selecionar processo.",
+                redirect_to="processos-busca"
+            )
+    
+    def setup_process_for_renewal_editing(self, process_id: str, user, request, nova_data: str) -> ViewSetupResult:
+        """
+        Set up process selection for renewal editing workflow.
+        
+        Similar to setup_process_for_editing but includes renewal date setup.
+        
+        Args:
+            process_id: The process ID to select
+            user: The user attempting to select the process
+            request: Django request object (for session management)
+            nova_data: The new date for renewal
+            
+        Returns:
+            ViewSetupResult: Success with redirect data or error information
+        """
+        try:
+            self.logger.info(f"Setting up process {process_id} for renewal editing by user {user.email}")
+            
+            # Use repository to get process with authorization check
+            process_repo = ProcessRepository()
+            processo, cid = process_repo.get_process_with_disease_info(int(process_id), user)
+            
+            if not processo:
+                self.logger.warning(f"Process {process_id} not found or unauthorized for user {user.email}")
+                return SetupError(
+                    message="Processo não encontrado ou você não tem permissão para acessá-lo.",
+                    redirect_to="processos-renovacao-rapida"
+                )
+            
+            # Set up session state for renewal editing workflow
+            request.session["processo_id"] = process_id
+            request.session["cid"] = cid
+            # Convert date object to string for JSON serialization
+            if hasattr(nova_data, 'strftime'):
+                request.session["data1"] = nova_data.strftime("%d/%m/%Y")
+            else:
+                request.session["data1"] = str(nova_data)
+            
+            self.logger.info(f"Successfully set up process {process_id} for renewal editing")
+            
+            # Return success with process information
+            return ViewSetupSuccess(
+                common=None,  # Not needed for this workflow
+                form=None,    # Not needed for this workflow
+                specific={
+                    'processo': processo,
+                    'redirect_to': "processos-edicao"
+                }
+            )
+            
+        except ValueError as e:
+            self.logger.error(f"Invalid process ID {process_id}: {e}")
+            return SetupError(
+                message="ID do processo inválido.",
+                redirect_to="processos-renovacao-rapida"
+            )
+        except Exception as e:
+            self.logger.error(f"Error setting up process {process_id} for renewal editing: {e}", exc_info=True)
+            return SetupError(
+                message="Erro interno ao selecionar processo.",
+                redirect_to="processos-renovacao-rapida"
+            )
+    
+    def validate_doctor_profile_completeness(self, medico, usuario) -> Optional[SetupError]:
+        """
+        Validate that doctor has completed required profile information.
+        
+        This method implements business rules about doctor profile completion
+        requirements before allowing prescription creation.
+        
+        Args:
+            medico: The doctor's profile
+            usuario: The user (for clinic access check)
+            
+        Returns:
+            SetupError: If profile is incomplete, with appropriate redirect
+            None: If profile is complete and valid
+        """
+        self.logger.debug(f"Validating doctor profile completeness for medico {medico.id if medico else 'None'}")
+        
+        # Check if doctor has required CRM and CNS data
+        if not medico.crm_medico or not medico.cns_medico:
+            self.logger.info(f"Doctor profile incomplete - missing CRM or CNS data")
+            return SetupError(
+                message="Complete seus dados médicos antes de criar processos.",
+                redirect_to="complete-profile"
+            )
+        
+        # Check if doctor has at least one clinic registered
+        if not usuario.clinicas.exists():
+            self.logger.info(f"Doctor profile incomplete - no clinics registered")
+            return SetupError(
+                message="Cadastre uma clínica antes de criar processos.",
+                redirect_to="clinicas-cadastro"
+            )
+        
+        self.logger.debug(f"Doctor profile validation passed for medico {medico.id}")
+        return None  # Profile is complete
+    
+    def build_patient_search_context(self, usuario, busca_param: Optional[str] = None) -> dict:
+        """
+        Build standardized context for patient search and listing operations.
+        
+        This method consolidates the duplicate context building patterns found in:
+        - busca_processos (GET)
+        - renovacao_rapida (GET and error handling)
+        
+        Creates optimized patient queries with prefetch_related for performance.
+        
+        Args:
+            usuario: The authenticated user
+            busca_param: Optional search parameter for filtering patients
+            
+        Returns:
+            dict: Standard context dictionary with patient data
+        """
+        self.logger.debug(f"Building patient search context for user {usuario.email}")
+        
+        # OPTIMIZATION: Prefetch related usuarios to avoid N+1 queries
+        # Before: 1 + N queries (1 for patients, N for each patient's users)
+        # After: 1 query with JOIN
+        pacientes_usuario = usuario.pacientes.prefetch_related('usuarios').all()
+        
+        # Handle patient search if busca parameter provided
+        if busca_param:
+            from pacientes.models import Paciente
+            patient_results = Paciente.get_patients_for_user_search(usuario, busca_param)
+            busca_pacientes = [patient for patient, version in patient_results]
+        else:
+            busca_pacientes = []
+        
+        context = {
+            "pacientes_usuario": pacientes_usuario,
+            "busca_pacientes": busca_pacientes,
+            "usuario": usuario
+        }
+        
+        self.logger.debug(f"Built context with {pacientes_usuario.count()} total patients, {len(busca_pacientes)} search results")
+        return context
+    
+    def handle_prescription_edit_request(self, request, setup, ModeloFormulario, escolhas, medicamentos, processo_id):
+        """
+        Handle POST request for prescription editing with clean control flow.
+        
+        Uses early returns to avoid nested try-catch hell and improve readability.
+        Delegates complex form processing to service layer.
+        
+        Args:
+            request: Django HTTP request
+            setup: ViewSetupResult from setup_for_edit_prescription
+            ModeloFormulario: Dynamic form class
+            escolhas: Clinic choices
+            medicamentos: Medication choices  
+            processo_id: Process being edited
+            
+        Returns:
+            JsonResponse: API response for frontend
+        """
+        from processos.services.prescription_services import PrescriptionService
+        from processos.services.io_services import PDFFileService
+        from processos.utils.pdf_json_response_helper import PDFJsonResponseHelper
+        import os
+        
+        # Extract setup data
+        usuario = setup.common.usuario
+        medico = setup.common.medico
+        
+        # Initialize response helper
+        json_response = PDFJsonResponseHelper()
+        
+        # Create and validate form
+        try:
+            formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
+        except Exception as e:
+            self.logger.error(f"Error creating form: {str(e)}")
+            return json_response.exception(e, context="criação do formulário")
+        
+        # Early return for invalid form
+        if not formulario.is_valid():
+            self.logger.error(f"Form validation failed: {formulario.errors}")
+            return json_response.form_validation_failed(formulario.errors)
+        
+        # Extract validated data
+        dados_formulario = formulario.cleaned_data
+        id_clin = dados_formulario["clinicas"]
+        
+        try:
+            clinica = medico.clinicas.get(id=id_clin)
+        except Exception as e:
+            self.logger.error(f"Error getting clinic {id_clin}: {str(e)}")
+            return json_response.exception(e, context="busca da clínica")
+        
+        # Process prescription update
+        try:
+            prescription_service = PrescriptionService()
+            pdf_response, updated_processo_id = prescription_service.create_or_update_prescription(
+                form_data=dados_formulario,
+                user=usuario,
+                medico=medico,
+                clinica=clinica,
+                patient_exists=True,  # For edit, patient always exists
+                process_id=processo_id  # Update existing prescription
+            )
+        except Exception as e:
+            self.logger.error(f"Error updating prescription: {str(e)}")
+            return json_response.exception(e, context="atualização da prescrição")
+        
+        # Early return if prescription service failed
+        if not pdf_response or not updated_processo_id:
+            self.logger.error("Prescription service returned null response")
+            return json_response.pdf_generation_failed()
+        
+        # Save PDF file
+        try:
+            file_service = PDFFileService()
+            pdf_url = file_service.save_pdf_and_get_url(
+                pdf_response, 
+                dados_formulario.get('cpf_paciente', 'unknown'),
+                dados_formulario.get('cid', 'unknown')
+            )
+        except Exception as e:
+            self.logger.error(f"Error saving PDF: {str(e)}")
+            return json_response.exception(e, context="salvamento do PDF")
+        
+        # Early return if PDF saving failed
+        if not pdf_url:
+            self.logger.error("PDF file service returned null URL")
+            return json_response.pdf_save_failed()
+        
+        # Success - update session and return response
+        try:
+            filename = os.path.basename(pdf_url.rstrip('/'))
+            request.session["path_pdf_final"] = pdf_url
+            request.session["processo_id"] = updated_processo_id
+            self.logger.info(f"Prescription updated successfully: Process {updated_processo_id}")
+            
+            return json_response.success(
+                pdf_url=pdf_url,
+                processo_id=updated_processo_id,
+                operation='update',
+                filename=filename
+            )
+        except Exception as e:
+            self.logger.error(f"Error finalizing response: {str(e)}")
+            return json_response.exception(e, context="finalização")

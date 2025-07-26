@@ -658,3 +658,61 @@ def fabricar_formulario(cid, renovar):
         logger.debug(f"Using data-driven conditional fields for {protocolo.nome}")
 
     return type("SuperForm", (modelo_base,), campos)
+
+
+# Renewal process form
+class RenovacaoRapidaForm(forms.Form):
+    """
+    Form for quick renewal process validation.
+    
+    This form handles validation for the renewal workflow, ensuring that
+    all required fields are present and valid before processing.
+    """
+    processo_id = forms.CharField(
+        required=True,
+        label="ID do Processo",
+        error_messages={'required': 'Selecione um processo para renovar.'}
+    )
+    data_1 = forms.DateField(
+        required=True,
+        label="Nova Data",
+        widget=forms.DateInput(format="%d/%m/%Y"),
+        input_formats=["%d/%m/%Y"],
+        error_messages={'required': 'Data é obrigatória.'}
+    )
+    edicao = forms.BooleanField(
+        required=False,
+        label="Edição completa"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "POST"
+        self.helper.attrs = {'novalidate': True}
+        self.helper.form_show_errors = False
+        self.helper.error_text_inline = False
+    
+    def clean_processo_id(self):
+        """Validate process ID is not empty and is a valid integer."""
+        processo_id = self.cleaned_data.get("processo_id")
+        
+        if not processo_id or not processo_id.strip():
+            raise forms.ValidationError("Selecione um processo para renovar")
+        
+        try:
+            # Ensure it's a valid integer
+            int(processo_id.strip())
+            return processo_id.strip()
+        except ValueError:
+            raise forms.ValidationError("ID do processo inválido")
+    
+    def clean_data_1(self):
+        """Validate renewal date."""
+        nova_data = self.cleaned_data.get("data_1")
+        
+        if not nova_data:
+            raise forms.ValidationError("Data é obrigatória")
+        
+        # Could add additional date validation here (e.g., not in the past)
+        return nova_data

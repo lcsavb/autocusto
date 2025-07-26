@@ -163,14 +163,12 @@ class RenewalService:
         end_clinica = dados["logradouro"] + ", " + dados["logradouro_num"]
         dados["end_clinica"] = end_clinica
         
-        # Validate and parse renewal date
-        if not renewal_date or renewal_date.strip() == "":
+        # Validate renewal date - expects a date object
+        if not renewal_date:
             raise ValueError("Data de renovação não pode estar vazia")
         
-        try:
-            dados["data_1"] = datetime.strptime(renewal_date, "%d/%m/%Y")
-        except ValueError as e:
-            raise ValueError(f"Formato de data inválido: {renewal_date}. Use DD/MM/AAAA")
+        # Use the date object directly
+        dados["data_1"] = renewal_date
         
         # Set disease information
         dados["cid"] = processo.doenca.cid

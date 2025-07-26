@@ -11,28 +11,28 @@
 
 ## **🔴 HIGH PRIORITY (This Sprint)**
 
-### **2. Extract File I/O from Business Logic**
+### **2. Extract File I/O from Business Logic** DONE
 - **File**: `processos/helpers.py:transfere_dados_gerador()` (lines 581-596)
 - **Problem**: Business service writing files to `/tmp/` violates separation of concerns
 - **Solution**: Create `PDFFileService` in infrastructure layer
 - **Effort**: 2 hours
 - **Risk**: Medium - Affects PDF serving functionality
 
-### **3. Simplify SetupResult Data Structure**
+### **3. Simplify SetupResult Data Structure** DONE
 - **File**: `processos/view_services.py:SetupResult` (lines 30-53)
 - **Problem**: 15+ field NamedTuple mixing error handling, user data, medical data
 - **Solution**: Replace with focused data classes using composition
 - **Effort**: 3 hours
 - **Risk**: Low - Internal refactoring only
 
-### **4. Replace Manual Field Copying**
+### **4. Replace Manual Field Copying** DONE
 - **File**: `processos/helpers.py:cria_dict_renovação()` (lines 332-345)
 - **Problem**: Manual field mapping creates maintenance burden
 - **Solution**: Use Django's `model_to_dict()` with field filtering
 - **Effort**: 1 hour
 - **Risk**: Low - Existing tests cover functionality
 
-### **5. Split PrescriptionService Responsibilities**
+### **5. Split PrescriptionService Responsibilities** DONE
 - **File**: `processos/prescription_services.py:PrescriptionService` (lines 403-531)
 - **Problem**: Single service handles validation, database, PDF, transactions
 - **Solution**: Create `PrescriptionWorkflow` for orchestration
