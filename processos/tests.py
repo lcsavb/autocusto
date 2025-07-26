@@ -194,7 +194,7 @@ class DadosFunctionsTest(TestCase):
         }
         expected_ids1 = [str(self.med1.id), str(self.med2.id), str(self.med1.id)]
         med_repo = MedicationRepository()
-        self.assertEqual(med_repo.extract_medication_ids(dados1), expected_ids1)
+        self.assertEqual(med_repo.extract_medication_ids_from_form(dados1), expected_ids1)
 
         # Test case 2: Some meds missing, some "nenhum"
         dados2 = {
@@ -202,12 +202,12 @@ class DadosFunctionsTest(TestCase):
             "id_med3": "nenhum",
         }
         expected_ids2 = [str(self.med1.id)]
-        self.assertEqual(gerar_lista_meds_ids(dados2), expected_ids2)
+        self.assertEqual(med_repo.extract_medication_ids_from_form(dados2), expected_ids2)
 
         # Test case 3: No meds present
         dados3 = {}
         expected_ids3 = []
-        self.assertEqual(gerar_lista_meds_ids(dados3), expected_ids3)
+        self.assertEqual(med_repo.extract_medication_ids_from_form(dados3), expected_ids3)
 
         # Test case 4: All meds are "nenhum"
         dados4 = {
@@ -215,7 +215,7 @@ class DadosFunctionsTest(TestCase):
             "id_med2": "nenhum",
         }
         expected_ids4 = []
-        self.assertEqual(gerar_lista_meds_ids(dados4), expected_ids4)
+        self.assertEqual(med_repo.extract_medication_ids_from_form(dados4), expected_ids4)
 
     def test_gerar_prescricao(self):
         meds_ids = [str(self.med1.id), str(self.med2.id)]
@@ -381,8 +381,9 @@ class DadosFunctionsTest(TestCase):
             (med2.id, f"{med2.nome} {med2.dosagem} - {med2.apres}"),
         ]
 
-        # Call the function and assert the result
-        result = listar_med(doenca.cid)
+        # Call the repository method and assert the result
+        med_repo = MedicationRepository()
+        result = med_repo.list_medications_by_cid(doenca.cid)
         self.assertEqual(result, tuple(expected_list))
 
 class PreProcessoFormTest(TestCase):

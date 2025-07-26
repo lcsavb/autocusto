@@ -9,6 +9,10 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
 
+# Import services
+from .services.doctor_profile_service import DoctorProfileService
+from .repositories.doctor_repository import DoctorRepository
+
 
 # English: registration
 @transaction.atomic
@@ -112,7 +116,21 @@ def custom_login(request):
 # English: profile
 @login_required
 def perfil(request):
-    return render(request, "medicos/perfil.html")
+    """Enhanced profile view using services to show profile status."""
+    profile_service = DoctorProfileService()
+    doctor_repository = DoctorRepository()
+    
+    # Get comprehensive profile information
+    professional_info = profile_service.get_doctor_professional_info(request.user)
+    completion_status = profile_service.get_profile_completion_status(request.user)
+    
+    context = {
+        'professional_info': professional_info,
+        'completion_status': completion_status,
+        'user': request.user
+    }
+    
+    return render(request, "medicos/perfil.html", context)
 
 
 def custom_logout(request):
@@ -139,12 +157,23 @@ def complete_profile(request):
             try:
                 form.save()
                 messages.success(request, "Dados médicos atualizados com sucesso!")
-                # Check if user has clinics now, if so redirect to process form
-                if request.user.clinicas.exists():
-                    messages.info(request, "Voltando para o formulário de criação do processo...")
-                    return redirect("processos-cadastro")
+                
+                # Use service to check profile completion and determine next step
+                profile_service = DoctorProfileService()
+                status = profile_service.get_profile_completion_status(request.user)
+                
+                if status['is_complete']:
+                    # Check if user has clinics, if so redirect to process form
+                    if request.user.clinicas.exists():
+                        messages.info(request, "Voltando para o formulário de criação do processo...")
+                        return redirect("processos-cadastro")
+                    else:
+                        return redirect("clinicas-cadastro")
                 else:
-                    return redirect("clinicas-cadastro")
+                    # Profile still incomplete, show what's missing
+                    missing = ", ".join(status['missing_fields'])
+                    messages.warning(request, f"Ainda faltam dados: {missing}")
+                    return redirect("complete-profile")
             except IntegrityError as e:
                 if 'cns_medico' in str(e):
                     messages.error(request, "Este CNS já está sendo usado por outro médico.")
@@ -158,15 +187,17 @@ def complete_profile(request):
                 for error in errors:
                     messages.error(request, error)
     else:
-        # Pre-populate with existing data if available
+        # Pre-populate with existing data using service
+        profile_service = DoctorProfileService()
+        professional_info = profile_service.get_doctor_professional_info(request.user)
+        
         initial_data = {}
-        medico = request.user.medicos.first()
-        if medico:
+        if professional_info:
             initial_data = {
-                'crm': medico.crm_medico,
-                'cns': medico.cns_medico,
-                'estado': medico.estado,
-                'especialidade': medico.especialidade,
+                'crm': professional_info.get('crm'),
+                'cns': professional_info.get('cns'),
+                'estado': professional_info.get('estado'),
+                'especialidade': professional_info.get('especialidade'),
             }
         form = ProfileCompletionForm(initial=initial_data, user=request.user)
     
@@ -194,18 +225,19 @@ def edit_profile(request):
                 for error in errors:
                     messages.error(request, error)
     else:
-        # Pre-populate form with current user/doctor data
-        initial_data = {}
-        medico = request.user.medicos.first()
-        if medico:
-            initial_data = {
-                'name': medico.nome_medico,
-                'crm': medico.crm_medico,
-                'cns': medico.cns_medico,
-                'estado': medico.estado,
-                'especialidade': medico.especialidade,
-            }
-        initial_data['email'] = request.user.email
+        # Pre-populate form with current user/doctor data using service
+        profile_service = DoctorProfileService()
+        professional_info = profile_service.get_doctor_professional_info(request.user)
+        
+        initial_data = {'email': request.user.email}
+        if professional_info:
+            initial_data.update({
+                'name': professional_info.get('nome'),
+                'crm': professional_info.get('crm'),
+                'cns': professional_info.get('cns'),
+                'estado': professional_info.get('estado'),
+                'especialidade': professional_info.get('especialidade'),
+            })
         form = UserDoctorEditForm(initial=initial_data, user=request.user)
     
     return render(

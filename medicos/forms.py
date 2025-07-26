@@ -6,6 +6,10 @@ from django.db import transaction
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Row, Column
 
+# Import services
+from .services.doctor_registration_service import DoctorRegistrationService
+from .services.doctor_profile_service import DoctorProfileService
+
 
 # doctor registration form
 class MedicoCadastroFormulario(CustomUserCreationForm):
@@ -135,27 +139,20 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
 
 
 
-    # English: save
-    @transaction.atomic
     def save(self):
-        # English: user
-        usuario = super().save(commit=False)
-        usuario.is_medico = True
-        usuario.save()
-        # English: doctor
-        medico = Medico(
-            cns_medico=None,
-            crm_medico=None,
-            nome_medico=self.cleaned_data["nome"],
-        )
-        medico.save()
-        usuario.medicos.add(medico)
-
-        # clinica_cns = self.cleaned_data['cns_clinica']
-        # clinica = Clinica.objects.create(cns=clinica_cns)
-        # clinica.medicos.add(medico)
-        # clinica.save()
-
+        """Save new doctor registration using DoctorRegistrationService."""
+        registration_service = DoctorRegistrationService()
+        
+        # Prepare registration data
+        registration_data = {
+            'email': self.cleaned_data['email'],
+            'password1': self.cleaned_data['password1'],
+            'password2': self.cleaned_data['password2'],
+            'nome': self.cleaned_data['nome']
+        }
+        
+        # Register new doctor
+        usuario, medico = registration_service.register_new_doctor(registration_data)
         return usuario
 
 
@@ -246,14 +243,6 @@ class ProfileCompletionForm(forms.Form):
         self.helper.help_text_inline = True
         self.helper.layout = Layout(
             Row(
-                Column('name', css_class='form-group col-md-12 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('email', css_class='form-group col-md-12 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
                 Column('crm', css_class='form-group col-md-12 mb-0'),
                 css_class='form-row'
             ),
@@ -282,22 +271,33 @@ class ProfileCompletionForm(forms.Form):
         return crm
     
     def clean(self):
-        """Validate CRM+State uniqueness together."""
+        """Validate CRM+State uniqueness together and business rules."""
         cleaned_data = super().clean()
         crm = cleaned_data.get("crm")
         estado = cleaned_data.get("estado")
+        cns = cleaned_data.get("cns")
         
-        # Check if CRM+State combination already exists for another medico
-        if crm and estado and self.user:
+        if self.user:
             current_medico = self.user.medicos.first()
-            existing_medico = Medico.objects.filter(
-                crm_medico=crm, 
-                estado=estado
-            ).exclude(
-                id=current_medico.id if current_medico else None
-            ).first()
-            if existing_medico:
-                raise forms.ValidationError(f"Este CRM já está sendo usado por outro médico no estado {dict(BRAZILIAN_STATES)[estado]}.")
+            
+            # Business rule: CRM cannot be changed once set
+            if current_medico and current_medico.crm_medico and crm and current_medico.crm_medico != crm:
+                self.add_error('crm', "CRM não pode ser alterado após cadastro inicial")
+            
+            # Business rule: CNS cannot be changed once set
+            if current_medico and current_medico.cns_medico and cns and current_medico.cns_medico != cns:
+                self.add_error('cns', "CNS não pode ser alterado após cadastro inicial")
+            
+            # Check if CRM+State combination already exists for another medico
+            if crm and estado:
+                existing_medico = Medico.objects.filter(
+                    crm_medico=crm, 
+                    estado=estado
+                ).exclude(
+                    id=current_medico.id if current_medico else None
+                ).first()
+                if existing_medico:
+                    self.add_error('crm', f"Este CRM já está sendo usado por outro médico no estado {dict(BRAZILIAN_STATES)[estado]}.")
         
         return cleaned_data
 
@@ -335,25 +335,23 @@ class ProfileCompletionForm(forms.Form):
         return cns2
 
 
-    @transaction.atomic
     def save(self):
-        """Update medico with CRM, CNS, specialty and state data."""
+        """Complete doctor profile using DoctorProfileService."""
         if not self.user:
             raise ValueError("User is required")
-            
-        medico = self.user.medicos.first()
-        if medico:
-            # Only update if not already set (frontend should prevent this, but safety check)
-            if not medico.crm_medico:
-                medico.crm_medico = self.cleaned_data["crm"]
-            if not medico.cns_medico:
-                medico.cns_medico = self.cleaned_data["cns"]
-            if not medico.estado:
-                medico.estado = self.cleaned_data["estado"]
-            # Specialty can be updated even if already set
-            medico.especialidade = self.cleaned_data["especialidade"]
-            medico.save()
         
+        profile_service = DoctorProfileService()
+        
+        # Prepare profile completion data
+        profile_data = {
+            'crm': self.cleaned_data['crm'],
+            'cns': self.cleaned_data['cns'],
+            'estado': self.cleaned_data['estado'],
+            'especialidade': self.cleaned_data['especialidade']
+        }
+        
+        # Complete profile
+        medico = profile_service.complete_doctor_profile(self.user, profile_data)
         return self.user
 
 
@@ -478,40 +476,34 @@ class UserDoctorEditForm(forms.Form):
             raise forms.ValidationError("CNS deve conter exatamente 15 números.")
         return cns
 
-    @transaction.atomic
     def save(self):
-        """Update User and Doctor information (partial updates allowed)."""
+        """Update User and Doctor information using DoctorProfileService."""
         if not self.user:
             raise ValueError("User is required for editing")
-            
-        # Get or create medico for this user
-        medico = self.user.medicos.first()
-        if not medico:
-            # Only create if we have at least name
-            if self.cleaned_data.get("name"):
-                medico = Medico(
-                    nome_medico=self.cleaned_data["name"],
-                    crm_medico=self.cleaned_data.get("crm") or None,
-                    cns_medico=self.cleaned_data.get("cns") or None,
-                    estado=self.cleaned_data.get("estado") or None,
-                    especialidade=self.cleaned_data.get("especialidade") or None,
-                )
-                medico.save()
-                self.user.medicos.add(medico)
+        
+        profile_service = DoctorProfileService()
+        
+        # Prepare update data (only include fields that have values)
+        update_data = {}
+        if self.cleaned_data.get("name"):
+            update_data['nome'] = self.cleaned_data["name"]
+        if self.cleaned_data.get("crm"):
+            update_data['crm'] = self.cleaned_data["crm"]
+        if self.cleaned_data.get("cns"):
+            update_data['cns'] = self.cleaned_data["cns"]
+        if self.cleaned_data.get("estado"):
+            update_data['estado'] = self.cleaned_data["estado"]
+        if self.cleaned_data.get("especialidade"):
+            update_data['especialidade'] = self.cleaned_data["especialidade"]
+        
+        # Check if user has doctor profile, create if needed
+        if not profile_service.doctor_repository.get_doctor_by_user(self.user):
+            # Create new doctor profile
+            registration_service = DoctorRegistrationService()
+            doctor_data = registration_service.doctor_repository.extract_doctor_data(update_data)
+            registration_service.doctor_repository.create_doctor(self.user, doctor_data)
         else:
-            # Update existing medico with provided fields
-            if self.cleaned_data.get("name"):
-                medico.nome_medico = self.cleaned_data["name"]
-            # Only update CRM/CNS/State if not already set (immutable once set)
-            if self.cleaned_data.get("crm") and not medico.crm_medico:
-                medico.crm_medico = self.cleaned_data["crm"]
-            if self.cleaned_data.get("cns") and not medico.cns_medico:
-                medico.cns_medico = self.cleaned_data["cns"]
-            if self.cleaned_data.get("estado") and not medico.estado:
-                medico.estado = self.cleaned_data["estado"]
-            # Specialty can be updated even if already set
-            if self.cleaned_data.get("especialidade"):
-                medico.especialidade = self.cleaned_data["especialidade"]
-            medico.save()
+            # Update existing profile
+            profile_service.update_doctor_profile(self.user, update_data)
         
         return self.user
