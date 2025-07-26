@@ -602,7 +602,8 @@ class RenovarProcesso(NovoProcesso):
 
         if edicao_completa == "True":
             cpf_paciente = dados["cpf_paciente"]
-            paciente_existe = checar_paciente_existe(cpf_paciente)
+            patient_repo = PatientRepository()
+            paciente_existe = patient_repo.check_patient_exists(cpf_paciente)
             clinica_id = dados["clinicas"]
             doenca = Doenca.objects.get(cid=dados["cid"])
             emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
