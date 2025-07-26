@@ -48,7 +48,9 @@ class PreProcesso(forms.Form):
     def clean_cid(self):
         """Validate CID exists in the disease database."""
         cid = self.cleaned_data["cid"].upper()
-        doencas = Doenca.objects.all()
+        from ..repositories.domain_repository import DomainRepository
+        domain_repo = DomainRepository()
+        doencas = domain_repo.get_all_diseases()
         lista_cids = [doenca.cid for doenca in doencas]
         
         if cid not in lista_cids:

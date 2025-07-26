@@ -15,6 +15,9 @@ from django.db import transaction
 from processos.models import Doenca
 from clinicas.models import Emissor
 from .pdf_generation import PrescriptionPDFService
+from .data_builder import PrescriptionDataBuilder
+from .process_repository import ProcessRepository
+from ...repositories.domain_repository import DomainRepository
 
 
 class PrescriptionService:
@@ -33,6 +36,9 @@ class PrescriptionService:
     def __init__(self):
         self.pdf_service = PrescriptionPDFService()
         self.logger = logging.getLogger(__name__)
+        self.data_builder = PrescriptionDataBuilder()
+        self.process_repository = ProcessRepository()
+        self.domain_repository = DomainRepository()
     
     @transaction.atomic
     def create_or_update_prescription(
@@ -62,7 +68,6 @@ class PrescriptionService:
             # Import services directly to avoid circular imports
             from processos.repositories.medication_repository import MedicationRepository
             from processos.utils.data_utils import link_issuer_data
-            from processos.services.registration_service import ProcessRegistrationService
             
             self.logger.info(
                 f"PrescriptionService: Processing prescription for "
@@ -83,48 +88,48 @@ class PrescriptionService:
                 db_logger.error("PrescriptionService: Business rule validation failed")
                 return None, None
             
-            # Step 3: Get required domain entities
+            # Step 3: Get required domain entities using DomainRepository
             db_logger.info("PrescriptionService: Step 3 - Getting domain entities")
             cid = form_data.get('cid')
+            doenca = self.domain_repository.get_disease_by_cid(cid)
+            emissor = self.domain_repository.get_emissor_by_medico_clinica(medico, clinica)
+            
+            # Step 4: Process prescription using service layer (clean architecture)
+            db_logger.info("PrescriptionService: Step 4 - Processing via service layer")
+            
             try:
-                doenca = Doenca.objects.get(cid=cid)
-                db_logger.info(f"PrescriptionService: Found disease: {doenca.nome}")
-            except Doenca.DoesNotExist:
-                db_logger.error(f"PrescriptionService: Disease not found for CID: {cid}")
-                raise
+                # Use our clean service architecture instead of forms
+                from processos.repositories.patient_repository import PatientRepository
+                patient_repo = PatientRepository()
+                cpf_paciente = final_data["cpf_paciente"]
+                paciente_existe = patient_repo.check_patient_exists(cpf_paciente)
                 
-            try:
-                emissor = Emissor.objects.get(medico=medico, clinica=clinica)
-                db_logger.info(f"PrescriptionService: Found emissor: {emissor.id}")
-            except Emissor.DoesNotExist:
-                db_logger.error(f"PrescriptionService: Emissor not found for medico/clinica")
-                raise
-            
-            # Step 4: Register prescription in database
-            db_logger.info("PrescriptionService: Step 4 - Registering in database")
-            # Get actual patient object if exists, not just boolean
-            from processos.repositories.patient_repository import PatientRepository
-            patient_repo = PatientRepository()
-            cpf_paciente = final_data.get('cpf_paciente')
-            paciente_obj = patient_repo.check_patient_exists(cpf_paciente) if patient_exists else False
-            
-            db_logger.info(f"PrescriptionService: CPF: {cpf_paciente}, Patient object: {type(paciente_obj)}")
-            
-            try:
-                registration_service = ProcessRegistrationService()
-                processo_id = registration_service.register_process(
-                    dados=final_data,
-                    meds_ids=meds_ids,
-                    doenca=doenca,
-                    emissor=emissor,
-                    usuario=user,
-                    paciente_existe=paciente_obj,
-                    cid=cid,
+                # Build structured data using DataBuilder
+                structured_data = self.data_builder.build_prescription_data(
+                    final_data, meds_ids, doenca, emissor, user,
+                    paciente_existe=paciente_existe, 
+                    cid=cid, 
                     processo_id=process_id
                 )
-                db_logger.info(f"PrescriptionService: Database registration completed with ID: {processo_id}")
+                
+                # Save using ProcessRepository
+                if process_id:
+                    # Update existing prescription
+                    db_logger.info(f"PrescriptionService: Updating process {process_id} via service layer")
+                    processo_id = self.process_repository.update_process_from_structured_data(
+                        process_id, structured_data
+                    )
+                else:
+                    # Create new prescription  
+                    db_logger.info("PrescriptionService: Creating new process via service layer")
+                    processo_id = self.process_repository.create_process_from_structured_data(
+                        structured_data
+                    )
+                
+                db_logger.info(f"PrescriptionService: Process saved with ID: {processo_id}")
+                    
             except Exception as db_error:
-                db_logger.error(f"PrescriptionService: CRITICAL ERROR in database registration: {db_error}")
+                db_logger.error(f"PrescriptionService: CRITICAL ERROR in service layer: {db_error}")
                 db_logger.error(f"PrescriptionService: Final data keys: {list(final_data.keys())}")
                 raise
             

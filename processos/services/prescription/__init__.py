@@ -19,6 +19,8 @@ from .template_selection import PrescriptionTemplateSelector
 from .pdf_generation import PrescriptionPDFService
 from .workflow_service import PrescriptionService
 from .renewal_service import RenewalService
+from .data_builder import PrescriptionDataBuilder
+from .process_repository import ProcessRepository
 
 __all__ = [
     'PrescriptionDataFormatter',
@@ -26,4 +28,6 @@ __all__ = [
     'PrescriptionPDFService',
     'PrescriptionService',
     'RenewalService',
+    'PrescriptionDataBuilder',
+    'ProcessRepository',
 ]

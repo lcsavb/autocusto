@@ -159,11 +159,14 @@ class NovoProcesso(PrescriptionBaseMixin, forms.Form):
         label="Endereço (com complemento)",
         error_messages={'required': 'Por favor, insira o endereço.'}
     )
-    incapaz = forms.ChoiceField(
-        choices=((False, "Não"), (True, "Sim")),
+    incapaz = forms.BooleanField(
         label="É incapaz?",
         initial=False,
-        widget=forms.RadioSelect(attrs={"class": "form-check-inline"}),
+        required=False,
+        widget=forms.RadioSelect(
+            choices=[(False, "Não"), (True, "Sim")],
+            attrs={"class": "form-check-inline"}
+        ),
     )
     nome_responsavel = forms.CharField(
         label="Nome do responsável",
@@ -305,28 +308,41 @@ class NovoProcesso(PrescriptionBaseMixin, forms.Form):
     @transaction.atomic
     def save(self, usuario, medico, meds_ids):
         """
-        Saves a new prescription process using service layer delegation.
+        Saves a new prescription process following proper Django patterns.
         
-        This method now delegates the complex business logic to services
-        instead of handling database operations directly in the form.
+        This method uses PrescriptionDataService for data construction and
+        PrescriptionDatabaseService for database operations, maintaining
+        clean separation of concerns.
         """
         from ..repositories.patient_repository import PatientRepository
-        from ..services.registration_service import ProcessRegistrationService
+        from ..repositories.domain_repository import DomainRepository
+        from ..services.prescription.data_builder import PrescriptionDataBuilder
+        from ..services.prescription.process_repository import ProcessRepository
         
         dados = self.cleaned_data
         clinica_id = dados["clinicas"]
-        doenca = Doenca.objects.get(cid=dados["cid"])
+        cid = dados["cid"]
         cpf_paciente = dados["cpf_paciente"]
+        
+        # Use repositories instead of direct database operations
+        domain_repo = DomainRepository()
+        doenca = domain_repo.get_disease_by_cid(cid)
+        emissor = domain_repo.get_emissor_by_medico_clinica(medico, medico.clinicas.get(id=clinica_id))
 
-        emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
-
+        # Check if patient exists
         patient_repo = PatientRepository()
         paciente_existe = patient_repo.check_patient_exists(cpf_paciente)
 
-        registration_service = ProcessRegistrationService()
-        processo_id = registration_service.register_process(
-            dados, meds_ids, doenca, emissor, usuario, paciente_existe=paciente_existe
+        # Step 1: Use DataBuilder for data construction
+        data_service = PrescriptionDataBuilder()
+        structured_data = data_service.build_prescription_data(
+            dados, meds_ids, doenca, emissor, usuario, 
+            paciente_existe=paciente_existe, cid=cid
         )
+
+        # Step 2: Use ProcessRepository with structured data
+        db_service = ProcessRepository()
+        processo_id = db_service.create_process_from_structured_data(structured_data)
 
         return processo_id
 
@@ -356,7 +372,7 @@ class RenovarProcesso(NovoProcesso):
         2. Quick renewal - date update only
         """
         from ..repositories.patient_repository import PatientRepository
-        from ..services.registration_service import ProcessRegistrationService
+        from ..services.prescription.process_repository import ProcessRepository
         
         dados = self.cleaned_data
         edicao_completa = dados["edicao_completa"]
@@ -364,42 +380,45 @@ class RenovarProcesso(NovoProcesso):
         if edicao_completa == "True":
             # Complete renewal - process all form data
             self._handle_complete_renewal(dados, meds_ids, medico, usuario, processo_id)
+            return processo_id
         else:
             # Quick renewal - update date only
             self._handle_quick_renewal(dados, meds_ids, processo_id)
+            return processo_id
 
     def _handle_complete_renewal(self, dados, meds_ids, medico, usuario, processo_id):
         """Handle complete renewal with full form processing."""
         from ..repositories.patient_repository import PatientRepository
-        from ..services.registration_service import ProcessRegistrationService
+        from ..services.prescription.process_repository import ProcessRepository
         
         cpf_paciente = dados["cpf_paciente"]
         patient_repo = PatientRepository()
         paciente_existe = patient_repo.check_patient_exists(cpf_paciente)
         clinica_id = dados["clinicas"]
-        doenca = Doenca.objects.get(cid=dados["cid"])
-        emissor = Emissor.objects.get(medico=medico, clinica_id=clinica_id)
+        
+        # Use repositories instead of direct database operations
+        from ..repositories.domain_repository import DomainRepository
+        domain_repo = DomainRepository()
+        doenca = domain_repo.get_disease_by_cid(dados["cid"])
+        emissor = domain_repo.get_emissor_by_medico_clinica(medico, medico.clinicas.get(id=clinica_id))
 
-        registration_service = ProcessRegistrationService()
-        registration_service.register_process(
-            dados,
-            meds_ids,
-            doenca,
-            emissor,
-            usuario,
-            paciente_existe=paciente_existe,
-            cid=dados["cid"],
-            processo_id=processo_id,  # Pass the specific process being edited
+        # Use DataBuilder for structured data construction
+        from ..services.prescription.data_builder import PrescriptionDataBuilder
+        data_service = PrescriptionDataBuilder()
+        structured_data = data_service.build_prescription_data(
+            dados, meds_ids, doenca, emissor, usuario, 
+            paciente_existe=paciente_existe, cid=dados["cid"], processo_id=processo_id
         )
+        
+        # Use ProcessRepository with structured data for updates
+        registration_service = ProcessRepository()
+        registration_service.update_process_from_structured_data(processo_id, structured_data)
 
     def _handle_quick_renewal(self, dados, meds_ids, processo_id):
         """Handle quick renewal with date update only."""
-        from ..services.registration_service import ProcessRegistrationService
+        from ..services.prescription.process_repository import ProcessRepository
         
-        # Partial renewal - update only the date
-        processo = Processo.objects.get(id=processo_id)
-        processo.prescricao[1]['data_1'] = dados['data_1'] 
-        processo.save(update_fields=['prescricao'])
-        
-        registration_service = ProcessRegistrationService()
-        registration_service._associate_medications(processo, meds_ids)
+        # Partial renewal - update only the date  
+        # Use ProcessRepository for quick date update instead of direct database operations
+        registration_service = ProcessRepository()
+        registration_service.update_process_date_only(processo_id, dados['data_1'], meds_ids)

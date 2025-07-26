@@ -12,6 +12,7 @@ from typing import Dict, Any, Optional, Union
 from django.db.models import QuerySet
 
 from pacientes.models import Paciente
+from ..services.prescription.patient_versioning_service import PatientVersioningService
 
 
 class PatientRepository:
@@ -26,6 +27,7 @@ class PatientRepository:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.patient_versioning = PatientVersioningService()
     
     def check_patient_exists(self, cpf_paciente: str) -> Union[Paciente, bool]:
         """
@@ -130,12 +132,8 @@ class PatientRepository:
         self.logger.debug(f"PatientRepository: Getting version for patient {patient.id}, user {user.email}")
         
         try:
-            patient_version = patient.get_version_for_user(user)
-            if patient_version:
-                self.logger.debug(f"PatientRepository: Found version {patient_version.id}")
-            else:
-                self.logger.debug("PatientRepository: No version found for user")
-            return patient_version
+            # Use PatientVersioningService instead of direct model calls
+            return self.patient_versioning.get_patient_version_for_user(patient.cpf_paciente, user)
         except Exception as e:
             self.logger.error(f"PatientRepository: Error getting patient version: {e}")
             return None
@@ -177,3 +175,26 @@ class PatientRepository:
         self.logger.debug(f"PatientRepository: Validation completed with {error_count} errors")
         
         return errors
+    
+    def get_patient_by_id(self, patient_id: int) -> Optional[Paciente]:
+        """
+        Get patient by ID.
+        
+        Args:
+            patient_id: The patient's ID
+            
+        Returns:
+            Paciente: The patient instance if found
+            
+        Raises:
+            Paciente.DoesNotExist: If patient not found
+        """
+        self.logger.debug(f"PatientRepository: Getting patient by ID {patient_id}")
+        
+        try:
+            patient = Paciente.objects.get(id=patient_id)
+            self.logger.debug(f"PatientRepository: Patient found with CPF {patient.cpf_paciente}")
+            return patient
+        except Paciente.DoesNotExist:
+            self.logger.error(f"PatientRepository: Patient not found for ID: {patient_id}")
+            raise

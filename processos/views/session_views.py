@@ -36,7 +36,9 @@ def set_edit_session(request):
     
     # Verify user owns this process
     try:
-        processo = Processo.objects.get(id=processo_id, usuario=request.user)
+        from ..services.prescription.process_repository import ProcessRepository
+        process_repo = ProcessRepository()
+        processo = process_repo.get_process_by_id_and_user(processo_id, request.user)
     except Processo.DoesNotExist:
         logger.warning(f"Process {processo_id} not found for user {request.user}")
         return JsonResponse({'error': 'Process not found'}, status=404)

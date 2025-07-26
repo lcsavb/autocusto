@@ -14,7 +14,7 @@ from processos.models import Processo, Doenca, Protocolo, Medicamento
 from pacientes.models import Paciente
 from medicos.models import Medico
 from clinicas.models import Clinica, Emissor
-from processos.services.registration_service import ProcessRegistrationService
+from processos.services.prescription_database_service import PrescriptionDatabaseService
 from processos.repositories.patient_repository import PatientRepository
 
 

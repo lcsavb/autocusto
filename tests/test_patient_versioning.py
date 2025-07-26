@@ -474,7 +474,7 @@ class PatientVersioningIntegrationTest(TestCase):
     
     def test_process_creation_uses_versioning(self):
         """Test that process creation integrates with patient versioning."""
-        from processos.services.registration_service import ProcessRegistrationService
+        from processos.services.prescription_database_service import PrescriptionDatabaseService
         from datetime import datetime
         
         # Prepare process data
@@ -489,8 +489,8 @@ class PatientVersioningIntegrationTest(TestCase):
         })
         
         # Create process with versioned patient
-        registration_service = ProcessRegistrationService()
-        processo_id = registration_service.register_process(
+        registration_service = PrescriptionDatabaseService()
+        processo_id = registration_service.save_process_to_database(
             dados=process_data,
             meds_ids=[],
             doenca=self.doenca,
@@ -515,8 +515,8 @@ class PatientVersioningIntegrationTest(TestCase):
         updated_data = process_data.copy()
         updated_data['nome_paciente'] = 'João Santos'  # Different version
         
-        registration_service2 = ProcessRegistrationService()
-        processo_id2 = registration_service2.register_process(
+        registration_service2 = PrescriptionDatabaseService()
+        processo_id2 = registration_service2.save_process_to_database(
             dados=updated_data,
             meds_ids=[],
             doenca=self.doenca,
