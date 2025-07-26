@@ -155,6 +155,16 @@ class MedicoUsuario(models.Model):
     # doctor
     medico = models.ForeignKey(Medico, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        # OPTIMIZATION: Indexes for efficient through table lookups
+        # These make queries like "find all doctors for this user" fast
+        # Before: Full table scan on MedicoUsuario
+        # After: Direct index lookups
+        indexes = [
+            models.Index(fields=['usuario'], name='medicousuario_usuario_idx'),
+            models.Index(fields=['medico'], name='medicousuario_medico_idx'),
+        ]
+
     def __str__(self):
         # Doctor: {doctor} and User {user}
         return f"Médico: {self.medico} e Usuário {self.usuario}"

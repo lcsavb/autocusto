@@ -182,6 +182,17 @@ class Emissor(models.Model):
         related_name="emissores",
     )
 
+    class Meta:
+        # OPTIMIZATION: Composite index for efficient doctor-clinic lookups
+        # This index makes queries like "find all issuers for this doctor at this clinic" fast
+        # Before: Full table scan for medico+clinica combinations
+        # After: Direct index lookup
+        # Note: NO unique_together because versioning system allows multiple users
+        # to have the same doctor-clinic combination with different versioned data
+        indexes = [
+            models.Index(fields=['medico', 'clinica'], name='emissor_medico_clinica_idx'),
+        ]
+
     def __str__(self):
         # Issued by clinic: {clinic} and by doctor with CRM: {doctor}
         return (
@@ -204,6 +215,16 @@ class ClinicaUsuario(models.Model):
     )
     # clinic
     clinica = models.ForeignKey(Clinica, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        # OPTIMIZATION: Indexes for efficient through table lookups
+        # These make queries like "find all clinics for this user" fast
+        # Before: Full table scan on ClinicaUsuario  
+        # After: Direct index lookups
+        indexes = [
+            models.Index(fields=['usuario'], name='clinicausuario_usuario_idx'),
+            models.Index(fields=['clinica'], name='clinicausuario_clinica_idx'),
+        ]
 
     def __str__(self):
         # Clinic: {clinic} and User {user}

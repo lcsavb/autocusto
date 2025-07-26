@@ -10,7 +10,7 @@ Services:
 """
 
 import logging
-from typing import NamedTuple, Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Union
 from datetime import date
 
 from django.shortcuts import redirect
@@ -24,34 +24,15 @@ from processos.services.prescription_services import RenewalService
 from processos.services.prescription_data_service import PrescriptionDataService
 from processos.forms import fabricar_formulario
 from processos.views import _get_initial_data
+from processos.services.view_setup_models import (
+    ViewSetupResult, SetupError, ViewSetupSuccess,
+    CommonSetupData, PrescriptionFormData, 
+    NewPrescriptionData, EditPrescriptionData,
+    is_setup_error, is_setup_success
+)
 
 
 logger = logging.getLogger(__name__)
-
-
-class SetupResult(NamedTuple):
-    """Result object containing all setup data for prescription views."""
-    success: bool
-    error_redirect: Optional[str]
-    error_message: Optional[str]
-    
-    # Common setup data
-    usuario: Optional[Any]
-    medico: Optional[Any]
-    clinicas: Optional[QuerySet]
-    escolhas: Optional[Tuple]
-    cid: Optional[str]
-    medicamentos: Optional[List]
-    ModeloFormulario: Optional[type]
-    
-    # Edit-specific data
-    processo_id: Optional[int]
-    processo: Optional[Processo]
-    dados_iniciais: Optional[dict]
-    
-    # New prescription-specific data
-    paciente_existe: Optional[bool]
-    primeira_data: Optional[str]
 
 
 class PrescriptionViewSetupService:
@@ -69,7 +50,7 @@ class PrescriptionViewSetupService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    def setup_for_new_prescription(self, request) -> SetupResult:
+    def setup_for_new_prescription(self, request) -> ViewSetupResult:
         """
         Set up all data needed for the cadastro (new prescription) view.
         
@@ -77,7 +58,7 @@ class PrescriptionViewSetupService:
             request: Django HTTP request object
             
         Returns:
-            SetupResult: Contains all setup data or error information
+            ViewSetupResult: Contains all setup data or error information
         """
         try:
             print(f"DEBUG SETUP: ============= SETUP SERVICE CALLED =============")
@@ -87,14 +68,14 @@ class PrescriptionViewSetupService:
             # Step 1: Common setup (user, doctor, clinics)
             print(f"DEBUG SETUP: Calling _setup_common_data")
             common_result = self._setup_common_data(request)
-            print(f"DEBUG SETUP: Common setup result: success={common_result.success}")
-            if not common_result.success:
+            print(f"DEBUG SETUP: Common setup result: {type(common_result)}")
+            if isinstance(common_result, SetupError):
                 return common_result
             
             # Step 2: Validate new prescription session requirements
-            session_result = self._validate_new_prescription_session(request)
-            if not session_result.success:
-                return session_result
+            session_error = self._validate_new_prescription_session(request)
+            if session_error:
+                return session_error
             
             # Step 3: Get prescription-specific data
             paciente_existe = request.session["paciente_existe"]
@@ -111,49 +92,34 @@ class PrescriptionViewSetupService:
                 dados_iniciais = _get_initial_data(request, paciente_existe, primeira_data, cid)
             except KeyError as e:
                 self.logger.error(f"Missing session data for initial data: {e}")
-                return SetupResult(
-                    success=False,
-                    error_redirect="home",
-                    error_message=str(e),
-                    usuario=None, medico=None, clinicas=None, escolhas=None,
-                    cid=None, medicamentos=None, ModeloFormulario=None,
-                    processo_id=None, processo=None, dados_iniciais=None,
-                    paciente_existe=None, primeira_data=None
+                return SetupError(
+                    message=str(e),
+                    redirect_to="home"
                 )
             
             self.logger.info(f"Successfully set up new prescription view for CID: {cid}")
             
-            return SetupResult(
-                success=True,
-                error_redirect=None,
-                error_message=None,
-                usuario=common_result.usuario,
-                medico=common_result.medico,
-                clinicas=common_result.clinicas,
-                escolhas=common_result.escolhas,
-                cid=cid,
-                medicamentos=medicamentos,
-                ModeloFormulario=ModeloFormulario,
-                processo_id=None,
-                processo=None,
-                dados_iniciais=dados_iniciais,
-                paciente_existe=paciente_existe,
-                primeira_data=primeira_data
+            return ViewSetupSuccess(
+                common=common_result,
+                form=PrescriptionFormData(
+                    cid=cid,
+                    medicamentos=medicamentos,
+                    ModeloFormulario=ModeloFormulario
+                ),
+                specific=NewPrescriptionData(
+                    paciente_existe=paciente_existe,
+                    primeira_data=primeira_data
+                )
             )
             
         except Exception as e:
             self.logger.error(f"Error setting up new prescription view: {e}", exc_info=True)
-            return SetupResult(
-                success=False,
-                error_redirect="home",
-                error_message=f"Erro ao carregar dados do cadastro: {e}",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message=f"Erro ao carregar dados do cadastro: {e}",
+                redirect_to="home"
             )
     
-    def setup_for_edit_prescription(self, request) -> SetupResult:
+    def setup_for_edit_prescription(self, request) -> ViewSetupResult:
         """
         Set up all data needed for the edicao (edit prescription) view.
         
@@ -161,25 +127,25 @@ class PrescriptionViewSetupService:
             request: Django HTTP request object
             
         Returns:
-            SetupResult: Contains all setup data or error information
+            ViewSetupResult: Contains all setup data or error information
         """
         try:
             self.logger.info(f"Setting up edit prescription view for user: {request.user}")
             
             # Step 1: Common setup (user, doctor, clinics)
             common_result = self._setup_common_data(request)
-            if not common_result.success:
+            if isinstance(common_result, SetupError):
                 return common_result
             
             # Step 2: Validate edit prescription session requirements
-            session_result = self._validate_edit_prescription_session(request, common_result.usuario)
-            if not session_result.success:
-                return session_result
+            session_error = self._validate_edit_prescription_session(request, common_result.usuario)
+            if session_error:
+                return session_error
             
             # Step 3: Get edit-specific data
             cid = request.session["cid"]
-            processo_id = session_result.processo_id
-            processo = session_result.processo
+            processo_id = int(request.session["processo_id"])
+            processo = Processo.objects.get(id=processo_id, usuario=common_result.usuario)
             
             # Step 4: Get medications and form for edit
             med_repo = MedicationRepository()
@@ -203,37 +169,28 @@ class PrescriptionViewSetupService:
             
             self.logger.info(f"Successfully set up edit prescription view for process: {processo_id}")
             
-            return SetupResult(
-                success=True,
-                error_redirect=None,
-                error_message=None,
-                usuario=common_result.usuario,
-                medico=common_result.medico,
-                clinicas=common_result.clinicas,
-                escolhas=common_result.escolhas,
-                cid=cid,
-                medicamentos=medicamentos,
-                ModeloFormulario=ModeloFormulario,
-                processo_id=processo_id,
-                processo=processo,
-                dados_iniciais=dados_iniciais,
-                paciente_existe=True,  # For edit, patient always exists
-                primeira_data=primeira_data
+            return ViewSetupSuccess(
+                common=common_result,
+                form=PrescriptionFormData(
+                    cid=cid,
+                    medicamentos=medicamentos,
+                    ModeloFormulario=ModeloFormulario
+                ),
+                specific=EditPrescriptionData(
+                    processo_id=processo_id,
+                    processo=processo,
+                    dados_iniciais=dados_iniciais
+                )
             )
             
         except Exception as e:
             self.logger.error(f"Error setting up edit prescription view: {e}", exc_info=True)
-            return SetupResult(
-                success=False,
-                error_redirect="processos-busca",
-                error_message=f"Erro na inicialização: {e}",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message=f"Erro na inicialização: {e}",
+                redirect_to="processos-busca"
             )
     
-    def _setup_common_data(self, request) -> SetupResult:
+    def _setup_common_data(self, request) -> Union[SetupError, CommonSetupData]:
         """Set up data common to both cadastro and edicao views."""
         try:
             print(f"DEBUG COMMON: Starting common setup for user: {request.user}")
@@ -246,14 +203,9 @@ class PrescriptionViewSetupService:
             if not medico:
                 print(f"DEBUG COMMON: No medico found, redirecting to home")
                 self.logger.error(f"No doctor profile found for user: {usuario}")
-                return SetupResult(
-                    success=False,
-                    error_redirect="home",
-                    error_message="Erro: perfil médico não encontrado. Contate o suporte.",
-                    usuario=usuario, medico=None, clinicas=None, escolhas=None,
-                    cid=None, medicamentos=None, ModeloFormulario=None,
-                    processo_id=None, processo=None, dados_iniciais=None,
-                    paciente_existe=None, primeira_data=None
+                return SetupError(
+                    message="Erro: perfil médico não encontrado. Contate o suporte.",
+                    redirect_to="home"
                 )
             
             # Get clinics and create choices
@@ -262,29 +214,18 @@ class PrescriptionViewSetupService:
             
             self.logger.debug(f"Common setup complete - User: {usuario}, Clinics: {clinicas.count()}")
             
-            return SetupResult(
-                success=True,
-                error_redirect=None,
-                error_message=None,
+            return CommonSetupData(
                 usuario=usuario,
                 medico=medico,
                 clinicas=clinicas,
-                escolhas=escolhas,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+                escolhas=escolhas
             )
             
         except Exception as e:
             self.logger.error(f"Error in common setup: {e}", exc_info=True)
-            return SetupResult(
-                success=False,
-                error_redirect="home",
-                error_message=f"Erro ao carregar dados básicos: {e}",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message=f"Erro ao carregar dados básicos: {e}",
+                redirect_to="home"
             )
     
     def _create_clinic_choices(self, clinicas: QuerySet, usuario) -> Tuple:
@@ -296,67 +237,40 @@ class PrescriptionViewSetupService:
             escolhas.append((c.id, clinic_name))
         return tuple(escolhas)
     
-    def _validate_new_prescription_session(self, request) -> SetupResult:
+    def _validate_new_prescription_session(self, request) -> Optional[SetupError]:
         """Validate session state for new prescription."""
         # Check for required session variables
         if "paciente_existe" not in request.session:
             self.logger.error("Missing paciente_existe in session")
-            return SetupResult(
-                success=False,
-                error_redirect="home",
-                error_message="Sessão expirada. Por favor, inicie o cadastro novamente.",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message="Sessão expirada. Por favor, inicie o cadastro novamente.",
+                redirect_to="home"
             )
         
         if "cid" not in request.session:
             self.logger.error("Missing cid in session")
-            return SetupResult(
-                success=False,
-                error_redirect="home",
-                error_message="CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message="CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.",
+                redirect_to="home"
             )
         
-        return SetupResult(
-            success=True,
-            error_redirect=None, error_message=None,
-            usuario=None, medico=None, clinicas=None, escolhas=None,
-            cid=None, medicamentos=None, ModeloFormulario=None,
-            processo_id=None, processo=None, dados_iniciais=None,
-            paciente_existe=None, primeira_data=None
-        )
+        return None  # Success - no error
     
-    def _validate_edit_prescription_session(self, request, usuario) -> SetupResult:
+    def _validate_edit_prescription_session(self, request, usuario) -> Optional[SetupError]:
         """Validate session state for edit prescription."""
         # Check for required session variables
         if "cid" not in request.session:
             self.logger.error("Missing cid in session for edit")
-            return SetupResult(
-                success=False,
-                error_redirect="processos-busca",
-                error_message="Erro na inicialização: CID não encontrado na sessão.",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message="Erro na inicialização: CID não encontrado na sessão.",
+                redirect_to="processos-busca"
             )
         
         if "processo_id" not in request.session:
             self.logger.error("Missing processo_id in session for edit")
-            return SetupResult(
-                success=False,
-                error_redirect="processos-busca",
-                error_message="Processo não encontrado ou você não tem permissão para acessá-lo.",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message="Processo não encontrado ou você não tem permissão para acessá-lo.",
+                redirect_to="processos-busca"
             )
         
         # Verify user owns this process
@@ -364,24 +278,11 @@ class PrescriptionViewSetupService:
             processo_id = int(request.session["processo_id"])
             processo = Processo.objects.get(id=processo_id, usuario=usuario)
             self.logger.debug(f"Process {processo_id} found and owned by user")
-            
-            return SetupResult(
-                success=True,
-                error_redirect=None, error_message=None,
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=processo_id, processo=processo, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
-            )
+            return None  # Success - no error
             
         except (KeyError, ValueError, Processo.DoesNotExist) as e:
             self.logger.error(f"Error validating process ownership: {e}")
-            return SetupResult(
-                success=False,
-                error_redirect="processos-busca",
-                error_message="Processo não encontrado ou você não tem permissão para acessá-lo.",
-                usuario=None, medico=None, clinicas=None, escolhas=None,
-                cid=None, medicamentos=None, ModeloFormulario=None,
-                processo_id=None, processo=None, dados_iniciais=None,
-                paciente_existe=None, primeira_data=None
+            return SetupError(
+                message="Processo não encontrado ou você não tem permissão para acessá-lo.",
+                redirect_to="processos-busca"
             )

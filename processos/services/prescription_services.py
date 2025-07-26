@@ -616,16 +616,8 @@ class RenewalService:
     def _validate_renewal_eligibility(self, process_id: int, user) -> bool:
         """Validate if a process is eligible for renewal by the user."""
         try:
-            processo = Processo.objects.get(id=process_id)
-            
-            # Check if user has access to this process
-            if processo.usuario != user:
-                self.logger.error(
-                    f"RenewalService: User {user.email} does not have access to "
-                    f"process {process_id}"
-                )
-                return False
-            
+            # Verify user owns this process - more efficient than fetching then checking
+            processo = Processo.objects.get(id=process_id, usuario=user)
             return True
             
         except Processo.DoesNotExist:
@@ -659,7 +651,12 @@ class RenewalService:
         
         self.logger.info(f"RenewalService: Generating renewal data for process {process_id}")
         
-        processo = Processo.objects.get(id=process_id)
+        # Verify user owns this process before accessing data
+        if user:
+            processo = Processo.objects.get(id=process_id, usuario=user)
+        else:
+            # Fallback for cases where user is not provided (should be rare)
+            processo = Processo.objects.get(id=process_id)
         dados = {}
         
         # Get versioned patient data if user is provided

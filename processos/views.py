@@ -31,6 +31,8 @@ from .forms import (
 )
 from processos.utils.url_utils import generate_protocol_link
 from processos.services.prescription_services import RenewalService
+from processos.services.io_services import PDFFileService
+from processos.services.view_setup_models import SetupError
 
 
 # English: _get_initial_data
@@ -131,7 +133,10 @@ def busca_processos(request):
         # English: user
         usuario = request.user
         # English: user_patients
-        pacientes_usuario = usuario.pacientes.all()
+        # OPTIMIZATION: Prefetch related usuarios to avoid N+1 queries
+        # Before: 1 + N queries (1 for patients, N for each patient's users)
+        # After: 1 query with JOIN
+        pacientes_usuario = usuario.pacientes.prefetch_related('usuarios').all()
 
         # English: context
         contexto = {"pacientes_usuario": pacientes_usuario, "usuario": usuario}
@@ -168,18 +173,18 @@ def edicao(request):
     setup = setup_service.setup_for_edit_prescription(request)
     
     # Handle setup errors
-    if not setup.success:
-        messages.error(request, setup.error_message)
-        return redirect(setup.error_redirect)
+    if isinstance(setup, SetupError):
+        messages.error(request, setup.message)
+        return redirect(setup.redirect_to)
     
     # Extract setup data
-    usuario = setup.usuario
-    medico = setup.medico
-    escolhas = setup.escolhas
-    medicamentos = setup.medicamentos
-    ModeloFormulario = setup.ModeloFormulario
-    processo = setup.processo
-    processo_id = setup.processo_id
+    usuario = setup.common.usuario
+    medico = setup.common.medico
+    escolhas = setup.common.escolhas
+    medicamentos = setup.form.medicamentos
+    ModeloFormulario = setup.form.ModeloFormulario
+    processo = setup.specific.processo
+    processo_id = setup.specific.processo_id
 
     if request.method == "POST":
         logger.info("Processing POST request")
@@ -219,11 +224,15 @@ def edicao(request):
 
                     if pdf_response and updated_processo_id:
                         # View layer handles file I/O operations
-                        pdf_url = _save_pdf_for_serving(pdf_response, dados_formulario)
+                        file_service = PDFFileService()
+                        pdf_url = file_service.save_pdf_and_get_url(
+                            pdf_response, 
+                            dados_formulario.get('cpf_paciente', 'unknown'),
+                            dados_formulario.get('cid', 'unknown')
+                        )
                         
                         if pdf_url:
                             # Extract filename from URL path for response
-                            import os
                             filename = os.path.basename(pdf_url.rstrip('/'))
                             
                             request.session["path_pdf_final"] = pdf_url
@@ -332,7 +341,8 @@ def renovacao_rapida(request):
             request.session["busca"] = busca
             
             # English: user_patients
-            pacientes_usuario = usuario.pacientes.all()
+            # OPTIMIZATION: Prefetch usuarios for potential template use
+            pacientes_usuario = usuario.pacientes.prefetch_related('usuarios').all()
             print(f"DEBUG: pacientes_usuario count = {pacientes_usuario.count()}")
             
             if busca:
@@ -387,10 +397,16 @@ def renovacao_rapida(request):
 
         # Check if user wants to edit the process
         if request.POST.get("edicao"):
-            request.session["processo_id"] = processo_id
-            request.session["cid"] = Processo.objects.get(id=processo_id).doenca.cid
-            request.session["data1"] = nova_data
-            return redirect("processos-edicao")
+            # Verify user owns this process before accessing disease data
+            try:
+                processo = Processo.objects.get(id=processo_id, usuario=request.user)
+                request.session["processo_id"] = processo_id
+                request.session["cid"] = processo.doenca.cid
+                request.session["data1"] = nova_data
+                return redirect("processos-edicao")
+            except Processo.DoesNotExist:
+                messages.error(request, "Processo não encontrado ou você não tem permissão para acessá-lo.")
+                return redirect("processos-renovacao-rapida")
         
         # Generate PDF for renewal
         try:
@@ -412,11 +428,16 @@ def renovacao_rapida(request):
                 # View layer handles file I/O operations - need to generate data for filename
                 renewal_service = RenewalService()
                 dados_renovacao = renewal_service.generate_renewal_data(nova_data, int(processo_id), usuario)
-                pdf_url = _save_pdf_for_serving(pdf_response, dados_renovacao)
+                
+                file_service = PDFFileService()
+                pdf_url = file_service.save_pdf_and_get_url(
+                    pdf_response,
+                    dados_renovacao.get('cpf_paciente', 'unknown'),
+                    dados_renovacao.get('cid', 'unknown')
+                )
                 
                 if pdf_url:
                     # Extract filename from URL path
-                    import os
                     filename = os.path.basename(pdf_url.rstrip('/'))
                     
                     # Check if this is an AJAX request
@@ -470,7 +491,8 @@ def renovacao_rapida(request):
         # English: user
         usuario = request.user
         # English: user_patients
-        pacientes_usuario = usuario.pacientes.all()
+        # OPTIMIZATION: Prefetch usuarios for consistent performance
+        pacientes_usuario = usuario.pacientes.prefetch_related('usuarios').all()
         
         # Use versioned patient search if busca exists
         if busca:
@@ -510,23 +532,22 @@ def cadastro(request):
     setup = setup_service.setup_for_new_prescription(request)
     
     print(f"DEBUG CADASTRO: Setup completed")
-    print(f"DEBUG CADASTRO: Setup success: {setup.success}")
-    print(f"DEBUG CADASTRO: Setup error_redirect: {setup.error_redirect}")
-    print(f"DEBUG CADASTRO: Setup error_message: {setup.error_message}")
+    print(f"DEBUG CADASTRO: Setup type: {type(setup)}")
+    print(f"DEBUG CADASTRO: Setup is error: {isinstance(setup, SetupError)}")
     
     # Handle setup errors
-    if not setup.success:
-        print(f"DEBUG CADASTRO: Setup failed, redirecting to: {setup.error_redirect}")
-        messages.error(request, setup.error_message)
-        return redirect(setup.error_redirect)
+    if isinstance(setup, SetupError):
+        print(f"DEBUG CADASTRO: Setup failed, redirecting to: {setup.redirect_to}")
+        messages.error(request, setup.message)
+        return redirect(setup.redirect_to)
     
     # Extract setup data
-    usuario = setup.usuario
-    medico = setup.medico
-    escolhas = setup.escolhas
-    paciente_existe = setup.paciente_existe
-    medicamentos = setup.medicamentos
-    ModeloFormulario = setup.ModeloFormulario
+    usuario = setup.common.usuario
+    medico = setup.common.medico
+    escolhas = setup.common.escolhas
+    paciente_existe = setup.specific.paciente_existe
+    medicamentos = setup.form.medicamentos
+    ModeloFormulario = setup.form.ModeloFormulario
     
     print(f"DEBUG CADASTRO: Extracted data - usuario: {usuario}, medico: {medico}")
     if medico:
@@ -563,11 +584,15 @@ def cadastro(request):
 
                 if pdf_response and processo_id:
                     # View layer handles file I/O operations
-                    pdf_url = _save_pdf_for_serving(pdf_response, dados_formulario)
+                    file_service = PDFFileService()
+                    pdf_url = file_service.save_pdf_and_get_url(
+                        pdf_response,
+                        dados_formulario.get('cpf_paciente', 'unknown'),
+                        dados_formulario.get('cid', 'unknown')
+                    )
                     
                     if pdf_url:
                         # Extract filename from URL path for response
-                        import os
                         filename = os.path.basename(pdf_url.rstrip('/'))
                         
                         request.session["processo_id"] = processo_id
@@ -881,38 +906,4 @@ def set_edit_session(request):
     return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
 
-def _save_pdf_for_serving(pdf_response, data):
-    """
-    Save PDF to filesystem for serving and return URL path.
-    
-    This is view-layer infrastructure logic, handling HTTP response processing
-    and file system operations.
-    
-    Args:
-        pdf_response: HttpResponse containing PDF data
-        data: Prescription data for filename generation
-        
-    Returns:
-        str: URL path for accessing the PDF, or None if save fails
-    """
-    try:
-        # Generate filename
-        cpf_paciente = data.get('cpf_paciente', 'unknown')
-        cid = data.get('cid', 'unknown')
-        filename = f"pdf_final_{cpf_paciente}_{cid}.pdf"
-        
-        # Save to /tmp for serving
-        tmp_pdf_path = f"/tmp/{filename}"
-        with open(tmp_pdf_path, 'wb') as f:
-            f.write(pdf_response.content)
-        
-        # Generate URL path
-        from django.urls import reverse
-        pdf_url = reverse('processos-serve-pdf', kwargs={'filename': filename})
-        
-        logger.info(f"View layer: PDF saved to {tmp_pdf_path}")
-        return pdf_url
-        
-    except Exception as e:
-        logger.error(f"View layer: Failed to save PDF: {e}")
-        return None
+# _save_pdf_for_serving function removed - replaced by PDFFileService.save_pdf_and_get_url()

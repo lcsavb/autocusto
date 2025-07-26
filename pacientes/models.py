@@ -90,7 +90,13 @@ class Paciente(models.Model):
         import logging
         logger = logging.getLogger(__name__)
         
-        user_patients = user.pacientes.all()
+        # OPTIMIZATION: Prefetch related data to avoid N+1 queries when checking versions
+        # Also prefetch process data since renewal search often needs process information
+        user_patients = user.pacientes.prefetch_related(
+            'versions',  # Patient versions
+            'processos__doenca',  # Process diseases for renewal context  
+            'processos__medicamentos'  # Process medications
+        ).all()
         results = []
         skipped_count = 0
         
