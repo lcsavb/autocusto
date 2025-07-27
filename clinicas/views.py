@@ -57,10 +57,13 @@ def cadastro(request):
                     messages.success(request, f'Clínica {dados["nome_clinica"]} atualizada com sucesso!')
                 
                 # Check if coming from setup flow
-                if "paciente_existe" in request.session and "cid" in request.session:
+                if request.session.get('in_setup_flow') == True:
+                    # Clear the setup flow flag
+                    request.session.pop('in_setup_flow', None)
                     return redirect("processos-cadastro")
-                else:
-                    return redirect("home")
+                
+                # Normal clinic addition - redirect to home
+                return redirect("home")
                     
             except ValidationError as e:
                 # Handle model validation errors

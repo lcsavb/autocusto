@@ -179,6 +179,11 @@ class RenewalService:
         dados["relatorio"] = False      # No report for renewals 
         dados["exames"] = False         # No exams for renewals
         
+        # Preserve conditional data from original process for ALL protocols
+        if processo.dados_condicionais:
+            for key, value in processo.dados_condicionais.items():
+                dados[key] = value
+        
         # Handle chronic pain special logic
         try:
             protocolo = processo.doenca.protocolo
@@ -186,11 +191,6 @@ class RenewalService:
             if protocolo.nome == "dor_crônica":
                 # For chronic pain, include the LANNS/EVA assessment form
                 dados["include_lanns_eva"] = True
-                
-                # Preserve any conditional data from original process
-                if processo.dados_condicionais:
-                    for key, value in processo.dados_condicionais.items():
-                        dados[key] = value
         except Exception:
             # Silently handle any protocol-related errors
             pass

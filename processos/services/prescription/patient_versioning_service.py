@@ -44,7 +44,7 @@ class PatientVersioningService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    @transaction.atomic
+    @transaction.atomic  # LGPD compliance: Ensures user isolation atomicity
     def create_or_update_patient_for_user(
         self, 
         usuario: Usuario, 
@@ -53,9 +53,13 @@ class PatientVersioningService:
         """
         Create or update a patient version for a specific user.
         
-        This method implements smart patient versioning that only creates new versions
-        when data actually changes, preserving audit trails while preventing
-        unnecessary version creation.
+        Privacy-by-design versioning system: Each user gets isolated patient data copy
+        to comply with Brazilian LGPD (Lei Geral de Proteção de Dados). This prevents
+        cross-contamination of patient data between medical professionals while
+        maintaining audit trail integrity.
+        
+        Smart versioning: Only creates new versions when data actually changes,
+        preventing database bloat while preserving complete change history.
         
         Args:
             usuario: The user who will own this patient version
@@ -74,13 +78,13 @@ class PatientVersioningService:
         if not cpf:
             raise ValueError("CPF is required for patient versioning")
         
-        # Early return: if user has version with same data, reuse existing patient
+        # Smart versioning: Reuse existing version if data hasn't changed (prevents bloat)
         existing_patient = self._user_has_version_with_same_data(usuario, patient_data)
         if existing_patient:
             self.logger.info(f"PatientVersioning: No data changes, reusing existing patient ID: {existing_patient.id}")
             return existing_patient
         
-        # Data changed or no version exists - create new version for audit trail
+        # Create new version for audit compliance - preserves complete change history
         self.logger.info(f"PatientVersioning: Creating new version (data changed or first version)")
         versioned_patient = Paciente.create_or_update_for_user(usuario, patient_data)
         
@@ -89,7 +93,10 @@ class PatientVersioningService:
     
     def get_patient_version_for_user(self, cpf: str, usuario: Usuario) -> Paciente:
         """
-        Get the patient version that a user has access to.
+        Get user's isolated patient version - enforces privacy boundaries.
+        
+        LGPD compliance: Each user only sees their own patient data version,
+        preventing unauthorized access to patient information across medical professionals.
         
         Args:
             cpf: The patient's CPF
@@ -107,6 +114,7 @@ class PatientVersioningService:
         # Implementation depends on the specific versioning model
         try:
             patient = Paciente.objects.get(cpf_paciente=cpf)
+            # Privacy enforcement: Only return user's own version, never another user's data
             user_version = patient.get_version_for_user(usuario)
             
             if user_version:
@@ -165,14 +173,14 @@ class PatientVersioningService:
             if not existing_version:
                 return None
             
-            # Fields that matter for versioning
+            # Versioning fields: Only track medically relevant changes to prevent bloat
             version_fields = [
                 'nome_paciente', 'nome_mae', 'peso', 'altura', 'end_paciente',
                 'incapaz', 'nome_responsavel', 'etnia', 'telefone1_paciente',
                 'telefone2_paciente', 'email_paciente'
             ]
             
-            # Use list comprehension to find any changed fields
+            # Smart comparison: Detect actual data changes vs cosmetic differences (whitespace)
             changed_fields = [
                 field for field in version_fields
                 if str(getattr(existing_version, field, '') or '').strip() != str(patient_data.get(field, '') or '').strip()

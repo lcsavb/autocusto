@@ -158,10 +158,8 @@ class DoctorRegistrationService:
         if email and User.objects.filter(email=email).exists():
             errors['email'] = "Este email já está cadastrado"
         
-        # Validate doctor-specific data
-        doctor_data = self.doctor_repository.extract_doctor_data(registration_data)
-        doctor_errors = self.doctor_repository.validate_doctor_data(doctor_data)
-        errors.update(doctor_errors)
+        # During initial registration, CRM and CNS are None
+        # They will be added later during profile completion step
         
         error_count = len(errors)
         self.logger.debug(f"DoctorRegistrationService: Validation completed with {error_count} errors")

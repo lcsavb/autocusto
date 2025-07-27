@@ -40,7 +40,7 @@ class PrescriptionService:
         self.process_repository = ProcessRepository()
         self.domain_repository = DomainRepository()
     
-    @transaction.atomic
+    @transaction.atomic  # Critical: Ensures data consistency for Brazilian medical compliance
     def create_or_update_prescription(
         self, 
         form_data: dict, 
@@ -51,7 +51,12 @@ class PrescriptionService:
         process_id: Optional[int] = None
     ) -> Tuple[Optional[HttpResponse], Optional[int]]:
         """
-        Create or update a prescription following medical business rules.
+        Core prescription workflow orchestrator - handles full prescription lifecycle.
+        
+        Brazilian healthcare compliance requires atomic operations to ensure:
+        - Patient data integrity across versioned models
+        - Medical audit trail completeness
+        - Prescription-medication linkage accuracy
         
         Returns:
             Tuple of (pdf_response, process_id) or (None, None) if failed
@@ -78,7 +83,9 @@ class PrescriptionService:
             db_logger.info("PrescriptionService: Step 1 - Preparing prescription data")
             med_repo = MedicationRepository()
             medication_ids = med_repo.extract_medication_ids_from_form(form_data)
+            # Format dosages to standardized units for regulatory compliance
             form_data, meds_ids = med_repo.format_medication_dosages(form_data, medication_ids)
+            # Link medical professional data for prescription legal validity
             final_data = link_issuer_data(user, medico, clinica, form_data)
             db_logger.info(f"PrescriptionService: Data prepared, medications: {len(meds_ids)}")
             
@@ -91,7 +98,9 @@ class PrescriptionService:
             # Step 3: Get required domain entities using DomainRepository
             db_logger.info("PrescriptionService: Step 3 - Getting domain entities")
             cid = form_data.get('cid')
+            # CID-10 disease classification required for Brazilian medical regulations
             doenca = self.domain_repository.get_disease_by_cid(cid)
+            # Emissor links doctor-clinic for prescription authorization chain
             emissor = self.domain_repository.get_emissor_by_medico_clinica(medico, clinica)
             
             # Step 4: Process prescription using service layer (clean architecture)
@@ -102,6 +111,7 @@ class PrescriptionService:
                 from processos.repositories.patient_repository import PatientRepository
                 patient_repo = PatientRepository()
                 cpf_paciente = final_data["cpf_paciente"]
+                # Check if patient exists to determine data operation type (create vs update)
                 paciente_existe = patient_repo.check_patient_exists(cpf_paciente)
                 
                 # Build structured data using DataBuilder
@@ -114,13 +124,13 @@ class PrescriptionService:
                 
                 # Save using ProcessRepository
                 if process_id:
-                    # Update existing prescription
+                    # Update existing prescription - preserves audit trail
                     db_logger.info(f"PrescriptionService: Updating process {process_id} via service layer")
                     processo_id = self.process_repository.update_process_from_structured_data(
                         process_id, structured_data
                     )
                 else:
-                    # Create new prescription  
+                    # Create new prescription - generates new audit chain
                     db_logger.info("PrescriptionService: Creating new process via service layer")
                     processo_id = self.process_repository.create_process_from_structured_data(
                         structured_data
@@ -150,7 +160,7 @@ class PrescriptionService:
                     return None, processo_id
             except Exception as pdf_error:
                 db_logger.error(f"PrescriptionService: PDF generation error: {pdf_error}")
-                # Return the process ID even if PDF fails, so user knows the process was created
+                # Return process ID even if PDF fails - prescription is valid, just no document
                 return None, processo_id
                 
         except Doenca.DoesNotExist:
@@ -170,13 +180,13 @@ class PrescriptionService:
             raise
     
     def _validate_business_rules(self, prescription_data: dict, medication_ids: list) -> bool:
-        """Validate prescription business rules."""
-        # Business rule: Must have at least one medication
+        """Validate Brazilian medical prescription compliance rules."""
+        # Medical compliance: Prescription must have medications to be legally valid
         if not medication_ids:
             self.logger.error("PrescriptionService: No medications selected")
             return False
         
-        # Business rule: Must have valid prescription dates
+        # Medical compliance: Prescription validity dates required for regulatory tracking
         if 'data_1' not in prescription_data:
             self.logger.error("PrescriptionService: Missing prescription start date")
             return False

@@ -258,7 +258,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Validate date
                 if (!isValidDate(dateValue)) {
-                    throw { error: 'Data inválida! Use o formato DD/MM/AAAA' };
+                    Toast.error('Data inválida! Use o formato DD/MM/AAAA');
+                    return false; // Prevent form submission
                 }
                 
                 // If editing is enabled, submit form normally to allow redirect

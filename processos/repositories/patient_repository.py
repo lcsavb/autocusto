@@ -31,11 +31,10 @@ class PatientRepository:
     
     def check_patient_exists(self, cpf_paciente: str) -> Union[Paciente, bool]:
         """
-        Check if a patient with the given CPF exists in the database.
+        Check if patient exists - crucial for prescription workflow routing.
         
-        This method performs a database lookup to determine if a patient record
-        exists for the provided CPF. It's commonly used in form validation
-        and process creation workflows.
+        Return type determines workflow: Paciente object for updates, False for new patient creation.
+        CPF (Cadastro de Pessoas Físicas) is Brazilian national ID - unique patient identifier.
         
         Args:
             cpf_paciente: The patient's CPF (Brazilian tax ID)
@@ -70,7 +69,7 @@ class PatientRepository:
         """
         self.logger.debug("PatientRepository: Extracting patient data from form")
         
-        # Define patient-specific fields
+        # Brazilian medical form fields - matches ANVISA prescription requirements
         patient_fields = [
             'nome_paciente', 'cpf_paciente', 'peso', 'altura', 'nome_mae',
             'incapaz', 'nome_responsavel', 'etnia', 'telefone1_paciente',
@@ -91,10 +90,10 @@ class PatientRepository:
     
     def get_patients_by_user(self, user) -> QuerySet:
         """
-        Get all patients accessible by a specific user.
+        Get user's accessible patients - enforces versioning security boundaries.
         
-        This method returns patients that the user has access to through
-        the versioning system, respecting data access permissions.
+        LGPD compliance: Users only see patients they've personally entered data for,
+        preventing unauthorized access to other medical professionals' patient records.
         
         Args:
             user: The user to get patients for
@@ -104,8 +103,8 @@ class PatientRepository:
         """
         self.logger.debug(f"PatientRepository: Getting patients for user {user.email}")
         
-        # This would depend on the specific patient versioning implementation
-        # For now, return patients where user has versions
+        # Privacy enforcement: Only return patients where user has created versions
+        # This prevents cross-contamination of patient data between medical professionals
         accessible_patients = Paciente.objects.filter(
             versions__usuario=user
         ).distinct()
@@ -115,7 +114,7 @@ class PatientRepository:
         
         return accessible_patients
     
-    def get_patient_version_for_user(self, patient: Paciente, user) -> Optional[Any]:
+    def get_patient_version_for_user(self, patient: Paciente, user):
         """
         Get the patient data version for a specific user.
         
@@ -127,16 +126,20 @@ class PatientRepository:
             user: The user requesting access
             
         Returns:
-            Patient version instance if found, None otherwise
+            Patient version instance if found
+            
+        Raises:
+            ValueError: If no patient version exists for this user
         """
         self.logger.debug(f"PatientRepository: Getting version for patient {patient.id}, user {user.email}")
         
-        try:
-            # Use PatientVersioningService instead of direct model calls
-            return self.patient_versioning.get_patient_version_for_user(patient.cpf_paciente, user)
-        except Exception as e:
-            self.logger.error(f"PatientRepository: Error getting patient version: {e}")
-            return None
+        version = self.patient_versioning.get_patient_version_for_user(patient.cpf_paciente, user)
+        
+        if version is None:
+            self.logger.warning(f"PatientRepository: No version found for patient {patient.id}, user {user.email}")
+            raise ValueError(f"No patient data version exists for user {user.email}. Patient data must be entered through proper workflow.")
+        
+        return version
     
     def validate_patient_data(self, patient_data: Dict[str, Any]) -> Dict[str, str]:
         """
@@ -155,13 +158,13 @@ class PatientRepository:
         
         errors = {}
         
-        # Required fields validation
+        # Brazilian medical compliance: Name and CPF mandatory for prescription validity
         required_fields = ['nome_paciente', 'cpf_paciente']
         for field in required_fields:
             if not patient_data.get(field):
                 errors[field] = f"{field} é obrigatório"
         
-        # CPF format validation (basic check)
+        # CPF validation: Must be exactly 11 digits (Brazilian tax ID format)
         cpf = patient_data.get('cpf_paciente', '')
         if cpf and len(cpf.replace('.', '').replace('-', '')) != 11:
             errors['cpf_paciente'] = "CPF deve ter 11 dígitos"
