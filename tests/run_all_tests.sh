@@ -76,17 +76,17 @@ run_test_category() {
     
     if [[ "$ENVIRONMENT" == "container" ]]; then
         print_status $YELLOW "   Running inside container"
-        output=$(timeout 300 python manage.py test $test_path --settings=test_settings --verbosity=1 2>&1) || exit_code=$?
+        output=$(timeout 120 python manage.py test $test_path --verbosity=1 2>&1) || exit_code=$?
     elif [[ "$ENVIRONMENT" == "docker" ]]; then
         print_status $YELLOW "   Using Docker environment"
-        output=$(timeout 300 docker-compose exec -T web python manage.py test $test_path --settings=test_settings --verbosity=1 2>&1) || exit_code=$?
+        output=$(timeout 120 docker exec -T autocusto-web-1 python manage.py test $test_path --verbosity=1 2>&1) || exit_code=$?
     else
         print_status $YELLOW "   Using local environment"
         # Check if virtual environment exists
         if [[ -d "venv/bin" ]]; then
             source venv/bin/activate
         fi
-        output=$(timeout 300 python manage.py test $test_path --settings=test_settings --verbosity=1 2>&1) || exit_code=$?
+        output=$(timeout 120 python manage.py test $test_path --verbosity=1 2>&1) || exit_code=$?
     fi
     
     parse_test_results "$output" "$category"
@@ -167,45 +167,35 @@ echo "==================================="
 install_chrome_if_needed
 echo ""
 
-# Run test categories
-print_status $BLUE "🧪 Executing Test Suite"
-echo "======================="
+# Run test categories using new pyramid structure
+print_status $BLUE "🧪 Executing Test Pyramid"
+echo "========================="
 
-# 1. Forms Tests (fastest, foundational)
-run_test_category "Forms" "tests.forms" "Form Validation Tests"
+# PHASE 1: Unit Tests (Fast feedback)
+print_status $BLUE "📍 PHASE 1: Unit Tests (Fast Feedback)"
+echo "======================================"
 
-# 2. Authentication Tests (core security)
-run_test_category "Authentication" "tests.test_authentication" "Authentication & Security Tests"
+run_test_category "Unit-Models" "tests.unit.models" "Model Unit Tests"
+run_test_category "Unit-Services" "tests.unit.services" "Service Unit Tests" 
+run_test_category "Unit-Repositories" "tests.unit.repositories" "Repository Unit Tests"
+run_test_category "Unit-Utils" "tests.unit.utils" "Utility Unit Tests"
 
-# 3. Backend Security Tests
-run_test_category "Security" "tests.test_security" "Backend Security Tests"
+# PHASE 2: Integration Tests (Component interactions)
+print_status $BLUE "📍 PHASE 2: Integration Tests (Component Interactions)"
+echo "===================================================="
 
-# 4. Session Functionality Tests
-run_test_category "Session" "tests.session_functionality" "Session Functionality Tests"
+run_test_category "Integration-Database" "tests.integration.database" "Database Integration Tests"
+run_test_category "Integration-API" "tests.integration.api" "API Integration Tests"
+run_test_category "Integration-Forms" "tests.integration.forms" "Form Integration Tests"
+run_test_category "Integration-Services" "tests.integration.services" "Service Integration Tests"
 
-# 5. Versioning System Tests (NEW)
-print_status $BLUE "🔄 Data Versioning System Tests"
-echo "==============================="
-print_status $YELLOW "   Testing patient and clinic versioning for multi-tenancy"
-run_test_category "Patient-Versioning" "tests.test_patient_versioning.PatientVersioningModelTest tests.test_patient_versioning.PatientVersioningTemplateTest" "Patient Data Versioning Tests"
-run_test_category "Clinic-Versioning" "tests.test_clinic_versioning.ClinicVersioningModelTest.test_create_new_clinic_with_version tests.test_clinic_versioning.ClinicVersioningModelTest.test_update_existing_clinic_creates_version" "Clinic Data Versioning Tests"
+# PHASE 3: End-to-End Tests (Complete workflows)
+print_status $BLUE "📍 PHASE 3: End-to-End Tests (Complete Workflows)"
+echo "=============================================="
 
-# 6. Integration Tests
-run_test_category "Integration" "tests.integration" "Cross-App Integration Tests"
-
-# 7. Views Tests
-run_test_category "Views" "tests.views" "View Logic Tests"
-
-# 8. Frontend Tests (Selenium - may fail without Chrome)
-print_status $BLUE "🌐 Frontend Tests (Selenium-based)"
-echo "================================="
-print_status $YELLOW "   Note: These tests require Chrome/Chromium and may be skipped if not available"
-
-run_test_category "Frontend-Login" "tests.test_login_frontend" "Frontend Login UI Tests"
-run_test_category "Frontend-Registration" "tests.test_user_registration" "Frontend Registration Tests"  
-run_test_category "Frontend-Security" "tests.test_frontend_security" "Frontend Security Tests"
-run_test_category "Clinic-Management" "tests.test_clinic_management" "Clinic Management Tests"
-run_test_category "Prescription-Forms" "tests.test_prescription_forms" "Prescription Form Tests"
+run_test_category "E2E-User-Journeys" "tests.e2e.user_journeys" "User Journey Tests"
+run_test_category "E2E-Browser" "tests.e2e.browser" "Browser UI Tests"
+run_test_category "E2E-Security" "tests.e2e.security" "Security End-to-End Tests"
 
 # Final Summary
 echo ""
