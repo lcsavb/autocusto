@@ -295,12 +295,17 @@ class PrescriptionViewSetupService:
             if "cpf_paciente" not in request.session:
                 raise KeyError("CPF do paciente não encontrado na sessão.")
             
+            # Get domain repository for disease lookup
+            from ..repositories.domain_repository import DomainRepository
+            domain_repo = DomainRepository()
+            disease = domain_repo.get_disease_by_cid(cid)
+            
             # Return minimal data structure for new patient form
             dados_iniciais = {
                 "cpf_paciente": request.session["cpf_paciente"],
                 "data_1": primeira_data,
                 "cid": cid,
-                "diagnostico": domain_repo.get_disease_by_cid(cid).nome,
+                "diagnostico": disease.nome,
             }
             
             self.logger.debug(f"Prepared initial data for new patient with CPF {request.session['cpf_paciente']}")
@@ -567,4 +572,86 @@ class PrescriptionViewSetupService:
         
         self.logger.debug(f"Built context with {pacientes_usuario.count()} total patients, {len(busca_pacientes)} search results")
         return context
+    
+    def extract_conditional_fields(self, form) -> list:
+        """
+        Extract conditional fields from a form based on field name patterns.
+        
+        This method identifies fields that are conditionally displayed
+        based on the 'opt_' prefix naming convention.
+        
+        Args:
+            form: Django form instance
+            
+        Returns:
+            list: List of conditional form fields
+        """
+        return [field for field in form if field.name.startswith("opt_")]
+    
+    def adjust_conditional_fields(self, patient_data: dict) -> tuple:
+        """
+        Conditionally shows/hides form fields based on patient data and form completion context.
+        
+        This method implements complex business logic for Brazilian medical form regulations:
+        1. If patient has email, it means the form is being filled digitally by a doctor (not patient)
+        2. If patient is incapable (incapaz), a responsible person's name field must be shown
+        3. Campo 18 refers to specific SUS (Brazilian health system) form fields that are only
+           required when the form is filled by medical personnel rather than the patient
+        
+        Args:
+            patient_data (dict): Patient data dictionary containing form field values
+        
+        Returns:
+            tuple: (visibility_dict, modified_patient_data)
+                - visibility_dict: CSS classes to show/hide conditional fields
+                - modified_patient_data: Updated patient data with 'preenchido_por' field set
+        """
+        # Initialize all conditional fields as hidden by default
+        visibility_classes = {"responsavel_mostrar": "d-none", "campo_18_mostrar": "d-none"}
+        
+        # Business rule: If patient has email, assume doctor is filling the form digitally
+        # This triggers showing additional SUS form fields (campo 18) required for medical personnel
+        if patient_data.get("email_paciente", "") != "":
+            visibility_classes["campo_18_mostrar"] = ""  # Show campo 18 fields
+            patient_data["preenchido_por"] = "medico"  # Set form completion context
+        
+        # Legal requirement: If patient is incapable, must show responsible person field
+        if patient_data.get("incapaz", False):
+            visibility_classes["responsavel_mostrar"] = ""  # Show responsible person name field
+        
+        return visibility_classes, patient_data
+    
+    def get_medication_display_classes(self, show_existing_medications: bool, process=None) -> dict:
+        """
+        Dynamically controls medication tab visibility in the UI based on existing process data.
+        
+        This method determines which medication tabs should be visible in the form interface.
+        By default, all medication tabs except the first one are hidden (using Bootstrap's 'd-none' class).
+        When editing an existing process, this method reveals tabs for medications that are already
+        associated with the process, ensuring users can see and edit existing medication data.
+        
+        Args:
+            show_existing_medications (bool): Whether to show medications (True for editing existing process, False for new)
+            process: Process instance when show_existing_medications=True
+        
+        Returns:
+            dict: CSS class mapping for medication tabs ('d-none' to hide, '' to show)
+        """
+        # Initialize all medication tabs as hidden except med1 (which is always shown)
+        display_classes = {
+            "med2_mostrar": "d-none",
+            "med3_mostrar": "d-none", 
+            "med4_mostrar": "d-none",
+        }
+        
+        if show_existing_medications and process:
+            # Exact same logic as original mostrar_med function
+            n = 1
+            # Iterate through existing medications and reveal corresponding tabs
+            # This ensures users can see all medications already associated with the process
+            for med in process.medicamentos.all():
+                display_classes[f"med{n}_mostrar"] = ""  # Remove 'd-none' class to show the tab
+                n = n + 1
+        
+        return display_classes
     

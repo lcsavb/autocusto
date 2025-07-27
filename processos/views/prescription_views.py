@@ -12,11 +12,7 @@ from django.db import IntegrityError
 from django.forms.models import model_to_dict
 from pacientes.models import Paciente
 from processos.models import Doenca
-from processos.forms import (
-    extrair_campos_condicionais,
-    ajustar_campos_condicionais,
-    mostrar_med,
-)
+# Removed deprecated form imports - now using service methods
 from processos.utils.url_utils import generate_protocol_link
 from processos.services.view_services import PrescriptionViewSetupService
 from processos.services.view_setup_models import SetupError
@@ -58,8 +54,9 @@ def edicao(request):
     # Handle GET request - form initialization
     formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.specific.dados_iniciais)
     
-    # Set up template context
-    campos_condicionais = extrair_campos_condicionais(formulario)
+    # Set up template context using service methods
+    setup_service_instance = PrescriptionViewSetupService()
+    campos_condicionais = setup_service_instance.extract_conditional_fields(formulario)
     link_protocolo = generate_protocol_link(setup.form.cid)
 
     contexto = {
@@ -68,7 +65,9 @@ def edicao(request):
         "campos_condicionais": campos_condicionais,
         "link_protocolo": link_protocolo,
     }
-    contexto.update(mostrar_med(True, processo))
+    # Use service method for medication display classes
+    display_service = PrescriptionViewSetupService()
+    contexto.update(display_service.get_medication_display_classes(True, processo))
 
     return render(request, "processos/edicao.html", contexto)
 
@@ -102,212 +101,22 @@ def cadastro(request):
     if request.method == "POST":
         return _handle_prescription_create_post(request, setup, ModeloFormulario, escolhas, medicamentos, paciente_existe)
     
-    # Handle GET request
-    return _handle_prescription_create_get(request, setup, ModeloFormulario, escolhas, medicamentos, paciente_existe, medico, usuario)
-
-
-def _handle_prescription_edit_post(request, setup, ModeloFormulario, escolhas, medicamentos, processo_id):
-    """Handle POST request for prescription editing using workflow service."""
-    from processos.services.prescription_services import PrescriptionService
-    from processos.services.io_services import PDFFileService
-    from processos.utils.pdf_json_response_helper import PDFJsonResponseHelper
-    import os
-    
-    # Extract setup data
-    usuario = setup.common.usuario
-    medico = setup.common.medico
-    
-    # Initialize response helper
-    json_response = PDFJsonResponseHelper()
-    
-    # Create and validate form
+    # Handle GET request - template rendering (HTTP concern)
     try:
-        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
-    except Exception as e:
-        logger.error(f"Error creating form: {str(e)}")
-        return json_response.exception(e, context="criação do formulário")
-    
-    # Early return for invalid form
-    if not formulario.is_valid():
-        logger.error(f"Form validation failed: {formulario.errors}")
-        return json_response.form_validation_failed(formulario.errors)
-    
-    # Extract validated data
-    dados_formulario = formulario.cleaned_data
-    id_clin = dados_formulario["clinicas"]
-    
-    try:
-        clinica = medico.clinicas.get(id=id_clin)
-    except Exception as e:
-        logger.error(f"Error getting clinic {id_clin}: {str(e)}")
-        return json_response.exception(e, context="busca da clínica")
-    
-    # Process prescription update
-    try:
-        prescription_service = PrescriptionService()
-        pdf_response, updated_processo_id = prescription_service.create_or_update_prescription(
-            form_data=dados_formulario,
-            user=usuario,
-            medico=medico,
-            clinica=clinica,
-            patient_exists=True,  # For edit, patient always exists
-            process_id=processo_id  # Update existing prescription
-        )
-    except Exception as e:
-        logger.error(f"Error updating prescription: {str(e)}")
-        return json_response.exception(e, context="atualização da prescrição")
-    
-    # Early return if prescription service failed
-    if not pdf_response or not updated_processo_id:
-        logger.error("Prescription service returned null response")
-        return json_response.pdf_generation_failed()
-    
-    # Save PDF file
-    try:
-        file_service = PDFFileService()
-        pdf_url = file_service.save_pdf_and_get_url(
-            pdf_response, 
-            dados_formulario.get('cpf_paciente', 'unknown'),
-            dados_formulario.get('cid', 'unknown')
-        )
-    except Exception as e:
-        logger.error(f"Error saving PDF: {str(e)}")
-        return json_response.exception(e, context="salvamento do PDF")
-    
-    # Early return if PDF saving failed
-    if not pdf_url:
-        logger.error("PDF file service returned null URL")
-        return json_response.pdf_save_failed()
-    
-    # Success - update session and return response
-    try:
-        filename = os.path.basename(pdf_url.rstrip('/'))
-        request.session["path_pdf_final"] = pdf_url
-        request.session["processo_id"] = updated_processo_id
-        logger.info(f"Prescription updated successfully: Process {updated_processo_id}")
+        # Validate doctor profile completeness
+        validation_service = PrescriptionViewSetupService()
+        profile_error = validation_service.validate_doctor_profile_completeness(medico, usuario)
         
-        return json_response.success(
-            pdf_url=pdf_url,
-            processo_id=updated_processo_id,
-            operation='update',
-            filename=filename
-        )
-    except Exception as e:
-        logger.error(f"Error finalizing response: {str(e)}")
-        return json_response.exception(e, context="finalização")
-
-
-def _handle_prescription_create_post(request, setup, ModeloFormulario, escolhas, medicamentos, paciente_existe):
-    """Handle POST request for prescription creation using workflow service."""
-    from processos.services.prescription_services import PrescriptionService
-    from processos.services.io_services import PDFFileService
-    from processos.utils.pdf_json_response_helper import PDFJsonResponseHelper
-    import os
-    
-    # Extract setup data
-    usuario = setup.common.usuario
-    medico = setup.common.medico
-    
-    # Initialize response helper
-    json_response = PDFJsonResponseHelper()
-    
-    # Create and validate form
-    try:
-        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
-    except Exception as e:
-        logger.error(f"Error creating form: {str(e)}")
-        return json_response.exception(e, context="criação do formulário")
-    
-    # Early return for invalid form
-    if not formulario.is_valid():
-        logger.error(f"Form validation failed: {formulario.errors}")
-        return json_response.form_validation_failed(formulario.errors)
-    
-    # Extract validated data
-    dados_formulario = formulario.cleaned_data
-    id_clin = dados_formulario["clinicas"]
-    
-    try:
-        clinica = medico.clinicas.get(id=id_clin)
-    except Exception as e:
-        logger.error(f"Error getting clinic {id_clin}: {str(e)}")
-        return json_response.exception(e, context="busca da clínica")
-    
-    # Process prescription creation
-    try:
-        prescription_service = PrescriptionService()
-        pdf_response, processo_id = prescription_service.create_or_update_prescription(
-            form_data=dados_formulario,
-            user=usuario,
-            medico=medico,
-            clinica=clinica,
-            patient_exists=paciente_existe,
-            process_id=None  # New prescription
-        )
-    except Exception as e:
-        logger.error(f"Error creating prescription: {str(e)}")
-        return json_response.exception(e, context="criação da prescrição")
-    
-    # Early return if prescription service failed
-    if not pdf_response or not processo_id:
-        logger.error("Prescription service returned null response")
-        return json_response.pdf_generation_failed()
-    
-    # Save PDF file
-    try:
-        file_service = PDFFileService()
-        pdf_url = file_service.save_pdf_and_get_url(
-            pdf_response, 
-            dados_formulario.get('cpf_paciente', 'unknown'),
-            dados_formulario.get('cid', 'unknown')
-        )
-    except Exception as e:
-        logger.error(f"Error saving PDF: {str(e)}")
-        return json_response.exception(e, context="salvamento do PDF")
-    
-    # Early return if PDF saving failed
-    if not pdf_url:
-        logger.error("PDF file service returned null URL")
-        return json_response.pdf_save_failed()
-    
-    # Success - update session and return response
-    try:
-        filename = os.path.basename(pdf_url.rstrip('/'))
-        request.session["processo_id"] = processo_id
-        logger.info(f"Prescription created successfully: Process {processo_id}")
+        if profile_error:
+            messages.info(request, profile_error.message)
+            return redirect(profile_error.redirect_to)
         
-        return json_response.success(
-            pdf_url=pdf_url,
-            processo_id=processo_id,
-            operation='create',
-            filename=filename
-        )
-    except Exception as e:
-        logger.error(f"Error finalizing response: {str(e)}")
-        return json_response.exception(e, context="finalização")
-
-
-def _handle_prescription_create_get(request, setup, ModeloFormulario, escolhas, medicamentos, paciente_existe, medico, usuario):
-    """Handle GET request for prescription creation form."""
-    
-    # Validate doctor profile completeness
-    validation_service = PrescriptionViewSetupService()
-    profile_error = validation_service.validate_doctor_profile_completeness(medico, usuario)
-    
-    if profile_error:
-        messages.info(request, profile_error.message)
-        return redirect(profile_error.redirect_to)
-    
-    # Create form with initial data
-    try:
+        # Create form with initial data
         formulario = ModeloFormulario(escolhas, medicamentos, initial=setup.specific.dados_iniciais)
-    except Exception as e:
-        messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
-        return redirect("home")
-    
-    # Setup context for template rendering
-    try:
-        campos_condicionais = extrair_campos_condicionais(formulario)
+        
+        # Setup context for template rendering using service methods
+        setup_service_instance = PrescriptionViewSetupService()
+        campos_condicionais = setup_service_instance.extract_conditional_fields(formulario)
         link_protocolo = generate_protocol_link(setup.form.cid)
         
         contexto = {
@@ -321,12 +130,158 @@ def _handle_prescription_create_get(request, setup, ModeloFormulario, escolhas, 
         if paciente_existe:
             contexto.update(_get_patient_context_data(request, setup))
         
-        contexto.update(mostrar_med(False))
+        contexto.update(setup_service_instance.get_medication_display_classes(False))
         return render(request, "processos/cadastro.html", contexto)
         
     except Exception as e:
         messages.error(request, f"Erro ao carregar formulário de cadastro: {e}")
         return redirect("home")
+
+
+def _handle_prescription_edit_post(request, setup, ModeloFormulario, escolhas, medicamentos, processo_id):
+    """Handle POST request for prescription editing - HTTP concerns only."""
+    from processos.services.prescription_services import PrescriptionService
+    from processos.services.io_services import PDFFileService
+    from processos.utils.pdf_json_response_helper import PDFJsonResponseHelper
+    import os
+    
+    # Extract setup data
+    usuario = setup.common.usuario
+    medico = setup.common.medico
+    json_response = PDFJsonResponseHelper()
+    
+    # Form validation (HTTP concern)
+    try:
+        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
+        if not formulario.is_valid():
+            return json_response.form_validation_failed(formulario.errors)
+        
+        dados_formulario = formulario.cleaned_data
+        clinica = medico.clinicas.get(id=dados_formulario["clinicas"])
+    except Exception as e:
+        logger.error(f"Error in form processing: {str(e)}")
+        return json_response.exception(e, context="validação do formulário")
+    
+    # Business logic (delegate to service)
+    try:
+        prescription_service = PrescriptionService()
+        pdf_response, updated_processo_id = prescription_service.create_or_update_prescription(
+            form_data=dados_formulario,
+            user=usuario,
+            medico=medico,
+            clinica=clinica,
+            patient_exists=True,
+            process_id=processo_id
+        )
+        
+        if not pdf_response or not updated_processo_id:
+            return json_response.pdf_generation_failed()
+            
+    except Exception as e:
+        logger.error(f"Error updating prescription: {str(e)}")
+        return json_response.exception(e, context="atualização da prescrição")
+    
+    # File I/O (HTTP concern)
+    try:
+        file_service = PDFFileService()
+        pdf_url = file_service.save_pdf_and_get_url(
+            pdf_response, 
+            dados_formulario.get('cpf_paciente', 'unknown'),
+            dados_formulario.get('cid', 'unknown')
+        )
+        
+        if not pdf_url:
+            return json_response.pdf_save_failed()
+        
+        # Session management (HTTP concern)
+        filename = os.path.basename(pdf_url.rstrip('/'))
+        request.session["path_pdf_final"] = pdf_url
+        request.session["processo_id"] = updated_processo_id
+        
+        logger.info(f"Prescription updated successfully: Process {updated_processo_id}")
+        return json_response.success(
+            pdf_url=pdf_url,
+            processo_id=updated_processo_id,
+            operation='update',
+            filename=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in file operations: {str(e)}")
+        return json_response.exception(e, context="operações de arquivo")
+
+
+def _handle_prescription_create_post(request, setup, ModeloFormulario, escolhas, medicamentos, paciente_existe):
+    """Handle POST request for prescription creation - HTTP concerns only."""
+    from processos.services.prescription_services import PrescriptionService
+    from processos.services.io_services import PDFFileService
+    from processos.utils.pdf_json_response_helper import PDFJsonResponseHelper
+    import os
+    
+    # Extract setup data
+    usuario = setup.common.usuario
+    medico = setup.common.medico
+    json_response = PDFJsonResponseHelper()
+    
+    # Form validation (HTTP concern)
+    try:
+        formulario = ModeloFormulario(escolhas, medicamentos, request.POST)
+        if not formulario.is_valid():
+            return json_response.form_validation_failed(formulario.errors)
+        
+        dados_formulario = formulario.cleaned_data
+        clinica = medico.clinicas.get(id=dados_formulario["clinicas"])
+    except Exception as e:
+        logger.error(f"Error in form processing: {str(e)}")
+        return json_response.exception(e, context="validação do formulário")
+    
+    # Business logic (delegate to service)
+    try:
+        prescription_service = PrescriptionService()
+        pdf_response, processo_id = prescription_service.create_or_update_prescription(
+            form_data=dados_formulario,
+            user=usuario,
+            medico=medico,
+            clinica=clinica,
+            patient_exists=paciente_existe,
+            process_id=None
+        )
+        
+        if not pdf_response or not processo_id:
+            return json_response.pdf_generation_failed()
+            
+    except Exception as e:
+        logger.error(f"Error creating prescription: {str(e)}")
+        return json_response.exception(e, context="criação da prescrição")
+    
+    # File I/O (HTTP concern)
+    try:
+        file_service = PDFFileService()
+        pdf_url = file_service.save_pdf_and_get_url(
+            pdf_response, 
+            dados_formulario.get('cpf_paciente', 'unknown'),
+            dados_formulario.get('cid', 'unknown')
+        )
+        
+        if not pdf_url:
+            return json_response.pdf_save_failed()
+        
+        # Session management (HTTP concern)
+        filename = os.path.basename(pdf_url.rstrip('/'))
+        request.session["processo_id"] = processo_id
+        
+        logger.info(f"Prescription created successfully: Process {processo_id}")
+        return json_response.success(
+            pdf_url=pdf_url,
+            processo_id=processo_id,
+            operation='create',
+            filename=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in file operations: {str(e)}")
+        return json_response.exception(e, context="operações de arquivo")
+
 
 
 def _get_patient_context_data(request, setup):
@@ -363,8 +318,10 @@ def _get_patient_context_data(request, setup):
     dados_paciente["cid"] = setup.form.cid
     dados_paciente["data_1"] = setup.specific.primeira_data
     
-    # Get adjusted fields for conditional display
-    campos_ajustados, _ = ajustar_campos_condicionais(dados_paciente)
+    # Get adjusted fields for conditional display using service method
+    from ..services.view_services import PrescriptionViewSetupService
+    service = PrescriptionViewSetupService()
+    campos_ajustados, _ = service.adjust_conditional_fields(dados_paciente)
     
     context = {"paciente": paciente}
     context.update(campos_ajustados)
