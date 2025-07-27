@@ -82,4 +82,6 @@ class ListarPacientes(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         # Only show patients associated with the current user
-        return Paciente.objects.filter(usuarios=self.request.user)
+        from processos.repositories.patient_repository import PatientRepository
+        patient_repo = PatientRepository()
+        return patient_repo.get_patients_by_user(self.request.user)

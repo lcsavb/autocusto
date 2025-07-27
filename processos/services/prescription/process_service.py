@@ -1,19 +1,18 @@
 """
-Prescription Database Service - Database Operations for Prescriptions
+Prescription Process Service - Business Logic and Database Operations
 
-This service handles ALL database operations and business logic for prescriptions.
-It is called ONLY by Django forms through their save() methods, maintaining
-proper Django patterns where forms handle database operations.
+This service handles prescription process business logic and coordinates database operations.
+It orchestrates the complex prescription workflow through repository pattern.
 
 Responsibilities:
-- Patient versioning and creation/update
 - Process creation and updates with business rules
+- Patient versioning coordination (delegates to PatientVersioningService)
 - Medication associations and relationship management
 - User statistics updates
-- Complex business logic that forms need
+- Complex business logic for prescription workflows
 
-This service is the ONLY path to database operations for prescription processes.
-Views should NEVER call this service directly - only through forms.
+This service coordinates repositories and implements prescription business rules.
+Called by workflow services and form save methods.
 """
 
 import logging
@@ -31,7 +30,7 @@ from .patient_versioning_service import PatientVersioningService
 logger = logging.getLogger('processos.database')
 
 
-class ProcessRepository:
+class ProcessService:
     """
     Service for database operations and business logic for prescriptions.
     
@@ -83,9 +82,9 @@ class ProcessRepository:
         medication_ids = structured_data['medication_ids']
         metadata = structured_data['metadata']
         
-        self.logger.info(f"ProcessRepository: Creating process from structured data")
-        self.logger.info(f"ProcessRepository: Patient exists: {metadata['patient_exists']}")
-        self.logger.info(f"ProcessRepository: Medications count: {len(medication_ids)}")
+        self.logger.info(f"ProcessService: Creating process from structured data")
+        self.logger.info(f"ProcessService: Patient exists: {metadata['patient_exists']}")
+        self.logger.info(f"ProcessService: Medications count: {len(medication_ids)}")
         
         if metadata['patient_exists']:
             return self._create_with_existing_patient(patient_data, process_data, medication_ids, metadata)
@@ -109,7 +108,7 @@ class ProcessRepository:
         medication_ids = structured_data['medication_ids']
         metadata = structured_data['metadata']
         
-        self.logger.info(f"ProcessRepository: Updating process {process_id} from structured data")
+        self.logger.info(f"ProcessService: Updating process {process_id} from structured data")
         
         # Set the process ID in process_data for update
         process_data['id'] = process_id
@@ -282,12 +281,17 @@ class ProcessRepository:
         from processos.models import Processo
         self.logger.debug(f"ProcessRepository: Getting process {process_id} for user {user.email}")
         
+        from ...repositories.process_repository import ProcessRepository
+        process_repo = ProcessRepository()
         try:
-            processo = Processo.objects.get(id=process_id, usuario=user)
-            self.logger.debug(f"ProcessRepository: Found process {process_id}")
+            processo = process_repo.get_process_for_user(process_id, user)
+            if not processo:
+                self.logger.error(f"ProcessService: Process {process_id} not found for user {user.email}")
+                raise Processo.DoesNotExist(f"Process {process_id} not found for user {user.email}")
+            self.logger.debug(f"ProcessService: Found process {process_id}")
             return processo
-        except Processo.DoesNotExist:
-            self.logger.error(f"ProcessRepository: Process {process_id} not found for user {user.email}")
+        except Exception as e:
+            self.logger.error(f"ProcessService: Error retrieving process {process_id}: {e}")
             raise
     
     def _prepare_model(self, modelo, **kwargs):
@@ -327,9 +331,11 @@ class ProcessRepository:
         from django.core.serializers.json import DjangoJSONEncoder
         import json
         
-        self.logger.info(f"ProcessRepository: Quick date update for process {process_id}")
+        self.logger.info(f"ProcessService: Quick date update for process {process_id}")
         
-        processo = Processo.objects.get(id=process_id)
+        from ...repositories.process_repository import ProcessRepository
+        process_repo = ProcessRepository()
+        processo = process_repo.get_process_by_id(process_id)
         processo.prescricao['1']['data_1'] = new_date
         
         # Ensure proper JSON serialization with Django's encoder

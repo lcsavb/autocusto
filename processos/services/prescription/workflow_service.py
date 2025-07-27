@@ -16,7 +16,7 @@ from processos.models import Doenca
 from clinicas.models import Emissor
 from .pdf_generation import PrescriptionPDFService
 from .data_builder import PrescriptionDataBuilder
-from .process_repository import ProcessRepository
+from .process_service import ProcessService
 from ...repositories.domain_repository import DomainRepository
 
 
@@ -37,7 +37,7 @@ class PrescriptionService:
         self.pdf_service = PrescriptionPDFService()
         self.logger = logging.getLogger(__name__)
         self.data_builder = PrescriptionDataBuilder()
-        self.process_repository = ProcessRepository()
+        self.process_service = ProcessService()
         self.domain_repository = DomainRepository()
     
     @transaction.atomic  # Critical: Ensures data consistency for Brazilian medical compliance
@@ -126,13 +126,13 @@ class PrescriptionService:
                 if process_id:
                     # Update existing prescription - preserves audit trail
                     db_logger.info(f"PrescriptionService: Updating process {process_id} via service layer")
-                    processo_id = self.process_repository.update_process_from_structured_data(
+                    processo_id = self.process_service.update_process_from_structured_data(
                         process_id, structured_data
                     )
                 else:
                     # Create new prescription - generates new audit chain
                     db_logger.info("PrescriptionService: Creating new process via service layer")
-                    processo_id = self.process_repository.create_process_from_structured_data(
+                    processo_id = self.process_service.create_process_from_structured_data(
                         structured_data
                     )
                 

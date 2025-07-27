@@ -125,9 +125,11 @@ class PrescriptionPDFService:
             return None
             
         try:
+            from ...repositories.domain_repository import DomainRepository
+            domain_repo = DomainRepository()
             cid = data['cid']
             self.logger.debug(f"PrescriptionPDFService: Looking up protocol for CID: {cid}")
-            protocolo = Protocolo.objects.get(doenca__cid=cid)
+            protocolo = domain_repo.get_protocol_by_cid(cid)
             self.logger.debug(f"PrescriptionPDFService: Found protocol: {protocolo.nome} (ID: {protocolo.id})")
             return protocolo
         except Protocolo.DoesNotExist:

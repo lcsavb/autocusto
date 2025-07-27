@@ -133,7 +133,9 @@ class MedicoCadastroFormulario(CustomUserCreationForm):
         email = self.cleaned_data.get("email")
         if email:
             email = email.lower()  # Normalize to lowercase for case-insensitive comparison
-            if Usuario.objects.filter(email=email).exists():
+            from medicos.repositories.doctor_repository import DoctorRepository
+            doctor_repo = DoctorRepository()
+            if doctor_repo.check_email_exists(email):
                 raise forms.ValidationError("Este email já está em uso.")
         return email
 
@@ -290,12 +292,10 @@ class ProfileCompletionForm(forms.Form):
             
             # Check if CRM+State combination already exists for another medico
             if crm and estado:
-                existing_medico = Medico.objects.filter(
-                    crm_medico=crm, 
-                    estado=estado
-                ).exclude(
-                    id=current_medico.id if current_medico else None
-                ).first()
+                from medicos.repositories.doctor_repository import DoctorRepository
+                doctor_repo = DoctorRepository()
+                # Use raw QuerySet access through repository for complex filtering
+                existing_medico = doctor_repo.check_crm_conflict(crm, estado, current_medico.id if current_medico else None)
                 if existing_medico:
                     self.add_error('crm', f"Este CRM já está sendo usado por outro médico no estado {dict(BRAZILIAN_STATES)[estado]}.")
         
@@ -310,9 +310,9 @@ class ProfileCompletionForm(forms.Form):
         # Check if CNS already exists for another medico
         if cns and self.user:
             current_medico = self.user.medicos.first()
-            existing_medico = Medico.objects.filter(cns_medico=cns).exclude(
-                id=current_medico.id if current_medico else None
-            ).first()
+            from medicos.repositories.doctor_repository import DoctorRepository
+            doctor_repo = DoctorRepository()
+            existing_medico = doctor_repo.check_cns_conflict(cns, current_medico.id if current_medico else None)
             if existing_medico:
                 raise forms.ValidationError("Este CNS já está sendo usado por outro médico.")
         

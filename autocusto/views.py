@@ -68,11 +68,9 @@ def home(request):
                 try:
                     # Security check: Ensure doctor can only access their own patients
                     # This prevents unauthorized access to patient data across different doctors
-                    # patient
-                    paciente = Paciente.objects.get(
-                        cpf_paciente=cpf_paciente,
-                        usuarios=usuario
-                    )
+                    from processos.repositories.patient_repository import PatientRepository
+                    patient_repo = PatientRepository()
+                    paciente = patient_repo.get_patient_by_cpf_for_user(cpf_paciente, usuario)
                     # Patient exists and belongs to current doctor
                     request.session["paciente_existe"] = True
                     request.session["paciente_id"] = paciente.id

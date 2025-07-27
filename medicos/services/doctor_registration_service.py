@@ -155,7 +155,7 @@ class DoctorRegistrationService:
         
         # Email uniqueness check
         email = registration_data.get('email')
-        if email and User.objects.filter(email=email).exists():
+        if email and self.doctor_repository.check_email_exists(email):
             errors['email'] = "Este email já está cadastrado"
         
         # During initial registration, CRM and CNS are None
@@ -184,7 +184,7 @@ class DoctorRegistrationService:
         }
         
         # Check if email already exists
-        if User.objects.filter(email=email).exists():
+        if self.doctor_repository.check_email_exists(email):
             result['eligible'] = False
             result['reasons'].append('Email já cadastrado no sistema')
         

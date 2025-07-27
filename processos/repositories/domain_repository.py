@@ -8,8 +8,8 @@ It provides a clean interface for domain-related database operations.
 import logging
 from typing import Optional
 
-from processos.models import Doenca
-from clinicas.models import Emissor
+from processos.models import Doenca, Protocolo
+from clinicas.models import Emissor, Clinica
 
 
 class DomainRepository:
@@ -80,3 +80,44 @@ class DomainRepository:
         """
         self.logger.debug("DomainRepository: Getting all diseases")
         return Doenca.objects.all()
+    
+    def get_protocol_by_cid(self, cid: str) -> Protocolo:
+        """
+        Get protocol by CID code through disease lookup.
+        
+        Args:
+            cid: The disease CID code
+            
+        Returns:
+            Protocolo: The protocol instance if found
+            
+        Raises:
+            Protocolo.DoesNotExist: If protocol not found
+        """
+        self.logger.debug(f"DomainRepository: Getting protocol for CID {cid}")
+        
+        try:
+            protocolo = Protocolo.objects.get(doenca__cid=cid)
+            self.logger.debug(f"DomainRepository: Found protocol: {protocolo.nome} (ID: {protocolo.id})")
+            return protocolo
+        except Protocolo.DoesNotExist:
+            self.logger.error(f"DomainRepository: Protocol not found for CID: {cid}")
+            raise
+    
+    def get_clinics_by_user(self, user):
+        """
+        Get clinics associated with a user.
+        
+        Args:
+            user: The user to get clinics for
+            
+        Returns:
+            QuerySet: QuerySet of clinic instances associated with the user
+        """
+        self.logger.debug(f"DomainRepository: Getting clinics for user {user.email}")
+        
+        clinics = Clinica.objects.filter(usuarios=user)
+        count = clinics.count()
+        
+        self.logger.debug(f"DomainRepository: Found {count} clinics for user")
+        return clinics

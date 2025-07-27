@@ -317,7 +317,7 @@ class NovoProcesso(PrescriptionBaseMixin, forms.Form):
         from ..repositories.patient_repository import PatientRepository
         from ..repositories.domain_repository import DomainRepository
         from ..services.prescription.data_builder import PrescriptionDataBuilder
-        from ..services.prescription.process_repository import ProcessRepository
+        from ..services.prescription.process_service import ProcessService
         
         dados = self.cleaned_data
         clinica_id = dados["clinicas"]
@@ -341,7 +341,7 @@ class NovoProcesso(PrescriptionBaseMixin, forms.Form):
         )
 
         # Step 2: Use ProcessRepository with structured data
-        db_service = ProcessRepository()
+        db_service = ProcessService()
         processo_id = db_service.create_process_from_structured_data(structured_data)
 
         return processo_id
@@ -372,7 +372,7 @@ class RenovarProcesso(NovoProcesso):
         2. Quick renewal - date update only
         """
         from ..repositories.patient_repository import PatientRepository
-        from ..services.prescription.process_repository import ProcessRepository
+        from ..services.prescription.process_service import ProcessService
         
         dados = self.cleaned_data
         edicao_completa = dados["edicao_completa"]
@@ -389,7 +389,7 @@ class RenovarProcesso(NovoProcesso):
     def _handle_complete_renewal(self, dados, meds_ids, medico, usuario, processo_id):
         """Handle complete renewal with full form processing."""
         from ..repositories.patient_repository import PatientRepository
-        from ..services.prescription.process_repository import ProcessRepository
+        from ..services.prescription.process_service import ProcessService
         
         cpf_paciente = dados["cpf_paciente"]
         patient_repo = PatientRepository()
@@ -411,14 +411,14 @@ class RenovarProcesso(NovoProcesso):
         )
         
         # Use ProcessRepository with structured data for updates
-        registration_service = ProcessRepository()
+        registration_service = ProcessService()
         registration_service.update_process_from_structured_data(processo_id, structured_data)
 
     def _handle_quick_renewal(self, dados, meds_ids, processo_id):
         """Handle quick renewal with date update only."""
-        from ..services.prescription.process_repository import ProcessRepository
+        from ..services.prescription.process_service import ProcessService
         
         # Partial renewal - update only the date  
         # Use ProcessRepository for quick date update instead of direct database operations
-        registration_service = ProcessRepository()
+        registration_service = ProcessService()
         registration_service.update_process_date_only(processo_id, dados['data_1'], meds_ids)

@@ -113,7 +113,14 @@ class PatientVersioningService:
         # This would use the patient versioning system to get the user's version
         # Implementation depends on the specific versioning model
         try:
-            patient = Paciente.objects.get(cpf_paciente=cpf)
+            from ...repositories.patient_repository import PatientRepository
+            patient_repo = PatientRepository()
+            patient = patient_repo.check_patient_exists(cpf)
+            
+            if not patient:  # Returns False if patient doesn't exist
+                self.logger.warning(f"PatientVersioning: Patient with CPF {cpf} not found")
+                raise Paciente.DoesNotExist(f"Patient with CPF {cpf} not found")
+            
             # Privacy enforcement: Only return user's own version, never another user's data
             user_version = patient.get_version_for_user(usuario)
             

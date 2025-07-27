@@ -147,9 +147,9 @@ class PrescriptionViewSetupService:
             # Step 3: Get edit-specific data
             cid = request.session["cid"]
             processo_id = int(request.session["processo_id"])
-            from ..services.prescription.process_repository import ProcessRepository
-            process_repo = ProcessRepository()
-            processo = process_repo.get_process_by_id_and_user(processo_id, common_result.usuario)
+            from ..services.prescription.process_service import ProcessService
+            process_service = ProcessService()
+            processo = process_service.get_process_by_id_and_user(processo_id, common_result.usuario)
             
             # Step 4: Get medications and form for edit
             med_repo = MedicationRepository()
@@ -359,9 +359,9 @@ class PrescriptionViewSetupService:
         # Verify user owns this process
         try:
             processo_id = int(request.session["processo_id"])
-            from ..services.prescription.process_repository import ProcessRepository
-            process_repo = ProcessRepository()
-            processo = process_repo.get_process_by_id_and_user(processo_id, usuario)
+            from ..services.prescription.process_service import ProcessService
+            process_service = ProcessService()
+            processo = process_service.get_process_by_id_and_user(processo_id, usuario)
             self.logger.debug(f"Process {processo_id} found and owned by user")
             return None  # Success - no error
             

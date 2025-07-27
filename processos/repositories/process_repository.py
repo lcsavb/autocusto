@@ -76,3 +76,26 @@ class ProcessRepository:
         
         self.logger.warning(f"ProcessRepository: No authorized process {process_id} found for user {user.email}")
         return None, None
+    
+    def get_process_by_id(self, process_id: int) -> Processo:
+        """
+        Get process by ID without user restriction - for internal operations.
+        
+        Args:
+            process_id: The process ID to retrieve
+            
+        Returns:
+            Processo: The process instance if found
+            
+        Raises:
+            Processo.DoesNotExist: If process not found
+        """
+        self.logger.debug(f"ProcessRepository: Getting process {process_id} (no user check)")
+        
+        try:
+            processo = Processo.objects.get(id=process_id)
+            self.logger.debug(f"ProcessRepository: Found process {process_id}")
+            return processo
+        except Processo.DoesNotExist:
+            self.logger.error(f"ProcessRepository: Process {process_id} not found")
+            raise

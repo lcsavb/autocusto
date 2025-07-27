@@ -1,7 +1,5 @@
 # AutoCusto
 
-Clean registry-only deployment implemented.
-
 ## Background
 
 The Unified Health System, known as "Sistema Único de Saúde" (SUS), is a universal health insurance established by the Brazilian 1988 Constitution. It is the only public health care system in the world which offers insurance for more than 190 million people[^1].

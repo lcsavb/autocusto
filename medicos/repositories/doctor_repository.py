@@ -205,3 +205,40 @@ class DoctorRepository:
         
         self.logger.debug(f"DoctorRepository: Extracted {extracted_count} doctor fields")
         return doctor_data
+    
+    def check_crm_conflict(self, crm: str, estado: str, exclude_doctor_id: Optional[int] = None):
+        """
+        Check for CRM conflicts excluding a specific doctor.
+        Uses the same logic as the original form validation.
+        """
+        return Medico.objects.filter(
+            crm_medico=crm, 
+            estado=estado
+        ).exclude(
+            id=exclude_doctor_id if exclude_doctor_id else None
+        ).first()
+    
+    def check_cns_conflict(self, cns: str, exclude_doctor_id: Optional[int] = None):
+        """
+        Check for CNS conflicts excluding a specific doctor.
+        Uses the same logic as the original form validation.
+        """
+        return Medico.objects.filter(cns_medico=cns).exclude(
+            id=exclude_doctor_id if exclude_doctor_id else None
+        ).first()
+    
+    def check_email_exists(self, email: str) -> bool:
+        """
+        Check if email already exists in User table.
+        
+        Args:
+            email: The email address to check
+            
+        Returns:
+            bool: True if email exists, False otherwise
+        """
+        self.logger.debug(f"DoctorRepository: Checking if email exists: {email}")
+        
+        exists = User.objects.filter(email=email).exists()
+        self.logger.debug(f"DoctorRepository: Email {email} exists: {exists}")
+        return exists

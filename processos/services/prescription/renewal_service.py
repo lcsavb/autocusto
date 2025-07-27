@@ -86,12 +86,13 @@ class RenewalService:
     def _validate_renewal_eligibility(self, process_id: int, user) -> bool:
         """Validate if a process is eligible for renewal by the user."""
         try:
-            # Verify user owns this process - more efficient than fetching then checking
-            processo = Processo.objects.get(id=process_id, usuario=user)
-            return True
+            from ...repositories.process_repository import ProcessRepository
+            process_repo = ProcessRepository()
+            processo = process_repo.get_process_for_user(process_id, user)
+            return processo is not None
             
-        except Processo.DoesNotExist:
-            self.logger.error(f"RenewalService: Process {process_id} not found")
+        except Exception as e:
+            self.logger.error(f"RenewalService: Error validating process {process_id}: {e}")
             return False
     
     def generate_renewal_data(self, renewal_date: str, process_id: int, user=None) -> dict:
@@ -121,11 +122,16 @@ class RenewalService:
         self.logger.info(f"RenewalService: Generating renewal data for process {process_id}")
         
         # Verify user owns this process before accessing data
+        from ...repositories.process_repository import ProcessRepository
+        process_repo = ProcessRepository()
+        
         if user:
-            processo = Processo.objects.get(id=process_id, usuario=user)
+            processo = process_repo.get_process_for_user(process_id, user)
+            if not processo:
+                raise Processo.DoesNotExist(f"Process {process_id} not found for user")
         else:
             # Fallback for cases where user is not provided (should be rare)
-            processo = Processo.objects.get(id=process_id)
+            processo = process_repo.get_process_by_id(process_id)
         dados = {}
         
         # Get versioned patient data if user is provided
@@ -184,17 +190,7 @@ class RenewalService:
             for key, value in processo.dados_condicionais.items():
                 dados[key] = value
         
-        # Handle chronic pain special logic
-        try:
-            protocolo = processo.doenca.protocolo
-            
-            if protocolo.nome == "dor_crônica":
-                # For chronic pain, include the LANNS/EVA assessment form
-                dados["include_lanns_eva"] = True
-        except Exception:
-            # Silently handle any protocol-related errors
-            pass
-        
+       
         # Retrieve prescription data from original process
         dados = self._retrieve_prescription_data(dados, processo)
         

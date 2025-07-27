@@ -201,3 +201,30 @@ class PatientRepository:
         except Paciente.DoesNotExist:
             self.logger.error(f"PatientRepository: Patient not found for ID: {patient_id}")
             raise
+    
+    def get_patient_by_cpf_for_user(self, cpf_paciente: str, user) -> Paciente:
+        """
+        Get patient by CPF ensuring user has access to this patient.
+        
+        This method replicates the original security logic:
+        Paciente.objects.get(cpf_paciente=cpf_paciente, usuarios=usuario)
+        
+        Args:
+            cpf_paciente: The patient's CPF (Brazilian tax ID)
+            user: The user requesting access
+            
+        Returns:
+            Paciente: The patient instance if found and user has access
+            
+        Raises:
+            Paciente.DoesNotExist: If patient not found or user has no access
+        """
+        self.logger.debug(f"PatientRepository: Getting patient by CPF {cpf_paciente} for user {user.email}")
+        
+        # Original security logic: patient must exist AND be associated with this user
+        patient = Paciente.objects.get(
+            cpf_paciente=cpf_paciente,
+            usuarios=user
+        )
+        self.logger.debug(f"PatientRepository: Patient found with ID {patient.id}")
+        return patient

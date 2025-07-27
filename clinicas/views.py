@@ -116,7 +116,9 @@ def list_clinics(request):
         clinics_data = []
         skipped_count = 0
         
-        user_clinics = Clinica.objects.filter(usuarios=user)
+        from processos.repositories.domain_repository import DomainRepository
+        domain_repo = DomainRepository()
+        user_clinics = domain_repo.get_clinics_by_user(user)
         
         for clinic in user_clinics:
             # Get versioned clinic data - no fallback to master record
