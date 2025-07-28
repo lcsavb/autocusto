@@ -8,7 +8,8 @@ This consolidates all setup flow tests across different apps:
 - User experience continuity
 """
 
-from django.test import TestCase, Client
+from tests.test_base import BaseTestCase
+from django.test import Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -19,7 +20,7 @@ from clinicas.models import Clinica
 from processos.models import Doenca, Protocolo
 
 
-class SetupFlowRedirectTest(TestCase):
+class SetupFlowRedirectTest(BaseTestCase):
     """Test setup flow redirect logic."""
 
     def setUp(self):
@@ -170,7 +171,7 @@ class SetupFlowRedirectTest(TestCase):
         self.assertEqual(response.url, reverse('complete-profile'))
 
 
-class SessionPreservationTest(TestCase):
+class SessionPreservationTest(BaseTestCase):
     """Test session preservation during setup flow."""
 
     def setUp(self):
@@ -264,7 +265,7 @@ class SessionPreservationTest(TestCase):
         session = self.client.session
         session['paciente_existe'] = False
         session['cid'] = 'M79.0'
-        session['cpf_paciente'] = '12345678901'
+        session['cpf_paciente'] = "11144477735"
         session['data1'] = '01/01/2024'
         session['extra_field'] = 'test_value'
         session['user_settings'] = {'theme': 'dark'}
@@ -287,13 +288,13 @@ class SessionPreservationTest(TestCase):
         # Verify all session data is preserved throughout
         self.assertEqual(self.client.session.get('paciente_existe'), False)
         self.assertEqual(self.client.session.get('cid'), 'M79.0')
-        self.assertEqual(self.client.session.get('cpf_paciente'), '12345678901')
+        self.assertEqual(self.client.session.get('cpf_paciente'), "11144477735")
         self.assertEqual(self.client.session.get('data1'), '01/01/2024')
         self.assertEqual(self.client.session.get('extra_field'), 'test_value')
         self.assertEqual(self.client.session.get('user_settings'), {'theme': 'dark'})
 
 
-class SetupFlowIntegrationTest(TestCase):
+class SetupFlowIntegrationTest(BaseTestCase):
     """Test setup flow integration across apps."""
 
     def setUp(self):

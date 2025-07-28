@@ -20,14 +20,27 @@ def test_home_redirects_to_login(live_server, page: Page):
 
 
 @pytest.mark.django_db
-def test_login_page_elements(live_server, page: Page):
+def test_login_page_elements(page: Page):
     """Test that login page has required elements"""
-    page.goto(f"{live_server.url}/login/")
+    page.goto("http://localhost:8001/")  # Login is at root/index
     
-    # Should see login form elements
-    assert page.locator('input[name="email"]').is_visible()
-    assert page.locator('input[name="password"]').is_visible()
-    assert page.locator('button[type="submit"]').is_visible()
+    # Debug: print page content
+    print(f"Page title: {page.title()}")
+    print(f"Page URL: {page.url}")
+    
+    # Should see login form elements (might need to wait or use different selectors)
+    page.wait_for_selector('form', timeout=5000)  # Wait for form to appear
+    
+    # Find login form elements specifically
+    login_email = page.locator('input[name="username"]')  # Login form email
+    login_password = page.locator('input[name="password"]')  # Login form password
+    
+    # Also check registration form exists
+    register_email = page.locator('input[name="email"]')  # Registration form email
+    
+    assert login_email.is_visible(), "Login email input not found"
+    assert login_password.is_visible(), "Login password input not found"
+    assert register_email.is_visible(), "Registration email input not found"
 
 
 @pytest.mark.django_db  
@@ -39,7 +52,7 @@ def test_invalid_login(live_server, page: Page):
     page.fill('input[name="password"]', 'wrongpassword')
     page.click('button[type="submit"]')
     
-    page.wait_for_load_state('networkidle')
+    page.wait_for_load_state('domcontentloaded', timeout=10000)
     
     # Should still be on login page with error
     assert "/login/" in page.url
@@ -60,7 +73,7 @@ def test_valid_login(live_server, page: Page):
     page.fill('input[name="password"]', 'testpass123') 
     page.click('button[type="submit"]')
     
-    page.wait_for_load_state('networkidle')
+    page.wait_for_load_state('domcontentloaded', timeout=10000)
     
     # Should be redirected away from login
     assert "/login/" not in page.url
@@ -86,24 +99,28 @@ def test_patient_access_authorization(live_server, page: Page):
         usuario=user1,
         nome_paciente="Patient 1",
         cpf_paciente="11111111111"
-    )
+    ,
+            incapaz=False
+        )
     
     patient2 = Paciente.objects.create(
         usuario=user2,
         nome_paciente="Patient 2", 
         cpf_paciente="22222222222"
-    )
+    ,
+            incapaz=False
+        )
     
     # Login as user1
     page.goto(f"{live_server.url}/login/")
     page.fill('input[name="email"]', 'user1@test.com')
     page.fill('input[name="password"]', 'testpass123')
     page.click('button[type="submit"]')
-    page.wait_for_load_state('networkidle')
+    page.wait_for_load_state('domcontentloaded', timeout=10000)
     
     # Try to access user2's patient
     page.goto(f"{live_server.url}/pacientes/")
-    page.wait_for_load_state('networkidle')
+    page.wait_for_load_state('domcontentloaded', timeout=10000)
     
     content = page.content()
     

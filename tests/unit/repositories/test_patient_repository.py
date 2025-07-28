@@ -40,10 +40,10 @@ class TestPatientRepositoryUnit(TestCase):
         mock_objects.get.return_value = mock_patient
         
         # Act
-        result = self.repo.check_patient_exists("12345678901")
+        result = self.repo.check_patient_exists("22255588846")
         
         # Assert
-        mock_objects.get.assert_called_once_with(cpf_paciente="12345678901")
+        mock_objects.get.assert_called_once_with(cpf_paciente="22255588846")
         self.assertEqual(result, mock_patient)
         
     @patch('processos.repositories.patient_repository.Paciente.objects')
@@ -53,10 +53,10 @@ class TestPatientRepositoryUnit(TestCase):
         mock_objects.get.side_effect = Paciente.DoesNotExist()
         
         # Act
-        result = self.repo.check_patient_exists("12345678901")
+        result = self.repo.check_patient_exists("22255588846")
         
         # Assert
-        mock_objects.get.assert_called_once_with(cpf_paciente="12345678901")
+        mock_objects.get.assert_called_once_with(cpf_paciente="22255588846")
         self.assertFalse(result)
         
     def test_extract_patient_data_complete_form(self):
@@ -64,7 +64,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         form_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '12345678901',
+            'cpf_paciente': "11144477735",
             'peso': '70kg',
             'altura': '1.75m',
             'nome_mae': 'Maria Silva',
@@ -100,7 +100,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         form_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '12345678901',
+            'cpf_paciente': "11144477735",
             # Missing other fields
         }
         
@@ -110,7 +110,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Assert
         self.assertEqual(len(result), 2)
         self.assertEqual(result['nome_paciente'], 'João Silva')
-        self.assertEqual(result['cpf_paciente'], '12345678901')
+        self.assertEqual(result['cpf_paciente'], "11144477735")
         
     @patch('processos.repositories.patient_repository.Paciente.objects')
     def test_get_patients_by_user(self, mock_objects):
@@ -136,11 +136,11 @@ class TestPatientRepositoryUnit(TestCase):
         mock_objects.get.return_value = mock_patient
         
         # Act
-        result = self.repo.get_patient_by_cpf_for_user("12345678901", self.mock_user)
+        result = self.repo.get_patient_by_cpf_for_user("22255588846", self.mock_user)
         
         # Assert
         mock_objects.get.assert_called_once_with(
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             usuarios=self.mock_user
         )
         self.assertEqual(result, mock_patient)
@@ -153,7 +153,7 @@ class TestPatientRepositoryUnit(TestCase):
         
         # Act & Assert
         with self.assertRaises(Paciente.DoesNotExist):
-            self.repo.get_patient_by_cpf_for_user("12345678901", self.mock_user)
+            self.repo.get_patient_by_cpf_for_user("22255588846", self.mock_user)
             
     @patch('processos.repositories.patient_repository.Paciente.objects')
     def test_get_patient_by_id_found(self, mock_objects):
@@ -161,7 +161,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         mock_patient = Mock()
         mock_patient.id = 123
-        mock_patient.cpf_paciente = "12345678901"
+        mock_patient.cpf_paciente = "22255588846"
         mock_objects.get.return_value = mock_patient
         
         # Act
@@ -186,7 +186,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         valid_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '12345678901',
+            'cpf_paciente': "11144477735",
             'email_paciente': 'joao@email.com'
         }
         
@@ -231,7 +231,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         invalid_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '12345678901',
+            'cpf_paciente': "11144477735",
             'email_paciente': 'invalid-email'  # No @ symbol
         }
         
@@ -247,7 +247,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         mock_patient = Mock()
         mock_patient.id = 123
-        mock_patient.cpf_paciente = "12345678901"
+        mock_patient.cpf_paciente = "22255588846"
         
         mock_version = Mock()
         mock_versioning_instance = Mock()
@@ -263,7 +263,7 @@ class TestPatientRepositoryUnit(TestCase):
         
         # Assert
         mock_versioning_instance.get_patient_version_for_user.assert_called_once_with(
-            "12345678901", self.mock_user
+            "22255588846", self.mock_user
         )
         self.assertEqual(result, mock_version)
         
@@ -273,7 +273,7 @@ class TestPatientRepositoryUnit(TestCase):
         # Arrange
         mock_patient = Mock()
         mock_patient.id = 123
-        mock_patient.cpf_paciente = "12345678901"
+        mock_patient.cpf_paciente = "22255588846"
         
         mock_versioning_instance = Mock()
         mock_versioning_instance.get_patient_version_for_user.return_value = None
@@ -305,7 +305,7 @@ class TestPatientRepositoryIntegration(TestCase):
         # Arrange
         patient = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             idade="30",
             sexo="M",
             nome_mae="Maria Silva",
@@ -326,7 +326,7 @@ class TestPatientRepositoryIntegration(TestCase):
         )
         
         # Act
-        result = self.repo.check_patient_exists("12345678901")
+        result = self.repo.check_patient_exists("22255588846")
         
         # Assert
         self.assertEqual(result.id, patient.id)

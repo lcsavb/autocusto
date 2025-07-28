@@ -29,20 +29,20 @@ class VersioningSecurityTestCase(TestCase):
         
         # Create doctors for both users
         self.medico1 = Medico.objects.create(
-            usuario=self.user1,
             nome_medico='Dr. User1',
             cns_medico='1234567890123',
             crm_medico='12345-SP'
         )
         self.medico2 = Medico.objects.create(
-            usuario=self.user2,
             nome_medico='Dr. User2', 
             cns_medico='1234567890124',
             crm_medico='12346-SP'
         )
         
         # Create shared patient with different versions for each user
-        self.shared_patient = Paciente.objects.create(cpf_paciente='123.456.789-00')
+        self.shared_patient = Paciente.objects.create(cpf_paciente="11144477735",
+            incapaz=False
+        )
         self.shared_patient.usuarios.add(self.user1, self.user2)
         
         # User1's version
@@ -53,6 +53,8 @@ class VersioningSecurityTestCase(TestCase):
             nome_paciente='User1 Version Name',
             idade='30',
             status='active'
+        ,
+            incapaz=False
         )
         
         # User2's version
@@ -63,6 +65,8 @@ class VersioningSecurityTestCase(TestCase):
             nome_paciente='User2 Version Name',
             idade='35',
             status='active'
+        ,
+            incapaz=False
         )
         
         # Assign versions to users
@@ -138,7 +142,9 @@ class PatientAjaxSecurityTest(VersioningSecurityTestCase):
     def test_ajax_patient_search_without_version_access(self):
         """Test AJAX search when user has no version access to a patient"""
         # Create patient without version for user1
-        orphan_patient = Paciente.objects.create(cpf_paciente='999.888.777-66')
+        orphan_patient = Paciente.objects.create(cpf_paciente='999.888.777-66',
+            incapaz=False
+        )
         orphan_patient.usuarios.add(self.user1)  # User has relationship but no version
         
         client = Client()
@@ -209,6 +215,8 @@ class TemplateFilterSecurityTest(VersioningSecurityTestCase):
         orphan_patient = Paciente.objects.create(
             cpf_paciente='111.222.333-44',
             nome_paciente='MASTER RECORD NAME'
+        ,
+            incapaz=False
         )
         orphan_patient.usuarios.add(self.user1)
         
@@ -227,6 +235,8 @@ class TemplateFilterSecurityTest(VersioningSecurityTestCase):
         orphan_patient = Paciente.objects.create(
             cpf_paciente='555.666.777-88',
             nome_paciente='MASTER DATA'
+        ,
+            incapaz=False
         )
         orphan_patient.usuarios.add(self.user1)
         
@@ -260,6 +270,8 @@ class ModelMethodSecurityTest(VersioningSecurityTestCase):
         orphan_patient = Paciente.objects.create(
             cpf_paciente='777.888.999-00',
             nome_paciente='MASTER NAME'
+        ,
+            incapaz=False
         )
         orphan_patient.usuarios.add(self.user1)
         
@@ -274,7 +286,9 @@ class ModelMethodSecurityTest(VersioningSecurityTestCase):
     
     def test_patient_search_model_method_no_fallback(self):
         """Test patient search model method doesn't include patients without versions"""
-        orphan_patient = Paciente.objects.create(cpf_paciente='333.444.555-66')
+        orphan_patient = Paciente.objects.create(cpf_paciente='333.444.555-66',
+            incapaz=False
+        )
         orphan_patient.usuarios.add(self.user1)
         
         with self.assertLogs('pacientes.models', level='WARNING') as log:
@@ -297,6 +311,8 @@ class ComprehensiveSecurityTest(VersioningSecurityTestCase):
         sensitive_patient = Paciente.objects.create(
             cpf_paciente='123.123.123-12',
             nome_paciente='SENSITIVE_MASTER_DATA_SHOULD_NEVER_BE_VISIBLE'
+        ,
+            incapaz=False
         )
         sensitive_patient.usuarios.add(self.user1)
         
@@ -307,6 +323,8 @@ class ComprehensiveSecurityTest(VersioningSecurityTestCase):
             created_by=self.user1,
             nome_paciente='Safe User Version',
             status='active'
+        ,
+            incapaz=False
         )
         
         user_rel = sensitive_patient.usuarios.through.objects.get(

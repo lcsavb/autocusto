@@ -5,7 +5,8 @@ This test MUST pass before any deployment. If this test fails, deployment should
 
 Tests the integrity of the clinic versioning system to ensure no production breakage.
 """
-from django.test import TestCase, TransactionTestCase
+from tests.test_base import BaseTestCase
+from django.test import TransactionTestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from clinicas.models import Clinica, ClinicaVersion, ClinicaUsuario, ClinicaUsuarioVersion, Emissor
@@ -14,7 +15,7 @@ from processos.models import Processo
 Usuario = get_user_model()
 
 
-class CriticalProductionSafetyTest(TestCase):
+class CriticalProductionSafetyTest(BaseTestCase):
     """
     CRITICAL: These tests verify production safety.
     If ANY test fails, deployment MUST be stopped.
@@ -48,47 +49,43 @@ class CriticalProductionSafetyTest(TestCase):
     
     def test_02_cns_uniqueness_enforced(self):
         """CRITICAL: CNS must be unique - no duplicates allowed"""
+        from django.db import transaction
+        
         # Test CNS uniqueness constraint
         test_cns = "9999999"
         
+        # Ensure our test CNS doesn't exist
+        Clinica.objects.filter(cns_clinica=test_cns).delete()
+        
+        # Create first clinic
+        clinic1 = Clinica.objects.create(
+            nome_clinica="Test Clinic 1",
+            cns_clinica=test_cns,
+            logradouro="Test Street",
+            logradouro_num="1",
+            cidade="Test City", 
+            bairro="Test District",
+            cep="12345-678",
+            telefone_clinica="(11) 1234-5678"
+        )
+        
         try:
-            # Ensure our test CNS doesn't exist
-            Clinica.objects.filter(cns_clinica=test_cns).delete()
-            
-            # Create first clinic
-            clinic1 = Clinica.objects.create(
-                nome_clinica="Test Clinic 1",
-                cns_clinica=test_cns,
-                logradouro="Test Street",
-                logradouro_num="1",
-                cidade="Test City", 
-                bairro="Test District",
-                cep="12345-678",
-                telefone_clinica="(11) 1234-5678"
-            )
-            
-            # Try to create duplicate - should fail
-            with self.assertRaises(IntegrityError, msg="PRODUCTION BLOCKER: CNS uniqueness not enforced"):
-                Clinica.objects.create(
-                    nome_clinica="Test Clinic 2",
-                    cns_clinica=test_cns,  # Same CNS - should fail
-                    logradouro="Different Street",
-                    logradouro_num="2",
-                    cidade="Different City",
-                    bairro="Different District", 
-                    cep="98765-432",
-                    telefone_clinica="(22) 9876-5432"
-                )
-            
-            # Cleanup
+            # Try to create duplicate in separate transaction - should fail
+            with transaction.atomic():
+                with self.assertRaises(IntegrityError, msg="PRODUCTION BLOCKER: CNS uniqueness not enforced"):
+                    Clinica.objects.create(
+                        nome_clinica="Test Clinic 2",
+                        cns_clinica=test_cns,  # Same CNS - should fail
+                        logradouro="Different Street",
+                        logradouro_num="2",
+                        cidade="Different City",
+                        bairro="Different District", 
+                        cep="98765-432",
+                        telefone_clinica="(22) 9876-5432"
+                    )
+        finally:
+            # Cleanup in separate transaction to avoid transaction management error
             clinic1.delete()
-        except Exception as e:
-            # If test setup fails, try a simpler approach
-            if "already exists" in str(e) or "duplicate key" in str(e):
-                # CNS uniqueness is working - this is what we want
-                pass
-            else:
-                raise
     
     def test_03_foreign_key_relationships_intact(self):
         """CRITICAL: All foreign key relationships must be preserved"""

@@ -8,7 +8,8 @@ This consolidates all CRM/CNS related tests from different apps:
 - User experience flows
 """
 
-from django.test import TestCase, Client
+from tests.test_base import BaseTestCase
+from django.test import Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -19,7 +20,7 @@ from medicos.models import Medico
 from usuarios.models import Usuario
 
 
-class CRMCNSConfirmationTest(TestCase):
+class CRMCNSConfirmationTest(BaseTestCase):
     """Test CRM/CNS confirmation field functionality."""
 
     def setUp(self):
@@ -88,7 +89,7 @@ class CRMCNSConfirmationTest(TestCase):
         self.assertTrue(form.is_valid())
 
 
-class CRMCNSImmutabilityTest(TestCase):
+class CRMCNSImmutabilityTest(BaseTestCase):
     """Test CRM/CNS immutability functionality."""
 
     def setUp(self):
@@ -168,7 +169,7 @@ class CRMCNSImmutabilityTest(TestCase):
         self.assertEqual(self.medico.cns_medico, '999999999999999')  # Unchanged
 
 
-class CRMCNSValidationTest(TestCase):
+class CRMCNSValidationTest(BaseTestCase):
     """Test CRM/CNS format and uniqueness validation."""
 
     def setUp(self):

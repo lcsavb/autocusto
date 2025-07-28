@@ -18,7 +18,7 @@ Or run specific test modules:
     python manage.py test processos.test_setup_integration
 """
 
-from django.test import TestCase
+from tests.test_base import BaseTestCase
 from django.test.utils import override_settings
 from django.core.management import call_command
 from django.test.runner import DiscoverRunner
@@ -27,7 +27,7 @@ import sys
 import os
 
 
-class SessionFunctionalityTestSuite(TestCase):
+class SessionFunctionalityTestSuite(BaseTestCase):
     """Master test suite for session functionality."""
 
     @classmethod

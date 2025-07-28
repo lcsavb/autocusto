@@ -104,10 +104,8 @@ class Command(BaseCommand):
         
         total_patients = Paciente.objects.count()
         
-        new_processes = Processo.objects.filter(
-            created_at__date=date if hasattr(Processo, 'created_at') else None
-        ).count() if hasattr(Processo, 'created_at') else 0
-        
+        # Now we can use created_at for processes
+        new_processes = Processo.objects.filter(created_at__date=date).count()
         total_processes = Processo.objects.count()
 
         # Create or update daily metrics
@@ -154,8 +152,8 @@ class Command(BaseCommand):
             # Unique patients treated
             unique_patients = clinic_processes.values('paciente').distinct().count()
 
-            # New processes created
-            new_processes = 0  # Would need created_at field on Processo
+            # New processes created for this clinic on this date
+            new_processes = clinic_processes.filter(created_at__date=date).count()
 
             ClinicMetrics.objects.update_or_create(
                 clinic=clinic,
@@ -179,8 +177,11 @@ class Command(BaseCommand):
                 generated_at__date=date
             ).count()
 
-            # Processes for this disease
-            process_count = Processo.objects.filter(doenca=disease).count()
+            # Processes for this disease created on this date
+            process_count = Processo.objects.filter(
+                doenca=disease,
+                created_at__date=date
+            ).count()
 
             # Unique patients with this disease
             unique_patients = Processo.objects.filter(

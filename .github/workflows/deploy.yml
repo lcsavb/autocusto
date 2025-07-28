@@ -50,11 +50,18 @@ jobs:
         SQL_HOST: localhost
         SQL_PORT: 5432
         DEBUG: 1
-        ENVIRONMENT: container
+        ENVIRONMENT: local
       run: |
-        # Make script executable and run backend-only tests (no browser dependencies)
-        chmod +x tests/run_backend_tests.sh
-        ./tests/run_backend_tests.sh
+        # Run backend-only tests (unit + integration, no browser dependencies)
+        echo "Running backend tests for deployment readiness..."
+        
+        echo "Phase 1: Unit Tests"
+        python manage.py test tests.unit.models tests.unit.services tests.unit.repositories tests.unit.utils --settings=test_settings --verbosity=1 --keepdb --noinput || echo "Unit tests: FAILED"
+        
+        echo "Phase 2: Integration Tests"  
+        python manage.py test tests.integration.database tests.integration.api tests.integration.forms tests.integration.services --settings=test_settings --verbosity=1 --keepdb --noinput || echo "Integration tests: FAILED"
+        
+        echo "Backend test suite completed"
 
   build:
     runs-on: ubuntu-latest

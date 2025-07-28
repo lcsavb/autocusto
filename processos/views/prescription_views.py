@@ -271,7 +271,32 @@ def _handle_prescription_edit_post(request, setup, ModeloFormulario, escolhas, m
         
         # Retrieve selected clinic for prescription header information
         # Clinic selection is required for legally compliant prescription documents
-        clinica = medico.clinicas.get(id=dados_formulario["clinicas"])
+        logger.error(f"🏥 PRESCRIPTION VIEW: About to retrieve clinic ID {dados_formulario['clinicas']} for medico {medico.id}")
+        all_medico_clinics = medico.clinicas.all()
+        logger.error(f"🏥 PRESCRIPTION VIEW: Medico {medico.id} has {all_medico_clinics.count()} clinics: {[c.id for c in all_medico_clinics]}")
+        
+        # Handle multiple clinic scenarios gracefully
+        try:
+            clinica = medico.clinicas.get(id=dados_formulario["clinicas"])
+        except medico.clinicas.model.DoesNotExist:
+            logger.error(f"🏥 PRESCRIPTION VIEW: Clinic {dados_formulario['clinicas']} not found for medico {medico.id}")
+            return json_response.exception(
+                Exception(f"Clínica selecionada não encontrada para este médico"), 
+                context="seleção de clínica"
+            )
+        except medico.clinicas.model.MultipleObjectsReturned:
+            logger.error(f"🏥 PRESCRIPTION VIEW: Multiple clinics found, using first available")
+            # In case of multiple clinics, use the first one that matches the requested ID
+            clinica = medico.clinicas.filter(id=dados_formulario["clinicas"]).first()
+            if not clinica:
+                # If the requested clinic ID is not found, use the first clinic available
+                clinica = all_medico_clinics.first()
+                logger.error(f"🏥 PRESCRIPTION VIEW: Using fallback clinic {clinica.id} instead of requested {dados_formulario['clinicas']}")
+                if not clinica:
+                    return json_response.exception(
+                        Exception("Nenhuma clínica disponível para este médico"), 
+                        context="seleção de clínica"
+                    )
         
     except Exception as e:
         # Log technical details for debugging while providing user-friendly error message
@@ -396,7 +421,32 @@ def _handle_prescription_create_post(request, setup, ModeloFormulario, escolhas,
         
         # Retrieve selected clinic for prescription header information
         # Clinic data is required for legally compliant prescription documents in Brazil
-        clinica = medico.clinicas.get(id=dados_formulario["clinicas"])
+        logger.error(f"🏥 PRESCRIPTION CREATE: About to retrieve clinic ID {dados_formulario['clinicas']} for medico {medico.id}")
+        all_medico_clinics = medico.clinicas.all()
+        logger.error(f"🏥 PRESCRIPTION CREATE: Medico {medico.id} has {all_medico_clinics.count()} clinics: {[c.id for c in all_medico_clinics]}")
+        
+        # Handle multiple clinic scenarios gracefully
+        try:
+            clinica = medico.clinicas.get(id=dados_formulario["clinicas"])
+        except medico.clinicas.model.DoesNotExist:
+            logger.error(f"🏥 PRESCRIPTION CREATE: Clinic {dados_formulario['clinicas']} not found for medico {medico.id}")
+            return json_response.exception(
+                Exception(f"Clínica selecionada não encontrada para este médico"), 
+                context="seleção de clínica"
+            )
+        except medico.clinicas.model.MultipleObjectsReturned:
+            logger.error(f"🏥 PRESCRIPTION CREATE: Multiple clinics found, using first available")
+            # In case of multiple clinics, use the first one that matches the requested ID
+            clinica = medico.clinicas.filter(id=dados_formulario["clinicas"]).first()
+            if not clinica:
+                # If the requested clinic ID is not found, use the first clinic available
+                clinica = all_medico_clinics.first()
+                logger.error(f"🏥 PRESCRIPTION CREATE: Using fallback clinic {clinica.id} instead of requested {dados_formulario['clinicas']}")
+                if not clinica:
+                    return json_response.exception(
+                        Exception("Nenhuma clínica disponível para este médico"), 
+                        context="seleção de clínica"
+                    )
         
     except Exception as e:
         # Log technical details for debugging while providing user-friendly error message

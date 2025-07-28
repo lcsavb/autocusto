@@ -16,6 +16,11 @@ def busca_doencas(request):
     """
     # disease (search keyword from request)
     doenca = request.GET.get("palavraChave", None)
+    
+    # Return empty list if no search term provided
+    if not doenca:
+        return JsonResponse([], safe=False)
+        
     # search_results (filtered disease queryset)
     b = Doenca.objects.filter(Q(cid__icontains=doenca) | Q(nome__icontains=doenca))
     # diseases (list of disease dictionaries for JSON response)
@@ -43,7 +48,20 @@ def verificar_1_vez(request):
     """
     # received_cid (CID code from AJAX request)
     cid_recebido = request.GET.get("cid", None)
-    # protocol (protocol object associated with the disease)
-    protocolo = Protocolo.objects.get(doenca__cid=cid_recebido)
-
-    return JsonResponse(protocolo.dados_condicionais["1_vez"])
+    
+    if not cid_recebido:
+        return JsonResponse({"error": "CID parameter required"}, status=400)
+    
+    try:
+        # protocol (protocol object associated with the disease)
+        protocolo = Protocolo.objects.get(doenca__cid=cid_recebido)
+        
+        # Check if "1_vez" key exists in conditional data
+        if "1_vez" in protocolo.dados_condicionais:
+            return JsonResponse(protocolo.dados_condicionais["1_vez"])
+        else:
+            # Return empty object if no first-time conditions configured
+            return JsonResponse({})
+            
+    except Protocolo.DoesNotExist:
+        return JsonResponse({"error": "Protocol not found for CID"}, status=404)

@@ -95,10 +95,25 @@ class PDFGenerator:
                 ram_pdf_path = f"/dev/shm/pdf_temp_{os.getpid()}_{i}_{timestamp}.pdf"
                 self.pdf_logger.debug(f"PDFGenerator: Filling to RAM path: {ram_pdf_path}")
                 
+                # Debug: Log form data to identify problematic values
+                self.pdf_logger.debug(f"PDFGenerator: Form data keys: {list(form_data.keys())}")
+                self.pdf_logger.debug(f"PDFGenerator: Form data sample: {dict(list(form_data.items())[:5])}")
+                
+                # Check for problematic values that might cause pdftk to fail
+                cleaned_form_data = {}
+                for key, value in form_data.items():
+                    if value is None:
+                        cleaned_form_data[key] = ""
+                    elif isinstance(value, (list, dict)):
+                        # Convert complex types to strings
+                        cleaned_form_data[key] = str(value)
+                    else:
+                        cleaned_form_data[key] = str(value)
+                
                 # Fill form
                 filled_path = pypdftk.fill_form(
                     template_path,
-                    form_data,
+                    cleaned_form_data,
                     ram_pdf_path,
                     flatten=False
                 )

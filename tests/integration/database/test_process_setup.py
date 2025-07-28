@@ -8,11 +8,22 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
+import random
 
 from usuarios.models import Usuario
 from medicos.models import Medico
 from clinicas.models import Clinica
 from processos.models import Doenca
+from pacientes.models import Paciente
+
+
+class TestDataFactory:
+    """Factory for generating unique test data to avoid conflicts."""
+    
+    @staticmethod
+    def get_unique_cns():
+        """Get a unique CNS for testing."""
+        return f"{random.randint(1000000, 9999999)}"
 
 
 class ProcessSetupIntegrationTest(TestCase):
@@ -46,6 +57,30 @@ class ProcessSetupIntegrationTest(TestCase):
             nome='Test Disease',
             protocolo=self.protocolo
         )
+        
+        # Create test patient for existing patient scenarios
+        self.test_patient = Paciente.objects.create(
+            nome_paciente='Test Patient',
+            cpf_paciente='11144477735',  # Valid CPF
+            cns_paciente='123456789012345',
+            nome_mae='Test Mother',
+            idade='30',
+            sexo='M',
+            peso='70',
+            altura='1.75',
+            incapaz=False,
+            nome_responsavel='',
+            rg='123456789',
+            escolha_etnia='Branco',
+            cidade_paciente='Test City',
+            end_paciente='Test Address',
+            cep_paciente='12345-678',
+            telefone1_paciente='11987654321',
+            telefone2_paciente='',
+            etnia='Branco',
+            email_paciente=''
+        )
+        self.test_patient.usuarios.add(self.user)
 
     def test_process_creation_redirect_when_missing_crm_cns(self):
         """Test that process creation redirects when CRM/CNS are missing."""
@@ -74,7 +109,7 @@ class ProcessSetupIntegrationTest(TestCase):
         session = self.client.session
         session['paciente_existe'] = True
         session['cid'] = 'G35'
-        session['paciente_id'] = '123'
+        session['paciente_id'] = self.test_patient.id
         session.save()
 
         response = self.client.get(reverse('processos-cadastro'))
@@ -96,7 +131,7 @@ class ProcessSetupIntegrationTest(TestCase):
 
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234567'
+            cns_clinica=TestDataFactory.get_unique_cns()
         )
         clinica.usuarios.add(self.user)
         clinica.medicos.add(self.medico)
@@ -105,7 +140,7 @@ class ProcessSetupIntegrationTest(TestCase):
         session = self.client.session
         session['paciente_existe'] = True
         session['cid'] = 'G35'
-        session['paciente_id'] = '123'
+        session['paciente_id'] = self.test_patient.id
         session.save()
 
         response = self.client.get(reverse('processos-cadastro'))
@@ -118,15 +153,17 @@ class ProcessSetupIntegrationTest(TestCase):
         # Create clinic but leave CRM/CNS empty
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234567'
+            cns_clinica=TestDataFactory.get_unique_cns()
         )
         clinica.usuarios.add(self.user)
         clinica.medicos.add(self.medico)
 
-        # Set up session data
+        # Set up complete session data with setup flow flag
         session = self.client.session
         session['paciente_existe'] = True
         session['cid'] = 'G35'
+        session['paciente_id'] = self.test_patient.id  # Required for existing patient flow
+        session['in_setup_flow'] = True  # Critical flag for redirect logic
         session.save()
 
         response = self.client.get(reverse('processos-cadastro'))
@@ -144,7 +181,7 @@ class ProcessSetupIntegrationTest(TestCase):
 
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234567'
+            cns_clinica=TestDataFactory.get_unique_cns()
         )
         clinica.usuarios.add(self.user)
         clinica.medicos.add(self.medico)
@@ -182,7 +219,7 @@ class ProcessSetupIntegrationTest(TestCase):
         session = self.client.session
         session['paciente_existe'] = False
         session['cid'] = 'G35'
-        session['cpf_paciente'] = '12345678901'
+        session['cpf_paciente'] = "11144477735"
         session['data1'] = '01/01/2024'
         session['extra_field'] = 'test_value'
         session['user_settings'] = {'theme': 'dark'}
@@ -193,7 +230,9 @@ class ProcessSetupIntegrationTest(TestCase):
             'crm': '123456',
             'crm2': '123456',
             'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'cns2': '123456789012345',
+            'estado': 'SP',  # Required state field
+            'especialidade': 'CARDIOLOGIA'  # Required specialty field
         }
         response = self.client.post(reverse('complete-profile'), data=form_data)
         self.assertEqual(response.status_code, 302)
@@ -220,7 +259,7 @@ class ProcessSetupIntegrationTest(TestCase):
         # Verify all session data is preserved throughout
         self.assertEqual(self.client.session.get('paciente_existe'), False)
         self.assertEqual(self.client.session.get('cid'), 'G35')
-        self.assertEqual(self.client.session.get('cpf_paciente'), '12345678901')
+        self.assertEqual(self.client.session.get('cpf_paciente'), "11144477735")
         self.assertEqual(self.client.session.get('data1'), '01/01/2024')
         self.assertEqual(self.client.session.get('extra_field'), 'test_value')
         self.assertEqual(self.client.session.get('user_settings'), {'theme': 'dark'})
@@ -232,7 +271,9 @@ class ProcessSetupIntegrationTest(TestCase):
             'crm': '123456',
             'crm2': '123456',
             'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'cns2': '123456789012345',
+            'estado': 'SP',  # Required state field
+            'especialidade': 'CARDIOLOGIA'  # Required specialty field (using choice key)
         }
         response = self.client.post(reverse('complete-profile'), data=form_data)
         
@@ -286,7 +327,7 @@ class ProcessSetupIntegrationTest(TestCase):
         # Create clinic to complete setup
         clinica = Clinica.objects.create(
             nome_clinica='Immutable Test Clinic',
-            cns_clinica='1234567'
+            cns_clinica=TestDataFactory.get_unique_cns()
         )
         clinica.usuarios.add(self.user)
         clinica.medicos.add(self.medico)

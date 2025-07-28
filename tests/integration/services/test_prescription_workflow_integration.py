@@ -40,12 +40,17 @@ class TestPrescriptionWorkflowIntegration(TestCase):
         )
         self.medico.usuarios.add(self.user)
         
-        # Create test clinica
+        # Create test clinica with unique CNS (max 7 chars)
+        import time
+        unique_cns = f"123{int(time.time()) % 10000:04d}"  # Generate unique 7-char CNS
         self.clinica = Clinica.objects.create(
             nome_clinica="Clínica Test",
-            cnes_clinica="1234567",
-            cnpj_clinica="12345678901234",
-            endereco_clinica="Rua Test, 123",
+            cns_clinica=unique_cns,
+            logradouro="Rua Test",
+            logradouro_num="123",
+            cidade="São Paulo",
+            bairro="Centro", 
+            cep="01234567",
             telefone_clinica="11999999999"
         )
         self.clinica.usuarios.add(self.user)
@@ -56,23 +61,28 @@ class TestPrescriptionWorkflowIntegration(TestCase):
             clinica=self.clinica
         )
         
-        # Create test disease
-        self.disease = Doenca.objects.create(
-            cid="H30",
-            nome="Coriorretinite"
-        )
-        
         # Create test protocol
         self.protocol = Protocolo.objects.create(
             nome="Protocolo H30 - Coriorretinite",
-            doenca=self.disease
+            arquivo="h30_protocol.pdf"
+        )
+        
+        # Create test disease
+        self.disease = Doenca.objects.create(
+            cid="H30",
+            nome="Coriorretinite", 
+            protocolo=self.protocol
         )
         
         # Create test medication
         self.medication = Medicamento.objects.create(
-            nome="prednisolona 20mg (comprimido)",
-            protocolo=self.protocol
+            nome="prednisolona",
+            dosagem="20mg",
+            apres="comprimido"
         )
+        
+        # Link medication to protocol
+        self.protocol.medicamentos.add(self.medication)
         
     def test_service_dependencies_integration(self):
         """Test that all service dependencies work together."""
@@ -94,20 +104,67 @@ class TestPrescriptionWorkflowIntegration(TestCase):
     def test_prescription_data_builder_integration(self):
         """Test data builder integration with form data."""
         form_data = {
-            'cpf_paciente': '12345678901',
+            # Patient data
+            'cpf_paciente': "11144477735",
             'nome_paciente': 'João Silva',
             'idade': '30',
             'sexo': 'M',
             'nome_mae': 'Maria Silva',
             'peso': '70',
             'altura': '1.75',
-            'medicamentos_padrao': [str(self.medication.id)]
+            'incapaz': False,
+            'nome_responsavel': '',
+            'rg': '123456789',
+            'escolha_etnia': 'parda',
+            'cns_paciente': '12345678901234',
+            'etnia': 'parda',
+            'telefone1_paciente': '11999999999',
+            'telefone2_paciente': '11888888888',
+            'email_paciente': 'joao@email.com',
+            'end_paciente': 'Rua Test, 123',
+            
+            # Process data
+            'anamnese': 'Test anamnese',
+            'tratou': False,
+            'tratamentos_previos': '',
+            'diagnostico': 'Test diagnosis',
+            'preenchido_por': 'medico',
+            'cid': self.disease.cid,
+            'data_1': '01/01/2024',
+            
+            # Medication data - at least one medication is required
+            'medicamentos_padrao': [str(self.medication.id)],
+            'id_med1': str(self.medication.id),
+            'med1_via': 'oral',
+            'med1_repetir_posologia': True,
+            'med1_posologia_mes1': '1 comprimido ao dia',
+            'qtd_med1_mes1': '30',
+            'med1_posologia_mes2': '1 comprimido ao dia',
+            'qtd_med1_mes2': '30',
+            'med1_posologia_mes3': '1 comprimido ao dia',
+            'qtd_med1_mes3': '30',
+            'med1_posologia_mes4': '1 comprimido ao dia',
+            'qtd_med1_mes4': '30',
+            'med1_posologia_mes5': '1 comprimido ao dia',
+            'qtd_med1_mes5': '30',
+            'med1_posologia_mes6': '1 comprimido ao dia',
+            'qtd_med1_mes6': '30'
         }
         
         # Test data builder can process form data
         try:
+            # Get emissor
+            emissor = Emissor.objects.create(medico=self.medico, clinica=self.clinica)
+            
             structured_data = self.service.data_builder.build_prescription_data(
-                form_data, self.user, self.medico, self.clinica, self.disease
+                dados=form_data,
+                meds_ids=[str(self.medication.id)],
+                doenca=self.disease,
+                emissor=emissor,
+                usuario=self.user,
+                paciente_existe=None,
+                cid=self.disease.cid,
+                processo_id=None
             )
             
             # Verify structure
@@ -125,7 +182,7 @@ class TestPrescriptionWorkflowIntegration(TestCase):
         # Create a patient first
         patient = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             idade="30",
             sexo="M",
             nome_mae="Maria Silva",
@@ -147,27 +204,75 @@ class TestPrescriptionWorkflowIntegration(TestCase):
         patient.usuarios.add(self.user)
         
         # Test process service can create process
+        # Build prescription structure like the data builder would
+        prescription_structure = {
+            'med1': {
+                'nome': self.medication.nome,
+                'id': str(self.medication.id),
+                'via': 'oral',
+                'prescricao': {
+                    'mes1': {'posologia': '1 comprimido ao dia', 'quantidade': '30'},
+                    'mes2': {'posologia': '1 comprimido ao dia', 'quantidade': '30'},
+                    'mes3': {'posologia': '1 comprimido ao dia', 'quantidade': '30'},
+                    'mes4': {'posologia': '1 comprimido ao dia', 'quantidade': '30'},
+                    'mes5': {'posologia': '1 comprimido ao dia', 'quantidade': '30'},
+                    'mes6': {'posologia': '1 comprimido ao dia', 'quantidade': '30'}
+                }
+            }
+        }
+        
         structured_data = {
             'patient_data': {
                 'nome_paciente': 'João Silva',
-                'cpf_paciente': '12345678901'
+                'cpf_paciente': "11144477735",
+                'nome_mae': 'Maria Silva',
+                'idade': '30',
+                'sexo': 'M',
+                'peso': '70',
+                'altura': '1.75',
+                'incapaz': False,
+                'nome_responsavel': '',
+                'etnia': 'parda',
+                'telefone1_paciente': '11999999999',
+                'telefone2_paciente': '11888888888',
+                'email_paciente': 'joao@email.com',
+                'end_paciente': 'Rua Test, 123'
             },
             'process_data': {
                 'doenca_id': self.disease.id,
                 'usuario_id': self.user.id,
-                'emissor_id': self.emissor.id
+                'emissor_id': self.emissor.id,
+                'clinica_id': self.clinica.id,
+                'medico_id': self.medico.id,
+                'usuario': self.user,
+                'doenca': self.disease,
+                'emissor': self.emissor,
+                'clinica': self.clinica,
+                'medico': self.medico,
+                'prescricao': prescription_structure,
+                'anamnese': 'Test anamnese',
+                'tratou': False,
+                'tratamentos_previos': '',
+                'dados_condicionais': {}
             },
-            'medication_ids': [self.medication.id]
+            'medication_ids': [self.medication.id],
+            'metadata': {
+                'cid': self.disease.cid,
+                'patient_exists': True
+            }
         }
         
         try:
-            process = self.service.process_service.create_process_from_structured_data(
-                structured_data, patient
+            # Add patient to structured data
+            structured_data['patient'] = patient
+            
+            process_id = self.service.process_service.create_process_from_structured_data(
+                structured_data
             )
             
             # Verify process was created
-            self.assertIsNotNone(process.id)
-            self.assertEqual(process.doenca.id, self.disease.id)
+            self.assertIsNotNone(process_id)
+            self.assertIsInstance(process_id, int)
             
         except Exception as e:
             # If this fails due to missing fields, that's acceptable for integration testing
@@ -218,7 +323,7 @@ class TestPrescriptionWorkflowIntegration(TestCase):
     def test_workflow_service_parameter_passing(self):
         """Test that workflow service accepts and processes parameters correctly."""
         form_data = {
-            'cpf_paciente': '12345678901',
+            'cpf_paciente': "11144477735",
             'nome_paciente': 'João Silva',
             'medicamentos_padrao': [str(self.medication.id)]
         }

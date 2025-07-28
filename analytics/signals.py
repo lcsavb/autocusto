@@ -4,12 +4,18 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from analytics.models import UserActivityLog, PDFGenerationLog
 from processos.models import Processo
 import logging
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+def is_analytics_enabled():
+    """Check if analytics is enabled - disabled in test environments."""
+    return getattr(settings, 'ANALYTICS_ENABLED', True)
 
 
 def get_client_ip(request):
@@ -30,7 +36,15 @@ def get_user_agent(request):
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
     """Track successful login"""
+    if not is_analytics_enabled():
+        return
+        
     try:
+        # Ensure request has META attribute and is not None
+        if not request or not hasattr(request, 'META'):
+            logger.debug("Request object missing META attribute, skipping analytics logging")
+            return
+            
         UserActivityLog.objects.create(
             user=user,
             activity_type='login',
@@ -48,7 +62,15 @@ def log_user_login(sender, request, user, **kwargs):
 @receiver(user_logged_out)
 def log_user_logout(sender, request, user, **kwargs):
     """Track logout"""
+    if not is_analytics_enabled():
+        return
+        
     try:
+        # Ensure request has META attribute and is not None
+        if not request or not hasattr(request, 'META'):
+            logger.debug("Request object missing META attribute, skipping analytics logging")
+            return
+            
         if user:
             UserActivityLog.objects.create(
                 user=user,
@@ -64,7 +86,15 @@ def log_user_logout(sender, request, user, **kwargs):
 @receiver(user_login_failed)
 def log_login_failed(sender, credentials, request, **kwargs):
     """Track failed login attempts"""
+    if not is_analytics_enabled():
+        return
+        
     try:
+        # Ensure request has META attribute and is not None
+        if not request or not hasattr(request, 'META'):
+            logger.debug("Request object missing META attribute, skipping analytics logging")
+            return
+            
         # Try to find user by email
         email = credentials.get('username', '')
         user = None

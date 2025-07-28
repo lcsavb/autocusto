@@ -45,7 +45,7 @@ class PatientVersioningModelTest(TestCase):
         # Standard patient data
         self.patient_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '123.456.789-00',
+            'cpf_paciente': "11144477735",
             'idade': '35',
             'sexo': 'Masculino',
             'nome_mae': 'Maria Silva',
@@ -70,7 +70,7 @@ class PatientVersioningModelTest(TestCase):
         patient = Paciente.create_or_update_for_user(self.user1, self.patient_data)
         
         # Check master record
-        self.assertEqual(patient.cpf_paciente, '123.456.789-00')
+        self.assertEqual(patient.cpf_paciente, "11144477735")
         self.assertTrue(patient.was_created)
         self.assertTrue(self.user1 in patient.usuarios.all())
         
@@ -138,9 +138,11 @@ class PatientVersioningModelTest(TestCase):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 Paciente.objects.create(
-                    cpf_paciente='123.456.789-00',
+                    cpf_paciente="11144477735",
                     nome_paciente='Different Name'
-                )
+                ,
+            incapaz=False
+        )
     
     def test_version_number_uniqueness(self):
         """Test version number uniqueness per patient."""
@@ -154,7 +156,9 @@ class PatientVersioningModelTest(TestCase):
                     version_number=1,  # Same as existing
                     nome_paciente='Test',
                     created_by=self.user2
-                )
+                ,
+            incapaz=False
+        )
     
     def test_get_version_for_user(self):
         """Test getting appropriate version for user."""
@@ -199,7 +203,7 @@ class PatientVersioningModelTest(TestCase):
         self.assertEqual(len(results), 2)
         
         # Find João in results
-        joao_result = next((r for r in results if r[0].cpf_paciente == '123.456.789-00'), None)
+        joao_result = next((r for r in results if r[0].cpf_paciente == "11144477735"), None)
         self.assertIsNotNone(joao_result)
         self.assertEqual(joao_result[1].nome_paciente, 'João Silva')  # User1's version
         
@@ -230,7 +234,7 @@ class PatientVersioningTemplateTest(TestCase):
         
         self.patient_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '123.456.789-00',
+            'cpf_paciente': "11144477735",
             'idade': '35',
             'sexo': 'Masculino',
             'nome_mae': 'Maria Silva',
@@ -329,7 +333,7 @@ class PatientVersioningAjaxTest(TestCase):
         
         self.patient_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '123.456.789-00',
+            'cpf_paciente': "11144477735",
             'idade': '35',
             'sexo': 'Masculino',
             'nome_mae': 'Maria Silva',
@@ -366,7 +370,7 @@ class PatientVersioningAjaxTest(TestCase):
         data1 = response1.json()
         self.assertEqual(len(data1), 1)
         self.assertEqual(data1[0]['nome_paciente'], 'João Silva')
-        self.assertEqual(data1[0]['cpf_paciente'], '123.456.789-00')
+        self.assertEqual(data1[0]['cpf_paciente'], "11144477735")
         
         # Test search as user2
         self.client.force_login(self.user2)
@@ -376,7 +380,7 @@ class PatientVersioningAjaxTest(TestCase):
         data2 = response2.json()
         self.assertEqual(len(data2), 1)
         self.assertEqual(data2[0]['nome_paciente'], 'João Santos')  # Different version
-        self.assertEqual(data2[0]['cpf_paciente'], '123.456.789-00')  # Same CPF
+        self.assertEqual(data2[0]['cpf_paciente'], "11144477735")  # Same CPF
     
     def test_ajax_search_without_term(self, mock_log_login):
         """Test AJAX search without search term returns all user's patients."""
@@ -452,7 +456,7 @@ class PatientVersioningIntegrationTest(TestCase):
         
         self.patient_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '123.456.789-00',
+            'cpf_paciente': "11144477735",
             'idade': '35',
             'sexo': 'Masculino',
             'nome_mae': 'Maria Silva',
@@ -474,7 +478,7 @@ class PatientVersioningIntegrationTest(TestCase):
     
     def test_process_creation_uses_versioning(self):
         """Test that process creation integrates with patient versioning."""
-        from processos.services.prescription_database_service import PrescriptionDatabaseService
+        from processos.services.prescription.workflow_service import PrescriptionDatabaseService
         from datetime import datetime
         
         # Prepare process data
@@ -503,7 +507,7 @@ class PatientVersioningIntegrationTest(TestCase):
         # Verify process was created
         processo = Processo.objects.get(id=processo_id)
         self.assertEqual(processo.usuario, self.user1)
-        self.assertEqual(processo.paciente.cpf_paciente, '123.456.789-00')
+        self.assertEqual(processo.paciente.cpf_paciente, "11144477735")
         
         # Verify patient versioning was used
         patient = processo.paciente
@@ -554,7 +558,7 @@ class PatientVersioningFormTest(TestCase):
         
         self.patient_data = {
             'nome_paciente': 'João Silva',
-            'cpf_paciente': '123.456.789-00',
+            'cpf_paciente': "11144477735",
             'idade': '35',
             'sexo': 'Masculino',
             'nome_mae': 'Maria Silva',
@@ -575,8 +579,8 @@ class PatientVersioningFormTest(TestCase):
         }
     
     def test_form_initialization_uses_versioned_data(self):
-        """Test that _get_initial_data uses versioned patient data, not master record."""
-        from processos.views import _get_initial_data
+        """Test that PrescriptionViewSetupService uses versioned patient data, not master record."""
+        from processos.services.view_services import PrescriptionViewSetupService
         from django.test import RequestFactory
         from processos.models import Doenca
         
@@ -599,7 +603,9 @@ class PatientVersioningFormTest(TestCase):
         request1.user = self.user1
         request1.session = {
             'paciente_id': patient.id,
-            'cpf_paciente': patient.cpf_paciente
+            'cpf_paciente': patient.cpf_paciente,
+            'paciente_existe': True,
+            'cid': 'F20'
         }
         
         # Create mock request for user2
@@ -607,24 +613,30 @@ class PatientVersioningFormTest(TestCase):
         request2.user = self.user2
         request2.session = {
             'paciente_id': patient.id,
-            'cpf_paciente': patient.cpf_paciente
+            'cpf_paciente': patient.cpf_paciente,
+            'paciente_existe': True,
+            'cid': 'F20'
         }
         
-        # Test user1 gets their version
-        initial_data1 = _get_initial_data(request1, True, '01/01/2024', 'F20')
+        # Use the service to prepare initial data
+        setup_service = PrescriptionViewSetupService()
+        
+        # Test user1 gets their version through the service
+        # The service._prepare_initial_form_data is called internally
+        initial_data1 = setup_service._prepare_initial_form_data(request1, True, '01/01/2024', 'F20')
         self.assertEqual(initial_data1['nome_paciente'], 'João Silva')
         self.assertEqual(initial_data1['altura'], '1,75m')
         self.assertEqual(initial_data1['peso'], '70kg')
         
-        # Test user2 gets their version
-        initial_data2 = _get_initial_data(request2, True, '01/01/2024', 'F20')
+        # Test user2 gets their version through the service
+        initial_data2 = setup_service._prepare_initial_form_data(request2, True, '01/01/2024', 'F20')
         self.assertEqual(initial_data2['nome_paciente'], 'João Santos')
         self.assertEqual(initial_data2['altura'], '1,80m')
         self.assertEqual(initial_data2['peso'], '75kg')
         
         # Verify both have same master record fields
-        self.assertEqual(initial_data1['cpf_paciente'], '123.456.789-00')
-        self.assertEqual(initial_data2['cpf_paciente'], '123.456.789-00')
+        self.assertEqual(initial_data1['cpf_paciente'], "11144477735")
+        self.assertEqual(initial_data2['cpf_paciente'], "11144477735")
         self.assertEqual(initial_data1['id'], patient.id)
         self.assertEqual(initial_data2['id'], patient.id)
     
@@ -680,8 +692,8 @@ class PatientVersioningFormTest(TestCase):
         self.assertEqual(renewal_data2['altura'], '1,80m')
         
         # Both should have same master record CPF
-        self.assertEqual(renewal_data1['cpf_paciente'], '123.456.789-00')
-        self.assertEqual(renewal_data2['cpf_paciente'], '123.456.789-00')
+        self.assertEqual(renewal_data1['cpf_paciente'], "11144477735")
+        self.assertEqual(renewal_data2['cpf_paciente'], "11144477735")
 
 
 class PatientVersioningEdgeCasesTest(TestCase):
@@ -696,7 +708,7 @@ class PatientVersioningEdgeCasesTest(TestCase):
         
         self.patient_data = {
             'nome_paciente': 'Test Patient',
-            'cpf_paciente': '123.456.789-00',
+            'cpf_paciente': "11144477735",
             'idade': '30',
             'sexo': 'Masculino',
             'nome_mae': 'Test Mother',

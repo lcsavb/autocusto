@@ -67,7 +67,7 @@ class RenovationWorkflowPlaywrightBase(PlaywrightFormTestBase):
         # Create test patient
         self.patient1 = Paciente.objects.create(
             nome_paciente="Maria Santos",
-            cpf_paciente="72834565031",
+            cpf_paciente="11144477735",
             cns_paciente="111111111111111",
             nome_mae="Ana Santos",
             idade="45",
@@ -90,7 +90,7 @@ class RenovationWorkflowPlaywrightBase(PlaywrightFormTestBase):
         # Create another patient for search testing
         self.patient2 = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             cns_paciente="222222222222222",
             nome_mae="Maria Silva",
             idade="30",
@@ -324,7 +324,7 @@ class RenovationWorkflowTest(RenovationWorkflowPlaywrightBase):
         
         if cpf_field:
             # Search using existing patient CPF
-            cpf_field.fill("72834565031")
+            cpf_field.fill("11144477735")
             
             # Submit search
             submit_button = self.page.locator('button[type="submit"], input[type="submit"]').first

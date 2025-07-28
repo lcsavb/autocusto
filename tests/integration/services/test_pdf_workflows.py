@@ -70,7 +70,7 @@ class PDFGenerationPlaywrightBase(PlaywrightFormTestBase):
         # Create test patient
         self.patient1 = Paciente.objects.create(
             nome_paciente="Maria Santos",
-            cpf_paciente="72834565031",
+            cpf_paciente="11144477735",
             cns_paciente="111111111111111",
             nome_mae="Ana Santos",
             idade="45",
@@ -471,7 +471,7 @@ class PDFGenerationCadastroTest(PDFGenerationPlaywrightBase):
         cid_field = self.page.locator('input[name="cid"]')
         
         if cpf_field.is_visible() and cid_field.is_visible():
-            cpf_field.fill("72834565031")
+            cpf_field.fill("11144477735")
             cid_field.fill("G40.0")
             
             submit_button = self.page.locator('button:has-text("Cadastrar")')
@@ -613,7 +613,7 @@ class PDFGenerationCadastroTest(PDFGenerationPlaywrightBase):
         cid_field = self.page.locator('input[name="cid"]')
         
         if cpf_field.is_visible() and cid_field.is_visible():
-            cpf_field.fill("72834565031")
+            cpf_field.fill("11144477735")
             cid_field.fill("G40.0")
             
             submit_button = self.page.locator('button:has-text("Cadastrar")')
@@ -696,7 +696,7 @@ class PDFSecurityTest(PDFGenerationPlaywrightBase):
         
         patient2 = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             cns_paciente="222222222222222",
             nome_mae="Ana Silva",
             idade="30",
@@ -770,7 +770,7 @@ class PDFContentValidationTest(PDFGenerationPlaywrightBase):
         
         # Verify test patient data is correct
         self.assertEqual(self.patient1.nome_paciente, "Maria Santos")
-        self.assertEqual(self.patient1.cpf_paciente, "72834565031")
+        self.assertEqual(self.patient1.cpf_paciente, "11144477735")
         
         # Test that patient data is accessible in the context where PDF would be generated
         user_patients = Paciente.objects.filter(usuarios=self.user1)

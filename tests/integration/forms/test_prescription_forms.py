@@ -73,7 +73,7 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         print("🔧 DEBUG: Creating patient...")
         self.patient1 = Paciente.objects.create(
             nome_paciente="Maria Santos",
-            cpf_paciente="72834565031",  # Valid CPF for testing
+            cpf_paciente="11144477735",  # Valid CPF for testing
             cns_paciente="111111111111111",
             nome_mae="Ana Santos",
             idade="45",
@@ -241,7 +241,7 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         print("📝 DEBUG: Filling home form...")
         cid_field = self.page.locator('input[name="cid"]')
         
-        self.fill_field_slowly(cpf_field, "72834565031")  # Existing patient
+        self.fill_field_slowly(cpf_field, "11144477735")  # Existing patient
         self.fill_field_slowly(cid_field, "G40.0")        # Epilepsia
         
         self.take_screenshot("02_home_form_filled")

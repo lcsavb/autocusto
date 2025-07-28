@@ -13,15 +13,8 @@ DATABASES = {
     }
 }
 
-# Disable migrations for faster tests
-class DisableMigrations:
-    def __contains__(self, item):
-        return True
-    
-    def __getitem__(self, item):
-        return None
-
-MIGRATION_MODULES = DisableMigrations()
+# Enable migrations for frontend tests that need real database structure
+# Note: Unit tests can still use --nomigrations flag if needed for speed
 
 # Speed up password hashing for tests
 PASSWORD_HASHERS = [
@@ -48,7 +41,7 @@ CACHES = {
 # This will be used by models to handle test-specific behavior
 TEST_ENVIRONMENT = True
 
-# Disable logging during tests
+# Disable most logging during tests to reduce noise
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -59,5 +52,22 @@ LOGGING = {
     },
     'root': {
         'handlers': ['null'],
+        'level': 'CRITICAL',
+    },
+    # Silence analytics logging during tests
+    'loggers': {
+        'analytics': {
+            'handlers': ['null'],
+            'level': 'CRITICAL',
+            'propagate': False,
+        },
+        'analytics.signals': {
+            'handlers': ['null'],
+            'level': 'CRITICAL',
+            'propagate': False,
+        },
     },
 }
+
+# Disable analytics signals completely during tests
+ANALYTICS_ENABLED = False

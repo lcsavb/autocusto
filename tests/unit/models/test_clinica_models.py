@@ -1,22 +1,15 @@
-# English: ClinicaModelTest
-from django.test import TestCase, TransactionTestCase
-from django.contrib.auth import get_user_model
 from django.db import IntegrityError
-# English: Clinica
+from tests.test_base import BaseTestCase, BaseTransactionTestCase, TestDataFactory
 from clinicas.models import Clinica, ClinicaVersion, ClinicaUsuario
-# English: ClinicaForm
 from clinicas.forms import ClinicaFormulario
 
-Usuario = get_user_model()
 
-class ClinicaModelTest(TestCase):
+class ClinicaModelTest(BaseTestCase):
 
     def test_create_clinica(self):
         # Create a Clinica instance with sample data
-        # English: clinic
-        clinica = Clinica.objects.create(
+        clinica = self.create_test_clinica(
             nome_clinica="Clínica Saúde e Bem-Estar",
-            cns_clinica="1234567",
             logradouro="Rua das Flores",
             logradouro_num="123",
             cidade="São Paulo",
@@ -29,20 +22,20 @@ class ClinicaModelTest(TestCase):
 
 
 # English: ClinicaFormTest
-class ClinicaFormularioTest(TestCase):
+class ClinicaFormularioTest(BaseTestCase):
 
     def test_valid_form(self):
-        # English: data
-        data = {
+        # Use global TestDataFactory for consistent data
+        data = TestDataFactory.get_valid_form_data_patterns()['clinic_creation']
+        data.update({
             'nome_clinica': 'Clinica Teste',
-            'cns_clinica': '1234567',
             'logradouro': 'Rua Teste',
             'logradouro_num': '123',
             'cidade': 'Cidade Teste',
             'bairro': 'Bairro Teste',
             'cep': '12345-678',
             'telefone_clinica': '(11) 98765-4321',
-        }
+        })
         # English: form
         form = ClinicaFormulario(data=data)
         self.assertTrue(form.is_valid(), form.errors)
@@ -54,7 +47,7 @@ class ClinicaFormularioTest(TestCase):
         # English: data
         data = {
             'nome_clinica': '',
-            'cns_clinica': '1234567',
+            'cns_clinica': TestDataFactory.get_unique_cns(),
             'logradouro': 'Rua Teste',
             'logradouro_num': '123',
             'cidade': 'Cidade Teste',
@@ -102,28 +95,24 @@ class ClinicaFormularioTest(TestCase):
         self.assertIn('cns_clinica', form.errors)
 
 
-class CNSIntegrityTest(TransactionTestCase):
+class CNSIntegrityTest(BaseTransactionTestCase):
     """Test CNS field integrity and uniqueness"""
     
     def setUp(self):
-        self.user = Usuario.objects.create_user(
-            email='test@example.com',
-            password='testpass123'
-        )
+        super().setUp()
+        self.user = self.create_test_user()
         
     def test_cns_unique_constraint(self):
         """Test that CNS must be unique across all clinics"""
-        # Create first clinic
-        clinic1 = Clinica.objects.create(
-            nome_clinica="Clinic 1",
-            cns_clinica="1234567"
-        )
+        # Create first clinic with unique CNS
+        clinic1 = self.create_test_clinica(nome_clinica="Clinic 1")
+        unique_cns = clinic1.cns_clinica
         
         # Try to create second clinic with same CNS
         with self.assertRaises(IntegrityError):
             Clinica.objects.create(
                 nome_clinica="Clinic 2",
-                cns_clinica="1234567"  # Same CNS
+                cns_clinica=unique_cns  # Same CNS
             )
     
     def test_cns_not_in_version_model(self):
@@ -134,10 +123,9 @@ class CNSIntegrityTest(TransactionTestCase):
     
     def test_cns_immutable_in_form(self):
         """Test that CNS cannot be changed in form when editing"""
-        # Create clinic
-        clinic = Clinica.objects.create(
+        # Create clinic with unique CNS
+        clinic = self.create_test_clinica(
             nome_clinica="Test Clinic",
-            cns_clinica="7654321",
             logradouro="Rua Test",
             logradouro_num="123",
             cidade="Test City",
@@ -145,11 +133,13 @@ class CNSIntegrityTest(TransactionTestCase):
             cep="12345-678",
             telefone_clinica="(11) 1234-5678"
         )
+        original_cns = clinic.cns_clinica
         
         # Create form for editing (has instance)
+        attempted_cns = TestDataFactory.get_unique_cns()  # Different CNS
         form_data = {
             'nome_clinica': 'Updated Clinic',
-            'cns_clinica': '9999999',  # Try to change CNS
+            'cns_clinica': attempted_cns,  # Try to change CNS
             'logradouro': 'Rua Test',
             'logradouro_num': '123',
             'cidade': 'Test City',
@@ -163,16 +153,13 @@ class CNSIntegrityTest(TransactionTestCase):
         
         # Save and check CNS didn't change
         saved_clinic = form.save()
-        self.assertEqual(saved_clinic.cns_clinica, "7654321")  # Original CNS
-        self.assertNotEqual(saved_clinic.cns_clinica, "9999999")  # Not the attempted change
+        self.assertEqual(saved_clinic.cns_clinica, original_cns)  # Original CNS
+        self.assertNotEqual(saved_clinic.cns_clinica, attempted_cns)  # Not the attempted change
     
     def test_versioning_preserves_cns_integrity(self):
         """Test that versioning system doesn't duplicate CNS"""
         # Create clinic
-        clinic = Clinica.objects.create(
-            nome_clinica="Version Test Clinic",
-            cns_clinica="1111111"
-        )
+        clinic = self.create_test_clinica(nome_clinica="Version Test Clinic")
         
         # Create multiple versions
         version1 = ClinicaVersion.objects.create(
@@ -202,23 +189,19 @@ class CNSIntegrityTest(TransactionTestCase):
         )
         
         # Verify both versions point to same clinic with same CNS
-        self.assertEqual(version1.clinica.cns_clinica, "1111111")
-        self.assertEqual(version2.clinica.cns_clinica, "1111111")
+        self.assertEqual(version1.clinica.cns_clinica, clinic.cns_clinica)
+        self.assertEqual(version2.clinica.cns_clinica, clinic.cns_clinica)
         self.assertEqual(version1.clinica.id, version2.clinica.id)
     
     def test_multiple_users_same_clinic_cns(self):
         """Test multiple users can access same clinic (same CNS)"""
         # Create second user
-        user2 = Usuario.objects.create_user(
-            email='user2@example.com',
-            password='testpass123'
+        user2 = self.create_test_user(
+            email=self.data_generator.generate_unique_email()
         )
         
         # Create clinic
-        clinic = Clinica.objects.create(
-            nome_clinica="Shared Clinic",
-            cns_clinica="2222222"
-        )
+        clinic = self.create_test_clinica(nome_clinica="Shared Clinic")
         
         # Associate both users
         ClinicaUsuario.objects.create(usuario=self.user, clinica=clinic)
@@ -228,6 +211,6 @@ class CNSIntegrityTest(TransactionTestCase):
         user1_clinics = Clinica.objects.filter(usuarios=self.user)
         user2_clinics = Clinica.objects.filter(usuarios=user2)
         
-        self.assertEqual(user1_clinics.first().cns_clinica, "2222222")
-        self.assertEqual(user2_clinics.first().cns_clinica, "2222222")
+        self.assertEqual(user1_clinics.first().cns_clinica, clinic.cns_clinica)
+        self.assertEqual(user2_clinics.first().cns_clinica, clinic.cns_clinica)
         self.assertEqual(user1_clinics.first().id, user2_clinics.first().id)

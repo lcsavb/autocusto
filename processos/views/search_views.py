@@ -19,10 +19,9 @@ def busca_processos(request):
     """Searches for processes associated with the logged-in user with simplified control flow."""
     
     if request.method == "GET":
-        # Use service to build standard patient context
-        setup_service = PrescriptionViewSetupService()
-        contexto = setup_service.build_patient_search_context(request.user)
-        return render(request, "processos/busca.html", contexto)
+        # Since busca.html template is deprecated, redirect to home
+        messages.info(request, "Funcionalidade de busca foi atualizada. Redirecionando para a página inicial.")
+        return redirect("home")
     
     # Handle POST request - process selection
     processo_id = request.POST.get("processo_id")

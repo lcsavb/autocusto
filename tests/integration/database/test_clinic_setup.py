@@ -54,6 +54,7 @@ class ClinicSetupIntegrationTest(TestCase):
         session['cid'] = 'G35'
         session['paciente_id'] = '123'
         session['data1'] = '01/01/2024'
+        session['in_setup_flow'] = True  # Indicate we're in the setup flow
         session.save()
 
         # Complete clinic registration  
@@ -130,7 +131,7 @@ class ClinicSetupIntegrationTest(TestCase):
         session = self.client.session
         session['paciente_existe'] = True
         session['cid'] = 'G35'
-        session['cpf_paciente'] = '12345678901'
+        session['cpf_paciente'] = "11144477735"
         session['data1'] = '01/01/2024'
         session.save()
 
@@ -158,7 +159,7 @@ class ClinicSetupIntegrationTest(TestCase):
         # Verify session data is preserved
         self.assertEqual(self.client.session.get('paciente_existe'), True)
         self.assertEqual(self.client.session.get('cid'), 'G35')
-        self.assertEqual(self.client.session.get('cpf_paciente'), '12345678901')
+        self.assertEqual(self.client.session.get('cpf_paciente'), "11144477735")
         self.assertEqual(self.client.session.get('data1'), '01/01/2024')
 
     def test_clinic_form_validation_preserves_session(self):

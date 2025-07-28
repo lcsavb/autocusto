@@ -4,7 +4,8 @@ Medico views tests.
 Consolidated from medicos/test_views.py
 """
 
-from django.test import TestCase, Client
+from tests.test_base import BaseTestCase, TestDataFactory
+from django.test import Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -15,24 +16,22 @@ from usuarios.models import Usuario
 from clinicas.models import Clinica
 
 
-class CompleteProfileViewTest(TestCase):
+class CompleteProfileViewTest(BaseTestCase):
     """Test complete_profile view functionality."""
 
     def setUp(self):
         """Set up test data."""
-        self.client = Client()
-        self.user = Usuario.objects.create_user(
-            email='test@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        self.medico = Medico.objects.create(
+        super().setUp()
+        
+        self.password = 'testpass123'
+        self.user = self.create_test_user(password=self.password, is_medico=True)
+        self.medico = self.create_test_medico(
+            user=self.user,
             nome_medico='Test Doctor',
             crm_medico='',
             cns_medico=''
         )
-        self.user.medicos.add(self.medico)
-        self.client.login(username='test@example.com', password='testpass123')
+        self.client.login(username=self.user.email, password=self.password)
 
     def test_login_required(self):
         """Test that login is required to access the view."""
@@ -66,7 +65,9 @@ class CompleteProfileViewTest(TestCase):
             'crm': '123456',
             'crm2': '123456',
             'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'cns2': '123456789012345',
+            'estado': 'SP',  # Required state field
+            'especialidade': 'CARDIOLOGIA'  # Required specialty field
         }
         response = self.client.post(reverse('complete-profile'), data=form_data)
         
@@ -86,10 +87,7 @@ class CompleteProfileViewTest(TestCase):
     def test_post_valid_data_with_existing_clinics(self):
         """Test POST with valid data when user already has clinics."""
         # Create a clinic for the user
-        clinica = Clinica.objects.create(
-            nome_clinica='Test Clinic',
-            cns_clinica='1234567'
-        )
+        clinica = self.create_test_clinica(nome_clinica='Test Clinic')
         clinica.usuarios.add(self.user)
         clinica.medicos.add(self.medico)
 
@@ -97,7 +95,9 @@ class CompleteProfileViewTest(TestCase):
             'crm': '123456',
             'crm2': '123456',
             'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'cns2': '123456789012345',
+            'estado': 'SP',  # Required state field
+            'especialidade': 'CARDIOLOGIA'  # Required specialty field
         }
         response = self.client.post(reverse('complete-profile'), data=form_data)
         
@@ -130,52 +130,48 @@ class CompleteProfileViewTest(TestCase):
 
     def test_post_integrity_error_crm(self):
         """Test POST handling IntegrityError for duplicate CRM."""
-        # Create another user with the same CRM
-        other_user = Usuario.objects.create_user(
-            email='other@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        other_medico = Medico.objects.create(
+        # Create another user with the same CRM using helper but with hardcoded CRM
+        other_user = self.create_test_user(is_medico=True)
+        other_medico = self.create_test_medico(
+            user=other_user,
             nome_medico='Other Doctor',
-            crm_medico='123456',  # Same CRM
-            cns_medico='999999999999999'
+            crm_medico='123456',  # Hardcoded CRM for duplicate testing
+            cns_medico='999999999999999'  # Hardcoded CNS for duplicate testing
         )
-        other_user.medicos.add(other_medico)
 
         form_data = {
             'crm': '123456',  # Duplicate CRM
             'crm2': '123456',
             'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'cns2': '123456789012345',
+            'estado': 'SP',  # Required field
+            'especialidade': 'CLINICA_MEDICA'  # Required field
         }
         response = self.client.post(reverse('complete-profile'), data=form_data)
         
         # Should re-render form with error
         self.assertEqual(response.status_code, 200)
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any('Este CRM já está sendo usado por outro médico.' in str(m) for m in messages))
+        self.assertTrue(any('Este CRM já está sendo usado por outro médico' in str(m) for m in messages))
 
     def test_post_integrity_error_cns(self):
         """Test POST handling IntegrityError for duplicate CNS."""
-        # Create another user with the same CNS
-        other_user = Usuario.objects.create_user(
-            email='other@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        other_medico = Medico.objects.create(
+        # Create another user with the same CNS using helper but with hardcoded CNS
+        other_user = self.create_test_user(is_medico=True)
+        other_medico = self.create_test_medico(
+            user=other_user,
             nome_medico='Other Doctor',
-            crm_medico='999999',
-            cns_medico='123456789012345'  # Same CNS
+            crm_medico='999999',  # Hardcoded CRM for testing
+            cns_medico='123456789012345'  # Hardcoded CNS for duplicate testing
         )
-        other_user.medicos.add(other_medico)
 
         form_data = {
             'crm': '123456',
             'crm2': '123456',
             'cns': '123456789012345',  # Duplicate CNS
-            'cns2': '123456789012345'
+            'cns2': '123456789012345',
+            'estado': 'SP',  # Required field
+            'especialidade': 'CLINICA_MEDICA'  # Required field
         }
         response = self.client.post(reverse('complete-profile'), data=form_data)
         
@@ -185,7 +181,7 @@ class CompleteProfileViewTest(TestCase):
         self.assertTrue(any('Este CNS já está sendo usado por outro médico.' in str(m) for m in messages))
 
 
-class EditProfileViewTest(TestCase):
+class EditProfileViewTest(BaseTestCase):
     """Test edit_profile view functionality."""
 
     def setUp(self):
@@ -274,7 +270,7 @@ class EditProfileViewTest(TestCase):
         self.assertTrue(len(messages) > 0)
 
 
-class NavigationTest(TestCase):
+class NavigationTest(BaseTestCase):
     """Test navigation and URL functionality."""
 
     def setUp(self):

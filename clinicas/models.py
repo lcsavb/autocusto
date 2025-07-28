@@ -3,6 +3,11 @@ from medicos.models import Medico
 from pacientes.models import Paciente
 from django.conf import settings
 from django.utils import timezone
+import logging
+import traceback
+
+# Debug logger for tracking clinic creation
+debug_logger = logging.getLogger('clinic_debug')
 
 
 # Clinic
@@ -38,6 +43,7 @@ class Clinica(models.Model):
         settings.AUTH_USER_MODEL, through="ClinicaUsuario", related_name="clinicas"
     )
 
+
     def __str__(self):
         return f"{self.nome_clinica}"
     
@@ -59,11 +65,16 @@ class Clinica(models.Model):
         latest_version = self.versions.order_by('-version_number').first()
         new_version_number = (latest_version.version_number + 1) if latest_version else 1
         
+        # Filter data to only include fields that exist in ClinicaVersion
+        version_fields = ['nome_clinica', 'logradouro', 'logradouro_num', 
+                         'cidade', 'bairro', 'cep', 'telefone_clinica']
+        version_data = {k: v for k, v in data.items() if k in version_fields}
+        
         version = ClinicaVersion.objects.create(
             clinica=self,
             version_number=new_version_number,
             created_by=user,
-            **data
+            **version_data
         )
         
         # Automatically assign this version to the user who created it
@@ -79,6 +90,8 @@ class Clinica(models.Model):
     @classmethod
     def create_or_update_for_user(cls, user, doctor, clinic_data):
         """Create new clinic or new version for existing clinic"""
+        debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Called for user {user.email} with CNS {clinic_data.get('cns_clinica')}")
+        
         # Validate required parameters
         if not user:
             raise ValueError("User is required")
@@ -91,6 +104,8 @@ class Clinica(models.Model):
         
         # Check if clinic with this CNS already exists
         existing_clinic = cls.objects.filter(cns_clinica=cns).first()
+        all_clinics = cls.objects.all()
+        debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Found {all_clinics.count()} total clinics, CNS {cns} exists: {bool(existing_clinic)}")
         
         if existing_clinic:
             # Create new version for this user
@@ -112,8 +127,10 @@ class Clinica(models.Model):
             existing_clinic.medicos.add(doctor)
             
             existing_clinic.was_created = False
+            debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Updated existing clinic {existing_clinic.id}")
             return existing_clinic
         else:
+            debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: No existing clinic with CNS {cns}, creating new one...")
             # Create new clinic
             new_clinic = cls.objects.create(
                 nome_clinica=clinic_data['nome_clinica'],
@@ -158,6 +175,7 @@ class Clinica(models.Model):
             )
             
             new_clinic.was_created = True
+            debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Created NEW clinic {new_clinic.id} with CNS {cns}")
             return new_clinic
 
 
@@ -192,6 +210,7 @@ class Emissor(models.Model):
         indexes = [
             models.Index(fields=['medico', 'clinica'], name='emissor_medico_clinica_idx'),
         ]
+
 
     def __str__(self):
         # Issued by clinic: {clinic} and by doctor with CRM: {doctor}

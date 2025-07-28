@@ -21,3 +21,5 @@ psutil==7.0.0
 # Testing dependencies
 playwright==1.40.0
 pytest-playwright==0.4.3
+pytest-django==4.11.1
+cpf-generator==2.1.4

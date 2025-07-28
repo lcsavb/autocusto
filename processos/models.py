@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import JSONField
+from django.utils import timezone
 from medicos.models import Medico
 from pacientes.models import Paciente
 from clinicas.models import Clinica, Emissor
@@ -108,6 +109,10 @@ class Processo(models.Model):
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="processos"
     )
+    # timestamp when the process was created
+    created_at = models.DateTimeField(default=timezone.now)
+    # timestamp when the process was last updated
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ['usuario', 'paciente', 'doenca']

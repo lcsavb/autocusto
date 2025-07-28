@@ -5,9 +5,10 @@ This package contains all tests organized by functionality rather than by Django
 This provides better test organization and easier maintenance.
 
 Structure:
-- session_functionality/: Tests for features implemented in the current session
+- unit/: Fast, isolated unit tests
 - integration/: Cross-app integration tests 
-- forms/: Form validation and behavior tests
-- views/: View logic and response tests
-- utils/: Test utilities and helpers
+- e2e/: End-to-end workflow tests
+- test_base.py: Unified test base classes and helpers
 """
+# Import test base classes and helpers for easy access
+from .test_base import *

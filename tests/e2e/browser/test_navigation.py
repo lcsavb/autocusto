@@ -59,7 +59,7 @@ class NavigationPlaywrightTestBase(PlaywrightFormTestBase):
         # Create test patient
         self.patient = Paciente.objects.create(
             nome_paciente="Test Patient",
-            cpf_paciente="72834565031",
+            cpf_paciente="11144477735",
             cns_paciente="111111111111111",
             nome_mae="Test Mother",
             idade="30",
@@ -268,7 +268,7 @@ class CoreAppWorkflowTest(NavigationPlaywrightTestBase):
         
         # Test with invalid CPF
         cpf_field = self.page.locator('input[name="cpf_paciente"]')
-        cpf_field.fill("123.456.789-00")  # Invalid CPF
+        cpf_field.fill("22255588846")  # Invalid CPF
         
         cid_field = self.page.locator('input[name="cid"]')
         cid_field.fill("G40.0")
@@ -466,7 +466,7 @@ class NavigationSecurityTest(NavigationPlaywrightTestBase):
         
         other_patient = Paciente.objects.create(
             nome_paciente="Other Patient",
-            cpf_paciente="12345678901",
+            cpf_paciente="33366699957",
             cns_paciente="222222222222222",
             nome_mae="Other Mother",
             idade="25",

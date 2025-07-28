@@ -133,10 +133,21 @@ class TestPrescriptionServiceSimple(TestCase):
             mock_pdf.generate_prescription_pdf.return_value = Mock()
             mock_domain.get_disease_by_cid.return_value = Mock(id=1)
             
-            # Try to call with minimal valid parameters
-            form_data = {'cpf_paciente': '12345678901'}
+            # Try to call with minimal valid parameters  
+            form_data = {'cpf_paciente': "11144477735"}
+            
+            # Create proper Django model mocks with _meta attributes
             medico = Mock()
+            medico._meta = Mock()
+            medico._meta.concrete_fields = []
+            medico._meta.private_fields = []
+            medico._meta.many_to_many = []
+            
             clinica = Mock()
+            clinica._meta = Mock()
+            clinica._meta.concrete_fields = []
+            clinica._meta.private_fields = []
+            clinica._meta.many_to_many = []
             
             try:
                 result = self.service.create_or_update_prescription(

@@ -65,7 +65,7 @@ class TestDataDrivenStrategy(TestCase):
         # Test patient data
         self.sample_lme_data = {
             "med1": "Fingolimod",  # Patient's medication
-            "cpf_paciente": "12345678901",
+            "cpf_paciente": "11144477735",
             "cid": "G35"  # Multiple Sclerosis code
         }
 
@@ -76,7 +76,7 @@ class TestDataDrivenStrategy(TestCase):
         SCENARIO: Multiple Sclerosis patient should get EDSS scale and disability forms
         WHY IT MATTERS: Every MS patient needs these forms regardless of medication
         """
-        with patch('processos.pdf_strategies.get_static_path') as mock_path, \
+        with patch('processos.services.pdf_strategies.get_static_path') as mock_path, \
              patch('os.path.exists') as mock_exists:
             
             # MOCK SETUP: Pretend the PDF files exist on disk
@@ -99,7 +99,7 @@ class TestDataDrivenStrategy(TestCase):
         SCENARIO: Patient on Fingolimod should get cardiac monitoring forms
         WHY IT MATTERS: Fingolimod can cause heart problems, so cardiac monitoring is required
         """
-        with patch('processos.pdf_strategies.get_static_path') as mock_path, \
+        with patch('processos.services.pdf_strategies.get_static_path') as mock_path, \
              patch('os.path.exists') as mock_exists:
             
             # MOCK SETUP: Pretend the PDF files exist
@@ -122,7 +122,7 @@ class TestDataDrivenStrategy(TestCase):
         SCENARIO: Patient switches from Fingolimod to Natalizumab
         WHY IT MATTERS: Different drugs have different monitoring requirements
         """
-        with patch('processos.pdf_strategies.get_static_path') as mock_path, \
+        with patch('processos.services.pdf_strategies.get_static_path') as mock_path, \
              patch('os.path.exists') as mock_exists:
             
             mock_exists.return_value = True
@@ -149,7 +149,7 @@ class TestDataDrivenStrategy(TestCase):
         SCENARIO: Configuration says to include a PDF but file doesn't exist on disk
         WHY IT MATTERS: Prevents system crashes when PDFs are accidentally deleted
         """
-        with patch('processos.pdf_strategies.get_static_path') as mock_path, \
+        with patch('processos.services.pdf_strategies.get_static_path') as mock_path, \
              patch('os.path.exists') as mock_exists:
             
             # MOCK SETUP: Files don't exist on disk
@@ -169,7 +169,7 @@ class TestDataDrivenStrategy(TestCase):
         SCENARIO: Doctor types "fingolimod" instead of "Fingolimod"
         WHY IT MATTERS: Doctors shouldn't have to worry about exact capitalization
         """
-        with patch('processos.pdf_strategies.get_static_path') as mock_path, \
+        with patch('processos.services.pdf_strategies.get_static_path') as mock_path, \
              patch('os.path.exists') as mock_exists:
             
             mock_exists.return_value = True

@@ -4,6 +4,7 @@ Medico forms tests.
 Consolidated from medicos/test_forms.py
 """
 
+from tests.test_base import BaseTestCase
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
@@ -13,22 +14,20 @@ from medicos.models import Medico
 from usuarios.models import Usuario
 
 
-class ProfileCompletionFormTest(TestCase):
+class ProfileCompletionFormTest(BaseTestCase):
     """Test ProfileCompletionForm functionality."""
 
     def setUp(self):
         """Set up test data."""
-        self.user = Usuario.objects.create_user(
-            email='test@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        self.medico = Medico.objects.create(
+        super().setUp()
+        
+        self.user = self.create_test_user(is_medico=True)
+        self.medico = self.create_test_medico(
+            user=self.user,
             nome_medico='Test Doctor',
             crm_medico='',
             cns_medico=''
         )
-        self.user.medicos.add(self.medico)
 
     def test_form_has_correct_fields(self):
         """Test that form has the correct fields."""
@@ -110,19 +109,15 @@ class ProfileCompletionFormTest(TestCase):
 
     def test_crm_uniqueness_validation(self):
         """Test that CRM+Estado uniqueness is validated."""
-        # Create another user with existing CRM+Estado combination
-        other_user = Usuario.objects.create_user(
-            email='other@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        other_medico = Medico.objects.create(
+        # Create another user with existing CRM+Estado combination using hardcoded values for uniqueness testing
+        other_user = self.create_test_user(is_medico=True)
+        other_medico = self.create_test_medico(
+            user=other_user,
             nome_medico='Other Doctor',
-            crm_medico='123456',  # This CRM+Estado combination is already taken
+            crm_medico='123456',  # Hardcoded CRM for uniqueness testing
             estado='SP',  # Same state as in the test form data
-            cns_medico='999999999999999'
+            cns_medico='999999999999999'  # Hardcoded CNS for uniqueness testing
         )
-        other_user.medicos.add(other_medico)
 
         form_data = {
             'crm': '123456',  # Trying to use existing CRM
@@ -134,24 +129,22 @@ class ProfileCompletionFormTest(TestCase):
         }
         form = ProfileCompletionForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
-        self.assertTrue(form.non_field_errors())  # Should have non-field validation errors
-        # The error should be about CRM+State combination being used (state name is "São Paulo", not "SP")
-        self.assertIn('Este CRM já está sendo usado por outro médico no estado São Paulo.', form.non_field_errors())
+        # The error is in field errors, not non-field errors
+        self.assertTrue(form.errors)  # Should have field validation errors
+        # The error should be about CRM+State combination being used
+        self.assertIn('Este CRM já está sendo usado por outro médico no estado São Paulo.', str(form.errors))
 
     def test_cns_uniqueness_validation(self):
         """Test that CNS uniqueness is validated."""
-        # Create another user with existing CNS
-        other_user = Usuario.objects.create_user(
-            email='other@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        other_medico = Medico.objects.create(
+        # Create another user with existing CNS using hardcoded values for uniqueness testing
+        other_user = self.create_test_user(is_medico=True)
+        other_medico = self.create_test_medico(
+            user=other_user,
             nome_medico='Other Doctor',
-            crm_medico='999999',
-            cns_medico='123456789012345'  # This CNS is already taken
+            crm_medico='999999',  # Hardcoded CRM for uniqueness testing
+            cns_medico='123456789012345',  # Hardcoded CNS for uniqueness testing
+            estado='RJ'  # Different state to avoid CRM conflict
         )
-        other_user.medicos.add(other_medico)
 
         form_data = {
             'crm': '123456',

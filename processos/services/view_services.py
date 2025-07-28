@@ -262,8 +262,17 @@ class PrescriptionViewSetupService:
             
             paciente_id = request.session["paciente_id"]
             from ..repositories.patient_repository import PatientRepository
+            from pacientes.models import Paciente
             patient_repo = PatientRepository()
-            paciente = patient_repo.get_patient_by_id(paciente_id)
+            
+            try:
+                paciente = patient_repo.get_patient_by_id(paciente_id)
+            except Paciente.DoesNotExist:
+                # Data inconsistency: session says patient exists but DB doesn't have it
+                self.logger.error(f"Data inconsistency: session says patient exists (ID: {paciente_id}) but patient not found in DB")
+                self.logger.error(f"Session data: paciente_existe=True, paciente_id={paciente_id}")
+                self.logger.error("This suggests stale session data or deleted patient record")
+                raise KeyError(f"Inconsistência de dados: paciente ID {paciente_id} não encontrado no banco de dados")
             
             # Get user's versioned data for form initialization
             user = request.user

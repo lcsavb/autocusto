@@ -73,7 +73,7 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
         # Create test patients for each user
         self.paciente1 = Paciente.objects.create(
             nome_paciente="Paciente 1",
-            cpf_paciente="12345678901",
+            cpf_paciente="11144477735",
             rg="123456789",
             idade="30",
             sexo="M",
@@ -259,6 +259,8 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
             paciente=self.paciente1,
             doenca=self.doenca,
             emissor=self.emissor1
+        ,
+            dados_condicionais={}
         )
         
         # Create a process for user2
@@ -267,6 +269,8 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
             paciente=self.paciente2,
             doenca=self.doenca,
             emissor=self.emissor2
+        ,
+            dados_condicionais={}
         )
         
         # Login as user1
@@ -289,6 +293,8 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
             paciente=self.paciente2,
             doenca=self.doenca,
             emissor=self.emissor2
+        ,
+            dados_condicionais={}
         )
         
         # Login as user1
@@ -542,6 +548,8 @@ class ProcessAuthorizationTest(PlaywrightSecurityTestBase):
             paciente=self.paciente1,
             doenca=self.doenca,
             emissor=self.emissor1
+        ,
+            dados_condicionais={}
         )
         
         processo2 = Processo.objects.create(
@@ -549,6 +557,8 @@ class ProcessAuthorizationTest(PlaywrightSecurityTestBase):
             paciente=self.paciente2,
             doenca=self.doenca,
             emissor=self.emissor1  # Same emissor for simplicity
+        ,
+            dados_condicionais={}
         )
         
         # Login as user1

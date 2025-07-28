@@ -101,10 +101,19 @@ class PlaywrightTestBase(StaticLiveServerTestCase):
     
     def login_user(self, email: str, password: str):
         """Helper method to log in a user."""
-        self.page.goto(f"{self.live_server_url}/login/")
+        self.page.goto(f"{self.live_server_url}/")
+        self.page.wait_for_load_state('domcontentloaded')
+        
+        # Fill login form (on home page)
         self.page.fill('input[name="email"]', email)
         self.page.fill('input[name="password"]', password)
-        self.page.click('button[type="submit"]')
+        
+        # Click login submit button (look for specific login form button)
+        login_button = self.page.locator('button[type="submit"]').first
+        login_button.click()
+        
+        # Wait for navigation after login
+        self.page.wait_for_load_state('domcontentloaded')
     
     # Common test data creation methods
     def create_test_user(self, email="test@example.com", password="testpass123"):

@@ -1,4 +1,5 @@
-from django.test import TestCase, Client
+from tests.test_base import BaseTestCase
+from django.test import Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from pacientes.models import Paciente
@@ -11,7 +12,7 @@ import json
 User = get_user_model()
 
 
-class SecurityTestCase(TestCase):
+class SecurityTestCase(BaseTestCase):
     """Test suite for verifying security fixes in patient data access."""
 
     def setUp(self):
@@ -173,7 +174,7 @@ class SecurityTestCase(TestCase):
         self.assertTrue(any('Você precisa estar logado' in str(m) for m in messages))
 
 
-class PatientSearchSecurityTest(TestCase):
+class PatientSearchSecurityTest(BaseTestCase):
     """Test security of patient search functionality."""
     
     def setUp(self):
@@ -299,7 +300,7 @@ class PatientSearchSecurityTest(TestCase):
         self.assertEqual(len(data), 0)
 
 
-class PatientListingSecurityTest(TestCase):
+class PatientListingSecurityTest(BaseTestCase):
     """Test security of patient listing functionality."""
     
     def setUp(self):
@@ -396,7 +397,7 @@ class PatientListingSecurityTest(TestCase):
         self.assertNotContains(response, 'João Silva')
 
 
-class ProcessAccessSecurityTest(TestCase):
+class ProcessAccessSecurityTest(BaseTestCase):
     """Test security of process access control."""
     
     def setUp(self):
@@ -645,7 +646,7 @@ class LGPDComplianceSecurityTest(TestCase):
         )
         self.patient = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             cns_paciente="111111111111111",
             nome_mae="Maria Silva",
             idade="30",
@@ -718,7 +719,7 @@ class MedicalDataValidationSecurityTest(TestCase):
 
     def test_cpf_format_validation(self):
         """Test CPF format validation and security."""
-        valid_cpfs = ["12345678901", "98765432100"]
+        valid_cpfs = ["22255588846", "98765432100"]
         
         invalid_cpfs = [
             "123456789",          # Too short
@@ -946,7 +947,7 @@ class InputSanitizationSecurityTest(TestCase):
                 from pacientes.models import Paciente
                 patient = Paciente.objects.create(
                     nome_paciente=f'João {payload}',
-                    cpf_paciente='12345678901',
+                    cpf_paciente="11144477735",
                     cns_paciente='111111111111111',
                     nome_mae=f'Maria {payload}',
                     idade='30',
@@ -1116,7 +1117,7 @@ class PDFGenerationSecurityTest(TestCase):
         
         self.patient1 = Paciente.objects.create(
             nome_paciente="Test Patient",
-            cpf_paciente="12345678901",
+            cpf_paciente="22255588846",
             cns_paciente="111111111111111",
             nome_mae="Test Mother",
             idade="30",

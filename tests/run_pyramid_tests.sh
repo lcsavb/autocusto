@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run all tests in test pyramid order (unit -> integration -> e2e)
 
-set -e  # Exit on error
+# set -e  # Exit on error - DISABLED to allow all tests to run even if some fail
 TOTAL_TIMEOUT=900  # 15 minutes total
 
 echo "Running Test Pyramid (Unit -> Integration -> E2E) with ${TOTAL_TIMEOUT}s total timeout..."

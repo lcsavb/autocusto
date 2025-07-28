@@ -3,7 +3,7 @@
 # Master Test Execution Script for AutoCusto
 # Runs all tests with proper categorization and reporting
 
-set -e  # Exit on any error
+# set -e  # Exit on any error - DISABLED to allow all tests to run even if some fail
 
 echo "🧪 AutoCusto Master Test Suite"
 echo "============================="
