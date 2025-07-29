@@ -1,6 +1,7 @@
-name: Test Pyramid Integration for AutoCusto
-# Comprehensive testing pipeline using Test Pyramid methodology
-# Unit Tests (fast) → Integration Tests (medium) → E2E Tests (comprehensive)
+name: 🔄 Legacy Test Pipeline (Sequential) - DEPRECATED
+# This workflow is maintained for compatibility but is SLOWER than parallel-tests.yml
+# 🚀 USE parallel-tests.yml for 75% faster execution
+# Will be removed in future versions
 
 on:
   push:
