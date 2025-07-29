@@ -10,6 +10,7 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from unittest.mock import patch
+from cpf_generator import CPF
 
 from pacientes.models import Paciente, PacienteVersion, PacienteUsuarioVersion
 from clinicas.models import Clinica, ClinicaVersion, ClinicaUsuarioVersion
@@ -40,7 +41,7 @@ class VersioningSecurityTestCase(TestCase):
         )
         
         # Create shared patient with different versions for each user
-        self.shared_patient = Paciente.objects.create(cpf_paciente="11144477735",
+        self.shared_patient = Paciente.objects.create(cpf_paciente=CPF.generate(),
             incapaz=False
         )
         self.shared_patient.usuarios.add(self.user1, self.user2)
@@ -126,7 +127,7 @@ class PatientAjaxSecurityTest(VersioningSecurityTestCase):
         client.login(email='user1@test.com', password='pass123')
         
         # Make AJAX request
-        response = client.get('/pacientes/ajax/busca/', {'palavraChave': 'User2'})
+        response = client.get('/pacientes/ajax/busca', {'palavraChave': 'User2'})
         self.assertEqual(response.status_code, 200)
         
         data = json.loads(response.content)
@@ -141,8 +142,11 @@ class PatientAjaxSecurityTest(VersioningSecurityTestCase):
     
     def test_ajax_patient_search_without_version_access(self):
         """Test AJAX search when user has no version access to a patient"""
+        # Generate valid CPF for test
+        orphan_cpf = CPF.generate()
+        
         # Create patient without version for user1
-        orphan_patient = Paciente.objects.create(cpf_paciente='999.888.777-66',
+        orphan_patient = Paciente.objects.create(cpf_paciente=orphan_cpf,
             incapaz=False
         )
         orphan_patient.usuarios.add(self.user1)  # User has relationship but no version
@@ -150,18 +154,18 @@ class PatientAjaxSecurityTest(VersioningSecurityTestCase):
         client = Client()
         client.login(email='user1@test.com', password='pass123')
         
-        with self.assertLogs('pacientes.ajax', level='WARNING') as log:
-            response = client.get('/pacientes/ajax/busca/')
+        with self.assertLogs('pacientes', level='WARNING') as log:
+            response = client.get('/pacientes/ajax/busca')
             self.assertEqual(response.status_code, 200)
             
             data = json.loads(response.content)
             
             # Should not include the orphan patient in results
             cpfs = [p['cpf_paciente'] for p in data]
-            self.assertNotIn('999.888.777-66', cpfs)
+            self.assertNotIn(orphan_cpf, cpfs)
             
             # Should log security warning
-            self.assertTrue(any('Security: Patient CPF 999.888.777-66 skipped' in msg for msg in log.output))
+            self.assertTrue(any(f'Security: Patient CPF {orphan_cpf} skipped' in msg for msg in log.output))
 
 
 class ClinicAjaxSecurityTest(VersioningSecurityTestCase):
@@ -174,7 +178,7 @@ class ClinicAjaxSecurityTest(VersioningSecurityTestCase):
         # Login as user1
         client.login(email='user1@test.com', password='pass123')
         
-        response = client.get('/clinicas/ajax/list/')
+        response = client.get('/clinicas/list/')
         self.assertEqual(response.status_code, 200)
         
         data = json.loads(response.content)
@@ -197,7 +201,7 @@ class ClinicAjaxSecurityTest(VersioningSecurityTestCase):
         client.login(email='user1@test.com', password='pass123')
         
         with self.assertLogs('clinicas.views', level='WARNING') as log:
-            response = client.get(f'/clinicas/ajax/get/{orphan_clinic.id}/')
+            response = client.get(f'/clinicas/get/{orphan_clinic.id}/')
             
             # Should return 404 as if clinic doesn't exist
             self.assertEqual(response.status_code, 404)
@@ -213,7 +217,7 @@ class TemplateFilterSecurityTest(VersioningSecurityTestCase):
         """Test patient name filter doesn't fall back to master record"""
         # Create patient without version for user1
         orphan_patient = Paciente.objects.create(
-            cpf_paciente='111.222.333-44',
+            cpf_paciente=CPF.generate(),
             nome_paciente='MASTER RECORD NAME'
         ,
             incapaz=False
@@ -233,7 +237,7 @@ class TemplateFilterSecurityTest(VersioningSecurityTestCase):
     def test_patient_data_filter_no_fallback_to_master(self):
         """Test patient data filter doesn't fall back to master record"""
         orphan_patient = Paciente.objects.create(
-            cpf_paciente='555.666.777-88',
+            cpf_paciente=CPF.generate(),
             nome_paciente='MASTER DATA'
         ,
             incapaz=False
@@ -268,7 +272,7 @@ class ModelMethodSecurityTest(VersioningSecurityTestCase):
     def test_get_name_for_user_no_fallback(self):
         """Test get_name_for_user method doesn't fall back to master record"""
         orphan_patient = Paciente.objects.create(
-            cpf_paciente='777.888.999-00',
+            cpf_paciente=CPF.generate(),
             nome_paciente='MASTER NAME'
         ,
             incapaz=False
@@ -286,7 +290,8 @@ class ModelMethodSecurityTest(VersioningSecurityTestCase):
     
     def test_patient_search_model_method_no_fallback(self):
         """Test patient search model method doesn't include patients without versions"""
-        orphan_patient = Paciente.objects.create(cpf_paciente='333.444.555-66',
+        orphan_cpf = CPF.generate()
+        orphan_patient = Paciente.objects.create(cpf_paciente=orphan_cpf,
             incapaz=False
         )
         orphan_patient.usuarios.add(self.user1)
@@ -296,10 +301,10 @@ class ModelMethodSecurityTest(VersioningSecurityTestCase):
             
             # Should not include orphan patient
             patient_cpfs = [p[0].cpf_paciente for p in results]
-            self.assertNotIn('333.444.555-66', patient_cpfs)
+            self.assertNotIn(orphan_cpf, patient_cpfs)
             
             # Should log security warning
-            self.assertTrue(any('Security: Patient CPF 333.444.555-66 skipped' in msg for msg in log.output))
+            self.assertTrue(any(f'Security: Patient CPF {orphan_cpf} skipped' in msg for msg in log.output))
 
 
 class ComprehensiveSecurityTest(VersioningSecurityTestCase):
@@ -309,7 +314,7 @@ class ComprehensiveSecurityTest(VersioningSecurityTestCase):
         """Comprehensive test to ensure master records are never exposed"""
         # Create patient with sensitive master record data
         sensitive_patient = Paciente.objects.create(
-            cpf_paciente='123.123.123-12',
+            cpf_paciente=CPF.generate(),
             nome_paciente='SENSITIVE_MASTER_DATA_SHOULD_NEVER_BE_VISIBLE'
         ,
             incapaz=False
@@ -337,7 +342,7 @@ class ComprehensiveSecurityTest(VersioningSecurityTestCase):
         client.login(email='user1@test.com', password='pass123')
         
         # 1. AJAX search
-        response = client.get('/pacientes/ajax/busca/')
+        response = client.get('/pacientes/ajax/busca')
         content = response.content.decode('utf-8')
         self.assertNotIn('SENSITIVE_MASTER_DATA', content)
         
@@ -370,12 +375,12 @@ class ComprehensiveSecurityTest(VersioningSecurityTestCase):
         # User2 should never see any trace of "User1 Version Name"
         
         # Check AJAX search
-        response = client.get('/pacientes/ajax/busca/', {'palavraChave': 'User1'})
+        response = client.get('/pacientes/ajax/busca', {'palavraChave': 'User1'})
         content = response.content.decode('utf-8') 
         self.assertNotIn('User1 Version Name', content)
         
         # Check clinic listing
-        response = client.get('/clinicas/ajax/list/')
+        response = client.get('/clinicas/list/')
         content = response.content.decode('utf-8')
         self.assertNotIn('User1 Clinic Version', content)
         

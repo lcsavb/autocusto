@@ -129,14 +129,22 @@ docker exec autocusto-web-1 python manage.py test --keepdb -v 2
 
 ### Priority Test Implementations Needed
 
+#### 🔴 **CRITICAL PRIORITY (Core Business Functionality)**
+1. **EDICAO Route PDF Generation Test Suite** ⚠️ **URGENT**
+   - Create missing `PDFGenerationEdicaoTest` class
+   - Test complete edit → PDF generation workflow
+   - Test AJAX response validation for edited processes
+   - Test PDF security and authorization for edited processes
+   - Test form validation before PDF generation in edit mode
+
 #### 🔴 High Priority (Security & Performance)
-1. **Comprehensive Security Test Suite**
+2. **Comprehensive Security Test Suite**
    - Authorization matrix testing (who can access what)
    - CSRF token validation across all forms
    - SQL injection prevention validation
    - XSS protection testing for user inputs
 
-2. **PDF Generation Performance Tests**
+3. **PDF Generation Performance Tests**
    - Large prescription PDF generation timing
    - Concurrent PDF generation load testing
    - Memory usage validation during PDF creation
@@ -501,20 +509,43 @@ Key Test: Verifies user isolation - User B cannot see User A's processes
 - Real-time features (if any WebSocket or polling features exist)
 - Browser compatibility (currently only testing Chrome/Chromium)
 
-**🚨 Critical Missing: PDF Generation End-to-End Testing**
+**🚨 Critical Gap Identified: EDICAO Route PDF Generation Testing**
 
-The core business value of AutoCusto is PDF generation, but current tests stop at form submission. Priority tests needed:
+The AutoCusto system has **three core PDF generation routes**, but testing coverage is incomplete:
 
-1. **Complete PDF Generation Workflow Tests**
-   - Verify AJAX response contains PDF URL
+### Core PDF Generation Routes Analysis
+
+| Route | Purpose | Test Coverage | Status |
+|-------|---------|---------------|---------|
+| `/processos/renovacao/` | Quick Renewal (Renovação Rápida) | ✅ **EXCELLENT** - 3 comprehensive tests | **COMPLETE** |
+| `/processos/cadastro/` | New Process Registration | ✅ **GOOD** - 2 dedicated tests + business logic tests | **COMPLETE** |
+| `/processos/edicao/` | Process Editing | ❌ **CRITICAL GAP** - No dedicated PDF generation tests | **MISSING** |
+
+### 🔴 **URGENT: Missing EDICAO PDF Generation Tests**
+
+The EDICAO route (/processos/edicao/) has **NO dedicated PDF generation test class**:
+
+- ✅ Existing: `PDFGenerationQuickRenewalTest` 
+- ✅ Existing: `PDFGenerationCadastroTest`
+- ❌ **MISSING**: `PDFGenerationEdicaoTest`
+
+**Required Tests for EDICAO Route:**
+1. **Complete EDICAO PDF Generation Workflow**
+   - Test workflow: existing process → edit form → PDF generation
+   - Verify AJAX response contains PDF URL  
    - Test PDF modal opens and displays correctly
    - Validate PDF download functionality
    - Test PDF content correctness
 
-2. **PDF Security & Authorization Tests**
-   - User can access their own PDFs
-   - User cannot access other users' PDFs
-   - PDF filename validation and security
+2. **EDICAO-Specific PDF Security & Authorization**
+   - User can access PDFs from their edited processes
+   - User cannot access PDFs from other users' edited processes
+   - PDF filename validation and security for edited processes
+
+3. **EDICAO Form Validation Before PDF Generation**
+   - Test form validation prevents PDF generation with invalid data
+   - Test partial vs complete edit mode PDF generation
+   - Test medication updates reflected in generated PDFs
 
 ## Test Execution Guidelines
 
@@ -576,6 +607,7 @@ Current test status:
 - ✅ **Backend unit tests**: All core services working (35/35 passing)
 - ✅ **Integration tests**: Prescription workflows validated  
 - ✅ **Repository tests**: Data access layer working
+- ❌ **CRITICAL GAP**: EDICAO route PDF generation tests completely missing
 - ⚠️ **Frontend tests**: Chrome/Docker networking limitation - infrastructure ready, needs container config
 - ❌ **Performance tests**: Need comprehensive PDF generation testing
 

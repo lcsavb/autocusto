@@ -6,7 +6,7 @@ This test MUST pass before any deployment. If this test fails, deployment should
 Tests the integrity of the clinic versioning system to ensure no production breakage.
 """
 from tests.test_base import BaseTestCase
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, TestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from clinicas.models import Clinica, ClinicaVersion, ClinicaUsuario, ClinicaUsuarioVersion, Emissor

@@ -8,6 +8,11 @@ This module provides:
 4. Common test data patterns
 
 Use this instead of django_test_base.py or test_data_fixtures.py
+
+RUNNING TESTS:
+Always use --keepdb flag to avoid database recreation overhead:
+  python manage.py test --keepdb
+  python manage.py test tests.integration.api.test_process_views --keepdb
 """
 
 import uuid
@@ -141,6 +146,68 @@ class BaseTestCase(TestCase):
         
         return Clinica.objects.create(**defaults)
     
+    def create_test_clinica_with_versioning(self, user, medico, **kwargs):
+        """Create a test clinic using the proper versioning system."""
+        from clinicas.models import Clinica
+        
+        defaults = {
+            'nome_clinica': f'Test Clinic {self.unique_suffix}',
+            'cns_clinica': self.data_generator.generate_unique_cns_clinica(),
+            'logradouro': 'Test Street',
+            'logradouro_num': '123',
+            'cidade': 'São Paulo',
+            'bairro': 'Centro',
+            'cep': '01000-000',
+            'telefone_clinica': '(11) 3333-4444'
+        }
+        defaults.update(kwargs)
+        
+        # Use the proper versioning system
+        return Clinica.create_or_update_for_user(
+            user=user,
+            doctor=medico,
+            clinic_data=defaults
+        )
+    
+    def ensure_clinic_version_assignments(self):
+        """
+        Utility method to ensure all test clinic-user relationships have version assignments.
+        This fixes the common test issue where clinic relationships exist but version assignments don't.
+        """
+        from clinicas.models import Clinica, ClinicaUsuario, ClinicaUsuarioVersion, ClinicaVersion
+        
+        # Find all ClinicaUsuario relationships without version assignments
+        missing_assignments = ClinicaUsuario.objects.filter(
+            active_version__isnull=True
+        )
+        
+        for cu in missing_assignments:
+            if cu.clinica and cu.usuario:
+                # Get or create a version for this clinic
+                version = cu.clinica.versions.first()
+                if not version:
+                    # Create initial version if none exists
+                    version = ClinicaVersion.objects.create(
+                        clinica=cu.clinica,
+                        version_number=1,
+                        nome_clinica=cu.clinica.nome_clinica,
+                        logradouro=cu.clinica.logradouro,
+                        logradouro_num=cu.clinica.logradouro_num,
+                        cidade=cu.clinica.cidade,
+                        bairro=cu.clinica.bairro,
+                        cep=cu.clinica.cep,
+                        telefone_clinica=cu.clinica.telefone_clinica,
+                        change_summary='Test version created automatically',
+                        status='active'
+                    )
+                
+                # Create the missing version assignment
+                ClinicaUsuarioVersion.objects.create(
+                    clinica_usuario=cu,
+                    version=version
+                )
+                print(f"✅ Created version assignment: {cu.usuario.email} -> Clinic {cu.clinica.cns_clinica} Version {version.version_number}")
+    
     def create_test_patient(self, user=None, **kwargs):
         """Create a test patient with unique CPF and CNS."""
         from pacientes.models import Paciente
@@ -171,9 +238,9 @@ class BaseTestCase(TestCase):
             
             # Create patient version for proper access control
             try:
-                from pacientes.models import PacienteVersion
+                from pacientes.models import PacienteVersion, PacienteUsuarioVersion
                 # Create initial version for the patient (only with known safe fields)
-                PacienteVersion.objects.create(
+                patient_version = PacienteVersion.objects.create(
                     paciente=patient,
                     nome_paciente=patient.nome_paciente,
                     cns_paciente=getattr(patient, 'cns_paciente', ''),  
@@ -197,8 +264,20 @@ class BaseTestCase(TestCase):
                     status='active',
                     created_by=user
                 )
-            except (ImportError, Exception):
+                
+                # Create user-patient version relationship to avoid security warnings
+                # Get the through relationship object
+                user_patient_rel = patient.usuarios.through.objects.get(
+                    paciente=patient, usuario=user
+                )
+                PacienteUsuarioVersion.objects.create(
+                    paciente_usuario=user_patient_rel,
+                    version=patient_version
+                )
+            except (ImportError, Exception) as e:
                 # PacienteVersion model might not exist or have different fields
+                # Don't silently fail - log the error for debugging
+                print(f"WARNING: Failed to create patient version: {e}")
                 pass
         
         return patient
@@ -251,6 +330,34 @@ class BaseTestCase(TestCase):
         
         return Medicamento.objects.create(**defaults)
     
+    def create_test_prescription_data(self, medications=None):
+        """Create properly structured prescription data for testing."""
+        if not medications:
+            medications = [self.create_test_medicamento()]
+        
+        prescricao = {}
+        for med_index, med in enumerate(medications, 1):
+            prescricao[str(med_index)] = {
+                f"id_med{med_index}": str(med.id),
+                f"med{med_index}_posologia_mes1": "1 comprimido 2x ao dia",
+                f"med{med_index}_posologia_mes2": "1 comprimido 2x ao dia", 
+                f"med{med_index}_posologia_mes3": "1 comprimido 2x ao dia",
+                f"med{med_index}_posologia_mes4": "1 comprimido 2x ao dia",
+                f"med{med_index}_posologia_mes5": "1 comprimido 2x ao dia",
+                f"med{med_index}_posologia_mes6": "1 comprimido 2x ao dia",
+                f"qtd_med{med_index}_mes1": "60",
+                f"qtd_med{med_index}_mes2": "60",
+                f"qtd_med{med_index}_mes3": "60",
+                f"qtd_med{med_index}_mes4": "60",
+                f"qtd_med{med_index}_mes5": "60",
+                f"qtd_med{med_index}_mes6": "60"
+            }
+            # Add administration route for first medication
+            if med_index == 1:
+                prescricao[str(med_index)]["med1_via"] = "oral"
+        
+        return prescricao
+    
     def create_test_emissor(self, medico=None, clinica=None):
         """Create a test emissor (doctor-clinic association)."""
         from clinicas.models import Emissor
@@ -302,6 +409,33 @@ class BaseTestCase(TestCase):
             defaults[key] = value
         
         return Processo.objects.create(**defaults)
+    
+    def create_test_processo_with_versioned_patient(self, user, patient_data, **kwargs):
+        """
+        Create a test process with properly versioned patient data.
+        
+        This helper is specifically for testing patient versioning scenarios where
+        different users need their own versions of patient data.
+        
+        Args:
+            user: The user who will see this version of the patient
+            patient_data: Dict containing patient data for this user's version
+            **kwargs: Additional arguments passed to create_test_processo
+        
+        Returns:
+            Processo: Created process with versioned patient
+        """
+        from pacientes.models import Paciente
+        
+        # Create or update patient with versioning for this specific user
+        versioned_patient = Paciente.create_or_update_for_user(user, patient_data)
+        
+        # Use existing helper with the versioned patient
+        return self.create_test_processo(
+            usuario=user,
+            paciente=versioned_patient,
+            **kwargs
+        )
     
     def login_test_user(self, user=None, password="testpass123"):
         """Login a test user."""

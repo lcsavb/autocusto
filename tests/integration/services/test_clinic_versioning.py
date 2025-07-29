@@ -139,7 +139,7 @@ class ClinicVersioningModelTest(BaseTestCase):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 Clinica.objects.create(
-                    cns_clinica="1234567",
+                    cns_clinica=self.clinic_data['cns_clinica'],  # Use same CNS as first clinic
                     nome_clinica='Different Name'
                 )
     
@@ -154,7 +154,7 @@ class ClinicVersioningModelTest(BaseTestCase):
                     clinica=clinic,
                     version_number=1,  # Same as existing
                     nome_clinica='Test',
-                    created_by=self.medico2.usuario
+                    created_by=self.user2
                 )
     
     def test_get_version_for_user(self):
@@ -174,10 +174,10 @@ class ClinicVersioningModelTest(BaseTestCase):
         self.assertEqual(user1_version.nome_clinica, self.clinic_data['nome_clinica'])
         self.assertEqual(user2_version.nome_clinica, 'Clínica Santos')
         
-        # User without access should get latest active version
+        # User without access should get None (security fix)
         user3 = User.objects.create_user(email='user3@test.com', password='pass')
         user3_version = clinic.get_version_for_user(user3)
-        self.assertEqual(user3_version.nome_clinica, 'Clínica Santos')  # Latest
+        self.assertIsNone(user3_version)  # No unauthorized access allowed
     
     def test_emissor_creation_with_versioning(self):
         """Test Emissor creation integrates with clinic versioning."""
@@ -297,7 +297,7 @@ class ClinicVersioningViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 302)
         
         # Verify clinic was created with versioning
-        clinic = Clinica.objects.get(cns_clinica="1234567")
+        clinic = Clinica.objects.get(cns_clinica=self.clinic_data['cns_clinica'])
         self.assertIsNotNone(clinic)
         
         # Verify version was created
@@ -334,7 +334,7 @@ class ClinicVersioningViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 302)
         
         # Should still be same clinic record
-        clinics = Clinica.objects.filter(cns_clinica="1234567")
+        clinics = Clinica.objects.filter(cns_clinica=self.clinic_data['cns_clinica'])
         self.assertEqual(clinics.count(), 1)
         
         clinic = clinics.first()
@@ -472,8 +472,9 @@ class ClinicVersioningMigrationTest(BaseTestCase):
             nome_clinica='Legacy Clinic'
         )
         
-        # Add medico relationship
+        # Add medico and user relationships (required for versioning system)
         clinic.medicos.add(self.medico)
+        clinic.usuarios.add(self.user)
         
         # Simulate migration: assign initial versions
         if not clinic.versions.exists():

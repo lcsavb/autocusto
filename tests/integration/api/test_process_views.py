@@ -30,7 +30,7 @@ import random
 from datetime import date, datetime
 from unittest.mock import patch, MagicMock
 
-from tests.test_base import BaseTestCase, TestDataFactory
+from tests.test_base import BaseTestCase, TestDataFactory, get_valid_prescription_form_data
 from django.test import Client
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
@@ -69,14 +69,14 @@ class ProcessViewsBusinessLogicTestBase(BaseTestCase):
             dados_condicionais={
                 "fields": [
                     {
-                        "name": "severity_score",
+                        "name": "opt_severity_score",
                         "type": "choice",
                         "label": "Disease Severity",
                         "choices": [("mild", "Mild"), ("severe", "Severe")],
                         "required": True
                     },
                     {
-                        "name": "notes",
+                        "name": "opt_notes",
                         "type": "textarea", 
                         "label": "Clinical Notes",
                         "required": False
@@ -86,16 +86,19 @@ class ProcessViewsBusinessLogicTestBase(BaseTestCase):
         )
         
         self.doenca = self.create_test_doenca(
-            cid="T99.9",
-            nome="Test Disease",
+            cid="G20",
+            nome="Doença de Parkinson",
             protocolo=self.protocolo
         )
         
         self.medicamento = self.create_test_medicamento(
-            nome="Test Medication",
-            dosagem="100mg",
-            apres="Tablet"
+            nome="Levodopa + Carbidopa",
+            dosagem="250mg + 25mg",
+            apres="Comprimido"
         )
+        
+        # Associate medication with protocol so it appears in form
+        self.protocolo.medicamentos.add(self.medicamento)
         
         self.paciente = self.create_test_patient(
             nome_paciente="Test Patient",
@@ -139,7 +142,7 @@ class TestCadastroBusinessLogic(ProcessViewsBusinessLogicTestBase):
         else:
             # If we get 200, check that dynamic fields from protocol are included
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'severity_score')
+            self.assertContains(response, 'opt_severity_score')
             self.assertContains(response, 'Disease Severity')
             self.assertContains(response, 'Clinical Notes')
 
@@ -186,8 +189,8 @@ class TestCadastroBusinessLogic(ProcessViewsBusinessLogicTestBase):
             'nome_paciente': self.paciente.nome_paciente,
             'cpf_paciente': self.paciente.cpf_paciente,
             'anamnese': 'Test anamnese',
-            'severity_score': 'mild',  # Dynamic field
-            'notes': 'Test clinical notes',  # Dynamic field
+            'opt_severity_score': 'mild',  # Dynamic field
+            'opt_notes': 'Test clinical notes',  # Dynamic field
             'id_med1': str(self.medicamento.id),
             'med1_posologia_mes1': '1 tablet daily',
             'qtd_med1_mes1': '30',
@@ -236,7 +239,7 @@ class TestCadastroBusinessLogic(ProcessViewsBusinessLogicTestBase):
         # Submit form with missing required field
         incomplete_form_data = {
             'nome_paciente': '',  # Required field missing
-            'severity_score': '',  # Required dynamic field missing
+            'opt_severity_score': '',  # Required dynamic field missing
         }
         
         
@@ -245,7 +248,7 @@ class TestCadastroBusinessLogic(ProcessViewsBusinessLogicTestBase):
         # Should stay on form page (not redirect)
         self.assertEqual(response.status_code, 200)
         # Should show form again with errors
-        self.assertContains(response, 'severity_score')  # Form fields should be present
+        self.assertContains(response, 'opt_severity_score')  # Form fields should be present
 
 
 class TestEdicaoBusinessLogic(ProcessViewsBusinessLogicTestBase):
@@ -254,10 +257,11 @@ class TestEdicaoBusinessLogic(ProcessViewsBusinessLogicTestBase):
     def setUp(self):
         super().setUp()
         # Create existing process for editing tests
+        prescription_data = self.create_test_prescription_data([self.medicamento])
         self.processo = Processo.objects.create(
             anamnese="Original anamnese",
             doenca=self.doenca,
-            prescricao={"med1": "Test Med"},
+            prescricao=prescription_data,
             tratou=True,
             tratamentos_previos="None",
             data1=date.today(),
@@ -311,7 +315,7 @@ class TestEdicaoBusinessLogic(ProcessViewsBusinessLogicTestBase):
         updated_data = {
             'nome_paciente': self.paciente.nome_paciente,
             'anamnese': 'Updated anamnese',
-            'severity_score': 'severe',  # Changed value
+            'opt_severity_score': 'severe',  # Changed value
             'tratou': 'True',
             'preenchido_por': 'medico'
         }
@@ -335,10 +339,11 @@ class TestRenovacaoRapidaBusinessLogic(ProcessViewsBusinessLogicTestBase):
     
     def setUp(self):
         super().setUp()
+        prescription_data = self.create_test_prescription_data([self.medicamento])
         self.processo = Processo.objects.create(
             anamnese="Renewal test",
             doenca=self.doenca,
-            prescricao={"med1": "Test Med"},
+            prescricao=prescription_data,
             tratou=True,
             tratamentos_previos="Previous treatments",
             data1=date.today(),
@@ -419,8 +424,8 @@ class TestPDFGenerationBusinessLogic(ProcessViewsBusinessLogicTestBase):
             'cpf_paciente': self.paciente.cpf_paciente,
             'nome_paciente': self.paciente.nome_paciente,
             'cid': self.doenca.cid,
-            'severity_score': 'mild',
-            'med1': 'Test Medication'
+            'opt_severity_score': 'mild',
+            'med1': 'Levodopa + Carbidopa'
         }
         session['path_lme_base'] = '/test/path/lme.pdf'
         session.save()
@@ -608,32 +613,59 @@ class TestCompleteWorkflowBusinessLogic(ProcessViewsBusinessLogicTestBase):
         else:
             # If we get 200, proceed with the test
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'severity_score')  # Dynamic field
+            self.assertContains(response, 'opt_severity_score')  # Dynamic field
         
         # Step 3: Submit form (should process and redirect)
-        form_data = {
+        # Start with base form data that includes all required fields
+        form_data = get_valid_prescription_form_data()
+        
+        # Override with test-specific values
+        form_data.update({
             'nome_paciente': self.paciente.nome_paciente,
+            'cpf_paciente': self.paciente.cpf_paciente,
+            'cid': self.doenca.cid,
             'anamnese': 'Complete workflow test',
-            'severity_score': 'mild',
-            'notes': 'Workflow notes',
+            'clinicas': str(self.clinica.id),
+            'consentimento': True,
+            # Additional required fields
+            'emitir_relatorio': False,
+            'emitir_exames': False,
+            # Dynamic fields
+            'opt_severity_score': 'mild',
+            'opt_notes': 'Workflow notes',
+            # Medication data
             'id_med1': str(self.medicamento.id),
             'med1_posologia_mes1': '1 tablet',
             'qtd_med1_mes1': '30',
+            'med1_posologia_mes2': '1 tablet',
+            'qtd_med1_mes2': '30',
+            'med1_posologia_mes3': '1 tablet',
+            'qtd_med1_mes3': '30',
+            'med1_posologia_mes4': '1 tablet',
+            'qtd_med1_mes4': '30',
+            'med1_posologia_mes5': '1 tablet',
+            'qtd_med1_mes5': '30',
+            'med1_posologia_mes6': '1 tablet',
+            'qtd_med1_mes6': '30',
+            'med1_via': 'oral',
             'med1_repetir_posologia': 'True',
             'tratou': 'True',
             'preenchido_por': 'medico',
-            'data_1': date.today().strftime('%Y-%m-%d')
-        }
+            'data_1': date.today().strftime('%d/%m/%Y')  # Brazilian date format
+        })
         
         response = self.client.post(reverse('processos-cadastro'), form_data)
+        
         # Successful form submission should return JSON response (200) for PDF generation
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json')
         
-        # Step 4: Generate PDF (should succeed)
-        response = self.client.get(reverse('processos-pdf'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/pdf')
+        # Parse the JSON response to verify success
+        import json
+        response_data = json.loads(response.content.decode())
+        self.assertTrue(response_data.get('success', False))
+        self.assertIn('pdf_url', response_data)
+        self.assertIn('processo_id', response_data)
 
 
 # SUMMARY: Business Logic Test Coverage

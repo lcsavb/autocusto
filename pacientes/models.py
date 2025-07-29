@@ -141,32 +141,21 @@ class Paciente(models.Model):
                 return version
         except self.usuarios.through.DoesNotExist:
             logger.warning(f"No relationship exists between user {user.email} and patient {self.cpf_paciente}")
+            # 🛡️ SECURITY FIX: Return None immediately for unauthorized users
+            logger.error(
+                f"🚨 SECURITY: Access denied - User {user.email} has no relationship "
+                f"with patient {self.cpf_paciente}. Returning None to prevent data leak."
+            )
+            return None
         
-        # Security warning: Using fallback mechanism
+        # Fallback mechanism only for users with relationships but missing version assignments
         fallback_version = self.versions.filter(status='active').order_by('-version_number').first()
         
         if fallback_version:
             logger.warning(
-                f"🚨 SECURITY: Fallback version access detected!\n"
-                f"   User: {user.email}\n"
-                f"   Patient: {self.cpf_paciente}\n"
-                f"   Fallback Version: {fallback_version.version_number} ('{fallback_version.nome_paciente}')\n"
-                f"   Created By: {fallback_version.created_by.email if fallback_version.created_by else 'Unknown'}\n"
-                f"   This may indicate missing version assignment or unauthorized access attempt!"
+                f"⚠️  Missing version assignment: User {user.email} has relationship "
+                f"with patient {self.cpf_paciente} but no assigned version - using fallback version {fallback_version.version_number}"
             )
-            
-            # Check if this is a legitimate case (new patient creation) or security issue
-            user_relationships = self.usuarios.filter(id=user.id).exists()
-            if not user_relationships:
-                logger.error(
-                    f"🚨 POTENTIAL SECURITY BREACH: User {user.email} has no relationship "
-                    f"with patient {self.cpf_paciente} but is accessing via fallback!"
-                )
-            else:
-                logger.warning(
-                    f"⚠️  Missing version assignment: User {user.email} has relationship "
-                    f"with patient {self.cpf_paciente} but no assigned version - using fallback"
-                )
         else:
             logger.warning(f"No versions available for patient {self.cpf_paciente}")
             

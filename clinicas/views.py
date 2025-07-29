@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction, IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.core.exceptions import ValidationError
 from .forms import ClinicaFormulario
 from medicos.seletor import medico as seletor_medico
@@ -181,8 +181,10 @@ def get_clinic(request, clinic_id):
                 f"for user {user.email} - no version access (data leak prevented)"
             )
             # Return 404 to make it appear as if the clinic doesn't exist
-            from django.http import Http404
             raise Http404("Clínica não encontrada")
+    except Http404:
+        # Let Http404 propagate to return proper 404 response
+        raise
     except Exception as e:
         logger.error(f"Error getting clinic {clinic_id} for user {request.user.id}: {e}")
         return JsonResponse({'error': 'Erro ao carregar dados da clínica'}, status=500)

@@ -58,19 +58,40 @@ run_container_test() {
     echo ""
     
     local exit_code=0
+    local temp_output="/tmp/test_output_$$"
     
-    # Run tests with keepdb for stability and add database recreation only when needed
-    timeout ${timeout_seconds} docker exec autocusto-web-1 python manage.py test $test_path --keepdb --noinput --verbosity=2 --debug-mode >> "$CONSOLIDATED_ERROR_FILE" 2>&1 || exit_code=$?
+    # Run tests and capture output to temporary file
+    timeout ${timeout_seconds} docker exec autocusto-web-1 python manage.py test $test_path --keepdb --noinput --verbosity=2 --debug-mode > "$temp_output" 2>&1 || exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
         print_status $GREEN "   ✅ $category completed successfully"
+        # Only log a success summary for passed tests
+        echo "=== $category PASSED ===" >> "$CONSOLIDATED_ERROR_FILE"
+        # Extract just the final summary line for passed tests
+        grep -E "^Ran [0-9]+ tests|^OK" "$temp_output" >> "$CONSOLIDATED_ERROR_FILE" 2>/dev/null || echo "All tests passed" >> "$CONSOLIDATED_ERROR_FILE"
+        echo "" >> "$CONSOLIDATED_ERROR_FILE"
     elif [[ $exit_code -eq 124 ]]; then
         print_status $YELLOW "   ⏰ $category timed out after ${timeout_seconds} seconds"
         echo "=== $category TIMEOUT (${timeout_seconds}s) ===" >> "$CONSOLIDATED_ERROR_FILE"
+        # For timeouts, include the last part of output which might have useful info
+        tail -50 "$temp_output" >> "$CONSOLIDATED_ERROR_FILE"
+        echo "" >> "$CONSOLIDATED_ERROR_FILE"
     else
         print_status $RED "   ❌ $category failed (exit code: $exit_code)"
         echo "=== $category FAILED (exit code: $exit_code) ===" >> "$CONSOLIDATED_ERROR_FILE"
+        # For failures, use a simpler approach: extract error sections and summary
+        {
+            # First add test summary
+            grep -E "^Ran [0-9]+ tests|^FAILED \(|^OK$|^Using existing test database" "$temp_output"
+            echo ""
+            # Then add each complete error/failure block
+            grep -A 20 -E "^ERROR:|^FAIL:" "$temp_output" | grep -E "^ERROR:|^FAIL:|^Traceback|^  File|^    |Error:|AssertionError:|^------"
+        } >> "$CONSOLIDATED_ERROR_FILE" 2>/dev/null
+        echo "" >> "$CONSOLIDATED_ERROR_FILE"
     fi
+    
+    # Clean up temporary file
+    rm -f "$temp_output"
     
     echo ""
     return $exit_code
@@ -215,7 +236,8 @@ if [[ -f "$CONSOLIDATED_ERROR_FILE" ]]; then
     
     if [[ $file_size -gt 100 ]]; then
         echo "   📊 Size: $file_size bytes, $line_count lines"
-        print_status $YELLOW "   💡 Use: grep -E 'ERROR|FAIL|Exception' $CONSOLIDATED_ERROR_FILE"
+        print_status $YELLOW "   💡 Contains only errors/failures and test summaries"
+        print_status $YELLOW "   💡 Use: grep -A 5 -B 5 'FAILED\\|ERROR' $CONSOLIDATED_ERROR_FILE"
     else
         echo "   📊 Size: $file_size bytes (minimal errors logged)"
     fi

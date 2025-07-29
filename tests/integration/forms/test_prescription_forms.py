@@ -4,6 +4,7 @@ Tests the complex prescription form workflow and functionality
 """
 
 import time
+import json
 from django.contrib.auth import get_user_model
 from tests.playwright_base import PlaywrightTestBase, PlaywrightFormTestBase
 from pacientes.models import Paciente
@@ -25,8 +26,11 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         
         # Create test user and medico
         print("🔧 DEBUG: Creating user...")
+        from tests.test_base import UniqueDataGenerator
+        data_generator = UniqueDataGenerator()
+        self.test_email = data_generator.generate_unique_email()
         self.user1 = User.objects.create_user(
-            email='medico@example.com',
+            email=self.test_email,
             password='testpass123'
         )
         self.user1.is_medico = True
@@ -36,8 +40,8 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         print("🔧 DEBUG: Creating medico...")
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. João Silva",
-            crm_medico="12345",
-            cns_medico="111111111111111"
+            crm_medico=data_generator.generate_unique_crm(),
+            cns_medico=data_generator.generate_unique_cns_medico()
         )
         self.medico1.usuarios.add(self.user1)
         print(f"✅ Created medico: {self.medico1.nome_medico} (CRM: {self.medico1.crm_medico})")
@@ -46,7 +50,7 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         print("🔧 DEBUG: Creating clinica...")
         self.clinica1 = Clinica.objects.create(
             nome_clinica="Clínica Teste",
-            cns_clinica="1234567",
+            cns_clinica=data_generator.generate_unique_cns_clinica(),
             logradouro="Rua A",
             logradouro_num="123",
             cidade="São Paulo",
@@ -56,10 +60,29 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         )
         print(f"✅ Created clinica: {self.clinica1.nome_clinica}")
         
-        # Associate user with clinica
-        print("🔧 DEBUG: Associating user with clinica...")
-        self.user1.clinicas.add(self.clinica1)
-        print("✅ User associated with clinica")
+        # Use the proper versioning system to create clinic with version assignment
+        print("🔧 DEBUG: Creating clinic with proper versioning...")
+        clinic_data = {
+            'nome_clinica': self.clinica1.nome_clinica,
+            'cns_clinica': self.clinica1.cns_clinica,
+            'logradouro': self.clinica1.logradouro,
+            'logradouro_num': self.clinica1.logradouro_num,
+            'cidade': self.clinica1.cidade,
+            'bairro': self.clinica1.bairro,
+            'cep': self.clinica1.cep,
+            'telefone_clinica': self.clinica1.telefone_clinica
+        }
+        
+        # Use the versioning system instead of manual creation
+        versioned_clinic = Clinica.create_or_update_for_user(
+            user=self.user1,
+            doctor=self.medico1,
+            clinic_data=clinic_data
+        )
+        
+        # Replace the manually created clinic with the properly versioned one
+        self.clinica1 = versioned_clinic
+        print("✅ Clinic created with proper versioning - no fallback needed")
         
         # Create emissor
         print("🔧 DEBUG: Creating emissor...")
@@ -92,6 +115,53 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
             nome_responsavel="",
         )
         self.patient1.usuarios.add(self.user1)
+        
+        # Create patient version and assignment for proper access control
+        print("🔧 DEBUG: Creating patient version...")
+        try:
+            from pacientes.models import PacienteVersion, PacienteUsuarioVersion
+            # Create initial version for the patient
+            patient_version = PacienteVersion.objects.create(
+                paciente=self.patient1,
+                nome_paciente=self.patient1.nome_paciente,
+                cns_paciente=getattr(self.patient1, 'cns_paciente', ''),  
+                nome_mae=getattr(self.patient1, 'nome_mae', ''),
+                idade=getattr(self.patient1, 'idade', ''),
+                sexo=getattr(self.patient1, 'sexo', ''),
+                peso=getattr(self.patient1, 'peso', ''),
+                altura=getattr(self.patient1, 'altura', ''),
+                incapaz=getattr(self.patient1, 'incapaz', False),
+                etnia=getattr(self.patient1, 'etnia', ''),
+                telefone1_paciente=getattr(self.patient1, 'telefone1_paciente', ''),
+                end_paciente=getattr(self.patient1, 'end_paciente', ''),
+                cidade_paciente=getattr(self.patient1, 'cidade_paciente', ''),
+                cep_paciente=getattr(self.patient1, 'cep_paciente', ''),
+                rg=getattr(self.patient1, 'rg', ''),
+                escolha_etnia=getattr(self.patient1, 'escolha_etnia', getattr(self.patient1, 'etnia', '')),
+                telefone2_paciente=getattr(self.patient1, 'telefone2_paciente', ''),
+                nome_responsavel=getattr(self.patient1, 'nome_responsavel', ''),
+                email_paciente=getattr(self.patient1, 'email_paciente', ''),
+                version_number=1,
+                status='active',
+                created_by=self.user1
+            )
+            print(f"✅ Created patient version: {patient_version.version_number}")
+            
+            # Get the through relationship object  
+            user_patient_rel = self.patient1.usuarios.through.objects.get(
+                paciente=self.patient1, usuario=self.user1
+            )
+            
+            # Create the version assignment that links user to their version
+            PacienteUsuarioVersion.objects.create(
+                paciente_usuario=user_patient_rel,
+                version=patient_version
+            )
+            print("✅ Patient version assignment created - no fallback needed")
+            
+        except (ImportError, Exception) as e:
+            print(f"WARNING: Failed to create patient version: {e}")
+        
         print(f"✅ Created patient: {self.patient1.nome_paciente} (CPF: {self.patient1.cpf_paciente})")
         
         # Create test medications
@@ -223,7 +293,7 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         print("\n🚀 TEST: test_prescription_form_navigation")
         
         # Login as medico
-        self.login_user('medico@example.com', 'testpass123')
+        self.login_user(self.test_email, 'testpass123')
         
         # Go to home page
         print("🏠 DEBUG: Navigating to home page")
@@ -439,7 +509,7 @@ class PrescriptionFormAccessibilityTest(PrescriptionFormPlaywrightBase):
     def test_prescription_form_accessibility(self):
         """Test prescription form accessibility features."""
         # Login and navigate to form
-        self.login_user('medico@example.com', 'testpass123')
+        self.login_user(self.test_email, 'testpass123')
         
         # Try to navigate to a prescription form directly
         form_urls = [
@@ -482,7 +552,7 @@ class PrescriptionFormAccessibilityTest(PrescriptionFormPlaywrightBase):
     def test_prescription_form_responsive(self):
         """Test prescription form on different screen sizes."""
         # Login first
-        self.login_user('medico@example.com', 'testpass123')
+        self.login_user(self.test_email, 'testpass123')
         
         # Try to get to a prescription form
         self.page.goto(f'{self.live_server_url}/')
@@ -514,10 +584,47 @@ class MedicationManagementTest(PrescriptionFormPlaywrightBase):
     def navigate_to_medication_form(self):
         """Helper to navigate to a form with medication management (edicao form)"""
         # Login first
-        self.login_user('medico@example.com', 'testpass123')
+        self.login_user(self.test_email, 'testpass123')
         
-        # Navigate to editing form which has full medication management
-        self.page.goto(f'{self.live_server_url}/processos/edicao/')
+        # Create a process using existing test models first - this is required for edicao form
+        print("🔧 DEBUG: Creating process for edicao form...")
+        processo = Processo.objects.create(
+            usuario=self.user1,
+            paciente=self.patient1,  # Use existing patient from setUp
+            doenca=self.doenca,      # Use existing doenca from setUp  
+            clinica=self.clinica1,   # Use existing clinica from setUp
+            medico=self.medico1,     # Use existing medico from setUp
+            emissor=self.emissor1,   # Use existing emissor from setUp
+            anamnese='Test anamnese for medication form',
+            prescricao={},
+            tratou=False,
+            tratamentos_previos='None',
+            data1='2025-01-01',
+            preenchido_por='M',
+            dados_condicionais={}
+        )
+        print(f"✅ Created process: {processo.id}")
+        
+        # Set up session data using the proper endpoint
+        print("🔧 DEBUG: Setting up session data via set_edit_session endpoint...")
+        
+        # Use Playwright to call the session setup endpoint
+        response = self.page.request.post(
+            f'{self.live_server_url}/processos/set-edit-session/',
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps({'processo_id': processo.id})
+        )
+        
+        if response.status == 200:
+            print("✅ Session data configured via endpoint")
+        else:
+            print(f"❌ Failed to set session data: {response.status}")
+            return False
+        
+        # Navigate to editing form 
+        edicao_url = f'{self.live_server_url}/processos/edicao/'
+        print(f"🔧 DEBUG: Navigating to: {edicao_url}")
+        self.page.goto(edicao_url)
         self.wait_for_page_load()
         
         # Check if we have medication tabs

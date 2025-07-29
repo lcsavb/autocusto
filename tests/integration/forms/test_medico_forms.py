@@ -247,6 +247,8 @@ class ProfileCompletionFormTest(BaseTestCase):
             'cns2': '999999999999999'
         }
         form = ProfileCompletionForm(data=form_data, user=self.user)
+        if not form.is_valid():
+            print(f"Form errors: {form.errors}")
         self.assertTrue(form.is_valid())
         form.save()
         

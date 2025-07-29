@@ -222,11 +222,13 @@ class ProfileCompletionForm(forms.Form):
                     self.initial['crm'] = medico.crm_medico
                     self.fields['crm'].disabled = True
                     self.fields['crm2'].disabled = True
+                    self.fields['crm2'].required = False
                     self.fields['crm'].help_text = "CRM já definido e não pode ser alterado"
                 if medico.cns_medico:
                     self.initial['cns'] = medico.cns_medico
                     self.fields['cns'].disabled = True
                     self.fields['cns2'].disabled = True
+                    self.fields['cns2'].required = False
                     self.fields['cns'].help_text = "CNS já definido e não pode ser alterado"
                 if medico.estado:
                     self.initial['estado'] = medico.estado

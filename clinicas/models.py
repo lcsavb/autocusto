@@ -48,17 +48,36 @@ class Clinica(models.Model):
         return f"{self.nome_clinica}"
     
     def get_version_for_user(self, user):
-        """Get the appropriate version of this clinic for a specific user"""
+        """
+        Get the appropriate version of this clinic for a specific user.
+        
+        Security: Only returns data if user has version access - no fallback to master record.
+        """
+        import logging
+        logger = logging.getLogger('clinicas.versioning')
+        
         try:
             # Check if user has a specific version assigned
             clinica_usuario = ClinicaUsuario.objects.get(clinica=self, usuario=user)
             if hasattr(clinica_usuario, 'active_version'):
-                return clinica_usuario.active_version.version
+                version = clinica_usuario.active_version.version
+                logger.debug(f"User {user.email} accessing assigned version {version.version_number} for clinic {self.cns_clinica}")
+                return version
         except ClinicaUsuario.DoesNotExist:
-            pass
+            logger.warning(f"No relationship exists between user {user.email} and clinic {self.cns_clinica}")
+            # 🛡️ SECURITY FIX: Return None immediately for unauthorized users
+            logger.error(
+                f"🚨 SECURITY: Access denied - User {user.email} has no relationship "
+                f"with clinic {self.cns_clinica}. Returning None to prevent data leak."
+            )
+            return None
         
-        # Return latest active version as fallback
-        return self.versions.filter(status='active').order_by('-version_number').first()
+        # NO FALLBACK - If user has relationship but no version assignment, this is a bug
+        logger.error(
+            f"🚨 BUG: User {user.email} has relationship with clinic {self.cns_clinica} "
+            f"but no version assignment in ClinicaUsuarioVersion table. This should never happen!"
+        )
+        return None
     
     def create_new_version(self, user, data):
         """Create a new version of this clinic"""
@@ -78,27 +97,32 @@ class Clinica(models.Model):
         )
         
         # Automatically assign this version to the user who created it
+        logger = logging.getLogger('clinicas.versioning')
         clinica_usuario = ClinicaUsuario.objects.filter(clinica=self, usuario=user).first()
         if clinica_usuario:
-            ClinicaUsuarioVersion.objects.update_or_create(
+            version_assignment, created = ClinicaUsuarioVersion.objects.update_or_create(
                 clinica_usuario=clinica_usuario,
                 defaults={'version': version}
             )
+            logger.debug(f"Version assignment {'created' if created else 'updated'} for user {user.email} - clinic {self.cns_clinica} version {version.version_number}")
+        else:
+            logger.error(f"🚨 BUG: Cannot create version assignment - no ClinicaUsuario relationship exists for user {user.email} and clinic {self.cns_clinica}")
+            raise ValueError(f"User {user.email} has no relationship with clinic {self.cns_clinica}")
         
         return version
 
     @classmethod
     def create_or_update_for_user(cls, user, doctor, clinic_data):
         """Create new clinic or new version for existing clinic"""
-        debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Called for user {user.email} with CNS {clinic_data.get('cns_clinica')}")
-        
-        # Validate required parameters
+        # Validate required parameters first
         if not user:
             raise ValueError("User is required")
         if not doctor:
             raise ValueError("Doctor is required")
         if not clinic_data:
             raise ValueError("Clinic data is required")
+            
+        debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Called for user {user.email} with CNS {clinic_data.get('cns_clinica')}")
             
         cns = clinic_data['cns_clinica']
         
@@ -108,6 +132,11 @@ class Clinica(models.Model):
         debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Found {all_clinics.count()} total clinics, CNS {cns} exists: {bool(existing_clinic)}")
         
         if existing_clinic:
+            # Ensure user and doctor are connected to clinic FIRST
+            # This must happen before create_new_version() so the relationship exists
+            existing_clinic.usuarios.add(user)
+            existing_clinic.medicos.add(doctor)
+            
             # Create new version for this user
             version_data = {
                 'nome_clinica': clinic_data['nome_clinica'],
@@ -121,10 +150,6 @@ class Clinica(models.Model):
             }
             
             existing_clinic.create_new_version(user, version_data)
-            
-            # Ensure user and doctor are connected to clinic
-            existing_clinic.usuarios.add(user)
-            existing_clinic.medicos.add(doctor)
             
             existing_clinic.was_created = False
             debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Updated existing clinic {existing_clinic.id}")
@@ -169,10 +194,15 @@ class Clinica(models.Model):
             
             # Create version assignment for user
             clinica_usuario = ClinicaUsuario.objects.get(usuario=user, clinica=new_clinic)
-            ClinicaUsuarioVersion.objects.create(
-                clinica_usuario=clinica_usuario,
-                version=new_clinic.versions.first()
-            )
+            initial_version = new_clinic.versions.first()
+            if initial_version:
+                version_assignment = ClinicaUsuarioVersion.objects.create(
+                    clinica_usuario=clinica_usuario,
+                    version=initial_version
+                )
+                debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Created version assignment {version_assignment.id} for user {user.email}")
+            else:
+                debug_logger.error(f"🚨 BUG: No initial version found for newly created clinic {new_clinic.id}")
             
             new_clinic.was_created = True
             debug_logger.error(f"🏥 CLINIC CREATE_OR_UPDATE: Created NEW clinic {new_clinic.id} with CNS {cns}")

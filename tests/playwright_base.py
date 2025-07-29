@@ -120,8 +120,7 @@ class PlaywrightTestBase(StaticLiveServerTestCase):
         """Create a test user with the given credentials."""
         return User.objects.create_user(
             email=email,
-            password=password,
-            nome_usuario="Test User"
+            password=password
         )
     
     def create_test_medico(self, user=None, crm="123456", cns="111111111111111"):

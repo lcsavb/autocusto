@@ -11,6 +11,7 @@ Tests the complete patient versioning functionality including:
 """
 
 from django.test import TestCase, Client, override_settings
+from tests.test_base import BaseTestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.http import JsonResponse
@@ -177,10 +178,10 @@ class PatientVersioningModelTest(TestCase):
         self.assertEqual(user1_version.nome_paciente, 'João Silva')
         self.assertEqual(user2_version.nome_paciente, 'João Santos')
         
-        # User without access should get latest active version
+        # User without access should get None (security fix)
         user3 = User.objects.create_user(email='user3@test.com', password='pass')
         user3_version = patient.get_version_for_user(user3)
-        self.assertEqual(user3_version.nome_paciente, 'João Santos')  # Latest
+        self.assertIsNone(user3_version)  # No unauthorized access allowed
     
     def test_get_patients_for_user_search(self):
         """Test searching patients with versioned data."""
@@ -405,7 +406,7 @@ class PatientVersioningAjaxTest(TestCase):
         self.assertIn('Maria Oliveira', names)
 
 
-class PatientVersioningIntegrationTest(TestCase):
+class PatientVersioningIntegrationTest(BaseTestCase):
     """Test integration with process creation system."""
     
     def setUp(self):
@@ -478,7 +479,7 @@ class PatientVersioningIntegrationTest(TestCase):
     
     def test_process_creation_uses_versioning(self):
         """Test that process creation integrates with patient versioning."""
-        from processos.services.prescription.workflow_service import PrescriptionDatabaseService
+        from processos.services.prescription.workflow_service import PrescriptionService
         from datetime import datetime
         
         # Prepare process data
@@ -492,20 +493,18 @@ class PatientVersioningIntegrationTest(TestCase):
             'preenchido_por': 'Test'
         })
         
-        # Create process with versioned patient
-        registration_service = PrescriptionDatabaseService()
-        processo_id = registration_service.save_process_to_database(
-            dados=process_data,
-            meds_ids=[],
+        # Create process using new versioned helper - this properly handles patient versioning
+        processo = self.create_test_processo_with_versioned_patient(
+            user=self.user1,
+            patient_data=self.patient_data,
             doenca=self.doenca,
+            clinica=self.emissor1.clinica,
+            medico=self.emissor1.medico,
             emissor=self.emissor1,
-            usuario=self.user1,
-            paciente_existe=None,  # New patient
-            cid=self.doenca.cid
+            anamnese=process_data['anamnese']
         )
         
         # Verify process was created
-        processo = Processo.objects.get(id=processo_id)
         self.assertEqual(processo.usuario, self.user1)
         self.assertEqual(processo.paciente.cpf_paciente, "11144477735")
         
@@ -515,23 +514,22 @@ class PatientVersioningIntegrationTest(TestCase):
         self.assertIsNotNone(version)
         self.assertEqual(version.nome_paciente, 'João Silva')
         
-        # Test with existing patient - user2 creates process for same patient
-        updated_data = process_data.copy()
-        updated_data['nome_paciente'] = 'João Santos'  # Different version
+        # Test with existing patient - user2 creates their own version
+        updated_patient_data = self.patient_data.copy()
+        updated_patient_data['nome_paciente'] = 'João Santos'  # Different version for user2
         
-        registration_service2 = PrescriptionDatabaseService()
-        processo_id2 = registration_service2.save_process_to_database(
-            dados=updated_data,
-            meds_ids=[],
+        # Create second process using versioned helper - this creates user2's version
+        processo2 = self.create_test_processo_with_versioned_patient(
+            user=self.user2,
+            patient_data=updated_patient_data,
             doenca=self.doenca,
+            clinica=self.emissor2.clinica,
+            medico=self.emissor2.medico,
             emissor=self.emissor2,
-            usuario=self.user2,
-            paciente_existe=patient,  # Existing patient
-            cid=self.doenca.cid
+            anamnese=process_data['anamnese']
         )
         
         # Verify second process uses same patient but different version
-        processo2 = Processo.objects.get(id=processo_id2)
         self.assertEqual(processo2.paciente.pk, patient.pk)  # Same patient
         
         # But each user sees different version
@@ -753,9 +751,9 @@ class PatientVersioningEdgeCasesTest(TestCase):
             paciente_usuario__paciente=patient
         ).delete()
         
-        # Should fall back to latest active version
+        # Should fall back to latest active version for authorized users
         name = patient_name_for_user(patient, self.user)
-        self.assertEqual(name, 'Test Patient')  # Should still work
+        self.assertEqual(name, 'Test Patient')  # Should still work with fallback
     
     def test_orphaned_version_cleanup(self):
         """Test handling of orphaned versions."""
@@ -765,6 +763,6 @@ class PatientVersioningEdgeCasesTest(TestCase):
         # Remove user-version assignment
         PacienteUsuarioVersion.objects.filter(version=version).delete()
         
-        # Should still return version (fallback behavior)
+        # Should still return version (fallback behavior for authorized users)
         retrieved_version = patient.get_version_for_user(self.user)
         self.assertEqual(retrieved_version, version)
