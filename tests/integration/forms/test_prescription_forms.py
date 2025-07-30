@@ -94,9 +94,11 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         
         # Create test patient with all required fields
         print("🔧 DEBUG: Creating patient...")
+        from cpf_generator import CPF
+        unique_cpf = CPF.generate()
         self.patient1 = Paciente.objects.create(
             nome_paciente="Maria Santos",
-            cpf_paciente="11144477735",  # Valid CPF for testing
+            cpf_paciente=unique_cpf,  # Generated unique CPF
             cns_paciente="111111111111111",
             nome_mae="Ana Santos",
             idade="45",
@@ -180,10 +182,12 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         
         # Create protocolo and doenca for testing
         print("🔧 DEBUG: Creating protocolo...")
-        self.protocolo = Protocolo.objects.create(
+        self.protocolo, created = Protocolo.objects.get_or_create(
             nome="Protocolo Epilepsia",
-            arquivo="epilepsia.pdf",
-            dados_condicionais={}
+            defaults={
+                'arquivo': "epilepsia.pdf",
+                'dados_condicionais': {}
+            }
         )
         
         # Associate medications with protocol
@@ -191,10 +195,12 @@ class PrescriptionFormPlaywrightBase(PlaywrightFormTestBase):
         print(f"✅ Created protocolo: {self.protocolo.nome}")
         
         print("🔧 DEBUG: Creating doenca...")
-        self.doenca = Doenca.objects.create(
+        self.doenca, created = Doenca.objects.get_or_create(
             cid="G40.0",
-            nome="Epilepsia",
-            protocolo=self.protocolo
+            defaults={
+                'nome': "Epilepsia",
+                'protocolo': self.protocolo
+            }
         )
         print(f"✅ Created doenca: {self.doenca.cid} - {self.doenca.nome}")
         

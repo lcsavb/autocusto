@@ -36,7 +36,34 @@ class PDFGenerator:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.pdf_logger = logging.getLogger('processos.pdf')
+        self.temp_files = []  # Track temporary files for cleanup
     
+    def _cleanup_temp_files(self):
+        """
+        Clean up all temporary PDF files created during generation.
+        
+        This method removes temporary files from /dev/shm to prevent
+        resource leakage and disk space exhaustion.
+        """
+        if not self.temp_files:
+            return
+            
+        cleaned_count = 0
+        for temp_file in self.temp_files:
+            try:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                    cleaned_count += 1
+                    self.pdf_logger.debug(f"PDFGenerator: Cleaned up temp file: {os.path.basename(temp_file)}")
+            except Exception as e:
+                self.logger.warning(f"PDFGenerator: Failed to clean up {temp_file}: {e}")
+        
+        if cleaned_count > 0:
+            self.pdf_logger.info(f"PDFGenerator: Cleaned up {cleaned_count} temporary files from /dev/shm")
+        
+        # Clear the list after cleanup
+        self.temp_files.clear()
+        
     def fill_and_concatenate(self, template_paths: List[str], form_data: dict) -> Optional[bytes]:
         """
         Fill PDF templates with data and concatenate into single document.
@@ -44,7 +71,8 @@ class PDFGenerator:
         WORKFLOW (pypdftk.concat flattens forms):
         1. Fill each PDF template individually with form data
         2. Concatenate the filled PDFs into final document
-        3. Return the final PDF bytes
+        3. Clean up temporary files from /dev/shm
+        4. Return the final PDF bytes
         
         Args:
             template_paths: List of PDF template file paths
@@ -55,24 +83,29 @@ class PDFGenerator:
         """
         self.pdf_logger.info(f"PDFGenerator: Starting generation with {len(template_paths)} PDF files")
         
-        # Step 1: Fill each PDF template individually
-        self.pdf_logger.info("PDFGenerator: Step 1 - Filling individual PDF templates")
-        filled_pdf_paths = self._fill_pdf_forms(template_paths, form_data)
-        
-        if not filled_pdf_paths:
-            self.logger.error("PDFGenerator: No PDFs were successfully filled")
-            return None
-        
-        # Step 2: Concatenate the filled PDFs
-        self.pdf_logger.info("PDFGenerator: Step 2 - Concatenating filled PDFs")
-        final_pdf_bytes = self._concatenate_pdfs(filled_pdf_paths)
-        
-        if final_pdf_bytes:
-            self.pdf_logger.info(f"PDFGenerator: Generation complete, final PDF size: {len(final_pdf_bytes)} bytes")
-        else:
-            self.logger.error("PDFGenerator: Concatenation failed")
+        try:
+            # Step 1: Fill each PDF template individually
+            self.pdf_logger.info("PDFGenerator: Step 1 - Filling individual PDF templates")
+            filled_pdf_paths = self._fill_pdf_forms(template_paths, form_data)
             
-        return final_pdf_bytes
+            if not filled_pdf_paths:
+                self.logger.error("PDFGenerator: No PDFs were successfully filled")
+                return None
+            
+            # Step 2: Concatenate the filled PDFs
+            self.pdf_logger.info("PDFGenerator: Step 2 - Concatenating filled PDFs")
+            final_pdf_bytes = self._concatenate_pdfs(filled_pdf_paths)
+            
+            if final_pdf_bytes:
+                self.pdf_logger.info(f"PDFGenerator: Generation complete, final PDF size: {len(final_pdf_bytes)} bytes")
+            else:
+                self.logger.error("PDFGenerator: Concatenation failed")
+                
+            return final_pdf_bytes
+            
+        finally:
+            # Step 3: Always clean up temporary files, even if generation fails
+            self._cleanup_temp_files()
     
     def _fill_pdf_forms(self, template_paths: List[str], form_data: dict) -> List[str]:
         """
@@ -94,6 +127,9 @@ class PDFGenerator:
                 timestamp = int(time.time() * 1000)
                 ram_pdf_path = f"/dev/shm/pdf_temp_{os.getpid()}_{i}_{timestamp}.pdf"
                 self.pdf_logger.debug(f"PDFGenerator: Filling to RAM path: {ram_pdf_path}")
+                
+                # Track temp file for cleanup
+                self.temp_files.append(ram_pdf_path)
                 
                 # Debug: Log form data to identify problematic values
                 self.pdf_logger.debug(f"PDFGenerator: Form data keys: {list(form_data.keys())}")
@@ -159,6 +195,9 @@ class PDFGenerator:
             # Concatenate using pypdftk directly with file paths
             output_path = f"/dev/shm/output_{os.getpid()}_{int(time.time() * 1000)}.pdf"
             self.pdf_logger.debug(f"PDFGenerator: Concatenating {len(pdf_paths)} PDFs to: {output_path}")
+            
+            # Track output file for cleanup
+            self.temp_files.append(output_path)
             
             result = pypdftk.concat(pdf_paths, output_path)
             

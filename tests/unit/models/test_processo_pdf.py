@@ -422,20 +422,19 @@ class PDFGenerationIntegrationTest(TransactionTestCase):
         )
         self.user.medicos.add(self.medico)
         
-        # Create clinic with unique CNS from factory
-        self.clinica = Clinica.objects.create(
-            nome_clinica='Test Clinic',
-            cns_clinica=unique_cns,
-            logradouro='Test Street',
-            logradouro_num='123',
-            cidade='Test City',
-            bairro='Test Neighborhood',
-            cep='12345-678',
-            telefone_clinica='(11) 9876-5432'
-        )
+        # Create clinic using proper versioning method
+        clinic_data = {
+            'nome_clinica': 'Test Clinic',
+            'cns_clinica': unique_cns,
+            'logradouro': 'Test Street',
+            'logradouro_num': '123',
+            'cidade': 'Test City',
+            'bairro': 'Test Neighborhood',
+            'cep': '12345-678',
+            'telefone_clinica': '(11) 9876-5432'
+        }
         
-        self.clinica.usuarios.add(self.user)
-        self.clinica.medicos.add(self.medico)  # Required for profile validation to pass
+        self.clinica = Clinica.create_or_update_for_user(self.user, self.medico, clinic_data)
         
         # Create emissor (doctor-clinic relationship) - use get_or_create to prevent duplicates
         from clinicas.models import Emissor
@@ -790,18 +789,19 @@ class PDFServingIntegrationTest(TestCase):
         )
         self.user.medicos.add(self.medico)
         
-        self.clinica = Clinica.objects.create(
-            nome_clinica='PDF Serving Test Clinic',
-            cns_clinica=random_cns,  # Random CNS to avoid conflicts
-            logradouro='PDF Street',
-            logradouro_num='456',
-            cidade='PDF City',
-            bairro='PDF Neighborhood',
-            cep='54321-987',
-            telefone_clinica='(11) 5432-1098'
-        )
-        self.clinica.usuarios.add(self.user)
-        self.clinica.medicos.add(self.medico)
+        # Create clinic using proper versioning method
+        clinic_data = {
+            'nome_clinica': 'PDF Serving Test Clinic',
+            'cns_clinica': random_cns,  # Random CNS to avoid conflicts
+            'logradouro': 'PDF Street',
+            'logradouro_num': '456',
+            'cidade': 'PDF City',
+            'bairro': 'PDF Neighborhood',
+            'cep': '54321-987',
+            'telefone_clinica': '(11) 5432-1098'
+        }
+        
+        self.clinica = Clinica.create_or_update_for_user(self.user, self.medico, clinic_data)
         
         # Use a consistent CPF for testing that matches our test PDF filename
         self.test_cpf = '98765432100'  # Matches the PDF filename pattern

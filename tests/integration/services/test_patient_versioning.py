@@ -676,7 +676,24 @@ class PatientVersioningFormTest(TestCase):
         updated_data = self.patient_data.copy()
         updated_data['nome_paciente'] = 'João Santos'
         updated_data['altura'] = '1,80m'
-        Paciente.create_or_update_for_user(self.user2, updated_data)
+        patient_user2 = Paciente.create_or_update_for_user(self.user2, updated_data)
+        
+        # Create separate process for user2 (users can only access their own processes)
+        processo2 = Processo.objects.create(
+            anamnese='Test anamnese',
+            doenca=doenca,
+            prescricao={},
+            tratou=False,
+            tratamentos_previos='',
+            data1=date(2024, 1, 1),
+            preenchido_por='M',
+            dados_condicionais={},
+            paciente=patient_user2,
+            medico=medico,
+            clinica=clinica,
+            emissor=emissor,
+            usuario=self.user2
+        )
         
         # Test renewal data for user1
         renewal_service = RenewalService()
@@ -684,8 +701,8 @@ class PatientVersioningFormTest(TestCase):
         self.assertEqual(renewal_data1['nome_paciente'], 'João Silva')
         self.assertEqual(renewal_data1['altura'], '1,75m')
         
-        # Test renewal data for user2
-        renewal_data2 = renewal_service.generate_renewal_data('01/02/2024', processo.id, self.user2)
+        # Test renewal data for user2 (using their own process)
+        renewal_data2 = renewal_service.generate_renewal_data('01/02/2024', processo2.id, self.user2)
         self.assertEqual(renewal_data2['nome_paciente'], 'João Santos')
         self.assertEqual(renewal_data2['altura'], '1,80m')
         

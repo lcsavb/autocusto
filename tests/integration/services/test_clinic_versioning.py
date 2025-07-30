@@ -570,9 +570,9 @@ class ClinicVersioningEdgeCasesTest(BaseTestCase):
         # Remove user-version assignment
         ClinicaUsuarioVersion.objects.filter(version=version).delete()
         
-        # Should still return version (fallback behavior)
+        # Should return None (no fallback behavior for security)
         retrieved_version = clinic.get_version_for_user(self.user)
-        self.assertEqual(retrieved_version, version)
+        self.assertIsNone(retrieved_version)
     
     def test_medico_without_user(self):
         """Test handling medico without user account."""

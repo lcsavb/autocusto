@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def edicao(request):
+    logger.error(f"🚨 EDICAO VIEW: Called with method {request.method}")
     """
     Handles editing of existing medical prescription processes in the Brazilian healthcare system.
     
@@ -79,6 +80,11 @@ def edicao(request):
     # POST request: Form submission for prescription update
     # Delegate to helper function to maintain clean separation of concerns
     if request.method == "POST":
+        logger.error(f"🚨 EDICAO POST: Received POST request to edicao view")
+        logger.error(f"🚨 EDICAO POST: Request data keys: {list(request.POST.keys())}")
+        # Log medication fields specifically
+        med_fields = {k: v for k, v in request.POST.items() if 'med' in k.lower()}
+        logger.error(f"🚨 EDICAO POST: Medication fields: {med_fields}")
         return _handle_prescription_edit_post(request, setup, ModeloFormulario, escolhas, medicamentos, processo_id)
     
     # GET request: Display form with existing prescription data pre-populated
@@ -414,10 +420,31 @@ def _handle_prescription_create_post(request, setup, ModeloFormulario, escolhas,
         # Validate form data according to medical prescription business rules
         # Includes validation for: patient data, medication dosages, clinic selection, etc.
         if not formulario.is_valid():
-            return json_response.form_validation_failed(formulario.errors)
+            logger.error(f"🚨 FORM VALIDATION FAILED: Form is not valid. Errors: {formulario.errors}")
+            logger.error(f"🚨 FORM VALIDATION: Request headers: {dict(request.headers)}")
+            logger.error(f"🚨 FORM VALIDATION: Is AJAX? {request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+            
+            # Check if this is an AJAX request
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                # For AJAX requests, return JSON with form errors
+                logger.error("🚨 FORM VALIDATION: Returning JSON response for AJAX")
+                return json_response.form_validation_failed(formulario.errors)
+            else:
+                # For traditional requests, add validation errors to Django messages and re-render form
+                logger.error("🚨 FORM VALIDATION: Handling non-AJAX request - adding messages and re-rendering")
+                for field, errors in formulario.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}" if field != '__all__' else error)
+                
+                # Re-render the form with validation errors
+                contexto = setup.form.contexto
+                contexto['form'] = formulario  # Include form with errors
+                logger.error("🚨 FORM VALIDATION: About to render edicao.html with errors")
+                return render(request, "processos/edicao.html", contexto)
         
         # Extract cleaned and validated form data - guaranteed to be properly typed
         dados_formulario = formulario.cleaned_data
+        logger.error(f"🚨 FORM VALIDATION SUCCESS: Form is valid, proceeding with processing")
         
         # Retrieve selected clinic for prescription header information
         # Clinic data is required for legally compliant prescription documents in Brazil
