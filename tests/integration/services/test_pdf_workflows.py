@@ -12,6 +12,7 @@ Features:
 - Security and authorization testing
 """
 
+import os
 import json
 import time
 from pathlib import Path
@@ -29,6 +30,11 @@ User = get_user_model()
 
 class PDFGenerationPlaywrightBase(PlaywrightFormTestBase):
     """Base class for PDF generation tests with comprehensive setup."""
+    
+    @property 
+    def live_server_url(self):
+        """Server URL for remote browser to access Django."""
+        return "http://web:8001"
     
     def setUp(self):
         """Set up test data for PDF generation workflows."""
@@ -143,7 +149,17 @@ class PDFGenerationPlaywrightBase(PlaywrightFormTestBase):
 
     def login_user(self, email, password):
         """Helper method to login a user through the browser."""
-        self.page.goto(f'{self.live_server_url}/')
+        # Connect to Django server - remote browser needs to access web container
+        server_url = "http://web:8001"
+        print(f"🔍 Connecting to: {server_url}")
+        
+        try:
+            self.page.goto(f'{server_url}/', timeout=15000)
+            print("✅ Successfully connected to server")
+        except Exception as e:
+            print(f"❌ Failed to connect: {e}")
+            raise
+            
         self.wait_for_page_load()
         
         email_field = self.page.locator('input[name="username"]')
@@ -673,19 +689,33 @@ class PDFGenerationCadastroTest(PDFGenerationPlaywrightBase):
             
             for locator in field_locators:
                 field = self.page.locator(locator)
-                if field.count() > 0 and field.is_visible():
-                    if field.evaluate('el => el.tagName.toLowerCase()') == 'select':
-                        # Handle select field
-                        if field_name == 'preenchido_por':
-                            field.select_option('M')
-                    else:
-                        # Handle input/textarea
-                        field.clear()
-                        field.fill(str(value))
-                    
-                    filled_fields += 1
-                    print(f"✅ DEBUG: Filled {field_name}")
-                    break
+                field_count = field.count()
+                
+                if field_count > 0:
+                    # For radio buttons (multiple elements with same name), handle specially
+                    if field_count > 1 and 'input' in locator:
+                        # This is likely a radio button group - check if first element is visible
+                        try:
+                            first_element = field.first
+                            if first_element.is_visible():
+                                # Skip radio buttons here - they're handled above
+                                continue
+                        except Exception:
+                            continue
+                    # For single elements, check visibility normally
+                    elif field_count == 1 and field.is_visible():
+                        if field.evaluate('el => el.tagName.toLowerCase()') == 'select':
+                            # Handle select field
+                            if field_name == 'preenchido_por':
+                                field.select_option('M')
+                        else:
+                            # Handle input/textarea
+                            field.clear()
+                            field.fill(str(value))
+                        
+                        filled_fields += 1
+                        print(f"✅ DEBUG: Filled {field_name}")
+                        break
         
         print(f"📊 DEBUG: Filled {filled_fields} form fields")
         

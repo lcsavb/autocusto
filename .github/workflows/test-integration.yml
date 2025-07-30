@@ -1,7 +1,5 @@
-name: 🔄 Legacy Test Pipeline (Sequential) - DEPRECATED
-# This workflow is maintained for compatibility but is SLOWER than parallel-tests.yml
-# 🚀 USE parallel-tests.yml for 75% faster execution
-# Will be removed in future versions
+name: 🔄 Test Pipeline (Sequential)
+# UPDATED: Now uses containerized Playwright infrastructure for reliable browser testing
 
 on:
   push:
@@ -85,6 +83,7 @@ jobs:
         python manage.py check --deploy --settings=test_settings
     
     - name: 🧪 Run backend tests with coverage (Test Pyramid)
+      id: backend-tests
       env:
         SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
         SQL_ENGINE: django.db.backends.postgresql
@@ -103,6 +102,7 @@ jobs:
         INTEGRATION_TESTS_FAILED=0
         
         echo "Phase 1: Unit Tests (Fast feedback)"
+        set +e  # Don't exit on command failure
         coverage run --source='.' manage.py test \
           tests.unit.models \
           tests.unit.services \
@@ -110,19 +110,34 @@ jobs:
           tests.unit.utils \
           --settings=test_settings \
           --verbosity=2 \
-          --keepdb --noinput || UNIT_TESTS_FAILED=1
+          --keepdb --noinput
+        UNIT_TEST_EXIT_CODE=$?
+        if [ $UNIT_TEST_EXIT_CODE -ne 0 ]; then
+          UNIT_TESTS_FAILED=1
+        fi
         
-        echo "Phase 2: Integration Tests (Component interactions)"
+        echo "Phase 2: Integration Tests (Component interactions - excluding Playwright)"
         coverage run --append --source='.' manage.py test \
           tests.integration.database \
           tests.integration.api \
-          tests.integration.forms \
-          tests.integration.services \
+          tests.integration.services.test_clinic_versioning \
+          tests.integration.services.test_patient_versioning \
+          tests.integration.services.test_prescription_workflow_integration \
+          tests.integration.services.test_versioning_security \
           --settings=test_settings \
           --verbosity=2 \
-          --keepdb --noinput || INTEGRATION_TESTS_FAILED=1
+          --keepdb --noinput
+        INTEGRATION_TEST_EXIT_CODE=$?
+        if [ $INTEGRATION_TEST_EXIT_CODE -ne 0 ]; then
+          INTEGRATION_TESTS_FAILED=1
+        fi
         
-        # Report results and fail job if any tests failed
+        echo "Note: Playwright-based tests run in separate playwright-tests job:"
+        echo "  - tests.integration.forms.* (prescription form tests)"
+        echo "  - tests.integration.services.test_pdf_workflows"
+        echo "  - tests.integration.services.test_pdf_basic_workflow"
+        
+        # Report results and naturally fail job if any tests failed
         echo "=== TEST RESULTS SUMMARY ==="
         if [ $UNIT_TESTS_FAILED -eq 1 ]; then
           echo "❌ Unit Tests: FAILED"
@@ -136,12 +151,16 @@ jobs:
           echo "✅ Integration Tests: PASSED"
         fi
         
-        # Fail the job if any test suite failed
+        # Set output for summary job and track overall result
         if [ $UNIT_TESTS_FAILED -eq 1 ] || [ $INTEGRATION_TESTS_FAILED -eq 1 ]; then
-          echo "🚨 Some backend tests failed - marking job as failed"
-          exit 1
+          echo "🚨 Some backend tests failed - job will be marked as failed after coverage"
+          echo "⏳ Other test jobs should be running independently..."
+          echo "BACKEND_TESTS_FAILED=true" >> $GITHUB_OUTPUT
+          echo "BACKEND_JOB_SHOULD_FAIL=1" >> $GITHUB_ENV
         else
           echo "🎉 All backend tests passed!"
+          echo "BACKEND_TESTS_FAILED=false" >> $GITHUB_OUTPUT
+          echo "BACKEND_JOB_SHOULD_FAIL=0" >> $GITHUB_ENV
         fi
     
     - name: 📊 Generate coverage report
@@ -156,10 +175,19 @@ jobs:
         flags: backend
         name: backend-coverage
         fail_ci_if_error: false
+    
+    - name: ❌ Fail job if backend tests failed
+      run: |
+        if [ "$BACKEND_JOB_SHOULD_FAIL" = "1" ]; then
+          echo "❌ Backend tests failed - failing job now that coverage is complete"
+          exit 1
+        else
+          echo "✅ All backend tests passed - job successful"
+        fi
 
-  # End-to-End testing job (Test Pyramid Phase 3)
-  frontend-tests:
-    name: E2E Tests (Pyramid Phase 3)
+  # Playwright Integration testing job (Test Pyramid Phase 3) 
+  playwright-tests:
+    name: Playwright Tests (Pyramid Phase 3) - Container Infrastructure
     runs-on: ubuntu-latest
     
     services:
@@ -185,10 +213,8 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: 🎭 Setup Playwright browsers
-      run: |
-        pip install playwright
-        playwright install chromium
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     
     - name: 📦 Cache pip dependencies
       uses: actions/cache@v3
@@ -198,68 +224,181 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
     
-    - name: 📥 Install dependencies
+    - name: 📥 Verify Docker Compose
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install playwright pytest-playwright
+        echo "Verifying Docker Compose V2 availability..."
+        docker compose version
+        docker --version
     
-    - name: 🏗️ Build test Docker image (with browsers)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        target: test
-        push: false
-        tags: autocusto-test:latest
-    
-    - name: 🔍 Verify test container has required dependencies
+    - name: 🐳 Start Playwright testing infrastructure using Docker Compose
       run: |
-        # Ensure test dependencies ARE available in test image
-        echo "Checking test container contains required test dependencies..."
-        docker run --rm autocusto-test:latest sh -c "
-          python -c 'import cpf_generator; print(\"✅ cpf-generator available\")' || (echo '❌ cpf-generator not found in test image!' && exit 1)
-          python -c 'import playwright; print(\"✅ playwright available\")' || (echo '❌ playwright not found in test image!' && exit 1)
+        echo "Creating temporary docker-compose.ci.yml for CI testing..."
+        cat > docker-compose.ci.yml << 'EOF'
+        services:
+          db:
+            image: postgres:17.4-alpine
+            environment:
+              - POSTGRES_USER=postgres
+              - POSTGRES_PASSWORD=postgres
+              - POSTGRES_DB=autocusto
+            ports:
+              - "5433:5432"
+          
+          web:
+            build:
+              context: .
+              target: test
+            environment:
+              - SECRET_KEY=test-secret-key-for-ci-${{ github.run_id }}
+              - SQL_ENGINE=django.db.backends.postgresql
+              - SQL_DATABASE=autocusto
+              - SQL_USER=postgres
+              - SQL_PASSWORD=postgres
+              - SQL_HOST=db
+              - SQL_PORT=5432
+              - DEBUG=1
+              - DJANGO_SETTINGS_MODULE=test_settings
+              - PLAYWRIGHT_CHROMIUM_WS_ENDPOINT=http://playwright-browsers:9222
+            depends_on:
+              - db
+              - playwright-browsers
+          
+          playwright-browsers:
+            image: mcr.microsoft.com/playwright:v1.40.0-jammy
+            ports:
+              - "9222:9222"
+            environment:
+              - DISPLAY=:99
+            security_opt:
+              - seccomp:unconfined
+            shm_size: 2gb
+            command: >
+              sh -c "
+                Xvfb :99 -screen 0 1920x1080x24 &
+                /ms-playwright/chromium-1091/chrome-linux/chrome --headless --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 --disable-web-security --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-features=VizDisplayCompositor --allow-running-insecure-content --disable-site-isolation-trials &
+                sleep 5
+                tail -f /dev/null
+              "
+        EOF
+        
+        echo "Starting Playwright testing infrastructure..."
+        docker compose -f docker-compose.ci.yml up -d
+        
+        echo "Waiting for services to be ready..."
+        sleep 30
+        
+        echo "Checking browser container logs..."
+        docker compose -f docker-compose.ci.yml logs playwright-browsers
+        
+        echo "Testing Chrome connection..."
+        curl -f http://localhost:9222/json/version || (echo "Chrome startup failed" && docker compose -f docker-compose.ci.yml logs playwright-browsers && exit 1)
+        
+        echo "Verifying web container dependencies..."
+        docker compose -f docker-compose.ci.yml exec -T web sh -c "
+          python -c 'import playwright; print(\"✅ playwright available\")' || (echo '❌ playwright not found!' && exit 1)
+          python -c 'import django; print(\"✅ django available\")' || (echo '❌ django not found!' && exit 1)
         "
     
-    - name: 🎭 Run frontend tests (E2E Test Pyramid)
-      env:
-        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
-        SQL_ENGINE: django.db.backends.postgresql
-        SQL_DATABASE: autocusto
-        SQL_USER: postgres
-        SQL_PASSWORD: postgres
-        SQL_HOST: localhost
-        SQL_PORT: 5432
-        DEBUG: 1
-        DJANGO_SETTINGS_MODULE: test_settings
-        PLAYWRIGHT_HEADLESS: true
+    - name: 🎭 Run Playwright tests with Docker Compose infrastructure
+      id: playwright-tests
       run: |
-        echo "Running E2E tests using Test Pyramid structure..."
-        echo "Phase 3: End-to-End Tests (Complete workflows)"
+        echo "Running Playwright tests using Docker Compose infrastructure (replicating local strategy)..."
+        echo "Phase 3: Playwright Integration Tests (Prescription Forms + Browser UI)"
         
-        echo "User Journey Tests..."
-        timeout 300 python manage.py test \
-          tests.e2e.user_journeys \
+        # Initialize test results tracking
+        PRESCRIPTION_TESTS_FAILED=0
+        PDF_TESTS_FAILED=0
+        E2E_TESTS_FAILED=0
+        
+        echo "🔧 Running Playwright prescription form tests..."
+        set +e  # Don't exit on command failure
+        docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
+          tests.integration.forms.test_prescription_forms \
           --settings=test_settings \
           --verbosity=2 \
-          --keepdb --noinput \
-          --failfast || echo "User journey tests: TIMEOUT or FAILED"
+          --keepdb --noinput
+        if [ $? -ne 0 ]; then
+          PRESCRIPTION_TESTS_FAILED=1
+          echo "Playwright prescription tests: FAILED"
+        else
+          echo "Playwright prescription tests: PASSED"
+        fi
         
-        echo "Browser UI Tests (Known Docker networking limitation)..."
-        timeout 300 python manage.py test \
+        echo "🔧 Running Playwright PDF workflow tests..."
+        docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
+          tests.integration.services.test_pdf_workflows \
+          tests.integration.services.test_pdf_basic_workflow \
+          --settings=test_settings \
+          --verbosity=2 \
+          --keepdb --noinput
+        if [ $? -ne 0 ]; then
+          PDF_TESTS_FAILED=1
+          echo "Playwright PDF tests: FAILED"
+        else
+          echo "Playwright PDF tests: PASSED"
+        fi
+        
+        echo "🔧 Running additional E2E tests..."
+        docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
           tests.e2e.browser \
           --settings=test_settings \
           --verbosity=2 \
-          --keepdb --noinput \
-          --failfast || echo "Browser tests: Infrastructure ready, Docker networking limitation"
+          --keepdb --noinput
+        if [ $? -ne 0 ]; then
+          E2E_TESTS_FAILED=1
+          echo "Additional E2E tests: FAILED"
+        else
+          echo "Additional E2E tests: PASSED"
+        fi
+        set -e  # Re-enable exit on error
         
-        echo "Security E2E Tests..."
-        timeout 300 python manage.py test \
-          tests.e2e.security \
-          --settings=test_settings \
-          --verbosity=2 \
-          --keepdb --noinput \
-          --failfast || echo "Security E2E tests: TIMEOUT or FAILED"
+        # Report results summary
+        echo "=== PLAYWRIGHT TEST RESULTS SUMMARY ==="
+        if [ $PRESCRIPTION_TESTS_FAILED -eq 1 ]; then
+          echo "❌ Prescription Form Tests: FAILED"
+        else
+          echo "✅ Prescription Form Tests: PASSED"
+        fi
+        
+        if [ $PDF_TESTS_FAILED -eq 1 ]; then
+          echo "❌ PDF Workflow Tests: FAILED"
+        else
+          echo "✅ PDF Workflow Tests: PASSED"
+        fi
+        
+        if [ $E2E_TESTS_FAILED -eq 1 ]; then
+          echo "❌ E2E Browser Tests: FAILED"
+        else
+          echo "✅ E2E Browser Tests: PASSED"
+        fi
+        
+        # Complete all tests before reporting final status
+        if [ $PRESCRIPTION_TESTS_FAILED -eq 1 ] || [ $PDF_TESTS_FAILED -eq 1 ] || [ $E2E_TESTS_FAILED -eq 1 ]; then
+          echo "🚨 Some Playwright tests failed - job will be marked as failed after cleanup"
+          echo "PLAYWRIGHT_TESTS_FAILED=true" >> $GITHUB_OUTPUT
+          echo "PLAYWRIGHT_JOB_SHOULD_FAIL=1" >> $GITHUB_ENV
+        else
+          echo "🎉 All Playwright tests passed!"
+          echo "PLAYWRIGHT_TESTS_FAILED=false" >> $GITHUB_OUTPUT
+          echo "PLAYWRIGHT_JOB_SHOULD_FAIL=0" >> $GITHUB_ENV
+        fi
+    
+    - name: 🧹 Clean up Docker Compose infrastructure
+      if: always()
+      run: |
+        echo "Cleaning up Docker Compose infrastructure..."
+        docker compose -f docker-compose.ci.yml down -v || true
+        docker compose -f docker-compose.ci.yml rm -f || true
+        rm -f docker-compose.ci.yml || true
+    
+    - name: ❌ Fail job if Playwright tests failed (after cleanup)
+      run: |
+        if [ "$PLAYWRIGHT_JOB_SHOULD_FAIL" = "1" ]; then
+          echo "❌ Playwright tests failed - failing job now that cleanup is complete"
+          exit 1
+        else
+          echo "✅ Playwright tests passed successfully"
+        fi
     
     - name: 📸 Upload test screenshots on failure
       if: failure()
@@ -461,7 +600,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, javascript-tests, security-tests, docker-test]
+    needs: [backend-tests, playwright-tests, javascript-tests, security-tests, docker-test]
     if: always()
     
     steps:
@@ -474,19 +613,24 @@ jobs:
         echo "| Test Suite | Status | Description |" >> $GITHUB_STEP_SUMMARY
         echo "|------------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
         echo "| 🔧 Unit & Integration Tests | ${{ needs.backend-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Fast unit tests + component interactions |" >> $GITHUB_STEP_SUMMARY
-        echo "| 🎭 E2E Tests | ${{ needs.frontend-tests.result == 'success' && '✅ Passed' || needs.frontend-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | Complete user workflows + browser UI (Docker networking limitation noted) |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🎭 Playwright Tests | ${{ needs.playwright-tests.result == 'success' && '✅ Passed' || needs.playwright-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | Prescription forms + browser UI using container infrastructure |" >> $GITHUB_STEP_SUMMARY
         echo "| 🚨 JavaScript Tests (Critical) | ${{ needs.javascript-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Medication validation logic |" >> $GITHUB_STEP_SUMMARY
         echo "| 🔒 Security Tests | ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | E2E security validation |" >> $GITHUB_STEP_SUMMARY
         echo "| 🐳 Docker Integration | ${{ needs.docker-test.result == 'success' && '✅ Passed' || '❌ Failed' }} | Production container testing |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Pipeline Status (All Jobs Complete):**" >> $GITHUB_STEP_SUMMARY
+        echo "- Backend Tests: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Playwright Tests: ${{ needs.playwright-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- JavaScript Tests (Medication Safety): ${{ needs.javascript-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Security Tests: ${{ needs.security-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker Integration: ${{ needs.docker-test.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
         if [ "${{ needs.backend-tests.result }}" = "success" ] && [ "${{ needs.javascript-tests.result }}" = "success" ] && [ "${{ needs.security-tests.result }}" = "success" ]; then
           echo "🎉 **Core tests passed!** System is ready for deployment." >> $GITHUB_STEP_SUMMARY
         else
-          echo "🚨 **Core tests failed.** Deployment blocked until issues are resolved." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Critical Requirements:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Backend Tests: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- JavaScript Tests (Medication Safety): ${{ needs.javascript-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Security Tests: ${{ needs.security-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Pipeline completed with some test failures.** Review individual job results above." >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Note:** Pipeline allowed to complete for full visibility into all test results." >> $GITHUB_STEP_SUMMARY
         fi

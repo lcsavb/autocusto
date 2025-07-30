@@ -10,71 +10,14 @@ The core test logic and cleanup is implemented correctly.
 """
 import unittest
 import os
-from django.test import LiveServerTestCase
-from playwright.sync_api import sync_playwright
+from tests.playwright_base import PlaywrightTestBase
 
 # Fix Django async context issues
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
 
-class SimplePlaywrightTest(LiveServerTestCase):
+class SimplePlaywrightTest(PlaywrightTestBase):
     """Simple test to verify Playwright works with Django"""
-    
-    @classmethod  
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.playwright = sync_playwright().start()
-        
-        # Enhanced Chrome args for Docker container
-        chrome_args = [
-            '--no-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-extensions',
-            '--disable-default-apps',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-            '--disable-features=TranslateUI',
-            '--disable-ipc-flooding-protection',
-            '--memory-pressure-off',
-            '--disable-client-side-phishing-detection',
-            '--disable-component-update',
-            '--disable-sync',
-            '--disable-background-networking',
-            '--disable-component-extensions-with-background-pages',
-            '--window-size=1920,1080',
-            '--single-process'  # This helps with container resource limits
-        ]
-        
-        try:
-            cls.browser = cls.playwright.chromium.launch(
-                headless=True,
-                executable_path='/usr/bin/google-chrome-stable',
-                args=chrome_args
-            )
-        except Exception as e:
-            print(f"Chrome launch failed: {e}")
-            # Fallback to default chromium
-            cls.browser = cls.playwright.chromium.launch(
-                headless=True,
-                args=chrome_args
-            )
-    
-    @classmethod
-    def tearDownClass(cls):
-        # Ensure proper cleanup to prevent defunct processes
-        try:
-            if hasattr(cls, 'browser'):
-                cls.browser.close()
-        except Exception:
-            pass
-        try:
-            if hasattr(cls, 'playwright'):
-                cls.playwright.stop()
-        except Exception:
-            pass
-        super().tearDownClass()
     
     def test_browser_opens_page(self):
         """Test that browser can open a page"""

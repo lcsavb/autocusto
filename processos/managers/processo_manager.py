@@ -103,4 +103,3 @@ class ProcessoManager(models.Manager):
         return self.filter(usuario=user).select_related(
             'paciente', 'doenca', 'medico', 'clinica'
         ).prefetch_related('medicamentos')
-EOF < /dev/null

@@ -195,8 +195,28 @@ else
     ((FAILED_CATEGORIES++))
 fi
 
-print_status $YELLOW "⚠️  Skipping E2E Browser Tests (Known Docker networking limitation)"
-print_status $YELLOW "   Infrastructure ready, but Chrome cannot connect to LiveServer in container"
+print_status $BLUE "🌐 Running E2E Browser Tests (Playwright Remote Architecture)"
+print_status $GREEN "   ✅ Infrastructure: Web container + Playwright browser container"
+
+# Check if Playwright browser container is running
+if ! docker exec autocusto-playwright-browsers-1 echo "Browser container accessible" > /dev/null 2>&1; then
+    print_status $YELLOW "   ⚠️  Playwright browser container not running - starting it..."
+    if ! docker compose up -d playwright-browsers > /dev/null 2>&1; then
+        print_status $RED "   ❌ Failed to start Playwright browser container"
+        print_status $YELLOW "   Skipping browser tests for this run"
+    else
+        print_status $GREEN "   ✅ Playwright browser container started"
+        sleep 3  # Give browser container time to initialize
+    fi
+fi
+
+# E2E Browser Tests (Playwright with remote browser)
+((TOTAL_CATEGORIES++))
+if run_container_test "E2E-Browser-Playwright" "tests.integration.services.test_pdf_workflows" "Playwright PDF Workflow Tests" 300; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
 
 ((TOTAL_CATEGORIES++))
 if run_container_test "E2E-Security" "tests.e2e.security" "Security End-to-End Tests" 300; then
@@ -247,14 +267,14 @@ fi
 # Status determination
 if [[ $FAILED_CATEGORIES -eq 0 ]]; then
     print_status $GREEN "🎉 ALL TEST CATEGORIES PASSED!"
-    print_status $GREEN "   Backend tests (35/35) are working correctly"
+    print_status $GREEN "   Backend tests are working correctly"
     print_status $GREEN "   System is stable for development work"
     echo ""
     print_status $BLUE "📝 Development Notes:"
-    echo "   - Backend unit tests: ✅ All passing (35/35)"
+    echo "   - Backend unit tests: ✅ All passing"
     echo "   - Integration tests: ✅ Working properly"  
-    echo "   - E2E browser tests: ⚠️  Infrastructure ready, Docker networking needs config"
-    echo "   - Test documentation: ✅ Consolidated and updated"
+    echo "   - E2E browser tests: ✅ Playwright remote browser architecture working"
+    echo "   - Test infrastructure: ✅ Fully operational with Docker containers"
     exit 0
 elif [[ $success_rate -ge 80 ]]; then
     print_status $YELLOW "⚠️  Most test categories passed ($success_rate% success rate)"

@@ -85,16 +85,18 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
 
     def login_user(self, email, password):
         """Helper method to login a user."""
-        self.page.goto(f'{self.live_server_url}/')
+        # Use container server URL - connect to web container
+        server_url = "http://web:8001"
+        self.page.goto(f'{server_url}/')
         self.wait_for_page_load()
         
-        email_field = self.page.locator('input[name="username"]')
+        email_field = self.page.locator('input[name="email"]')
         password_field = self.page.locator('input[name="password"]')
         
         email_field.fill(email)
         password_field.fill(password)
         
-        login_button = self.page.locator('button[type="submit"]:has-text("Login")')
+        login_button = self.page.locator('button[type="submit"]').first
         login_button.click()
         
         self.wait_for_page_load()
@@ -105,7 +107,8 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
         
         # Try to access PDF without login
         pdf_filename = "pdf_final_12345678901_G40.0.pdf"
-        pdf_url = f'{self.live_server_url}/processos/serve-pdf/{pdf_filename}/'
+        server_url = "http://web:8001"
+        pdf_url = f'{server_url}/processos/serve-pdf/{pdf_filename}/'
         
         response = self.page.goto(pdf_url)
         
@@ -139,7 +142,8 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
         ]
         
         for filename in invalid_filenames:
-            pdf_url = f'{self.live_server_url}/processos/serve-pdf/{filename}/'
+            server_url = "http://web:8001"
+            pdf_url = f'{server_url}/processos/serve-pdf/{filename}/'
             
             try:
                 response = self.page.goto(pdf_url)
@@ -157,7 +161,8 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
         self.login_user('medico@example.com', 'testpass123')
         
         # Navigate to renovation page
-        self.page.goto(f'{self.live_server_url}/processos/renovacao/')
+        server_url = "http://web:8001"
+        self.page.goto(f'{server_url}/processos/renovacao/')
         self.wait_for_page_load()
         
         # Check page loads
@@ -185,7 +190,8 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
         self.login_user('medico@example.com', 'testpass123')
         
         # Try direct navigation to cadastro
-        self.page.goto(f'{self.live_server_url}/processos/cadastro/')
+        server_url = "http://web:8001"
+        self.page.goto(f'{server_url}/processos/cadastro/')
         self.wait_for_page_load()
         
         current_url = self.page.url
@@ -200,7 +206,8 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
             print("⚠️  DEBUG: Direct cadastro navigation redirected, trying via home")
             
             # Try via home page
-            self.page.goto(f'{self.live_server_url}/')
+            server_url = "http://web:8001"
+            self.page.goto(f'{server_url}/')
             self.wait_for_page_load()
             
             # Fill minimal home form
@@ -297,7 +304,8 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
         self.login_user('medico@example.com', 'testpass123')
         
         # Test renovation basic workflow
-        self.page.goto(f'{self.live_server_url}/processos/renovacao/')
+        server_url = "http://web:8001"
+        self.page.goto(f'{server_url}/processos/renovacao/')
         self.wait_for_page_load()
         
         # Look for search field and try basic interaction

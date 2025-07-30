@@ -35,19 +35,26 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y postgresql-client-17 \
     && rm -rf /var/lib/apt/lists/*
 
-# Stage 3: Test image (with browsers for Selenium testing)
+# Stage 3: Test image (with Playwright browser dependencies)
 FROM base AS test
 
-# Install Chrome/Chromium for testing
+# Install Playwright browser dependencies
 RUN apt-get update && apt-get install -y \
-    # Chrome/Chromium dependencies
-    chromium \
-    chromium-driver \
-    # Google Chrome (more stable for Selenium)
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxcb1 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Complete test image setup
@@ -65,6 +72,8 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache /wheels/*
+
+# No browser dependencies - tests will run in separate Playwright container
 
 # Switch to root to clean up wheels, then back to appuser
 USER root
