@@ -26,9 +26,12 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Unit and Integration testing job (Test Pyramid Phases 1-2)
+  # =====================================================
+  # BACKEND TESTS - Server-side logic and data layer
+  # =====================================================
+  
   backend-tests:
-    name: Unit & Integration Tests (Pyramid Phase 1-2)
+    name: 🔧 Backend Tests (Unit + Integration + API)
     runs-on: ubuntu-latest
     
     services:
@@ -116,10 +119,10 @@ jobs:
           UNIT_TESTS_FAILED=1
         fi
         
-        echo "Phase 2: Integration Tests (Component interactions - excluding Playwright)"
+        echo "Phase 2: Integration Tests (Component interactions - excluding PDF generation)"
         coverage run --append --source='.' manage.py test \
           tests.integration.database \
-          tests.integration.api \
+          tests.integration.api.test_authentication \
           tests.integration.services.test_clinic_versioning \
           tests.integration.services.test_patient_versioning \
           tests.integration.services.test_prescription_workflow_integration \
@@ -132,8 +135,9 @@ jobs:
           INTEGRATION_TESTS_FAILED=1
         fi
         
-        echo "Note: Playwright-based tests run in separate playwright-tests job:"
+        echo "Note: Containerized tests run in separate frontend-tests job:"
         echo "  - tests.integration.forms.* (prescription form tests)"
+        echo "  - tests.integration.api.test_pdf_generation_verification (PDF tests)"
         echo "  - tests.integration.services.test_pdf_workflows"
         echo "  - tests.integration.services.test_pdf_basic_workflow"
         
@@ -185,9 +189,12 @@ jobs:
           echo "✅ All backend tests passed - job successful"
         fi
 
-  # Playwright Integration testing job (Test Pyramid Phase 3) 
-  playwright-tests:
-    name: Playwright Tests (Pyramid Phase 3) - Container Infrastructure
+  # =====================================================
+  # FRONTEND TESTS - Browser automation and UI testing
+  # =====================================================
+  
+  frontend-tests:
+    name: 🎭 Frontend Tests (Playwright + Browser UI)
     runs-on: ubuntu-latest
     
     services:
@@ -324,8 +331,9 @@ jobs:
           echo "Playwright prescription tests: PASSED"
         fi
         
-        echo "🔧 Running Playwright PDF workflow tests..."
+        echo "🔧 Running PDF generation tests (containerized environment)..."
         docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
+          tests.integration.api.test_pdf_generation_verification \
           tests.integration.services.test_pdf_workflows \
           tests.integration.services.test_pdf_basic_workflow \
           --settings=test_settings \
@@ -333,9 +341,9 @@ jobs:
           --keepdb --noinput
         if [ $? -ne 0 ]; then
           PDF_TESTS_FAILED=1
-          echo "Playwright PDF tests: FAILED"
+          echo "PDF generation tests: FAILED"
         else
-          echo "Playwright PDF tests: PASSED"
+          echo "PDF generation tests: PASSED"
         fi
         
         echo "🔧 Running additional E2E tests..."
@@ -391,33 +399,7 @@ jobs:
         docker compose -f docker-compose.ci.yml rm -f || true
         rm -f docker-compose.ci.yml || true
     
-    - name: ❌ Fail job if Playwright tests failed (after cleanup)
-      run: |
-        if [ "$PLAYWRIGHT_JOB_SHOULD_FAIL" = "1" ]; then
-          echo "❌ Playwright tests failed - failing job now that cleanup is complete"
-          exit 1
-        else
-          echo "✅ Playwright tests passed successfully"
-        fi
-    
-    - name: 📸 Upload test screenshots on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-screenshots
-        path: test_screenshots/
-        retention-days: 7
-
-  # JavaScript unit tests (Node.js - no browser dependencies)
-  javascript-tests:
-    name: JavaScript Unit Tests (Critical Medication Logic)
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🟢 Set up Node.js
+    - name: 🟢 Set up Node.js for JavaScript tests
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -429,29 +411,61 @@ jobs:
       run: |
         npm install
     
-    - name: 🧪 Run JavaScript unit tests
+    - name: 🧪 Run JavaScript unit tests (Critical Medication Logic)
       working-directory: ./static/autocusto/js
       run: |
         echo "🚨 CRITICAL: Testing medication validation logic from med.js"
         echo "Testing core business logic that prevents invalid medical prescriptions"
+        set +e  # Don't exit on command failure
         npm test -- --verbose
-    
-    - name: 📊 JavaScript test coverage (disabled)
-      working-directory: ./static/autocusto/js
-      run: |
-        echo "✅ JavaScript tests completed successfully"
-        echo "📊 Coverage reporting temporarily disabled - focusing on core test functionality"
+        JS_TEST_EXIT_CODE=$?
+        if [ $JS_TEST_EXIT_CODE -ne 0 ]; then
+          echo "JS_TESTS_FAILED=1" >> $GITHUB_ENV
+        else
+          echo "JS_TESTS_FAILED=0" >> $GITHUB_ENV
+        fi
     
     - name: 📤 Upload JavaScript coverage
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: javascript-coverage
         path: static/autocusto/js/coverage/
         retention-days: 7
+    
+    - name: ❌ Fail job if any frontend tests failed (after cleanup)
+      run: |
+        FRONTEND_JOB_SHOULD_FAIL=0
+        if [ "$PLAYWRIGHT_JOB_SHOULD_FAIL" = "1" ]; then
+          echo "❌ Playwright tests failed"
+          FRONTEND_JOB_SHOULD_FAIL=1
+        fi
+        if [ "$JS_TESTS_FAILED" = "1" ]; then
+          echo "❌ JavaScript tests failed"
+          FRONTEND_JOB_SHOULD_FAIL=1
+        fi
+        
+        if [ $FRONTEND_JOB_SHOULD_FAIL = 1 ]; then
+          echo "❌ Frontend tests failed - failing job now"
+          exit 1
+        else
+          echo "✅ All frontend tests passed successfully"
+        fi
+    
+    - name: 📸 Upload test screenshots on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-screenshots
+        path: test_screenshots/
+        retention-days: 7
 
-  # Security-focused testing
+  # =====================================================
+  # SECURITY TESTS - Authentication, vulnerabilities, safety
+  # =====================================================
+  
   security-tests:
-    name: Security Tests
+    name: 🔒 Security & Safety Tests (Backend + Dependencies)
     runs-on: ubuntu-latest
     
     services:
@@ -520,9 +534,12 @@ jobs:
           bandit-report.json
         retention-days: 30
 
-  # Docker build and test (production-like container)
-  docker-test:
-    name: Docker Integration Test
+  # =====================================================
+  # INFRASTRUCTURE TESTS - Docker, containers, deployment
+  # =====================================================
+  
+  infrastructure-tests:
+    name: 🐳 Infrastructure Tests (Docker + Production Containers)
     runs-on: ubuntu-latest
     
     steps:
@@ -577,11 +594,14 @@ jobs:
         echo "Production container size:"
         docker images autocusto-prod-test:latest --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
 
-  # Deployment readiness check
+  # =====================================================
+  # PIPELINE MANAGEMENT - Deployment readiness and summary
+  # =====================================================
+  
   deployment-readiness:
-    name: Deployment Readiness
+    name: 🚀 Deployment Readiness Check
     runs-on: ubuntu-latest
-    needs: [backend-tests, javascript-tests, security-tests]
+    needs: [backend-tests, frontend-tests, security-tests]
     if: github.ref == 'refs/heads/master'
     
     steps:
@@ -592,15 +612,14 @@ jobs:
       run: |
         echo "🎉 All tests passed! Deployment is ready."
         echo "Backend tests: ✅"
-        echo "JavaScript tests (Critical Medication Logic): ✅"
+        echo "Frontend tests (Playwright + JavaScript): ✅"
         echo "Security tests: ✅"
         echo "Ready to deploy to production."
 
-  # Test results summary
   test-summary:
-    name: Test Summary
+    name: 📊 Test Results Summary
     runs-on: ubuntu-latest
-    needs: [backend-tests, playwright-tests, javascript-tests, security-tests, docker-test]
+    needs: [backend-tests, frontend-tests, security-tests, infrastructure-tests]
     if: always()
     
     steps:
@@ -612,23 +631,21 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "| Test Suite | Status | Description |" >> $GITHUB_STEP_SUMMARY
         echo "|------------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
-        echo "| 🔧 Unit & Integration Tests | ${{ needs.backend-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Fast unit tests + component interactions |" >> $GITHUB_STEP_SUMMARY
-        echo "| 🎭 Playwright Tests | ${{ needs.playwright-tests.result == 'success' && '✅ Passed' || needs.playwright-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | Prescription forms + browser UI using container infrastructure |" >> $GITHUB_STEP_SUMMARY
-        echo "| 🚨 JavaScript Tests (Critical) | ${{ needs.javascript-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Medication validation logic |" >> $GITHUB_STEP_SUMMARY
-        echo "| 🔒 Security Tests | ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | E2E security validation |" >> $GITHUB_STEP_SUMMARY
-        echo "| 🐳 Docker Integration | ${{ needs.docker-test.result == 'success' && '✅ Passed' || '❌ Failed' }} | Production container testing |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🔧 Backend Tests | ${{ needs.backend-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Unit + Integration + API tests |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🎭 Frontend Tests | ${{ needs.frontend-tests.result == 'success' && '✅ Passed' || needs.frontend-tests.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | Playwright + JavaScript (medication logic) |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🔒 Security Tests | ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Auth + vulnerabilities + dependency scanning |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🐳 Infrastructure Tests | ${{ needs.infrastructure-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} | Docker + production containers |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Test Pipeline Status (All Jobs Complete):**" >> $GITHUB_STEP_SUMMARY
         echo "- Backend Tests: ${{ needs.backend-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Playwright Tests: ${{ needs.playwright-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- JavaScript Tests (Medication Safety): ${{ needs.javascript-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Frontend Tests: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Security Tests: ${{ needs.security-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Docker Integration: ${{ needs.docker-test.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Infrastructure Tests: ${{ needs.infrastructure-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ "${{ needs.backend-tests.result }}" = "success" ] && [ "${{ needs.javascript-tests.result }}" = "success" ] && [ "${{ needs.security-tests.result }}" = "success" ]; then
+        if [ "${{ needs.backend-tests.result }}" = "success" ] && [ "${{ needs.frontend-tests.result }}" = "success" ] && [ "${{ needs.security-tests.result }}" = "success" ]; then
           echo "🎉 **Core tests passed!** System is ready for deployment." >> $GITHUB_STEP_SUMMARY
         else
           echo "📊 **Pipeline completed with some test failures.** Review individual job results above." >> $GITHUB_STEP_SUMMARY

@@ -26,15 +26,15 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
         # Create test doctors
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. João Silva",
-            crm_medico="123456", 
-            cns_medico="111111111111111"
+            crm_medico=self.data_generator.generate_unique_crm(), 
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         self.medico1.usuarios.add(self.user1)
         
         self.medico2 = Medico.objects.create(
             nome_medico="Dr. Maria Santos",
-            crm_medico="654321",
-            cns_medico="222222222222222"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         self.medico2.usuarios.add(self.user2)
         
@@ -73,7 +73,7 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
         # Create test patients for each user
         self.paciente1 = Paciente.objects.create(
             nome_paciente="Paciente 1",
-            cpf_paciente="11144477735",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
             rg="123456789",
             idade="30",
             sexo="M",
@@ -83,7 +83,7 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
             peso="70kg",
             altura="1,70m",
             escolha_etnia="Branco",
-            cns_paciente="111111111111111",
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             email_paciente="paciente1@test.com",
             cidade_paciente="Test City",
             end_paciente="Endereço 1",
@@ -96,7 +96,7 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
         
         self.paciente2 = Paciente.objects.create(
             nome_paciente="Paciente 2", 
-            cpf_paciente="98765432109",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
             rg="987654321",
             idade="25",
             sexo="F",
@@ -106,7 +106,7 @@ class FrontendSecurityTest(PlaywrightSecurityTestBase):
             peso="60kg",
             altura="1,65m",
             escolha_etnia="Branco",
-            cns_paciente="222222222222222",
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             email_paciente="paciente2@test.com",
             cidade_paciente="Test City 2",
             end_paciente="Endereço 2",
@@ -379,7 +379,7 @@ class PatientAuthorizationTest(PlaywrightSecurityTestBase):
         # Create patients for different users
         self.paciente_user1 = Paciente.objects.create(
             nome_paciente="Test Patient User1",
-            cpf_paciente="11111111111",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
             rg="111111111",
             idade="30",
             sexo="M",
@@ -389,7 +389,7 @@ class PatientAuthorizationTest(PlaywrightSecurityTestBase):
             peso="70kg",
             altura="1,70m",
             escolha_etnia="Branco",
-            cns_paciente="111111111111111",
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             email_paciente="patient1@test.com",
             cidade_paciente="Test City",
             end_paciente="Test Address 1",
@@ -402,7 +402,7 @@ class PatientAuthorizationTest(PlaywrightSecurityTestBase):
         
         self.paciente_user2 = Paciente.objects.create(
             nome_paciente="Test Patient User2", 
-            cpf_paciente="22222222222",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
             rg="222222222",
             idade="25",
             sexo="F",
@@ -412,7 +412,7 @@ class PatientAuthorizationTest(PlaywrightSecurityTestBase):
             peso="60kg",
             altura="1,65m",
             escolha_etnia="Branco",
-            cns_paciente="222222222222222",
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             email_paciente="patient2@test.com",
             cidade_paciente="Test City 2",
             end_paciente="Test Address 2",
@@ -473,7 +473,7 @@ class ProcessAuthorizationTest(PlaywrightSecurityTestBase):
         # Create patients
         self.paciente1 = Paciente.objects.create(
             nome_paciente="Patient 1",
-            cpf_paciente="11111111111",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
             rg="111111111",
             idade="30",
             sexo="M",
@@ -483,7 +483,7 @@ class ProcessAuthorizationTest(PlaywrightSecurityTestBase):
             peso="70kg",
             altura="1,70m",
             escolha_etnia="Branco",
-            cns_paciente="111111111111111",
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             email_paciente="patient1@process.com",
             cidade_paciente="Test City",
             end_paciente="Test Address 1",
@@ -496,7 +496,7 @@ class ProcessAuthorizationTest(PlaywrightSecurityTestBase):
         
         self.paciente2 = Paciente.objects.create(
             nome_paciente="Patient 2",
-            cpf_paciente="22222222222",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
             rg="222222222",
             idade="25",
             sexo="F",
@@ -506,7 +506,7 @@ class ProcessAuthorizationTest(PlaywrightSecurityTestBase):
             peso="60kg",
             altura="1,65m",
             escolha_etnia="Branco",
-            cns_paciente="222222222222222",
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             email_paciente="patient2@process.com",
             cidade_paciente="Test City 2",
             end_paciente="Test Address 2",

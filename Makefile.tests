@@ -78,13 +78,13 @@ test-frontend:
 	@echo "🌐 Running frontend/Selenium tests..."
 	@if command -v docker-compose >/dev/null 2>&1 && docker-compose ps | grep -q "web.*Up"; then \
 		echo "   Using Docker environment"; \
-		docker-compose exec web python manage.py test tests.test_login_frontend tests.test_user_registration tests.test_frontend_security tests.test_clinic_management tests.test_prescription_forms --settings=test_settings; \
+		docker-compose exec web python manage.py test tests.e2e.browser.test_login_frontend tests.e2e.browser.test_user_registration tests.e2e.security.test_frontend_security tests.e2e.browser.test_clinic_management tests.integration.forms.test_prescription_forms --settings=test_settings; \
 	elif [ -d "venv" ]; then \
 		echo "   Using virtual environment"; \
-		source venv/bin/activate && python manage.py test tests.test_login_frontend tests.test_user_registration tests.test_frontend_security tests.test_clinic_management tests.test_prescription_forms --settings=test_settings; \
+		source venv/bin/activate && python manage.py test tests.e2e.browser.test_login_frontend tests.e2e.browser.test_user_registration tests.e2e.security.test_frontend_security tests.e2e.browser.test_clinic_management tests.integration.forms.test_prescription_forms --settings=test_settings; \
 	else \
 		echo "   Using system Python"; \
-		python manage.py test tests.test_login_frontend tests.test_user_registration tests.test_frontend_security tests.test_clinic_management tests.test_prescription_forms --settings=test_settings; \
+		python manage.py test tests.e2e.browser.test_login_frontend tests.e2e.browser.test_user_registration tests.e2e.security.test_frontend_security tests.e2e.browser.test_clinic_management tests.integration.forms.test_prescription_forms --settings=test_settings; \
 	fi
 
 # Docker-specific testing

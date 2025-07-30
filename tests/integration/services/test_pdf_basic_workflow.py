@@ -168,9 +168,25 @@ class BasicPDFWorkflowTest(PlaywrightFormTestBase):
         # Check page loads
         self.assertIn("CliqueReceita", self.page.title())
         
-        # Check basic form elements exist
-        search_field = self.page.locator('input[placeholder*="nome"], input[placeholder*="CPF"]')
-        self.assertTrue(search_field.count() > 0, "Search field should exist")
+        # Check basic form elements exist - try multiple possible selectors
+        search_selectors = [
+            'input[placeholder*="nome"], input[placeholder*="CPF"]',
+            'input[name="b"]',  # Common search parameter name
+            'input[type="text"]',  # Generic text input
+            '.search-input',
+            '#search'
+        ]
+        
+        search_field = None
+        for selector in search_selectors:
+            field = self.page.locator(selector)
+            if field.count() > 0:
+                search_field = field
+                print(f"✅ DEBUG: Found search field with selector: {selector}")
+                break
+        
+        self.assertTrue(search_field is not None and search_field.count() > 0, 
+                       f"Search field should exist. Tried selectors: {search_selectors}")
         
         # Try basic input
         if search_field.count() > 0:

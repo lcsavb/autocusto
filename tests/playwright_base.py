@@ -12,6 +12,7 @@ from clinicas.models import Clinica, Emissor
 from pacientes.models import Paciente
 from processos.models import Doenca, Medicamento, Processo
 import datetime
+from tests.test_base import UniqueDataGenerator
 
 # Import container utilities for debugging and process management
 try:
@@ -38,13 +39,23 @@ User = get_user_model()
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
 
-class PlaywrightTestBase(TestCase):
+class PlaywrightTestBase(StaticLiveServerTestCase):
     """
     Base test class for Playwright tests in Django.
     Optimized for Docker container environments and official Playwright images.
     """
     
     # Django server is running in separate web container
+    
+    # Override to make live server accessible from other containers
+    host = '0.0.0.0'
+    
+    @property
+    def live_server_url(self):
+        """Override to use container network-accessible URL."""
+        # Return URL that playwright-browsers container can access
+        # Use the web service name instead of localhost
+        return f"http://web:{self.server_thread.port}"
     
     @classmethod
     def setUpClass(cls):
@@ -92,6 +103,9 @@ class PlaywrightTestBase(TestCase):
     
     def setUp(self):
         super().setUp()
+        
+        # Initialize data generator
+        self.data_generator = UniqueDataGenerator()
         
         # Initialize container debugger
         self.debugger = PlaywrightContainerDebugger(self)
