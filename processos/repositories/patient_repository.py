@@ -106,7 +106,7 @@ class PatientRepository:
         # Privacy enforcement: Only return patients where user has created versions
         # This prevents cross-contamination of patient data between medical professionals
         accessible_patients = Paciente.objects.filter(
-            versions__usuario=user
+            versions__created_by=user
         ).distinct()
         
         count = accessible_patients.count()

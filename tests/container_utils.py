@@ -87,6 +87,13 @@ class ContainerProcessManager:
     @staticmethod
     def check_network_connectivity(url="http://127.0.0.1:8001/"):
         """Check if Django server is accessible."""
+        # Skip network check when using StaticLiveServerTestCase
+        # It will start its own server on a random port
+        import os
+        if os.environ.get('CI') and os.environ.get('DJANGO_SETTINGS_MODULE') == 'test_settings':
+            print("🌐 Network check: Skipping - StaticLiveServerTestCase will start its own server")
+            return True
+            
         try:
             result = subprocess.run(
                 ['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', url],
@@ -98,7 +105,8 @@ class ContainerProcessManager:
             status_code = result.stdout.strip()
             print(f"🌐 Network check: {url} -> {status_code}")
             
-            return status_code == '200'
+            # Accept 200 (OK) or 302 (Redirect) as success
+            return status_code in ['200', '302']
         except Exception as e:
             print(f"🌐 Network check failed: {e}")
             return False
@@ -155,11 +163,19 @@ class PlaywrightContainerDebugger:
         if not ContainerProcessManager.monitor_resources():
             print("⚠️ Resource constraints detected")
         
-        # Check network
-        if not ContainerProcessManager.check_network_connectivity():
+        # Check network - Django runs on port 8001 in CI
+        network_ok = ContainerProcessManager.check_network_connectivity("http://localhost:8001/")
+        if not network_ok:
             print("⚠️ Network connectivity issues detected")
         
-        # Check Chrome availability
+        # Check if we're using Playwright server approach
+        playwright_server_endpoint = os.environ.get("PW_TEST_CONNECT_WS_ENDPOINT")
+        if playwright_server_endpoint:
+            print("✅ Using official Playwright server approach - Chrome not needed in this container")
+            print(f"📡 Playwright server endpoint: {playwright_server_endpoint}")
+            return True
+        
+        # Fallback: Check Chrome availability (for legacy setups)
         chrome_paths = [
             '/usr/bin/google-chrome-stable',
             '/usr/bin/google-chrome',
@@ -174,6 +190,6 @@ class PlaywrightContainerDebugger:
                 break
         
         if not chrome_available:
-            print("❌ No Chrome installation found")
+            print("❌ No Chrome installation found (legacy mode)")
         
         return chrome_available

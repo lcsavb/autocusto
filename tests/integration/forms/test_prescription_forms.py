@@ -19,16 +19,28 @@ User = get_user_model()
 class PrescriptionFormPlaywrightBase(PlaywrightLiveServerTestBase):
     """Base class for prescription form tests with common setup and utilities."""
     
-    # StaticLiveServerTestCase provides live_server_url automatically
+    # Now we can use PlaywrightLiveServerTestBase since tests run on the host
     
     def setUp(self):
         """Set up test data for prescription forms with extensive debugging."""
-        super().setUp()
+        import sys
+        print("🔧 DEBUG: PrescriptionFormPlaywrightBase.setUp() starting...", flush=True)
+        print(f"🔧 DEBUG: MRO: {[c.__name__ for c in self.__class__.__mro__]}", flush=True)
+        sys.stdout.flush()
         
-        print("🔧 DEBUG: Setting up test data...")
+        try:
+            print("🔧 DEBUG: About to call super().setUp()...", flush=True)
+            sys.stdout.flush()
+            super().setUp()
+            print("🔧 DEBUG: Parent setUp() complete", flush=True)
+        except Exception as e:
+            print(f"🔧 ERROR: Parent setUp() failed: {e}", flush=True)
+            raise
+        
+        print("🔧 DEBUG: Setting up test data...", flush=True)
         
         # Create test user and medico with unique email to avoid constraint violations
-        print("🔧 DEBUG: Creating user...")
+        print("🔧 DEBUG: Creating user...", flush=True)
         from tests.test_base import UniqueDataGenerator
         data_generator = UniqueDataGenerator()
         self.test_email = data_generator.generate_unique_email()
@@ -221,6 +233,7 @@ class PrescriptionFormPlaywrightBase(PlaywrightLiveServerTestBase):
         # Use Django test client to establish authentication session
         from django.test import Client
         from django.contrib.sessions.backends.db import SessionStore
+        from urllib.parse import urlparse
         
         # Create a session for the authenticated user
         client = Client()
@@ -234,33 +247,42 @@ class PrescriptionFormPlaywrightBase(PlaywrightLiveServerTestBase):
             client.session.save()
             session_key = client.session.session_key
         
+        # Parse the server URL to get the correct domain
+        parsed_url = urlparse(self.accessible_live_server_url)
+        cookie_domain = parsed_url.hostname or 'localhost'
+        
         # Set the session cookie in the browser context
         self.context.add_cookies([{
             'name': 'sessionid',
             'value': session_key,
-            'domain': 'web',  # Match the container domain
+            'domain': cookie_domain,  # Use the correct domain
             'path': '/'
         }])
         
         print(f"✅ Authentication session established for user: {self.user1.email}")
+        print(f"✅ Cookie domain set to: {cookie_domain}")
         return session_key
 
     def fill_field_slowly(self, field_locator, value, delay=0.05):
         """Fill field with value using Playwright, with robust interaction."""
         print(f"✏️  DEBUG: Filling field with value: {value}")
         
-        # Wait for element to be visible and enabled
-        field_locator.wait_for(state="visible")
-        
-        # Scroll element into view
-        field_locator.scroll_into_view_if_needed()
-        
-        # Clear and fill field
-        field_locator.clear()
-        field_locator.fill(str(value))
-        
-        self.page.wait_for_timeout(int(delay * 1000))
-        print("✅ DEBUG: Field filled successfully")
+        try:
+            # Wait for element to be visible and enabled with timeout
+            field_locator.wait_for(state="visible", timeout=10000)
+            
+            # Scroll element into view
+            field_locator.scroll_into_view_if_needed()
+            
+            # Clear and fill field
+            field_locator.clear()
+            field_locator.fill(str(value))
+            
+            self.page.wait_for_timeout(int(delay * 1000))
+            print("✅ DEBUG: Field filled successfully")
+        except Exception as e:
+            print(f"❌ DEBUG: Failed to fill field: {e}")
+            raise
 
     def debug_page_state(self, step_name):
         """Print extensive debugging information about current page state."""
@@ -268,23 +290,39 @@ class PrescriptionFormPlaywrightBase(PlaywrightLiveServerTestBase):
         print(f"📍 Current URL: {self.page.url}")
         print(f"📄 Page Title: {self.page.title()}")
         
-        # Check for forms on page
-        forms = self.page.locator('form').all()
-        print(f"📝 Forms found: {len(forms)}")
+        # Check for forms on page (with error handling)
+        try:
+            forms = self.page.locator('form').all()
+            print(f"📝 Forms found: {len(forms)}")
+        except Exception as e:
+            print(f"❌ Error checking forms: {e}")
+            forms = []
         
-        # Check for input fields
-        inputs = self.page.locator('input').all()
-        print(f"🔤 Input fields found: {len(inputs)}")
+        # Check for input fields (with error handling)
+        try:
+            inputs = self.page.locator('input').all()
+            print(f"🔤 Input fields found: {len(inputs)}")
+        except Exception as e:
+            print(f"❌ Error checking inputs: {e}")
+            inputs = []
         
-        # Check for select dropdowns
-        selects = self.page.locator('select').all()
-        print(f"📋 Select dropdowns found: {len(selects)}")
+        # Check for select dropdowns (with error handling)
+        try:
+            selects = self.page.locator('select').all()
+            print(f"📋 Select dropdowns found: {len(selects)}")
+        except Exception as e:
+            print(f"❌ Error checking selects: {e}")
+            selects = []
         
-        # Check for buttons
-        buttons = self.page.locator('button').all()
-        print(f"🔘 Buttons found: {len(buttons)}")
+        # Check for buttons (with error handling)
+        try:
+            buttons = self.page.locator('button').all()
+            print(f"🔘 Buttons found: {len(buttons)}")
+        except Exception as e:
+            print(f"❌ Error checking buttons: {e}")
+            buttons = []
         
-        # Check for any error messages
+        # Check for any error messages (with error handling)
         page_content = self.page.content()
         if 'error' in page_content.lower() or 'erro' in page_content.lower():
             print("⚠️  DEBUG: Possible errors detected on page")
@@ -295,19 +333,25 @@ class PrescriptionFormPlaywrightBase(PlaywrightLiveServerTestBase):
 
 class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
     """Test complex prescription form filling workflow."""
-
-    def test_prescription_form_navigation(self):
-        """Test navigation from home page to prescription form with extensive debugging."""
-        
-        print("\n🚀 TEST: test_prescription_form_navigation")
-        
-        # Set up authenticated session without browser login
-        self.setup_authenticated_session()
-        
-        # Go to home page
+    
+    def navigate_to_prescription_form(self):
+        """Helper method to navigate from home page to prescription form."""
         print("🏠 DEBUG: Navigating to home page")
-        self.page.goto(f'{self.accessible_live_server_url}/')
+        print(f"🔗 DEBUG: URL: {self.accessible_live_server_url}/")
+        
+        try:
+            # Add timeout to goto to prevent hanging
+            self.page.goto(f'{self.accessible_live_server_url}/', timeout=30000, wait_until="domcontentloaded")
+            print("✅ DEBUG: Page loaded successfully")
+        except Exception as e:
+            print(f"❌ DEBUG: Failed to load home page: {e}")
+            self.take_screenshot("01_navigation_error")
+            raise
+        
+        print("⏳ DEBUG: Waiting for page to be fully loaded...")
         self.wait_for_page_load()
+        print("✅ DEBUG: Page load complete")
+        
         self.take_screenshot("01_home_page_logged_in")
         self.debug_page_state("Home page after login")
         
@@ -327,7 +371,7 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
                 name = input_elem.get_attribute('name')
                 type_attr = input_elem.get_attribute('type')
                 print(f"  Input {i}: name='{name}', type='{type_attr}'")
-            self.skipTest("CPF field not found on home page")
+            raise Exception("CPF field not found on home page")
         
         # Fill CPF and CID to navigate to prescription form
         print("📝 DEBUG: Filling home form...")
@@ -342,12 +386,26 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         # Submit form
         print("📤 DEBUG: Submitting home form...")
         submit_button = self.page.locator('button:has-text("Cadastrar")')
-        submit_button.click()
+        
+        try:
+            submit_button.wait_for(state="visible", timeout=5000)
+            submit_button.click()
+            print("✅ DEBUG: Submit button clicked")
+        except Exception as e:
+            print(f"❌ DEBUG: Failed to click submit button: {e}")
+            self.take_screenshot("02_submit_error")
+            raise
         
         # Wait for navigation to prescription form
         print("⏳ DEBUG: Waiting for navigation...")
-        self.wait_for_page_load()
-        self.page.wait_for_timeout(2000)  # Give more time for navigation
+        try:
+            self.wait_for_page_load()
+            self.page.wait_for_timeout(2000)  # Give more time for navigation
+            print("✅ DEBUG: Navigation complete")
+        except Exception as e:
+            print(f"❌ DEBUG: Navigation wait failed: {e}")
+            self.take_screenshot("03_navigation_timeout")
+            raise
         
         current_url = self.page.url
         print(f"📍 DEBUG: Navigated to: {current_url}")
@@ -368,20 +426,39 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
                 if 'error' in page_content.lower() or 'erro' in page_content.lower():
                     print("❌ DEBUG: Error messages detected on home page")
                     print(f"Page content preview: {page_content[:500]}")
+            raise Exception(f"Failed to navigate to prescription form. Current URL: {current_url}")
         
-        self.assertTrue(
-            url_match,
-            f"Expected prescription form page ({expected_urls}), got: {current_url}"
-        )
         print("✅ DEBUG: Successfully navigated to prescription form!")
+        return True
+
+    def test_prescription_form_navigation(self):
+        """Test navigation from home page to prescription form with extensive debugging."""
+        
+        print("\n🚀 TEST: test_prescription_form_navigation")
+        
+        # Set up authenticated session without browser login
+        self.setup_authenticated_session()
+        
+        # Use the helper method to navigate
+        try:
+            self.navigate_to_prescription_form()
+            self.assertTrue(True, "Navigation to prescription form successful")
+        except Exception as e:
+            self.fail(f"Navigation to prescription form failed: {e}")
 
     def test_prescription_form_basic_patient_data(self):
         """Test filling basic patient data in prescription form."""
         
         print("\n🚀 TEST: test_prescription_form_basic_patient_data")
         
-        # Navigate to prescription form (via home page workflow)
-        self.test_prescription_form_navigation()
+        # Set up authenticated session without browser login
+        self.setup_authenticated_session()
+        
+        # Navigate to prescription form using helper method
+        try:
+            self.navigate_to_prescription_form()
+        except Exception as e:
+            self.fail(f"Failed to navigate to prescription form: {e}")
         
         # Take screenshot of the form before filling
         self.take_screenshot("04_prescription_form_empty")
@@ -389,18 +466,18 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         
         # Wait for prescription form to load completely
         print("⏳ DEBUG: Waiting for prescription form fields...")
-        patient_name_field = self.page.locator('input[name="nome_paciente"]')
-        if patient_name_field.count() > 0:
+        try:
+            patient_name_field = self.page.locator('input[name="nome_paciente"]')
             patient_name_field.wait_for(state="visible", timeout=15000)
             print("✅ DEBUG: Patient name field found")
-        else:
-            print("❌ DEBUG: Patient name field not found")
+        except Exception as e:
+            print(f"❌ DEBUG: Patient name field not found. Error: {e}")
             self.take_screenshot("04_error_no_patient_fields")
             # Try to find any input fields
             all_inputs = self.page.locator('input').all()
             input_names = [inp.get_attribute('name') for inp in all_inputs if inp.get_attribute('name')]
             print(f"❌ DEBUG: Available input fields: {input_names}")
-            self.skipTest("Patient name field not found on prescription form")
+            self.fail("Patient name field not found on prescription form")
         
         # Fill basic patient information
         patient_fields = {
@@ -414,28 +491,38 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         print("📝 DEBUG: Filling patient basic data...")
         filled_fields = 0
         for field_name, value in patient_fields.items():
-            field_locator = self.page.locator(f'input[name="{field_name}"]')
-            if field_locator.is_visible():
+            try:
+                field_locator = self.page.locator(f'input[name="{field_name}"]')
+                field_locator.wait_for(state="visible", timeout=5000)
                 self.fill_field_slowly(field_locator, value, delay=0.05)
                 print(f"✅ DEBUG: Filled {field_name}: {value}")
                 filled_fields += 1
-            else:
-                print(f"⚠️  DEBUG: Field {field_name} not found or not visible on page")
+            except Exception as e:
+                print(f"⚠️  DEBUG: Field {field_name} not found or not visible on page: {e}")
         
         self.take_screenshot("05_patient_data_filled")
         print(f"📊 DEBUG: Successfully filled {filled_fields}/{len(patient_fields)} patient fields")
+        
+        # Assert that at least some fields were filled
+        self.assertGreater(filled_fields, 0, "No patient fields could be filled")
 
     def test_prescription_form_medication_section(self):
         """Test filling medication section of prescription form."""
         
         print("\n🚀 TEST: test_prescription_form_medication_section")
         
-        # Navigate to prescription form first
-        self.test_prescription_form_navigation()
+        # Set up authenticated session without browser login
+        self.setup_authenticated_session()
+        
+        # Navigate to prescription form using helper method
+        try:
+            self.navigate_to_prescription_form()
+        except Exception as e:
+            self.fail(f"Failed to navigate to prescription form: {e}")
         
         print("🔍 DEBUG: Looking for medication section...")
         
-        # Look for medication-related fields or sections
+        # Look for medication-related fields or sections with timeouts
         medication_selectors = [
             'select[name*="medicamento"]',
             'input[name*="medicamento"]',
@@ -446,11 +533,16 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         
         found_medication_elements = False
         for selector in medication_selectors:
-            elements = self.page.locator(selector).all()
-            if elements:
-                print(f"✅ DEBUG: Found {len(elements)} medication elements with selector: {selector}")
-                found_medication_elements = True
-                break
+            try:
+                elements = self.page.locator(selector)
+                elements.first.wait_for(state="visible", timeout=5000)
+                count = elements.count()
+                if count > 0:
+                    print(f"✅ DEBUG: Found {count} medication elements with selector: {selector}")
+                    found_medication_elements = True
+                    break
+            except Exception:
+                continue
         
         if not found_medication_elements:
             print("⚠️  DEBUG: No medication section found on this form")
@@ -466,12 +558,36 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         
         print("\n🚀 TEST: test_prescription_form_submission")
         
-        # Navigate and fill basic data
-        self.test_prescription_form_basic_patient_data()
+        # Set up authenticated session without browser login
+        self.setup_authenticated_session()
+        
+        # Navigate to prescription form using helper method
+        try:
+            self.navigate_to_prescription_form()
+        except Exception as e:
+            self.fail(f"Failed to navigate to prescription form: {e}")
+        
+        # Fill basic patient data first
+        print("📝 DEBUG: Filling basic patient data before submission...")
+        patient_fields = {
+            'nome_paciente': 'Maria Santos Silva',
+            'nome_mae': 'Ana Santos',
+            'peso': '65',
+            'altura': '165',
+            'end_paciente': 'Rua das Flores, 123, Apt 45'
+        }
+        
+        for field_name, value in patient_fields.items():
+            try:
+                field_locator = self.page.locator(f'input[name="{field_name}"]')
+                field_locator.wait_for(state="visible", timeout=5000)
+                self.fill_field_slowly(field_locator, value, delay=0.05)
+            except Exception:
+                pass
         
         print("📤 DEBUG: Looking for form submission button...")
         
-        # Look for common submit button patterns
+        # Look for common submit button patterns with timeout
         submit_selectors = [
             'button[type="submit"]',
             'input[type="submit"]',
@@ -483,11 +599,14 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         
         submit_button = None
         for selector in submit_selectors:
-            button = self.page.locator(selector).first
-            if button.is_visible():
+            try:
+                button = self.page.locator(selector).first
+                button.wait_for(state="visible", timeout=3000)
                 submit_button = button
                 print(f"✅ DEBUG: Found submit button with selector: {selector}")
                 break
+            except Exception:
+                continue
         
         if submit_button:
             initial_url = self.page.url
@@ -524,6 +643,7 @@ class PrescriptionFormTest(PrescriptionFormPlaywrightBase):
         else:
             print("⚠️  DEBUG: No submit button found on prescription form")
             self.take_screenshot("07_no_submit_button")
+            self.fail("Submit button not found on prescription form")
 
 
 class PrescriptionFormAccessibilityTest(PrescriptionFormPlaywrightBase):

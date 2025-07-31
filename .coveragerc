@@ -1,0 +1,26 @@
+[run]
+source = .
+omit = 
+    */tests/playwright_base_backup.py
+    */migrations/*
+    */venv/*
+    */virtualenv/*
+    */env/*
+    manage.py
+    */settings/*
+    */test_settings.py
+    */wsgi.py
+    */asgi.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod

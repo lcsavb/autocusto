@@ -242,9 +242,9 @@ class CRMCNSValidationTest(BaseTestCase):
         }
         form = ProfileCompletionForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
-        self.assertTrue(form.non_field_errors())  # Should have non-field validation errors
+        self.assertTrue(form.errors['crm'])  # Should have CRM field validation errors
         # The error should be about CRM+State combination being used (state name is "São Paulo", not "SP")
-        self.assertIn('Este CRM já está sendo usado por outro médico no estado São Paulo.', form.non_field_errors())
+        self.assertIn('Este CRM já está sendo usado por outro médico no estado São Paulo.', form.errors['crm'])
 
     def test_cns_uniqueness_validation(self):
         """Test that CNS uniqueness is validated across different medicos."""

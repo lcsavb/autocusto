@@ -124,7 +124,7 @@ class TestPatientRepositoryUnit(TestCase):
         result = self.repo.get_patients_by_user(self.mock_user)
         
         # Assert
-        mock_objects.filter.assert_called_once_with(versions__usuario=self.mock_user)
+        mock_objects.filter.assert_called_once_with(versions__created_by=self.mock_user)
         self.assertEqual(result, mock_queryset)
         
     @patch('processos.repositories.patient_repository.Paciente.objects')

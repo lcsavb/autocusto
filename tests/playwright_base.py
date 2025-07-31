@@ -6,13 +6,15 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import override_settings, TransactionTestCase
 from django.db import transaction
 from django.contrib.auth import get_user_model
-from playwright.sync_api import sync_playwright, Browser, BrowserContext, Page
+from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 from medicos.models import Medico
 from clinicas.models import Clinica, Emissor
 from pacientes.models import Paciente
 from processos.models import Doenca, Medicamento, Processo
 import datetime
 from tests.test_base import UniqueDataGenerator
+
+# Using Playwright Async API to work properly with asyncio event loops
 
 # Import container utilities for debugging and process management
 try:
@@ -23,15 +25,18 @@ except ImportError:
         @staticmethod
         def cleanup_chrome_processes():
             return True
+
         @staticmethod
         def monitor_resources():
             return True
-    
+
     class PlaywrightContainerDebugger:
         def __init__(self, test_instance):
             pass
+
         def health_check_before_test(self):
             return True
+
 
 User = get_user_model()
 
@@ -44,455 +49,909 @@ class PlaywrightTestBase(StaticLiveServerTestCase):
     Base test class for Playwright tests in Django.
     Optimized for Docker container environments and official Playwright images.
     """
-    
+
     # Django server is running in separate web container
-    
+
     # Override to make live server accessible from other containers
-    host = '0.0.0.0'
-    
+    host = "0.0.0.0"
+
     @property
     def live_server_url(self):
         """Override to use container network-accessible URL."""
-        # Return URL that playwright-browsers container can access
+        # Return URL that Playwright server container can access
         # Use the web service name instead of localhost
         return f"http://web:{self.server_thread.port}"
-    
+
+    @classmethod
+    async def async_class_setup(cls):
+        """Async setup for Playwright - called from setUpClass"""
+        print("[SETUP] Initializing Playwright with Async API...")
+
+        # Initialize Playwright in async mode
+        cls.playwright = await async_playwright().start()
+        print("[OK] Playwright async API initialized successfully")
+
+        # Connect to Playwright server running in playwright-server container
+        playwright_server_endpoint = os.environ.get(
+            "PW_TEST_CONNECT_WS_ENDPOINT", "ws://playwright-server:3000/"
+        )
+        
+        print(f"[CONNECT] Connecting to Playwright server at {playwright_server_endpoint}")
+        
+        try:
+            # Connect to the Playwright server using the standard connect method
+            cls.browser = await cls.playwright.chromium.connect(playwright_server_endpoint)
+            print("[OK] Successfully connected to Playwright server")
+            
+            # Test the connection by getting browser version
+            try:
+                browser_version = cls.browser.version
+                print(f"[DEBUG] Connected browser version: {browser_version}")
+            except Exception as version_error:
+                print(f"[WARN] Could not get browser version: {version_error}")
+                
+        except Exception as connection_error:
+            print(f"[ERROR] Playwright server connection failed: {connection_error}")
+            print(f"[DEBUG] Attempted endpoint: {playwright_server_endpoint}")
+            raise Exception(f"Failed to connect to Playwright server: {connection_error}")
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
+        # Run the async setup
+        import asyncio
+
+        asyncio.run(cls.async_class_setup())
+
+    @classmethod
+    async def async_class_teardown(cls):
+        """Async teardown for Playwright - called from tearDownClass"""
+        import asyncio
         
-        # Initialize Playwright in sync mode
-        cls.playwright = sync_playwright().start()
-        
-        print("🔧 Initializing Playwright browser...")
-        
-        # Connect to remote Chromium browser in playwright-browsers container
-        remote_browser_endpoint = os.environ.get('PLAYWRIGHT_CHROMIUM_WS_ENDPOINT', 'http://playwright-browsers:9222')
-        
+        # Proper teardown sequence per official Playwright documentation
         try:
-            print(f"🔗 Connecting to remote Chrome at {remote_browser_endpoint}")
-            # Use CDP connection to remote Chrome instance
-            cls.browser = cls.playwright.chromium.connect_over_cdp(remote_browser_endpoint)
-            print("✅ Successfully connected to remote Chrome browser")
+            if hasattr(cls, "browser") and cls.browser:
+                print("[TEARDOWN] Closing browser connection...")
+                # Add delay before browser.close() to prevent CancelledError
+                await asyncio.sleep(0.1)
+                await cls.browser.close()
+                print("[OK] Browser closed successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Browser close cancelled during teardown (expected)")
         except Exception as e:
-            print(f"❌ Remote browser connection failed: {e}")
-            # For debugging, let's see what's available at the endpoint
-            try:
-                import subprocess
-                result = subprocess.run(['curl', '-s', f'{remote_browser_endpoint}/json'], 
-                                      capture_output=True, text=True, timeout=5)
-                print(f"🔍 DEBUG: Curl response: {result.stdout[:200]}...")
-            except Exception as debug_e:
-                print(f"🔍 DEBUG: Could not test endpoint: {debug_e}")
-            raise Exception(f"Failed to connect to remote Chrome: {e}")
-    
+            print(f"[WARN] Browser cleanup failed: {e}")
+            
+        try:
+            if hasattr(cls, "playwright") and cls.playwright:
+                print("[TEARDOWN] Stopping Playwright...")
+                await cls.playwright.stop()
+                print("[OK] Playwright stopped successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Playwright stop cancelled during teardown (expected)")
+        except Exception as e:
+            print(f"[WARN] Playwright cleanup failed: {e}")
+
     @classmethod
     def tearDownClass(cls):
-        # Ensure proper cleanup to prevent zombie processes
+        # Run async cleanup
+        import asyncio
+
         try:
-            if hasattr(cls, 'browser') and cls.browser:
-                cls.browser.close()
+            asyncio.run(cls.async_class_teardown())
         except Exception as e:
-            print(f"Warning: Browser cleanup failed: {e}")
-        try:
-            if hasattr(cls, 'playwright') and cls.playwright:
-                cls.playwright.stop()
-        except Exception as e:
-            print(f"Warning: Playwright cleanup failed: {e}")
+            print(f"Warning: Teardown failed: {e}")
+            # Continue with teardown even if cleanup fails
         super().tearDownClass()
-    
+
     def setUp(self):
         super().setUp()
-        
-        # Initialize data generator
-        self.data_generator = UniqueDataGenerator()
-        
-        # Initialize container debugger
-        self.debugger = PlaywrightContainerDebugger(self)
-        self.debugger.health_check_before_test()
-        
-        # Health check: ensure browser is still responsive
+
+        # Create an async test utility
+        import asyncio
+
+        # Python 3.11+ compatible event loop handling
+        # Official Python pattern for handling "no current event loop" RuntimeError
         try:
-            if not self.browser.is_connected():
-                raise Exception("Browser is not connected")
-        except Exception as e:
-            print(f"⚠️  DEBUG: Browser health check failed: {e}")
-            # Clean up processes and try to recover
-            ContainerProcessManager.cleanup_chrome_processes()
-            try:
-                if hasattr(self.__class__, 'browser'):
-                    self.__class__.browser.close()
-            except:
-                pass
-            # This will force browser recreation in next test
-            
-        self.context = self.browser.new_context(
-            viewport={'width': 1920, 'height': 1080},
-            # Add additional container-friendly context options
-            ignore_https_errors=True,
-            bypass_csp=True
+            self.loop = asyncio.get_event_loop()
+        except RuntimeError as ex:
+            if "There is no current event loop in thread" in str(ex):
+                # Create and set new event loop as recommended by Python docs
+                self.loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self.loop)
+            else:
+                raise
+        
+        # Alternative pattern (for reference):
+        # try:
+        #     self.loop = asyncio.get_running_loop()
+        # except RuntimeError:
+        #     self.loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(self.loop)
+
+        # Create a new context for each test to ensure isolation
+        self.context = None
+        self.page = None
+        
+        # Initialize browser context and page for the test
+        self.setup_browser()
+
+    async def async_setup_browser(self):
+        """Set up browser context and page for the test"""
+        # Create new context for test isolation
+        self.context = await self.browser.new_context(
+            viewport={"width": 1280, "height": 720}
         )
-        self.page = self.context.new_page()
+
+        # Enable request/response interception for debugging
+        self.context.on("request", lambda request: print(f"Request: {request.url}"))
+        self.context.on(
+            "response",
+            lambda response: print(f"Response: {response.url} - {response.status}"),
+        )
+
+        # Create new page
+        self.page = await self.context.new_page()
+
+        # Set up screenshot directory for failed tests
+        screenshot_dir = Path("tests/screenshots")
+        screenshot_dir.mkdir(exist_ok=True)
+        self.screenshot_dir = screenshot_dir
+
+        print(f"[SETUP] Browser context and page ready for {self.__class__.__name__}")
+
+    def setup_browser(self):
+        """Synchronous wrapper for async browser setup"""
+        return self.loop.run_until_complete(self.async_setup_browser())
+
+    async def async_teardown_browser(self):
+        """Clean up browser context and page after the test"""
+        import asyncio
         
-        # Set reasonable timeouts for container environment
-        self.page.set_default_timeout(30000)
-        self.page.set_default_navigation_timeout(30000)
-        
-        # Setup screenshot directory
-        self.screenshot_dir = Path('test_screenshots')
-        self.screenshot_dir.mkdir(exist_ok=True)
-    
-    def tearDown(self):
-        if hasattr(self, 'context'):
-            self.context.close()
-        super().tearDown()
-    
-    def take_screenshot(self, name: str):
-        """Take a screenshot with the given name."""
-        screenshot_path = self.screenshot_dir / f"{self.__class__.__name__}_{name}.png"
-        self.page.screenshot(path=str(screenshot_path))
-        return screenshot_path
-    
-    def wait_for_page_load(self):
-        """Wait for the page to fully load."""
-        self.page.wait_for_load_state('networkidle')
-    
-    def login_user(self, email: str, password: str):
-        """Helper method to log in a user."""
-        # Connect to localhost since tests run in same container as Django
-        server_url = "http://localhost:8001"
-        print(f"🔍 Connecting to Django server: {server_url}")
-        
+        # Proper teardown sequence: page -> context
         try:
-            self.page.goto(f"{server_url}/", timeout=30000, wait_until='networkidle')
-            print("✅ Successfully connected to Django server")
+            if self.page:
+                print("[TEARDOWN] Closing page...")
+                await self.page.close()
+                print("[OK] Page closed successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Page close cancelled during teardown (expected)")
         except Exception as e:
-            print(f"❌ Failed to connect to Django server: {e}")
+            print(f"[WARN] Page cleanup failed: {e}")
+            
+        try:
+            if self.context:
+                print("[TEARDOWN] Closing context...")
+                await asyncio.sleep(0.1)  # Small delay before context close
+                await self.context.close()
+                print("[OK] Context closed successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Context close cancelled during teardown (expected)")
+        except Exception as e:
+            print(f"[WARN] Context cleanup failed: {e}")
+
+    def teardown_browser(self):
+        """Synchronous wrapper for async browser teardown"""
+        return self.loop.run_until_complete(self.async_teardown_browser())
+
+    def tearDown(self):
+        # Clean up browser resources
+        if hasattr(self, "context") and self.context:
+            self.teardown_browser()
+        super().tearDown()
+
+    async def async_navigate_to(self, url):
+        """Navigate to a URL with error handling"""
+        if not self.page:
+            await self.async_setup_browser()
+
+        print(f"[NAV] Navigating to: {url}")
+        try:
+            response = await self.page.goto(url, wait_until="networkidle")
+            if response:
+                print(f"[NAV] Response status: {response.status}")
+            return response
+        except Exception as e:
+            print(f"[ERROR] Navigation failed: {e}")
+            # Take screenshot on navigation failure
+            await self.async_take_screenshot(f"navigation_failed_{self._testMethodName}")
+            raise
+
+    def navigate_to(self, url):
+        """Synchronous wrapper for navigation"""
+        return self.loop.run_until_complete(self.async_navigate_to(url))
+
+    async def async_take_screenshot(self, name: str):
+        """Take a screenshot with the given name"""
+        if not self.page:
+            print("[WARN] No page available for screenshot")
+            return
+
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{name}_{timestamp}.png"
+        screenshot_path = self.screenshot_dir / filename
+
+        try:
+            await self.page.screenshot(path=str(screenshot_path), full_page=True)
+            print(f"[SCREENSHOT] Saved: {screenshot_path}")
+            return screenshot_path
+        except Exception as e:
+            print(f"[ERROR] Screenshot failed: {e}")
+            return None
+
+    def take_screenshot(self, name: str):
+        """Synchronous wrapper for taking screenshots"""
+        return self.loop.run_until_complete(self.async_take_screenshot(name))
+
+    async def async_wait_for_page_load(self):
+        """Wait for the page to fully load."""
+        if not self.page:
+            await self.async_setup_browser()
+        # Add timeout to prevent infinite wait
+        await self.page.wait_for_load_state("networkidle", timeout=30000)
+
+    def wait_for_page_load(self):
+        """Synchronous wrapper for waiting for page load"""
+        return self.loop.run_until_complete(self.async_wait_for_page_load())
+
+    async def async_login_user(self, email: str, password: str):
+        """Helper method to log in a user."""
+        if not self.page:
+            await self.async_setup_browser()
+            
+        # Use the proper live server URL for container communication
+        server_url = self.live_server_url
+        print(f"[DEBUG] Connecting to Django server: {server_url}")
+
+        try:
+            await self.page.goto(f"{server_url}/", timeout=30000, wait_until="networkidle")
+            print("[OK] Successfully connected to Django server")
+        except Exception as e:
+            print(f"[ERROR] Failed to connect to Django server: {e}")
             # Take screenshot for debugging
             try:
-                self.take_screenshot("connection_failed")
-            except:
+                await self.async_take_screenshot("connection_failed")
+            except BaseException:
                 pass
             raise
-            
-        self.page.wait_for_load_state('domcontentloaded')
-        
+
+        await self.page.wait_for_load_state("domcontentloaded")
+
         # Fill login form (on home page)
-        self.page.fill('input[name="email"]', email)
-        self.page.fill('input[name="password"]', password)
-        
+        # The form uses 'username' field for email
+        await self.page.fill('input[name="username"]', email)
+        await self.page.fill('input[name="password"]', password)
+
         # Click login submit button (look for specific login form button)
         login_button = self.page.locator('button[type="submit"]').first
-        login_button.click()
-        
-        # Wait for navigation after login
-        self.page.wait_for_load_state('domcontentloaded')
-    
-    # Common test data creation methods
-    def create_test_user(self, email="test@example.com", password="testpass123"):
-        """Create a test user with the given credentials."""
-        return User.objects.create_user(
-            email=email,
-            password=password
-        )
-    
-    def create_test_medico(self, user=None, crm="123456", cns="111111111111111"):
-        """Create a test medical professional."""
-        if not user:
-            user = self.create_test_user()
-        
-        return Medico.objects.create(
-            usuario=user,
-            nome_medico="Dr. Test Silva",
-            crm_medico=crm,
-            cns_medico=cns,
-            uf_medico="SP",
-            cidade_medico="São Paulo",
-            status_aprovacao_medico=True
-        )
-    
-    def create_test_clinica(self, cnes="1234567"):
-        """Create a test clinic."""
-        return Clinica.objects.create(
-            nome_clinica="Test Clinic",
-            cnpj_clinica="12345678901234",
-            cnes_clinica=cnes,
-            endereco_clinica="Test Street, 123",
-            cidade_clinica="São Paulo",
-            uf_clinica="SP",
-            cep_clinica="12345678",
-            telefone_clinica="1134567890"
-        )
-    
-    def create_test_emissor(self, medico=None, clinica=None):
-        """Create a test emissor (doctor-clinic relationship)."""
-        if not medico:
-            medico = self.create_test_medico()
-        if not clinica:
-            clinica = self.create_test_clinica()
-            
-        return Emissor.objects.create(
-            medico=medico,
-            clinica=clinica
-        )
-    
-    def create_test_paciente(self, cpf="12345678901"):
-        """Create a test patient."""
-        return Paciente.objects.create(
-            nome_paciente="Test Patient",
-            cpf_paciente=cpf,
-            data_nascimento_paciente=datetime.date(1990, 1, 1),
-            sexo_paciente="M",
-            endereco_paciente="Test Address",
-            cidade_paciente="São Paulo",
-            uf_paciente="SP",
-            cep_paciente="12345678",
-            telefone_paciente="1198765432"
-        )
-    
-    def create_test_doenca(self, nome="Test Disease", codigo="T01"):
-        """Create a test disease."""
-        return Doenca.objects.create(
-            nome_doenca=nome,
-            codigo_doenca=codigo
-        )
-    
-    def create_test_medicamento(self, nome="Test Medicine"):
-        """Create a test medication."""
-        return Medicamento.objects.create(
-            nome_medicamento=nome,
-            forma_farmaceutica="Comprimido",
-            concentracao="100mg",
-            laboratorio="Test Lab"
-        )
-    
-    def create_complete_test_setup(self):
-        """Create a complete test setup with user, medico, clinic, and emissor."""
-        user = self.create_test_user()
-        medico = self.create_test_medico(user=user)
-        clinica = self.create_test_clinica()
-        emissor = self.create_test_emissor(medico=medico, clinica=clinica)
-        return {
-            'user': user,
-            'medico': medico,
-            'clinica': clinica,
-            'emissor': emissor
-        }
+        await login_button.click()
 
+        # Wait for navigation and full page reload after login
+        await self.page.wait_for_load_state("networkidle")
 
-class PlaywrightSecurityTestBase(PlaywrightTestBase):
-    """Base class specifically for security-related frontend tests."""
-    
-    def setUp(self):
-        super().setUp()
-        # Create test users for security testing
-        self.user1 = self.create_test_user(email='user1@test.com')
-        self.user2 = self.create_test_user(email='user2@test.com')
-    
-    def assert_redirected_to_login(self):
-        """Assert that the page redirected to login."""
-        self.assertIn('/login/', self.page.url)
-    
-    def assert_access_denied(self):
-        """Assert that access was denied (either redirect to login or 403)."""
-        current_url = self.page.url
-        # Check if redirected to login or got access denied
-        self.assertTrue(
-            '/login/' in current_url or self.page.locator('text=Access Denied').is_visible(),
-            f"Expected access denied but got URL: {current_url}"
-        )
+    def login_user(self, email: str, password: str):
+        """Synchronous wrapper for user login"""
+        return self.loop.run_until_complete(self.async_login_user(email, password))
 
 
 class PlaywrightFormTestBase(PlaywrightTestBase):
     """Base class for testing forms and complex interactions."""
-    
-    def fill_form_field(self, selector: str, value: str):
+
+    async def async_fill_form_field(self, selector: str, value: str):
         """Fill a form field and wait for it to be updated."""
-        self.page.fill(selector, value)
-        self.page.wait_for_timeout(100)  # Small delay for form updates
-    
-    def select_dropdown_option(self, selector: str, value: str):
+        if not self.page:
+            await self.async_setup_browser()
+        await self.page.fill(selector, value)
+        await self.page.wait_for_timeout(100)  # Small delay for form updates
+
+    def fill_form_field(self, selector: str, value: str):
+        """Synchronous wrapper for filling form fields"""
+        return self.loop.run_until_complete(self.async_fill_form_field(selector, value))
+
+    async def async_select_dropdown_option(self, selector: str, value: str):
         """Select an option from a dropdown."""
-        self.page.select_option(selector, value)
-        self.page.wait_for_timeout(100)
-    
-    def submit_form_and_wait(self, form_selector: str = 'form'):
+        if not self.page:
+            await self.async_setup_browser()
+        await self.page.select_option(selector, value)
+        await self.page.wait_for_timeout(100)
+
+    def select_dropdown_option(self, selector: str, value: str):
+        """Synchronous wrapper for selecting dropdown options"""
+        return self.loop.run_until_complete(self.async_select_dropdown_option(selector, value))
+
+    async def async_submit_form_and_wait(self, form_selector: str = "form"):
         """Submit a form and wait for the response."""
-        self.page.click(f'{form_selector} button[type="submit"]')
-        self.wait_for_page_load()
-    
-    def assert_form_error(self, message: str):
+        if not self.page:
+            await self.async_setup_browser()
+        await self.page.click(f'{form_selector} button[type="submit"]')
+        await self.page.wait_for_load_state("networkidle")
+
+    def submit_form_and_wait(self, form_selector: str = "form"):
+        """Synchronous wrapper for form submission"""
+        return self.loop.run_until_complete(self.async_submit_form_and_wait(form_selector))
+
+    async def async_assert_form_error(self, message: str):
         """Assert that a form error message is displayed."""
+        if not self.page:
+            await self.async_setup_browser()
         error_locator = self.page.locator(f'text="{message}"')
-        self.assertTrue(error_locator.is_visible(), f"Form error '{message}' not found")
-    
-    def assert_success_message(self, message: str):
+        is_visible = await error_locator.is_visible()
+        assert is_visible, f"Form error '{message}' not found"
+
+    def assert_form_error(self, message: str):
+        """Synchronous wrapper for asserting form errors"""
+        return self.loop.run_until_complete(self.async_assert_form_error(message))
+
+    async def async_assert_success_message(self, message: str):
         """Assert that a success message is displayed."""
+        if not self.page:
+            await self.async_setup_browser()
         success_locator = self.page.locator(f'text="{message}"')
-        self.assertTrue(success_locator.is_visible(), f"Success message '{message}' not found")
+        is_visible = await success_locator.is_visible()
+        assert is_visible, f"Success message '{message}' not found"
+
+    def assert_success_message(self, message: str):
+        """Synchronous wrapper for asserting success messages"""
+        return self.loop.run_until_complete(self.async_assert_success_message(message))
 
 
 class PlaywrightNavigationTestBase(PlaywrightTestBase):
     """Base class for testing navigation and workflow."""
-    
-    def click_link_and_wait(self, selector: str):
+
+    async def async_click_link_and_wait(self, selector: str):
         """Click a link and wait for navigation."""
-        self.page.click(selector)
-        self.wait_for_page_load()
-    
-    def assert_page_title(self, expected_title: str):
+        if not self.page:
+            await self.async_setup_browser()
+        await self.page.click(selector)
+        await self.page.wait_for_load_state("networkidle")
+
+    def click_link_and_wait(self, selector: str):
+        """Synchronous wrapper for clicking links"""
+        return self.loop.run_until_complete(self.async_click_link_and_wait(selector))
+
+    async def async_assert_page_title(self, expected_title: str):
         """Assert the page title matches expected."""
-        actual_title = self.page.title()
-        self.assertEqual(actual_title, expected_title)
-    
-    def assert_url_contains(self, url_fragment: str):
+        if not self.page:
+            await self.async_setup_browser()
+        actual_title = await self.page.title()
+        assert actual_title == expected_title, f"Expected title '{expected_title}', got '{actual_title}'"
+
+    def assert_page_title(self, expected_title: str):
+        """Synchronous wrapper for asserting page title"""
+        return self.loop.run_until_complete(self.async_assert_page_title(expected_title))
+
+    async def async_assert_url_contains(self, url_fragment: str):
         """Assert the current URL contains the given fragment."""
+        if not self.page:
+            await self.async_setup_browser()
         current_url = self.page.url
-        self.assertIn(url_fragment, current_url)
-    
-    def navigate_to_section(self, section_name: str):
+        assert url_fragment in current_url, f"URL fragment '{url_fragment}' not found in '{current_url}'"
+
+    def assert_url_contains(self, url_fragment: str):
+        """Synchronous wrapper for asserting URL contents"""
+        return self.loop.run_until_complete(self.async_assert_url_contains(url_fragment))
+
+    async def async_navigate_to_section(self, section_name: str):
         """Navigate to a specific section via menu/navigation."""
-        # This will be implemented based on your specific navigation structure
+        if not self.page:
+            await self.async_setup_browser()
         nav_link = self.page.locator(f'a:has-text("{section_name}")')
-        if nav_link.is_visible():
-            nav_link.click()
-            self.wait_for_page_load()
+        is_visible = await nav_link.is_visible()
+        if is_visible:
+            await nav_link.click()
+            await self.page.wait_for_load_state("networkidle")
         else:
             raise AssertionError(f"Navigation link '{section_name}' not found")
 
+    def navigate_to_section(self, section_name: str):
+        """Synchronous wrapper for section navigation"""
+        return self.loop.run_until_complete(self.async_navigate_to_section(section_name))
 
-class PlaywrightLiveServerTestBase(StaticLiveServerTestCase):
+
+class PlaywrightLiveServerTestBase(TransactionTestCase):
     """
-    Playwright test base using StaticLiveServerTestCase for shared database state.
-    This ensures the live server and test database share the same state,
-    fixing authentication issues between Django test client and Playwright browser.
+    Playwright test base that bypasses StaticLiveServerTestCase hanging issues.
+    Uses TransactionTestCase for database isolation and assumes server is already running.
     """
+
+    # Server configuration - assumes Django server is already running
+    # This avoids the hanging issue with StaticLiveServerTestCase in CI
+    server_port = 8001
     
-    # Configure live server to be accessible from remote browser container
     @classmethod
     def setUpClass(cls):
-        # Set the live server to bind to all interfaces for container access
-        cls.host = '0.0.0.0'
-        super().setUpClass()
+        import sys
+        print(f"[PLAYWRIGHT-CLASS-SETUP] Starting setUpClass for {cls.__name__}", flush=True)
+        sys.stdout.flush()
         
-        print("🔧 Initializing Playwright browser...")
-        cls.playwright = sync_playwright().start()
+        # Since we're not using StaticLiveServerTestCase, we don't need to call super().setUpClass()
+        # which is where the hanging occurs
+        print("[PLAYWRIGHT-CLASS-SETUP] Skipping StaticLiveServerTestCase setup to avoid hang", flush=True)
         
-        # Connect to remote Chromium browser in playwright-browsers container
-        remote_browser_endpoint = os.environ.get('PLAYWRIGHT_CHROMIUM_WS_ENDPOINT', 'http://172.18.0.2:9222')
+        # Set the host for container access
+        cls.host = "0.0.0.0"
+        
+        # CRITICAL: Set allowed hosts for Django's server
+        from django.conf import settings
+        settings.ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', 'web', '0.0.0.0']
+
+        # Run the async setup
+        import asyncio
+
+        print("[PLAYWRIGHT-CLASS-SETUP] Running async_class_setup...")
         try:
-            print(f"🔗 Connecting to remote Chrome at {remote_browser_endpoint}")
-            cls.browser = cls.playwright.chromium.connect_over_cdp(remote_browser_endpoint)
-            print("✅ Successfully connected to remote Chrome browser")
+            asyncio.run(cls.async_class_setup())
+            print("[PLAYWRIGHT-CLASS-SETUP] async_class_setup complete")
         except Exception as e:
-            print(f"❌ Failed to connect to remote browser: {e}")
-            # Fallback to local browser
-            cls.browser = cls.playwright.chromium.launch(headless=True)
-            print("⚠️  Fallback: Using local browser")
+            print(f"[PLAYWRIGHT-CLASS-SETUP] ERROR in async_class_setup: {e}")
+            raise
+
+    @classmethod
+    async def async_class_setup(cls):
+        """Async setup for Playwright - called from setUpClass"""
+        print("[SETUP] Initializing Playwright with Async API...")
+
+        # Initialize Playwright in async mode
+        cls.playwright = await async_playwright().start()
+        print("[OK] Playwright async API initialized successfully")
+
+        # Connect to Playwright server running in playwright-server container
+        playwright_server_endpoint = os.environ.get(
+            "PW_TEST_CONNECT_WS_ENDPOINT", "ws://playwright-server:3000/"
+        )
         
+        print(f"[CONNECT] Connecting to Playwright server at {playwright_server_endpoint}")
+        
+        print(f"[DEBUG] CI env var: {os.environ.get('CI')}")
+        print(f"[DEBUG] Comparing endpoint: {playwright_server_endpoint} == ws://localhost:3000/")
+        
+        try:
+            # In CI, launch Chrome browser directly instead of connecting to server
+            if os.environ.get("CI") == "true":
+                print("[CI] Detected CI environment, launching Chrome browser directly")
+                print("[CI] Launching Chromium (Chrome) with special CI flags...")
+                cls.browser = await cls.playwright.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--disable-web-security',
+                        '--disable-features=IsolateOrigins,site-per-process'
+                    ]
+                )
+                print("[OK] Chrome browser launched successfully")
+            else:
+                # Not in CI, connect to the Playwright server
+                cls.browser = await cls.playwright.chromium.connect(playwright_server_endpoint)
+                print("[OK] Successfully connected to Playwright server")
+            
+            # Test the connection by getting browser version
+            try:
+                browser_version = cls.browser.version
+                print(f"[DEBUG] Connected browser version: {browser_version}")
+            except Exception as version_error:
+                print(f"[WARN] Could not get browser version: {version_error}")
+                
+        except Exception as connection_error:
+            print(f"[ERROR] Playwright server/browser setup failed: {connection_error}")
+            print(f"[DEBUG] Attempted endpoint: {playwright_server_endpoint}")
+            raise Exception(f"Failed to setup Playwright browser: {connection_error}")
+
         # Health checks
         try:
             manager = ContainerProcessManager()
             debugger = PlaywrightContainerDebugger(None)
-            
-            print("🏥 Performing container health checks...")
+
+            print("[HEALTH] Performing container health checks...")
             manager.cleanup_chrome_processes()
             manager.monitor_resources()
             debugger.health_check_before_test()
-            print("✅ Container health checks completed")
+            print("[OK] Container health checks completed")
         except Exception as e:
-            print(f"⚠️  Health check error: {e}")
-    
+            print(f"[WARN]  Health check error: {e}")
+
+    @classmethod
+    async def async_class_teardown(cls):
+        """Async teardown for Playwright - called from tearDownClass"""
+        import asyncio
+        
+        # Proper teardown sequence per official Playwright documentation
+        try:
+            if hasattr(cls, "browser") and cls.browser:
+                print("[TEARDOWN] Closing browser connection...")
+                # Add delay before browser.close() to prevent CancelledError
+                await asyncio.sleep(0.1)
+                await cls.browser.close()
+                print("[OK] Browser closed successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Browser close cancelled during teardown (expected)")
+        except Exception as e:
+            print(f"[WARN] Browser cleanup failed: {e}")
+            
+        try:
+            if hasattr(cls, "playwright") and cls.playwright:
+                print("[TEARDOWN] Stopping Playwright...")
+                await cls.playwright.stop()
+                print("[OK] Playwright stopped successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Playwright stop cancelled during teardown (expected)")
+        except Exception as e:
+            print(f"[WARN] Playwright cleanup failed: {e}")
+
     @classmethod
     def tearDownClass(cls):
-        if hasattr(cls, 'browser'):
-            cls.browser.close()
-        if hasattr(cls, 'playwright'):
-            cls.playwright.stop()
-        super().tearDownClass()
-    
+        # Run async cleanup
+        import asyncio
+
+        try:
+            asyncio.run(cls.async_class_teardown())
+        except Exception as e:
+            print(f"Warning: Teardown failed: {e}")
+            # Continue with teardown even if cleanup fails
+        # Don't call super() since we're not using StaticLiveServerTestCase
+
     def setUp(self):
-        super().setUp()
-        self.context = self.browser.new_context()
-        self.page = self.context.new_page()
-    
+        print(f"[PLAYWRIGHT-BASE-SETUP] Starting setUp for {self.__class__.__name__}", flush=True)
+        print(f"[PLAYWRIGHT-BASE-SETUP] Using TransactionTestCase setUp (no server startup)", flush=True)
+        import sys
+        sys.stdout.flush()
+        
+        # Call TransactionTestCase setUp instead of StaticLiveServerTestCase
+        # This avoids the hanging server startup
+        try:
+            super().setUp()
+            print("[PLAYWRIGHT-BASE-SETUP] Parent setUp complete", flush=True)
+            sys.stdout.flush()
+        except Exception as e:
+            print(f"[PLAYWRIGHT-BASE-SETUP] ERROR in parent setUp: {e}", flush=True)
+            raise
+
+        print("[PLAYWRIGHT-BASE-SETUP] Point 1: After parent setUp", flush=True)
+        sys.stdout.flush()
+        
+        # Create a new browser context and page for each test
+        print("[PLAYWRIGHT-BASE-SETUP] Point 2: About to import asyncio...", flush=True)
+        sys.stdout.flush()
+        
+        import asyncio
+
+        print("[PLAYWRIGHT-BASE-SETUP] Point 3: asyncio imported successfully", flush=True)
+        sys.stdout.flush()
+        
+        print("[PLAYWRIGHT-BASE-SETUP] Point 4: Setting up event loop...", flush=True)
+        sys.stdout.flush()
+        
+        # Python 3.11+ compatible event loop handling
+        # Official Python pattern for handling "no current event loop" RuntimeError
+        try:
+            print("[PLAYWRIGHT-BASE-SETUP] Point 5: Attempting to get event loop...", flush=True)
+            sys.stdout.flush()
+            self.loop = asyncio.get_event_loop()
+            print("[PLAYWRIGHT-BASE-SETUP] Point 6: Got existing event loop", flush=True)
+            sys.stdout.flush()
+        except RuntimeError as ex:
+            print(f"[PLAYWRIGHT-BASE-SETUP] Point 7: RuntimeError: {ex}", flush=True)
+            sys.stdout.flush()
+            if "There is no current event loop in thread" in str(ex):
+                # Create and set new event loop as recommended by Python docs
+                print("[PLAYWRIGHT-BASE-SETUP] Point 8: Creating new event loop", flush=True)
+                sys.stdout.flush()
+                self.loop = asyncio.new_event_loop()
+                print("[PLAYWRIGHT-BASE-SETUP] Point 9: Setting event loop", flush=True)
+                sys.stdout.flush()
+                asyncio.set_event_loop(self.loop)
+                print("[PLAYWRIGHT-BASE-SETUP] Point 10: Event loop set", flush=True)
+                sys.stdout.flush()
+            else:
+                raise
+        
+        print("[PLAYWRIGHT-BASE-SETUP] Point 11: Event loop setup complete", flush=True)
+        sys.stdout.flush()
+        
+        print("[PLAYWRIGHT-BASE-SETUP] Point 12: About to run async_setup_page...", flush=True)
+        sys.stdout.flush()
+        try:
+            print("[PLAYWRIGHT-BASE-SETUP] Point 13: Calling run_until_complete...", flush=True)
+            sys.stdout.flush()
+            self.loop.run_until_complete(self.async_setup_page())
+            print("[PLAYWRIGHT-BASE-SETUP] Point 14: async_setup_page complete", flush=True)
+            sys.stdout.flush()
+        except Exception as e:
+            print(f"[PLAYWRIGHT-BASE-SETUP] Point 15: ERROR in async_setup_page: {e}", flush=True)
+            sys.stdout.flush()
+            raise
+        
+        print("[PLAYWRIGHT-BASE-SETUP] Point 16: setUp fully complete", flush=True)
+        sys.stdout.flush()
+
+    async def async_setup_page(self):
+        """Create a new page for the test"""
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A1: Starting async_setup_page", flush=True)
+        import sys
+        sys.stdout.flush()
+        
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A2: Checking browser instance...", flush=True)
+        print(f"[PLAYWRIGHT-ASYNC-SETUP] Has browser attr: {hasattr(self, 'browser')}", flush=True)
+        print(f"[PLAYWRIGHT-ASYNC-SETUP] Has class browser attr: {hasattr(self.__class__, 'browser')}", flush=True)
+        sys.stdout.flush()
+        
+        if not hasattr(self.__class__, 'browser') or not self.__class__.browser:
+            print("[PLAYWRIGHT-ASYNC-SETUP] ERROR: No browser instance available on class!", flush=True)
+            raise Exception("Browser not initialized. Check class setup.")
+        
+        # Use class browser instance
+        browser = self.__class__.browser
+        
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A3: Browser instance found", flush=True)
+        print(f"[PLAYWRIGHT-ASYNC-SETUP] Browser type: {type(browser)}", flush=True)
+        print(f"[PLAYWRIGHT-ASYNC-SETUP] Browser is_connected: {browser.is_connected() if hasattr(browser, 'is_connected') else 'N/A'}", flush=True)
+        
+        # Test if browser is still responsive
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A3.1: Testing browser responsiveness...", flush=True)
+        try:
+            # Try to get browser version as a simple connectivity test
+            if hasattr(browser, 'version'):
+                print(f"[PLAYWRIGHT-ASYNC-SETUP] Browser version: {browser.version}", flush=True)
+        except Exception as e:
+            print(f"[PLAYWRIGHT-ASYNC-SETUP] WARNING: Browser version check failed: {e}", flush=True)
+        
+        sys.stdout.flush()
+        
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A4: Creating new browser context...", flush=True)
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A4.1: About to call browser.new_context()", flush=True)
+        import os
+        print(f"[PLAYWRIGHT-ASYNC-SETUP] Playwright server endpoint: {os.environ.get('PW_TEST_CONNECT_WS_ENDPOINT', 'Not set')}", flush=True)
+        sys.stdout.flush()
+        try:
+            # Add timeout to prevent infinite hang
+            import asyncio
+            print("[PLAYWRIGHT-ASYNC-SETUP] Point A4.2: Creating context with 30s timeout...", flush=True)
+            print("[PLAYWRIGHT-ASYNC-SETUP] Trying minimal context creation first...", flush=True)
+            sys.stdout.flush()
+            
+            # Try creating context with minimal options
+            try:
+                # In CI environments, browser.newContext() can hang due to GPU issues
+                # Try with a very short timeout first
+                self.context = await asyncio.wait_for(
+                    browser.new_context(),  # No viewport or other options
+                    timeout=5.0
+                )
+                print("[PLAYWRIGHT-ASYNC-SETUP] Point A5: Minimal context created successfully", flush=True)
+                # Now try to set viewport
+                await self.context.set_viewport_size({"width": 1280, "height": 720})
+                print("[PLAYWRIGHT-ASYNC-SETUP] Viewport size set", flush=True)
+            except asyncio.TimeoutError:
+                print("[PLAYWRIGHT-ASYNC-SETUP] Minimal context also timed out", flush=True)
+                # Try using a page directly from browser
+                print("[PLAYWRIGHT-ASYNC-SETUP] Attempting to get default context...", flush=True)
+                contexts = browser.contexts
+                if contexts:
+                    print(f"[PLAYWRIGHT-ASYNC-SETUP] Found {len(contexts)} existing contexts", flush=True)
+                    self.context = contexts[0]
+                else:
+                    # Last resort: try launching a new browser instance
+                    print("[PLAYWRIGHT-ASYNC-SETUP] No contexts available, trying to launch new browser", flush=True)
+                    try:
+                        # Get playwright instance from class
+                        playwright = self.__class__.playwright
+                        print("[PLAYWRIGHT-ASYNC-SETUP] Launching new browser instance...", flush=True)
+                        # Launch Chrome with CI-specific flags
+                        print("[PLAYWRIGHT-ASYNC-SETUP] Launching Chrome browser with CI flags...", flush=True)
+                        new_browser = await playwright.chromium.launch(
+                            headless=True,
+                            args=[
+                                '--no-sandbox',
+                                '--disable-setuid-sandbox',
+                                '--disable-dev-shm-usage',
+                                '--disable-gpu',
+                                '--disable-web-security',
+                                '--disable-features=IsolateOrigins,site-per-process'
+                            ]
+                        )
+                        print("[PLAYWRIGHT-ASYNC-SETUP] New browser launched, creating context...", flush=True)
+                        self.context = await new_browser.new_context(
+                            viewport={"width": 1280, "height": 720}
+                        )
+                        print("[PLAYWRIGHT-ASYNC-SETUP] Context created on new browser", flush=True)
+                        # Store the new browser instance
+                        self._local_browser = new_browser
+                    except Exception as launch_error:
+                        print(f"[PLAYWRIGHT-ASYNC-SETUP] Failed to launch new browser: {launch_error}", flush=True)
+                        raise Exception("No contexts available and cannot create new one")
+            
+            sys.stdout.flush()
+        except asyncio.TimeoutError:
+            print("[PLAYWRIGHT-ASYNC-SETUP] ERROR: Timeout creating context after 30s", flush=True)
+            print("[PLAYWRIGHT-ASYNC-SETUP] This suggests the Playwright server connection is broken", flush=True)
+            sys.stdout.flush()
+            raise Exception("Timeout creating browser context - Playwright server may be unreachable")
+        except Exception as e:
+            print(f"[PLAYWRIGHT-ASYNC-SETUP] ERROR creating context: {e}", flush=True)
+            print(f"[PLAYWRIGHT-ASYNC-SETUP] Error type: {type(e).__name__}", flush=True)
+            sys.stdout.flush()
+            raise
+        
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A6: Creating new page...", flush=True)
+        sys.stdout.flush()
+        try:
+            self.page = await self.context.new_page()
+            print("[PLAYWRIGHT-ASYNC-SETUP] Point A7: Page created", flush=True)
+            sys.stdout.flush()
+        except Exception as e:
+            print(f"[PLAYWRIGHT-ASYNC-SETUP] ERROR creating page: {e}", flush=True)
+            sys.stdout.flush()
+            raise
+
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A8: Setting up screenshot directory...", flush=True)
+        sys.stdout.flush()
+        
+        # Set up screenshot directory
+        from pathlib import Path
+        screenshot_dir = Path("tests/screenshots")
+        screenshot_dir.mkdir(exist_ok=True)
+        self.screenshot_dir = screenshot_dir
+        
+        print("[PLAYWRIGHT-ASYNC-SETUP] Point A9: async_setup_page complete", flush=True)
+        sys.stdout.flush()
+
     def tearDown(self):
-        if hasattr(self, 'context'):
-            self.context.close()
+        # Clean up the page and context
+        import asyncio
+
+        if hasattr(self, "context") and self.context:
+            asyncio.run(self.async_cleanup_page())
         super().tearDown()
+
+    async def async_cleanup_page(self):
+        """Clean up page and context"""
+        import asyncio
+        
+        # Proper teardown sequence: page -> context -> local browser (if any)
+        try:
+            if hasattr(self, "page") and self.page:
+                print("[TEARDOWN] Closing page...")
+                await self.page.close()
+                print("[OK] Page closed successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Page close cancelled during teardown (expected)")
+        except Exception as e:
+            print(f"[WARN] Page cleanup failed: {e}")
+            
+        try:
+            if hasattr(self, "context") and self.context:
+                print("[TEARDOWN] Closing context...")
+                await asyncio.sleep(0.1)  # Small delay before context close
+                await self.context.close()
+                print("[OK] Context closed successfully")
+        except asyncio.exceptions.CancelledError:
+            print("[WARN] Context close cancelled during teardown (expected)")
+        except Exception as e:
+            print(f"[WARN] Context cleanup failed: {e}")
+            
+        # Clean up local browser if we created one
+        try:
+            if hasattr(self, "_local_browser") and self._local_browser:
+                print("[TEARDOWN] Closing local browser instance...")
+                await self._local_browser.close()
+                print("[OK] Local browser closed successfully")
+        except Exception as e:
+            print(f"[WARN] Local browser cleanup failed: {e}")
+
+    async def async_navigate_to(self, url):
+        """Navigate to a URL with error handling"""
+        print(f"[NAV] Navigating to: {url}")
+        try:
+            response = await self.page.goto(url, wait_until="networkidle")
+            if response:
+                print(f"[NAV] Response status: {response.status}")
+            return response
+        except Exception as e:
+            print(f"[ERROR] Navigation failed: {e}")
+            # Take screenshot on navigation failure
+            await self.async_take_screenshot(f"navigation_failed_{self._testMethodName}")
+            raise
+
+    def navigate_to(self, url):
+        """Synchronous wrapper for navigation"""
+        return self.loop.run_until_complete(self.async_navigate_to(url))
+
+    async def async_take_screenshot(self, name: str):
+        """Take a screenshot with the given name"""
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{name}_{timestamp}.png"
+        screenshot_path = self.screenshot_dir / filename
+
+        try:
+            await self.page.screenshot(path=str(screenshot_path), full_page=True)
+            print(f"[SCREENSHOT] Saved: {screenshot_path}")
+            return screenshot_path
+        except Exception as e:
+            print(f"[ERROR] Screenshot failed: {e}")
+            return None
+
+    def take_screenshot(self, name: str):
+        """Synchronous wrapper for taking screenshots"""
+        return self.loop.run_until_complete(self.async_take_screenshot(name))
+
+    @property
+    def live_server_url(self):
+        """Return URL for the already-running Django server"""
+        # Assume Django server is already running on port 8001
+        # This bypasses StaticLiveServerTestCase's server startup
+        if os.environ.get('CI'):
+            # In CI, Django should be running on the host
+            return f"http://localhost:{self.server_port}"
+        else:
+            # Local development
+            return f"http://127.0.0.1:{self.server_port}"
     
     @property
     def accessible_live_server_url(self):
-        """Get live server URL accessible from remote browser container."""
-        # Replace localhost/127.0.0.1/0.0.0.0 with web container hostname
-        if hasattr(self, 'live_server_url'):
-            url = self.live_server_url
-            # Replace various localhost forms with 'web'
-            return url.replace('localhost', 'web').replace('127.0.0.1', 'web').replace('0.0.0.0', 'web')
-        return "http://web:8001"  # Fallback
-    
-    def wait_for_page_load(self, timeout=30000):
-        """Wait for page to finish loading."""
-        try:
-            self.page.wait_for_load_state("networkidle", timeout=timeout)
-        except Exception as e:
-            print(f"⚠️  Page load timeout: {e}")
-    
-    def take_screenshot(self, name):
-        """Take a screenshot with the given name."""
-        screenshot_dir = Path("test_screenshots")
-        screenshot_dir.mkdir(exist_ok=True)
+        """URL accessible from the Playwright container in Docker environment"""
+        # In Docker, use the web service name for inter-container communication
+        if os.environ.get('PW_TEST_CONNECT_WS_ENDPOINT'):
+            # We're in a containerized environment with separate playwright server
+            return f"http://web:{self.server_port}"
+        else:
+            # Local development or same-container setup
+            return self.live_server_url
+
+
+# Common test data creation methods
+class PlaywrightTestDataMixin:
+    """Mixin providing common test data creation methods for Playwright tests"""
+
+    def create_test_user(self, username="testuser", email="test@example.com"):
+        """Create a test user"""
+        return User.objects.create_user(
+            username=username, email=email, password="testpass123"
+        )
+
+    def create_test_medico(self, user=None):
+        """Create a test medico"""
+        if not user:
+            user = self.create_test_user()
+        return Medico.objects.create(
+            user=user,
+            crm="123456",
+            nome_completo=f"Dr. {user.username}",
+            especialidade="Clínica Geral",
+        )
+
+    def create_test_clinica(self, medico=None):
+        """Create a test clinica"""
+        if not medico:
+            medico = self.create_test_medico()
+        return Clinica.objects.create(
+            medico=medico,
+            nome="Clínica Teste",
+            endereco="Rua Teste, 123",
+            telefone="(11) 99999-9999",
+        )
+
+    def create_test_paciente(self, medico=None):
+        """Create a test paciente"""
+        if not medico:
+            medico = self.create_test_medico()
         
-        test_class = self.__class__.__name__
-        screenshot_path = screenshot_dir / f"{test_class}_{name}.png"
-        
-        self.page.screenshot(path=str(screenshot_path))
-        print(f"📸 Screenshot saved: {screenshot_path}")
-    
-    def authenticate_via_browser(self, email, password):
-        """
-        Perform browser-based authentication using Playwright.
-        This ensures authentication works with the live server.
-        """
-        print(f"🔐 DEBUG: Authenticating {email} via browser")
-        
-        # Navigate to home page using accessible URL
-        server_url = self.accessible_live_server_url
-        print(f"🔍 DEBUG: Navigating to {server_url}")
-        self.page.goto(server_url)
-        self.wait_for_page_load()
-        
-        # Fill login form
-        email_field = self.page.locator('input[name="username"]')
-        password_field = self.page.locator('input[name="password"]')
-        
-        if not (email_field.is_visible() and password_field.is_visible()):
-            self.take_screenshot("login_form_not_found")
-            self.fail("Login form not visible on home page")
-        
-        email_field.fill(email)
-        password_field.fill(password)
-        
-        # Click login button - be specific to avoid button ambiguity
-        login_form = self.page.locator('form').filter(has=self.page.locator('input[name="username"]'))
-        login_button = login_form.locator('button[type="submit"]')
-        
-        self.take_screenshot("before_login")
-        login_button.click()
-        self.wait_for_page_load()
-        
-        # Verify authentication success
-        login_form_after = self.page.locator('input[name="username"]')
-        if login_form_after.is_visible():
-            self.take_screenshot("login_failed")
-            # Check for error messages
-            error_msgs = self.page.locator('.alert, .error, .message').all()
-            error_text = ""
-            for msg in error_msgs:
-                if msg.is_visible():
-                    error_text += msg.inner_text() + " "
-            
-            self.fail(f"Browser authentication failed for {email}. Error: {error_text}")
-        
-        print("✅ DEBUG: Browser authentication successful")
-        self.take_screenshot("login_successful")
+        generator = UniqueDataGenerator()
+        return Paciente.objects.create(
+            medico=medico,
+            nome_completo="Paciente Teste",
+            cpf=generator.generate_valid_cpf(),
+            data_nascimento="1990-01-01",
+            telefone="(11) 88888-8888",
+        )
+
+    def create_test_processo(self, paciente=None, medico=None):
+        """Create a test processo"""
+        if not paciente:
+            paciente = self.create_test_paciente(medico)
+        return Processo.objects.create(
+            paciente=paciente,
+            data_inicio=datetime.date.today(),
+            observacoes="Processo de teste",
+        )

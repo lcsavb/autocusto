@@ -33,7 +33,9 @@ RUN apt-get update && apt-get install -y \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get install -y postgresql-client-17 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # Ensure pdftk is executable by all users
+    && chmod +x /usr/bin/pdftk
 
 # Stage 3: Test image (with Playwright browser dependencies)
 FROM base AS test

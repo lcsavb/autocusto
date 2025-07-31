@@ -219,19 +219,16 @@ class RenovacaoRapidaVersioningBugTest(BaseTestCase):
         # Login and test the actual view
         self.client.login(email='doctor@test.com', password='testpass123')
         
-        # Test renovacao_rapida view with search
-        response = self.client.get('/processos/renovacao/', {'b': 'João'}, follow=True)
+        # Test renovacao_rapida view with search - search for the actual patient name
+        search_term = patient.nome_paciente.split()[0]  # Get first word of name (e.g., "Test")
+        response = self.client.get('/processos/renovacao/', {'b': search_term}, follow=True)
         self.assertEqual(response.status_code, 200)
         
         # Check if the patient appears in the context
         busca_pacientes = response.context['busca_pacientes']
         
-        # Get the created patient
-        processo = Processo.objects.get(id=processo_id)
-        created_patient = processo.paciente
-        
         # CRITICAL ASSERTION: The patient should be in the search results
-        self.assertIn(created_patient, busca_pacientes,
+        self.assertIn(patient, busca_pacientes,
                      "Newly created patient should appear in renovacao_rapida template context")
         
         # Also test that we have the right number of patients

@@ -184,8 +184,7 @@ test-quick:
 clean:
 	@echo "🧹 Cleaning test artifacts..."
 	rm -rf htmlcov/ .coverage
-	rm -rf tests/screenshots/*.png 2>/dev/null || true
-	rm -rf test_screenshots/ 2>/dev/null || true  
+	rm -rf tests/screenshots/*.png 2>/dev/null || true  
 	find . -name "*.pyc" -delete 2>/dev/null || true
 	find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 	@echo "   ✅ Cleaned test artifacts"

@@ -108,7 +108,9 @@ class PreProcessoSetupFlowTest(BaseTestCase):
             'crm': generated_crm,
             'crm2': generated_crm,
             'cns': generated_cns,
-            'cns2': generated_cns
+            'cns2': generated_cns,
+            'estado': 'SP',  # São Paulo state
+            'especialidade': 'CARDIOLOGIA'  # Cardiology specialty
         }
         response = self.client.post(reverse('complete-profile'), profile_data)
         
@@ -120,6 +122,8 @@ class PreProcessoSetupFlowTest(BaseTestCase):
         self.medico.refresh_from_db()
         self.assertEqual(self.medico.crm_medico, generated_crm)
         self.assertEqual(self.medico.cns_medico, generated_cns)
+        self.assertEqual(self.medico.estado, 'SP')
+        self.assertEqual(self.medico.especialidade, 'CARDIOLOGIA')
         
         # Session should still preserve PreProcesso data
         session = self.client.session
@@ -144,11 +148,18 @@ class PreProcessoSetupFlowTest(BaseTestCase):
             'crm': generated_crm,
             'crm2': generated_crm,
             'cns': generated_cns,
-            'cns2': generated_cns
+            'cns2': generated_cns,
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA'
         }
         self.client.post(reverse('complete-profile'), profile_data)
         
         # Step 3: Create clinic
+        # Set up session to indicate we're in setup flow (required for redirect logic)
+        session = self.client.session
+        session['in_setup_flow'] = True
+        session.save()
+        
         clinic_data = {
             'nome_clinica': 'Test Clinic',
             'cns_clinica': self.data_generator.generate_unique_cns_clinica(),
@@ -340,11 +351,16 @@ class SessionPreservationTest(BaseTestCase):
         self.assertEqual(session.get('cpf_paciente'), cpf)
         
         # Step 2: Complete profile
+        generated_crm = self.data_generator.generate_unique_crm()
+        generated_cns = self.data_generator.generate_unique_cns_medico()
+        
         profile_data = {
-            'crm': self.data_generator.generate_unique_crm(),
-            'crm2': self.data_generator.generate_unique_crm(),
-            'cns': self.data_generator.generate_unique_cns_medico(),
-            'cns2': self.data_generator.generate_unique_cns_medico()
+            'crm': generated_crm,
+            'crm2': generated_crm,
+            'cns': generated_cns,
+            'cns2': generated_cns,
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA'
         }
         self.client.post(reverse('complete-profile'), profile_data)
         
