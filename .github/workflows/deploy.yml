@@ -3,7 +3,6 @@ name: Deploy to VPS
 on:
   push:
     branches: [ master ]
-  # Removed pull_request trigger - only deploy on actual pushes to master
 
 env:
   REGISTRY: ghcr.io
@@ -52,7 +51,6 @@ jobs:
         DEBUG: 1
         ENVIRONMENT: local
       run: |
-        # Run backend-only tests (unit + integration, no browser dependencies)
         echo "Running backend tests for deployment readiness..."
         
         echo "Phase 1: Unit Tests"
@@ -97,43 +95,43 @@ jobs:
     if: github.ref == 'refs/heads/master'
     
     steps:
-    - name: Deploy to VPS
+    - name: Deploy to VPS with Host Nginx
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.KINGHOST_SSH_KEY }}
         script: |
-          echo "=== REGISTRY-ONLY DEPLOYMENT START ==="
-
-          
+          echo "=== DEPLOYMENT WITH HOST NGINX START ==="
           
           # Setup deployment directory
           sudo chown $USER:$USER /opt/autocusto
           mkdir -p /opt/autocusto
           cd /opt/autocusto
 
-          # Create pre-deployment database backup (CRITICAL - stop deployment if fails)
+          # Create pre-deployment database backup
           echo "=== Creating pre-deployment database backup ==="
-          if ! docker-compose exec -T web python manage.py dbbackup --clean; then
-            echo "❌ Database backup failed! Deployment STOPPED for safety."
-            exit 1
+          if docker-compose ps | grep -q "web.*running"; then
+            if ! docker-compose exec -T web python manage.py dbbackup --clean; then
+              echo "❌ Database backup failed! Deployment STOPPED for safety."
+              exit 1
+            fi
+            echo "✅ Database backup completed successfully"
+          else
+            echo "⚠️ No running web container for backup - first deployment or container is down"
           fi
           
-          echo "✅ Database backup completed successfully"
-
-          
-          # Copy GPG public key for container use (accessible by deploy user)
+          # Setup GPG key for backups
           echo "=== Setting up GPG key for backups ==="
           GPG_KEY_PATH="/home/deploy/lucas-backup-public.asc"
           if [ ! -f "$GPG_KEY_PATH" ]; then
             echo "Exporting GPG public key..."
-            gpg --export --armor lcsavb@gmail.com > "$GPG_KEY_PATH".
+            gpg --export --armor lcsavb@gmail.com > "$GPG_KEY_PATH"
             sudo chown deploy:deploy "$GPG_KEY_PATH"
             chmod 600 "$GPG_KEY_PATH"
           fi
           
-          # Ensure .prodenv exists and is readable by deploy user
+          # Ensure .prodenv exists
           if [ ! -f .prodenv ]; then
             echo "Warning: .prodenv file not found, creating minimal version"
             touch .prodenv
@@ -141,14 +139,27 @@ jobs:
           sudo chown deploy:deploy .prodenv
           chmod 600 .prodenv
           
+          # Setup directories for static and media files
+          echo "=== Setting up static and media directories ==="
+          sudo mkdir -p /opt/autocusto/static_files
+          sudo mkdir -p /opt/autocusto/media_files
+          sudo mkdir -p /dev/shm/autocusto/static/processos
+          sudo mkdir -p /dev/shm/autocusto/static/protocolos
+          
+          # Set ownership to nginx user (www-data or deploy depending on your setup)
+          # Change to www-data if nginx runs as www-data
+          sudo chown -R deploy:deploy /opt/autocusto/static_files
+          sudo chown -R deploy:deploy /opt/autocusto/media_files
+          sudo chown -R deploy:deploy /dev/shm/autocusto
+          
           # Login to GitHub Container Registry
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           
-          # Pull latest image with commit SHA
+          # Pull latest image
           echo "=== Pulling latest image with SHA ${{ github.sha }} ==="
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-                            
-          # Create production docker-compose.yml dynamically
+          
+          # Create production docker-compose.yml
           echo "=== Creating production docker-compose.yml ==="
           cat > docker-compose.yml << 'EOF'
           version: '3.8'
@@ -157,31 +168,18 @@ jobs:
             web:
               image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
               ports:
-                - "8001:8001"
+                - "127.0.0.1:8001:8001"  # Only bind to localhost for nginx
               env_file:
                 - .prodenv
               depends_on:
                 - db
               volumes:
-                - static_volume:/home/appuser/app/static_root
-                - media_volume:/home/appuser/app/media
+                # Use bind mounts instead of Docker volumes for static/media
+                - /opt/autocusto/static_files:/home/appuser/app/static_root
+                - /opt/autocusto/media_files:/home/appuser/app/media
+                - /dev/shm/autocusto:/dev/shm/autocusto
               tmpfs:
                 - /tmp:rw,noexec,nosuid,size=100m
-                - /dev/shm:rw,noexec,nosuid,size=100m
-              restart: unless-stopped
-
-            nginx:
-              image: nginx:alpine
-              ports:
-                - "80:80"
-                - "443:443"
-              volumes:
-                - ./nginx.conf:/etc/nginx/nginx.conf
-                - ./ssl:/etc/nginx/ssl
-                - static_volume:/home/appuser/app/static_root
-                - media_volume:/home/appuser/app/media
-              depends_on:
-                - web
               restart: unless-stopped
 
             db:
@@ -193,47 +191,68 @@ jobs:
               restart: unless-stopped
 
           volumes:
-            postgres_data:
-            static_volume:
-            media_volume:
+            postgres_data:  # Keep database as Docker volume
           EOF
-          
-          # Copy nginx config and SSL certs (these should already exist)
-          echo "=== Verifying nginx config and SSL certs ==="
-          ls -la nginx.conf || echo "Warning: nginx.conf not found"
-          ls -la ssl/ || echo "Warning: ssl directory not found"
           
           echo "=== Generated docker-compose.yml ==="
           cat docker-compose.yml
           echo "=================================="
           
           # Validate docker-compose syntax
-          echo "=== Validating docker-compose.yml ==="
           docker-compose config --quiet
           
           # Stop and remove old containers
           docker-compose down
           
-          # Start new containers (force recreate to pick up env changes)
+          # Start new containers
           docker-compose up -d --force-recreate
+          
+          # Wait for web container to be ready
+          echo "=== Waiting for web container to be ready ==="
+          sleep 5
           
           # Clean up old images
           docker image prune -f
           
           # Import GPG key into container
           echo "=== Setting up GPG in container ==="
-          docker-compose exec -T web bash -c "gpg --import /dev/stdin" < /root/lucas-backup-public.asc
-        
-          
-          # Upload backup (can fail - network issues are acceptable)
-          echo "=== Uploading backup to remote storage ==="
-          docker-compose exec -T web python manage.py upload_backup || echo "⚠️  Backup upload failed (network issue) - continuing with local backup"
+          docker-compose exec -T web bash -c "gpg --import /dev/stdin" < "$GPG_KEY_PATH"
           
           # Run migrations
+          echo "=== Running migrations ==="
           docker-compose exec -T web python manage.py migrate
           
-          # Collect static files for production
+          # Collect static files
           echo "=== Collecting static files ==="
-          docker-compose exec -T web python manage.py collectstatic --noinput
+          docker-compose exec -T web python manage.py collectstatic --noinput --clear
           
-          echo "=== REGISTRY-ONLY DEPLOYMENT COMPLETE ==="
+          # Fix permissions on static files (adjust user based on nginx config)
+          echo "=== Fixing static file permissions ==="
+          sudo chown -R deploy:deploy /opt/autocusto/static_files
+          sudo chmod -R 755 /opt/autocusto/static_files
+          sudo chown -R deploy:deploy /opt/autocusto/media_files
+          sudo chmod -R 755 /opt/autocusto/media_files
+          
+          # Upload backup
+          echo "=== Uploading backup to remote storage ==="
+          docker-compose exec -T web python manage.py upload_backup || echo "⚠️ Backup upload failed (network issue) - continuing with local backup"
+          
+          # Reload nginx on host
+          echo "=== Reloading host nginx ==="
+          if systemctl is-active --quiet nginx; then
+            sudo systemctl reload nginx
+            echo "✅ Nginx reloaded successfully"
+          else
+            echo "⚠️ Nginx is not running - please check nginx configuration"
+          fi
+          
+          # Health check
+          echo "=== Performing health check ==="
+          sleep 3
+          if curl -f -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8001/health/ | grep -q "200"; then
+            echo "✅ Application health check passed"
+          else
+            echo "⚠️ Health check failed - application might not be responding correctly"
+          fi
+          
+          echo "=== DEPLOYMENT WITH HOST NGINX COMPLETE ==="
