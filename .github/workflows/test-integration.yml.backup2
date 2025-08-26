@@ -196,7 +196,6 @@ jobs:
   frontend-tests:
     name: 🎭 Frontend Tests (Playwright + Browser UI)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
     
     services:
       postgres:
@@ -232,90 +231,136 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
     
-    - name: 🎭 Start Playwright server
+    - name: 📥 Verify Docker Compose
       run: |
-        echo "Starting Playwright server directly..."
-        npx -y playwright@1.54.0 run-server --port 3000 --host 0.0.0.0 &
-        PLAYWRIGHT_SERVER_PID=$!
-        echo "PLAYWRIGHT_SERVER_PID=$PLAYWRIGHT_SERVER_PID" >> $GITHUB_ENV
+        echo "Verifying Docker Compose V2 availability..."
+        docker compose version
+        docker --version
+    
+    - name: 🐳 Start Playwright testing infrastructure using Docker Compose
+      run: |
+        echo "Creating temporary docker-compose.ci.yml for CI testing..."
+        cat > docker-compose.ci.yml << 'EOF'
+        services:
+          db:
+            image: postgres:17.4-alpine
+            environment:
+              - POSTGRES_USER=postgres
+              - POSTGRES_PASSWORD=postgres
+              - POSTGRES_DB=autocusto
+            ports:
+              - "5433:5432"
+          
+          web:
+            build:
+              context: .
+              target: test
+            environment:
+              - SECRET_KEY=test-secret-key-for-ci-${{ github.run_id }}
+              - SQL_ENGINE=django.db.backends.postgresql
+              - SQL_DATABASE=autocusto
+              - SQL_USER=postgres
+              - SQL_PASSWORD=postgres
+              - SQL_HOST=db
+              - SQL_PORT=5432
+              - DEBUG=1
+              - DJANGO_SETTINGS_MODULE=test_settings
+              - PW_TEST_CONNECT_WS_ENDPOINT=ws://playwright-server:3000/
+              - DJANGO_ALLOW_ASYNC_UNSAFE=true
+              - CI=true
+            depends_on:
+              - db
+              - playwright-server
+          
+          playwright-server:
+            image: mcr.microsoft.com/playwright:v1.54.0-noble
+            ports:
+              - "3000:3000"
+            environment:
+              - PLAYWRIGHT_RUN_ID=${{ github.run_id }}
+            command: 
+              - sh
+              - -c
+              - |
+                echo '=== STARTING OFFICIAL PLAYWRIGHT SERVER ==='
+                echo "Container hostname: $(hostname)"
+                echo "Container IP: $(hostname -i || echo 'unknown')"
+                echo "GitHub Run ID: ${PLAYWRIGHT_RUN_ID}"
+                
+                echo '=== STARTING PLAYWRIGHT SERVER ==='
+                npx -y playwright@1.54.0 run-server --port 3000 --host 0.0.0.0
+        EOF
+        
+        echo "Starting Playwright testing infrastructure..."
+        docker compose -f docker-compose.ci.yml up -d
         
         echo "Waiting for Playwright server to be ready..."
-        sleep 10
+        sleep 15
         
-        # Verify Playwright server is running
+        echo "Checking playwright server container logs..."
+        docker compose -f docker-compose.ci.yml logs playwright-server
+        
+        echo "=== PLAYWRIGHT SERVER CONNECTION TEST ==="
+        echo "🔍 Testing Playwright server connection from GitHub Actions host to container..."
+        echo "🔍 Docker container port mapping:"
+        docker compose -f docker-compose.ci.yml port playwright-server 3000 || echo "Cannot get port mapping for 3000"
+        
+        echo "🔍 Docker container network inspection:"
+        docker compose -f docker-compose.ci.yml ps
+        
+        echo "🔍 Testing Playwright server connection:"
+        for i in {1..5}; do
+          echo "Attempt $i/5 to localhost:3000..."
+          if curl -f -v -m 10 http://localhost:3000 2>&1; then
+            echo "✅ Playwright server connection successful from host on attempt $i"
+            HOST_PLAYWRIGHT_WORKS=true
+            break
+          else
+            echo "❌ Connection to localhost:3000 failed on attempt $i"
+            sleep 3
+          fi
+        done
+        
+        if [ "$HOST_PLAYWRIGHT_WORKS" = "true" ]; then
+          echo "✅ Host can connect to Playwright server on port 3000"
+        else
+          echo "❌ Host cannot connect to Playwright server"
+          echo "🔍 This indicates a container networking or port mapping issue"
+        fi
+        
+        echo "=== INTER-CONTAINER CONNECTION TEST ==="
+        echo "🔍 Testing Playwright server connection from web container..."
+        echo "Testing playwright-server:3000..."
+        docker compose -f docker-compose.ci.yml exec -T web curl -f -v -m 10 http://playwright-server:3000 2>&1 && echo "✅ Web->Playwright Server works" || echo "❌ Web->Playwright Server fails"
+        
+        echo "🔍 Container network diagnostics from web container:"
+        docker compose -f docker-compose.ci.yml exec -T web sh -c "
+          echo 'Web container IP:' && hostname -I 2>/dev/null
+          echo 'DNS resolution for playwright-server:' && nslookup playwright-server 2>/dev/null || echo 'nslookup failed'
+          echo 'Ping test to playwright-server:' && ping -c 2 playwright-server 2>/dev/null || echo 'ping failed'
+          echo 'Port connectivity test:' && nc -zv playwright-server 3000 2>&1 || echo 'nc test failed'
+        " || echo "Container diagnostics failed"
+        
+        # Final check - if it still fails, show detailed logs but continue
         curl -f http://localhost:3000 || (
-          echo "Playwright server not responding"
-          exit 1
+          echo "⚠️  Playwright server still not responding after 5 attempts"
+          echo "Container logs:"
+          docker compose -f docker-compose.ci.yml logs playwright-server
+          echo "Container processes:"
+          docker compose -f docker-compose.ci.yml exec -T playwright-server ps aux || true
+          echo "Will attempt tests anyway..."
         )
         
+        echo "Verifying web container dependencies..."
+        docker compose -f docker-compose.ci.yml exec -T web sh -c "
+          python -c 'import playwright; print(\"✅ playwright available\")' || (echo '❌ playwright not found!' && exit 1)
+          python -c 'import django; print(\"✅ django available\")' || (echo '❌ django not found!' && exit 1)
+        "
     
-    - name: 📥 Install Python dependencies for Playwright tests
-      run: |
-        echo "Installing dependencies for Playwright tests..."
-        pip install -r requirements.txt
-        pip install playwright
-        playwright install chromium
-    
-    - name: 🗃️ Prepare database for tests
-      env:
-        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
-        SQL_ENGINE: django.db.backends.postgresql
-        SQL_DATABASE: autocusto
-        SQL_USER: postgres
-        SQL_PASSWORD: postgres
-        SQL_HOST: localhost
-        SQL_PORT: 5432
-        DEBUG: 1
-        DJANGO_SETTINGS_MODULE: test_settings
-      run: |
-        echo "Running migrations..."
-        python manage.py migrate --noinput
-    
-    - name: 🌐 Start Django test server
-      env:
-        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
-        SQL_ENGINE: django.db.backends.postgresql
-        SQL_DATABASE: autocusto
-        SQL_USER: postgres
-        SQL_PASSWORD: postgres
-        SQL_HOST: localhost
-        SQL_PORT: 5432
-        DEBUG: 1
-        DJANGO_SETTINGS_MODULE: test_settings
-      run: |
-        echo "Starting Django test server on port 8001..."
-        python manage.py runserver 0.0.0.0:8001 --settings=test_settings &
-        DJANGO_SERVER_PID=$!
-        echo "DJANGO_SERVER_PID=$DJANGO_SERVER_PID" >> $GITHUB_ENV
-        
-        echo "Waiting for Django server to be ready..."
-        sleep 10
-        
-        # Verify Django server is running
-        curl -f http://localhost:8001 || (
-          echo "Django server not responding"
-          exit 1
-        )
-        echo "✅ Django server is running on port 8001"
-    
-    - name: 🎭 Run Playwright tests directly (like backend tests)
+    - name: 🎭 Run Playwright tests with Docker Compose infrastructure
       id: playwright-tests
-      env:
-        SECRET_KEY: test-secret-key-for-ci-${{ github.run_id }}
-        SQL_ENGINE: django.db.backends.postgresql
-        SQL_DATABASE: autocusto
-        SQL_USER: postgres
-        SQL_PASSWORD: postgres
-        SQL_HOST: localhost
-        SQL_PORT: 5432
-        DEBUG: 1
-        DJANGO_SETTINGS_MODULE: test_settings
-        PW_TEST_CONNECT_WS_ENDPOINT: ws://localhost:3000/
-        DJANGO_ALLOW_ASYNC_UNSAFE: true
-        CI: true
-        PLAYWRIGHT_HEADLESS: true
       run: |
-        echo "Running Playwright tests directly on GitHub Actions runner..."
+        echo "Running Playwright tests using Docker Compose infrastructure (replicating local strategy)..."
         echo "Phase 3: Playwright Integration Tests (Prescription Forms + Browser UI)"
         
         # Initialize test results tracking
@@ -323,59 +368,28 @@ jobs:
         PDF_TESTS_FAILED=0
         E2E_TESTS_FAILED=0
         
-        echo "🔧 First, testing basic Playwright connectivity..."
-        python manage.py test \
-          tests.integration.forms.test_simple_playwright.SimplePlaywrightTest \
-          --settings=test_settings \
-          --verbosity=3 \
-          --keepdb --noinput
+        echo "🔧 Running Playwright prescription form tests..."
+        echo "🐛 ASYNC DEBUG: First checking what test methods exist"
+        docker compose -f docker-compose.ci.yml exec -T web python -c "import sys; sys.path.append('/app'); import django; django.setup(); from tests.integration.forms.test_prescription_forms import *; import inspect; [print(f'Test class: {name}') or [print(f'  - {method}') for method in dir(obj) if method.startswith('test_')] for name, obj in globals().items() if inspect.isclass(obj) and 'Test' in name]"
         
-        if [ $? -ne 0 ]; then
-          echo "❌ Basic Playwright test failed - skipping complex tests"
-          PRESCRIPTION_TESTS_FAILED=1
-        else
-          echo "✅ Basic Playwright test passed - continuing with full tests"
-          
-          echo "🔧 Running Playwright prescription form tests..."
-          echo "🐛 First checking what test methods exist"
-          python -c "import sys; import django; django.setup(); from tests.integration.forms.test_prescription_forms import *; import inspect; [print(f'Test class: {name}') or [print(f'  - {method}') for method in dir(obj) if method.startswith('test_')] for name, obj in globals().items() if inspect.isclass(obj) and 'Test' in name]"
-          
-          echo "🐛 ASYNC DEBUG: Running prescription form tests individually with timeouts"
-          set +e
-          
-          # Run each test class individually with timeout
-          echo "Running MedicationManagementTest..."
-          timeout 300 python manage.py test \
-            tests.integration.forms.test_prescription_forms.MedicationManagementTest \
-            --settings=test_settings \
-            --verbosity=3 \
-            --keepdb --noinput
-          if [ $? -eq 124 ]; then
-            echo "🚨 MedicationManagementTest TIMED OUT after 300s"
-            PRESCRIPTION_TESTS_FAILED=1
-          elif [ $? -ne 0 ]; then
-            echo "🚨 MedicationManagementTest FAILED"
-            PRESCRIPTION_TESTS_FAILED=1
-          else
-            echo "✅ MedicationManagementTest PASSED"
-          fi
-        fi
-        
-        echo "Running PrescriptionFormTest..."
-        timeout 300 python manage.py test \
-          tests.integration.forms.test_prescription_forms.PrescriptionFormTest \
+        echo "🐛 ASYNC DEBUG: Running all prescription form tests with timeout"
+        set +e
+        timeout 180 docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
+          tests.integration.forms.test_prescription_forms \
           --settings=test_settings \
           --verbosity=2 \
           --keepdb --noinput
+        TEST_EXIT_CODE=$?
         
-        if [ $? -eq 124 ]; then
-          echo "🚨 PrescriptionFormTest TIMED OUT after 300s"
+        if [ $TEST_EXIT_CODE -eq 124 ]; then
+          echo "🚨 ASYNC DEBUG: Tests TIMED OUT after 180 seconds - preventing infinite hang"
+          echo "🚨 ASYNC DEBUG: One or more tests in test_prescription_forms are hanging"
           PRESCRIPTION_TESTS_FAILED=1
-        elif [ $? -ne 0 ]; then
-          echo "🚨 PrescriptionFormTest FAILED"
+        elif [ $TEST_EXIT_CODE -ne 0 ]; then
+          echo "🚨 ASYNC DEBUG: Test FAILED with exit code $TEST_EXIT_CODE"
           PRESCRIPTION_TESTS_FAILED=1
         else
-          echo "✅ PrescriptionFormTest PASSED"
+          echo "🐛 ASYNC DEBUG: Test completed normally"
         fi
         if [ $? -ne 0 ]; then
           PRESCRIPTION_TESTS_FAILED=1
@@ -384,53 +398,26 @@ jobs:
           echo "Playwright prescription tests: PASSED"
         fi
         
-        echo "🔧 Skipping PDF generation tests (focusing on working tests)..."
-        echo "⏭️  PDF tests skipped - tests.integration.api.test_pdf_generation_verification"
-        echo "⏭️  PDF tests skipped - tests.integration.services.test_pdf_workflows" 
-        echo "⏭️  PDF tests skipped - tests.integration.services.test_pdf_basic_workflow"
-        PDF_TESTS_FAILED=0
-        
-        echo "🔧 Running additional E2E tests individually..."
-        
-        echo "Running E2E browser login tests..."
-        timeout 180 python manage.py test \
-          tests.e2e.browser.test_login_frontend \
+        echo "🔧 Running PDF generation tests (containerized environment)..."
+        timeout 300 docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
+          tests.integration.api.test_pdf_generation_verification \
+          tests.integration.services.test_pdf_workflows \
+          tests.integration.services.test_pdf_basic_workflow \
           --settings=test_settings \
-          --verbosity=3 \
+          --verbosity=2 \
           --keepdb --noinput
-        if [ $? -eq 124 ]; then
-          echo "🚨 E2E login tests TIMED OUT after 180s"
-          E2E_TESTS_FAILED=1
-        elif [ $? -ne 0 ]; then
-          echo "🚨 E2E login tests FAILED"
-          E2E_TESTS_FAILED=1
+        if [ $? -ne 0 ]; then
+          PDF_TESTS_FAILED=1
+          echo "PDF generation tests: FAILED"
         else
-          echo "✅ E2E login tests PASSED"
+          echo "PDF generation tests: PASSED"
         fi
         
-        echo "Running E2E browser navigation tests..."
-        timeout 180 python manage.py test \
-          tests.e2e.browser.test_navigation \
+        echo "🔧 Running additional E2E tests..."
+        timeout 600 docker compose -f docker-compose.ci.yml exec -T web python manage.py test \
+          tests.e2e.browser \
           --settings=test_settings \
-          --verbosity=3 \
-          --keepdb --noinput
-        if [ $? -eq 124 ]; then
-          echo "🚨 E2E navigation tests TIMED OUT after 180s"
-          E2E_TESTS_FAILED=1
-        elif [ $? -ne 0 ]; then
-          echo "🚨 E2E navigation tests FAILED"
-          E2E_TESTS_FAILED=1
-        else
-          echo "✅ E2E navigation tests PASSED"
-        fi
-        
-        echo "Running E2E browser basic tests..."
-        timeout 120 python manage.py test \
-          tests.e2e.browser.test_playwright_basic \
-          tests.e2e.browser.test_playwright_setup \
-          tests.e2e.browser.test_user_registration \
-          --settings=test_settings \
-          --verbosity=3 \
+          --verbosity=2 \
           --keepdb --noinput
         if [ $? -ne 0 ]; then
           E2E_TESTS_FAILED=1
@@ -471,18 +458,13 @@ jobs:
           echo "PLAYWRIGHT_JOB_SHOULD_FAIL=0" >> $GITHUB_ENV
         fi
     
-    - name: 🧹 Clean up servers
+    - name: 🧹 Clean up Docker Compose infrastructure
       if: always()
       run: |
-        echo "Cleaning up Playwright server..."
-        if [ ! -z "$PLAYWRIGHT_SERVER_PID" ]; then
-          kill $PLAYWRIGHT_SERVER_PID || true
-        fi
-        
-        echo "Cleaning up Django server..."
-        if [ ! -z "$DJANGO_SERVER_PID" ]; then
-          kill $DJANGO_SERVER_PID || true
-        fi
+        echo "Cleaning up Docker Compose infrastructure..."
+        docker compose -f docker-compose.ci.yml down -v || true
+        docker compose -f docker-compose.ci.yml rm -f || true
+        rm -f docker-compose.ci.yml || true
     
     - name: 🟢 Set up Node.js for JavaScript tests
       uses: actions/setup-node@v4

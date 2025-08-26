@@ -70,6 +70,18 @@ class UniqueDataGenerator:
         unique_id = str(uuid.uuid4())[:8]
         timestamp = str(int(time.time()))[-6:]
         return f"test_{unique_id}_{timestamp}@example.com"
+    
+    @staticmethod
+    def generate_unique_cid():
+        """Generate a unique CID (Classificação Internacional de Doenças) code."""
+        # CID format: letter + numbers + optional decimal + numbers
+        # Example: A00.0, B12.3, T001
+        letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+        letter = random.choice(letters)
+        # Use timestamp to ensure uniqueness
+        timestamp = str(int(time.time() * 1000))[-3:]  # Last 3 digits of timestamp
+        random_part = str(random.randint(0, 9))
+        return f"{letter}{timestamp}.{random_part}"
 
 
 class BaseTestCase(TestCase):

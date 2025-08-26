@@ -19,7 +19,9 @@ uwsgi==2.0.26
 psutil==7.0.0
 
 # Testing dependencies
-playwright==1.40.0
+playwright==1.54.0
 pytest-playwright==0.4.3
 pytest-django==4.11.1
 cpf-generator==2.1.4
+requests==2.31.0
+aiohttp==3.9.1

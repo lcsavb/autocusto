@@ -468,7 +468,7 @@ class ProcessoCadastroViewTest(TestCase):
         # Create clinic and associate with user and medico
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234503',  # unique CNS for get_renders_form_new_patient test
+            cns_clinica=TestDataFactory.get_unique_cns(),  # unique CNS for get_renders_form_new_patient test
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -504,7 +504,7 @@ class ProcessoCadastroViewTest(TestCase):
         # Create clinic and associate with user and medico
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234501',  # unique CNS for existing_patient_loads_data test
+            cns_clinica=TestDataFactory.get_unique_cns(),  # unique CNS for existing_patient_loads_data test
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -545,7 +545,7 @@ class ProcessoCadastroViewTest(TestCase):
         # Create clinic for completeness
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234502',  # unique CNS for missing_crm test
+            cns_clinica=TestDataFactory.get_unique_cns(),  # unique CNS for missing_crm test
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -582,7 +582,7 @@ class ProcessoCadastroViewTest(TestCase):
         # Create clinic for completeness
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234504',  # unique CNS for missing_cns test
+            cns_clinica=TestDataFactory.get_unique_cns(),  # unique CNS for missing_cns test
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -625,7 +625,7 @@ class ProcessoCadastroViewTest(TestCase):
         # Create clinic for completeness
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234505',  # unique CNS for missing_both test
+            cns_clinica=TestDataFactory.get_unique_cns(),  # unique CNS for missing_both test
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -701,7 +701,7 @@ class ProcessoCadastroViewTest(TestCase):
         # Create clinic (this should be ignored due to missing CRM/CNS)
         clinica = Clinica.objects.create(
             nome_clinica='Test Clinic',
-            cns_clinica='1234506',  # unique CNS for redirect_priority test
+            cns_clinica=TestDataFactory.get_unique_cns(),  # unique CNS for redirect_priority test
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -757,7 +757,7 @@ class ProfileCompletionIntegrationTest(TestCase):
         # Create existing clinic and associate with user
         clinica = Clinica.objects.create(
             nome_clinica='Existing Clinic',
-            cns_clinica='1234567',
+            cns_clinica=TestDataFactory.get_unique_cns(),
             logradouro='Test Street',
             logradouro_num='123',
             cidade='Test City',
@@ -971,7 +971,7 @@ class ClinicRegistrationIntegrationTest(TestCase):
         # Create existing clinic
         existing_clinic = Clinica.objects.create(
             nome_clinica='Original Clinic',
-            cns_clinica='1111111',
+            cns_clinica=TestDataFactory.get_unique_cns(),
             logradouro='Original Street',
             logradouro_num='100',
             cidade='Original City',
@@ -993,7 +993,7 @@ class ClinicRegistrationIntegrationTest(TestCase):
         # Submit form with same CNS (should update existing)
         clinic_data = {
             'nome_clinica': 'Updated Clinic Name',
-            'cns_clinica': '1111111',  # Same CNS as existing
+            'cns_clinica': existing_clinic.cns_clinica,  # Same CNS as existing
             'logradouro': 'Updated Street',
             'logradouro_num': '200',
             'cidade': 'Updated City',
@@ -1016,7 +1016,7 @@ class ClinicRegistrationIntegrationTest(TestCase):
         self.assertEqual(response.url, reverse('processos-cadastro'))
         
         # Verify clinic was updated, not duplicated
-        self.assertEqual(Clinica.objects.filter(cns_clinica='1111111').count(), 1)
+        self.assertEqual(Clinica.objects.filter(cns_clinica=existing_clinic.cns_clinica).count(), 1)
         existing_clinic.refresh_from_db()
         
         # Check that a new version was created with updated data
@@ -1041,7 +1041,7 @@ class ClinicRegistrationIntegrationTest(TestCase):
         # Create a clinic so profile validation passes (we want to test exception handling, not setup flow)
         clinic = Clinica.objects.create(
             nome_clinica='Test Exception Clinic',
-            cns_clinica='9999999',
+            cns_clinica=TestDataFactory.get_unique_cns(),
             logradouro='Exception Street',
             logradouro_num='999',
             cidade='Exception City',

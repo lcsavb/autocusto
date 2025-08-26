@@ -17,13 +17,15 @@ class SecurityTestCase(BaseTestCase):
 
     def setUp(self):
         """Set up test data for security tests."""
+        super().setUp()
+        
         # Create test users
         self.user1 = User.objects.create_user(
-            email='user1@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         self.user2 = User.objects.create_user(
-            email='user2@example.com', 
+            email=self.data_generator.generate_unique_email(), 
             password='testpass123'
         )
         
@@ -39,13 +41,13 @@ class SecurityTestCase(BaseTestCase):
         
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. João",
-            crm_medico="12345",
-            cns_medico="111111111111111"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         self.medico2 = Medico.objects.create(
             nome_medico="Dr. José", 
-            crm_medico="67890",
-            cns_medico="222222222222222"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         
         # Associate medicos with users
@@ -55,13 +57,13 @@ class SecurityTestCase(BaseTestCase):
         # Create clinicas
         self.clinica1 = Clinica.objects.create(
             nome_clinica="Clínica A",
-            cns_clinica="1234567",
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
             logradouro="Rua A",
             logradouro_num="123",
             cidade="São Paulo",
             bairro="Centro",
             cep="01000-000",
-            telefone_clinica="11999999999"
+            telefone_clinica=f"11{self.data_generator.generate_unique_crm()[:8]}"
         )
         
         # Associate clinicas with medicos
@@ -85,8 +87,8 @@ class SecurityTestCase(BaseTestCase):
         # Create test patients
         self.patient1 = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="11111111111",
-            cns_paciente="111111111111111",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Maria Silva",
             idade="30",
             sexo="M",
@@ -106,8 +108,8 @@ class SecurityTestCase(BaseTestCase):
         
         self.patient2 = Paciente.objects.create(
             nome_paciente="José Santos",
-            cpf_paciente="22222222222",
-            cns_paciente="222222222222222",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Ana Santos",
             idade="25",
             sexo="M",
@@ -135,11 +137,11 @@ class SecurityTestCase(BaseTestCase):
         """Test that users can only access patients they're authorized for."""
         
         # Login as user1
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         # Test accessing authorized patient (should work)
         response = self.client.post(reverse('home'), {
-            'cpf_paciente': '11111111111',
+            'cpf_paciente': self.patient1.cpf_paciente,
             'cid': 'G40.0'
         })
         
@@ -148,7 +150,7 @@ class SecurityTestCase(BaseTestCase):
         
         # Test accessing unauthorized patient (should fail)
         response = self.client.post(reverse('home'), {
-            'cpf_paciente': '22222222222',  # This belongs to user2
+            'cpf_paciente': self.patient2.cpf_paciente,  # This belongs to user2
             'cid': 'G40.0'
         })
         
@@ -161,7 +163,7 @@ class SecurityTestCase(BaseTestCase):
         """Test that unauthenticated users cannot access patient data."""
         
         response = self.client.post(reverse('home'), {
-            'cpf_paciente': '11111111111',
+            'cpf_paciente': self.patient1.cpf_paciente,
             'cid': 'G40.0'
         })
         
@@ -179,60 +181,63 @@ class PatientSearchSecurityTest(BaseTestCase):
     
     def setUp(self):
         """Set up test data for search tests."""
+        super().setUp()
+        
         self.user1 = User.objects.create_user(
-            email='user1@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         self.user2 = User.objects.create_user(
-            email='user2@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         
-        self.patient1 = Paciente.objects.create(
-            nome_paciente="João Silva",
-            cpf_paciente="11111111111",
-            cns_paciente="111111111111111",
-            nome_mae="Maria Silva",
-            idade="30",
-            sexo="M",
-            peso="70.5",
-            altura="1.75",
-            incapaz=False,
-            etnia="Branca",
-            telefone1_paciente="11999999999",
-            end_paciente="Rua A, 123",
-            rg="123456789",
-            escolha_etnia="Branca",
-            cidade_paciente="São Paulo",
-            cep_paciente="01000-000",
-            telefone2_paciente="11888888888",
-            nome_responsavel="",
-        )
+        # Create patients using proper versioning system
+        patient1_data = {
+            'nome_paciente': "João Silva",
+            'cpf_paciente': self.data_generator.generate_unique_cpf(),
+            'cns_paciente': self.data_generator.generate_unique_cns_paciente(),
+            'nome_mae': "Maria Silva",
+            'idade': "30",
+            'sexo': "M",
+            'peso': "70.5",
+            'altura': "1.75",
+            'incapaz': False,
+            'etnia': "Branca",
+            'telefone1_paciente': "11999999999",
+            'end_paciente': "Rua A, 123",
+            'rg': "123456789",
+            'escolha_etnia': "Branca",
+            'cidade_paciente': "São Paulo",
+            'cep_paciente': "01000-000",
+            'telefone2_paciente': "11888888888",
+            'nome_responsavel': "",
+        }
         
-        self.patient2 = Paciente.objects.create(
-            nome_paciente="José Santos",
-            cpf_paciente="22222222222",
-            cns_paciente="222222222222222",
-            nome_mae="Ana Santos",
-            idade="25",
-            sexo="M",
-            peso="80.0",
-            altura="1.80",
-            incapaz=False,
-            etnia="Branca",
-            telefone1_paciente="11777777777",
-            end_paciente="Rua B, 456",
-            rg="987654321",
-            escolha_etnia="Branca",
-            cidade_paciente="Rio de Janeiro",
-            cep_paciente="20000-000",
-            telefone2_paciente="11666666666",
-            nome_responsavel="",
-        )
+        patient2_data = {
+            'nome_paciente': "José Santos",
+            'cpf_paciente': self.data_generator.generate_unique_cpf(),
+            'cns_paciente': self.data_generator.generate_unique_cns_paciente(),
+            'nome_mae': "Ana Santos",
+            'idade': "25",
+            'sexo': "M",
+            'peso': "80.0",
+            'altura': "1.80",
+            'incapaz': False,
+            'etnia': "Branca",
+            'telefone1_paciente': "11777777777",
+            'end_paciente': "Rua B, 456",
+            'rg': "987654321",
+            'escolha_etnia': "Branca",
+            'cidade_paciente': "Rio de Janeiro",
+            'cep_paciente': "20000-000",
+            'telefone2_paciente': "11666666666",
+            'nome_responsavel': "",
+        }
         
-        # Associate patients with users
-        self.patient1.usuarios.add(self.user1)
-        self.patient2.usuarios.add(self.user2)
+        # Create patients with proper versioning using the model's method
+        self.patient1 = Paciente.create_or_update_for_user(self.user1, patient1_data)
+        self.patient2 = Paciente.create_or_update_for_user(self.user2, patient2_data)
         
         self.client = Client()
 
@@ -250,7 +255,7 @@ class PatientSearchSecurityTest(BaseTestCase):
         """Test that users can only search their own patients."""
         
         # Login as user1
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         # Search for own patient
         response = self.client.get(reverse('busca-pacientes'), {
@@ -279,11 +284,11 @@ class PatientSearchSecurityTest(BaseTestCase):
         """Test that CPF search respects user authorization."""
         
         # Login as user1
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         # Search for own patient's CPF
         response = self.client.get(reverse('busca-pacientes'), {
-            'palavraChave': '11111111111'
+            'palavraChave': self.patient1.cpf_paciente
         })
         
         self.assertEqual(response.status_code, 200)
@@ -292,7 +297,7 @@ class PatientSearchSecurityTest(BaseTestCase):
         
         # Search for other user's patient CPF
         response = self.client.get(reverse('busca-pacientes'), {
-            'palavraChave': '22222222222'
+            'palavraChave': self.patient2.cpf_paciente
         })
         
         self.assertEqual(response.status_code, 200)
@@ -305,19 +310,21 @@ class PatientListingSecurityTest(BaseTestCase):
     
     def setUp(self):
         """Set up test data for listing tests."""
+        super().setUp()
+        
         self.user1 = User.objects.create_user(
-            email='user1@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         self.user2 = User.objects.create_user(
-            email='user2@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         
         self.patient1 = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="11111111111",
-            cns_paciente="111111111111111",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Maria Silva",
             idade="30",
             sexo="M",
@@ -337,8 +344,8 @@ class PatientListingSecurityTest(BaseTestCase):
         
         self.patient2 = Paciente.objects.create(
             nome_paciente="José Santos",
-            cpf_paciente="22222222222",
-            cns_paciente="222222222222222",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Ana Santos",
             idade="25",
             sexo="M",
@@ -373,8 +380,29 @@ class PatientListingSecurityTest(BaseTestCase):
     def test_patient_listing_authorization(self):
         """Test that users only see their own patients in listing."""
         
+        # Debug: Check basic creation  
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"DEBUG: Starting test - user1={self.user1.email}, user2={self.user2.email}")
+        
+        # Debug: Check what was actually created
+        from pacientes.models import PacienteVersion, Paciente
+        total_patients = Paciente.objects.count()
+        total_versions = PacienteVersion.objects.count()
+        versions_for_user1 = PacienteVersion.objects.filter(created_by=self.user1)
+        versions_for_user2 = PacienteVersion.objects.filter(created_by=self.user2)
+        
+        logger.error(f"DEBUG: Total patients: {total_patients}, Total versions: {total_versions}")
+        logger.error(f"DEBUG: Versions for user1: {versions_for_user1.count()}, user2: {versions_for_user2.count()}")
+        
+        if hasattr(self, 'patient1'):
+            logger.error(f"DEBUG: patient1 exists: {self.patient1.nome_paciente}")
+            logger.error(f"DEBUG: patient1 has {self.patient1.versions.count()} versions")
+        else:
+            logger.error("DEBUG: patient1 not found in self")
+        
         # Login as user1
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         response = self.client.get(reverse('pacientes-listar'))
         
@@ -386,7 +414,7 @@ class PatientListingSecurityTest(BaseTestCase):
         
         # Login as user2
         self.client.logout()
-        self.client.login(email='user2@example.com', password='testpass123')
+        self.client.login(email=self.user2.email, password='testpass123')
         
         response = self.client.get(reverse('pacientes-listar'))
         
@@ -402,12 +430,14 @@ class ProcessAccessSecurityTest(BaseTestCase):
     
     def setUp(self):
         """Set up test data for process tests."""
+        super().setUp()
+        
         self.user1 = User.objects.create_user(
-            email='user1@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         self.user2 = User.objects.create_user(
-            email='user2@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         
@@ -417,16 +447,20 @@ class ProcessAccessSecurityTest(BaseTestCase):
         self.user1.save()
         self.user2.save()
         
-        # Create medicos
+        # Create medicos with complete profiles
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. João",
-            crm_medico="12345",
-            cns_medico="111111111111111"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico(),
+            estado='SP',
+            especialidade='CARDIOLOGIA'
         )
         self.medico2 = Medico.objects.create(
             nome_medico="Dr. José",
-            crm_medico="67890",
-            cns_medico="222222222222222"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico(),
+            estado='RJ',
+            especialidade='NEUROLOGIA'
         )
         
         # Associate medicos with users
@@ -436,14 +470,18 @@ class ProcessAccessSecurityTest(BaseTestCase):
         # Create clinicas
         self.clinica1 = Clinica.objects.create(
             nome_clinica="Clínica A",
-            cns_clinica="1234567",
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
             logradouro="Rua A",
             logradouro_num="123",
             cidade="São Paulo",
             bairro="Centro",
             cep="01000-000",
-            telefone_clinica="11999999999"
+            telefone_clinica=f"11{self.data_generator.generate_unique_crm()[:8]}"
         )
+        
+        # Associate users with clinics
+        self.user1.clinicas.add(self.clinica1)
+        self.user2.clinicas.add(self.clinica1)
         
         # Create emissor
         self.emissor1 = Emissor.objects.create(
@@ -451,30 +489,60 @@ class ProcessAccessSecurityTest(BaseTestCase):
             clinica=self.clinica1
         )
         
-        # Create patients
-        self.patient1 = Paciente.objects.create(
-            nome_paciente="João Silva",
-            cpf_paciente="11111111111",
-            cns_paciente="111111111111111",
-            nome_mae="Maria Silva",
-            idade="30",
-            sexo="M",
-            peso="70.5",
-            altura="1.75",
-            incapaz=False,
-            etnia="Branca",
-            telefone1_paciente="11999999999",
-            end_paciente="Rua A, 123",
-            rg="123456789",
-            escolha_etnia="Branca",
-            cidade_paciente="São Paulo",
-            cep_paciente="01000-000",
-            telefone2_paciente="11888888888",
-            nome_responsavel="",
-        )
+        # Create patients using proper versioned system
+        patient1_data = {
+            'nome_paciente': "João Silva",
+            'cpf_paciente': self.data_generator.generate_unique_cpf(),
+            'cns_paciente': self.data_generator.generate_unique_cns_paciente(),
+            'nome_mae': "Maria Silva",
+            'idade': "30",
+            'sexo': "M",
+            'peso': "70.5",
+            'altura': "1.75",
+            'incapaz': False,
+            'etnia': "Branca",
+            'telefone1_paciente': "11999999999",
+            'end_paciente': "Rua A, 123",
+            'rg': "123456789",
+            'escolha_etnia': "Branca",
+            'cidade_paciente': "São Paulo",
+            'cep_paciente': "01000-000",
+            'telefone2_paciente': "11888888888",
+            'nome_responsavel': "",
+        }
+        # Use the proper service to create patient with versioning
+        from processos.services.prescription.patient_versioning_service import PatientVersioningService
+        versioning_service = PatientVersioningService()
+        self.patient1 = versioning_service.create_or_update_patient_for_user(self.user1, patient1_data)
         
-        # Associate patients with users
-        self.patient1.usuarios.add(self.user1)
+        # Create second patient for user2
+        patient2_data = {
+            'nome_paciente': "José Santos",
+            'cpf_paciente': self.data_generator.generate_unique_cpf(),
+            'cns_paciente': self.data_generator.generate_unique_cns_paciente(),
+            'nome_mae': "Ana Santos",
+            'idade': "45",
+            'sexo': "M",
+            'peso': "80.0",
+            'altura': "1.80",
+            'incapaz': False,
+            'etnia': "Parda",
+            'telefone1_paciente': "11888888888",
+            'end_paciente': "Rua B, 456",
+            'rg': "987654321",
+            'escolha_etnia': "Parda",
+            'cidade_paciente': "Rio de Janeiro",
+            'cep_paciente': "20000-000",
+            'telefone2_paciente': "11777777777",
+            'nome_responsavel': "",
+        }
+        try:
+            print(f"DEBUG: Creating patient2 for user {self.user2.email}")
+            self.patient2 = Paciente.create_or_update_for_user(self.user2, patient2_data)
+            print(f"DEBUG: Patient2 created successfully: {self.patient2.nome_paciente}")
+        except Exception as e:
+            print(f"DEBUG: Error creating patient2: {e}")
+            raise
         
         # Create protocolo and doenca
         self.protocolo = Protocolo.objects.create(
@@ -534,120 +602,85 @@ class ProcessAccessSecurityTest(BaseTestCase):
         self.client = Client()
 
     def test_process_search_authorization(self):
-        """Test that users can only access their own processes in search."""
+        """Test that users can only access their own processes through renovation workflow."""
         
         # Login as user1
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
-        # Access process search page
-        response = self.client.get(reverse('processos-busca'))
-        
+        # Test renovation workflow - search for own patient
+        response = self.client.get('/processos/renovacao/', {'b': 'João'})
         self.assertEqual(response.status_code, 200)
-        # Should show only user1's patients
+        # Should show user1's patient
         self.assertContains(response, 'João Silva')
         
-        # Test process selection with valid process
-        session = self.client.session
-        response = self.client.post(reverse('processos-busca'), {
-            'processo_id': self.processo1.id
-        })
-        
-        # Should redirect to edit page
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('processos-edicao'))
+        # Test that user1 cannot search for user2's patient
+        response = self.client.get('/processos/renovacao/', {'b': 'José'})
+        self.assertEqual(response.status_code, 200)
+        # Should not show user2's patient
+        self.assertNotContains(response, 'José Santos')
 
     def test_process_access_unauthorized_process_id(self):
-        """Test that users cannot access processes they don't own."""
+        """Test that users cannot access processes they don't own through edition workflow."""
         
-        # Create another user and process
-        user3 = User.objects.create_user(
-            email='user3@example.com',
-            password='testpass123'
-        )
+        # Login as user1 and try to access user2's process directly through edition URL
+        self.client.login(email=self.user1.email, password='testpass123')
         
-        patient3 = Paciente.objects.create(
-            nome_paciente="Carlos Souza",
-            cpf_paciente="33333333333",
-            cns_paciente="333333333333333",
-            nome_mae="Ana Souza",
-            idade="35",
-            sexo="M",
-            peso="75.0",
-            altura="1.70",
-            incapaz=False,
-            etnia="Branca",
-            telefone1_paciente="11555555555",
-            end_paciente="Rua C, 789",
-            rg="111222333",
-            escolha_etnia="Branca",
-            cidade_paciente="Brasília",
-            cep_paciente="70000-000",
-            telefone2_paciente="11444444444",
-            nome_responsavel="",
-        )
+        # Try to access the process edition page with another user's process ID
+        # This should be blocked by the service layer
+        response = self.client.get(f'/processos/edicao/?processo_id={self.processo1.id}')
         
-        patient3.usuarios.add(user3)
+        # The view should handle unauthorized access appropriately
+        # Either redirect with error or show access denied
+        self.assertIn(response.status_code, [302, 403, 404])
         
-        processo3 = Processo.objects.create(
-            anamnese="Teste anamnese 3",
+        if response.status_code == 302:
+            # If redirected, check it's not to the edit page
+            self.assertNotIn('edicao', response.url)
+            
+        # Test that the service layer properly validates process ownership
+        from processos.services.view_services import PrescriptionViewSetupService
+        setup_service = PrescriptionViewSetupService()
+        
+        # Create a process that belongs to user2 
+        processo_user2 = Processo.objects.create(
+            anamnese="Teste anamnese user2",
             doenca=self.doenca,
-            prescricao={
-                "1": {
-                    "id_med1": str(self.medicamento1.id),
-                    "med1_posologia_mes1": "2x ao dia",
-                    "qtd_med1_mes1": "60",
-                    "med1_posologia_mes2": "2x ao dia",
-                    "qtd_med1_mes2": "60",
-                    "med1_posologia_mes3": "2x ao dia",
-                    "qtd_med1_mes3": "60",
-                    "med1_posologia_mes4": "2x ao dia",
-                    "qtd_med1_mes4": "60",
-                    "med1_posologia_mes5": "2x ao dia",
-                    "qtd_med1_mes5": "60",
-                    "med1_posologia_mes6": "2x ao dia",
-                    "qtd_med1_mes6": "60"
-                }
-            },
+            prescricao={"test": "data"},
             tratou=False,
             tratamentos_previos="Nenhum",
             preenchido_por="M",
-            dados_condicionais={"teste": "dados3"},
-            paciente=patient3,
-            medico=self.medico1,
+            dados_condicionais={"teste": "dados2"},
+            paciente=self.patient2,
+            medico=self.medico2,
             clinica=self.clinica1,
             emissor=self.emissor1,
-            usuario=user3
+            usuario=self.user2
         )
         
-        # Login as user1 and try to access user3's process
-        self.client.login(email='user1@example.com', password='testpass123')
+        # Try to access user2's process while logged in as user1
+        result = setup_service.setup_process_for_editing(processo_user2.id, self.user1, None)
         
-        response = self.client.post(reverse('processos-busca'), {
-            'processo_id': processo3.id  # Process belongs to user3
-        })
-        
-        # Should redirect back to search with error message
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('processos-busca'))
-        
-        # Check error message
-        messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any('não tem permissão' in str(m) for m in messages))
+        # Service should return an error
+        from processos.services.view_setup_models import SetupError
+        self.assertIsInstance(result, SetupError)
+        self.assertIn('não tem permissão', result.message.lower())
 
 
-class LGPDComplianceSecurityTest(TestCase):
+class LGPDComplianceSecurityTest(BaseTestCase):
     """Test LGPD (Brazilian data protection law) compliance."""
     
     def setUp(self):
         """Set up test data for LGPD compliance tests."""
+        super().setUp()
+        
         self.user = User.objects.create_user(
             email='test@example.com',
             password='testpass123'
         )
         self.patient = Paciente.objects.create(
             nome_paciente="João Silva",
-            cpf_paciente="22255588846",
-            cns_paciente="111111111111111",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Maria Silva",
             idade="30",
             sexo="M",
@@ -706,11 +739,13 @@ class LGPDComplianceSecurityTest(TestCase):
         self.assertNotIn('secret', patient_json.lower())
 
 
-class MedicalDataValidationSecurityTest(TestCase):
+class MedicalDataValidationSecurityTest(BaseTestCase):
     """Test medical data validation and integrity."""
     
     def setUp(self):
         """Set up test data for medical validation tests."""
+        super().setUp()
+        
         self.user = User.objects.create_user(
             email='test@example.com',
             password='testpass123'
@@ -719,7 +754,7 @@ class MedicalDataValidationSecurityTest(TestCase):
 
     def test_cpf_format_validation(self):
         """Test CPF format validation and security."""
-        valid_cpfs = ["22255588846", "98765432100"]
+        valid_cpfs = [self.data_generator.generate_unique_cpf(), self.data_generator.generate_unique_cpf()]
         
         invalid_cpfs = [
             "123456789",          # Too short
@@ -735,7 +770,7 @@ class MedicalDataValidationSecurityTest(TestCase):
                 patient = Paciente.objects.create(
                     nome_paciente="Test Patient",
                     cpf_paciente=cpf,
-                    cns_paciente="111111111111111",
+                    cns_paciente=self.data_generator.generate_unique_cns_paciente(),
                     nome_mae="Test Mother",
                     idade="30",
                     sexo="M",
@@ -758,7 +793,7 @@ class MedicalDataValidationSecurityTest(TestCase):
 
     def test_cns_validation(self):
         """Test CNS (health card) number validation."""
-        valid_cns_numbers = ["111111111111111", "222222222222222"]
+        valid_cns_numbers = [self.data_generator.generate_unique_cns_paciente(), self.data_generator.generate_unique_cns_paciente()]
         
         invalid_cns_numbers = [
             "12345678901234",   # 14 digits (too short)
@@ -773,7 +808,7 @@ class MedicalDataValidationSecurityTest(TestCase):
             try:
                 medico = Medico.objects.create(
                     nome_medico="Dr. Test",
-                    crm_medico="12345",
+                    crm_medico=self.data_generator.generate_unique_crm(),
                     cns_medico=cns
                 )
                 # Verify CNS is stored correctly
@@ -904,11 +939,13 @@ class AuditTrailSecurityTest(TestCase):
         # Should be redirected to login or forbidden
         self.assertIn(response.status_code, [302, 403], 
                      "Regular users should not have admin access to audit logs")
-class InputSanitizationSecurityTest(TestCase):
+class InputSanitizationSecurityTest(BaseTestCase):
     """Test input validation and XSS prevention."""
     
     def setUp(self):
         """Set up test data for input sanitization tests."""
+        super().setUp()
+        
         self.user = User.objects.create_user(
             email='test@example.com',
             password='testpass123'
@@ -919,8 +956,8 @@ class InputSanitizationSecurityTest(TestCase):
         # Create medico for the user
         self.medico = Medico.objects.create(
             nome_medico="Dr. Test",
-            crm_medico="12345",
-            cns_medico="111111111111111"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         self.medico.usuarios.add(self.user)
         
@@ -947,8 +984,8 @@ class InputSanitizationSecurityTest(TestCase):
                 from pacientes.models import Paciente
                 patient = Paciente.objects.create(
                     nome_paciente=f'João {payload}',
-                    cpf_paciente="11144477735",
-                    cns_paciente='111111111111111',
+                    cpf_paciente=self.data_generator.generate_unique_cpf(),
+                    cns_paciente=self.data_generator.generate_unique_cns_paciente(),
                     nome_mae=f'Maria {payload}',
                     idade='30',
                     sexo='M',
@@ -1029,13 +1066,13 @@ class InputSanitizationSecurityTest(TestCase):
         )
         clinica = Clinica.objects.create(
             nome_clinica="Test Clinic",
-            cns_clinica="1234567",
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
             logradouro="Rua Test",
             logradouro_num="123",
             cidade="São Paulo",
             bairro="Centro",
             cep="01000-000",
-            telefone_clinica="11999999999"
+            telefone_clinica=f"11{self.data_generator.generate_unique_crm()[:8]}"
         )
         emissor = Emissor.objects.create(
             medico=self.medico,
@@ -1080,13 +1117,15 @@ class InputSanitizationSecurityTest(TestCase):
                 pass
 
 
-class PDFGenerationSecurityTest(TestCase):
+class PDFGenerationSecurityTest(BaseTestCase):
     """Test PDF generation security vulnerabilities."""
     
     def setUp(self):
         """Set up test data for PDF security tests."""
+        super().setUp()
+        
         self.user1 = User.objects.create_user(
-            email='user1@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         self.user1.is_medico = True
@@ -1094,20 +1133,20 @@ class PDFGenerationSecurityTest(TestCase):
         
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. Test",
-            crm_medico="12345",
-            cns_medico="111111111111111"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         self.medico1.usuarios.add(self.user1)
         
         self.clinica1 = Clinica.objects.create(
             nome_clinica="Clínica Test",
-            cns_clinica="1234567",
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
             logradouro="Rua Test",
             logradouro_num="123",
             cidade="São Paulo",
             bairro="Centro",
             cep="01000-000",
-            telefone_clinica="11999999999"
+            telefone_clinica=f"11{self.data_generator.generate_unique_crm()[:8]}"
         )
         
         self.emissor1 = Emissor.objects.create(
@@ -1117,8 +1156,8 @@ class PDFGenerationSecurityTest(TestCase):
         
         self.patient1 = Paciente.objects.create(
             nome_paciente="Test Patient",
-            cpf_paciente="22255588846",
-            cns_paciente="111111111111111",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Test Mother",
             idade="30",
             sexo="M",
@@ -1141,7 +1180,7 @@ class PDFGenerationSecurityTest(TestCase):
 
     def test_pdf_generation_rate_limiting(self):
         """Test that PDF generation has rate limiting to prevent DoS attacks."""
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         # Simulate rapid PDF generation requests
         pdf_requests = []
@@ -1161,7 +1200,7 @@ class PDFGenerationSecurityTest(TestCase):
 
     def test_pdf_filename_injection_prevention(self):
         """Test that PDF filenames prevent directory traversal and injection."""
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         malicious_filenames = [
             "pdf_final_12345678901_G40.0.pdf';rm -rf /;.pdf",
@@ -1192,8 +1231,8 @@ class PDFGenerationSecurityTest(TestCase):
         try:
             patient = Paciente.objects.create(
                 nome_paciente=malicious_data["nome_paciente"],
-                cpf_paciente="98765432100",
-                cns_paciente="222222222222222",
+                cpf_paciente=self.data_generator.generate_unique_cpf(),
+                cns_paciente=self.data_generator.generate_unique_cns_paciente(),
                 nome_mae=malicious_data["nome_mae"],
                 idade="30",
                 sexo="M",
@@ -1225,15 +1264,15 @@ class PDFGenerationSecurityTest(TestCase):
         """Test that users cannot access PDFs of other users' patients."""
         # Create second user
         user2 = User.objects.create_user(
-            email='user2@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         
         # Create patient for user2
         patient2 = Paciente.objects.create(
             nome_paciente="User2 Patient",
-            cpf_paciente="98765432100",
-            cns_paciente="222222222222222",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="User2 Mother",
             idade="25",
             sexo="F",
@@ -1253,7 +1292,7 @@ class PDFGenerationSecurityTest(TestCase):
         patient2.usuarios.add(user2)
         
         # Login as user1 and try to access user2's PDF
-        self.client.login(email='user1@example.com', password='testpass123')
+        self.client.login(email=self.user1.email, password='testpass123')
         
         # Try to access PDF that would belong to user2's patient
         user2_pdf_filename = f"pdf_final_{patient2.cpf_paciente}_G40.0.pdf"

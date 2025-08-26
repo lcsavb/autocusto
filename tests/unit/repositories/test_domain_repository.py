@@ -181,7 +181,9 @@ class TestDomainRepositoryIntegration(TestCase):
             
     def test_get_all_diseases_real_database(self):
         """Test get_all_diseases returns all diseases in database."""
-        # Arrange
+        # Arrange - clear any existing diseases to ensure test isolation
+        Doenca.objects.all().delete()
+        
         disease1 = Doenca.objects.create(cid="H30", nome="Coriorretinite")
         disease2 = Doenca.objects.create(cid="H31", nome="Outras doenças da retina")
         

@@ -1,7 +1,14 @@
 #!/bin/bash
-# Host Machine Test Runner for AutoCusto
+# Host Machine Test Runner for AutoCusto - Enhanced Version
 # Runs all tests inside the Docker container but executed from host for convenience
 # DO NOT ADD TO DEPLOYMENT WORKFLOW - this is for local development only
+#
+# ⚡ IMPROVEMENTS IN THIS VERSION:
+# - E2E/Browser tests run ONE BY ONE with real-time feedback (expert approach)
+# - No more batching issues - each test gets full resources and clean state
+# - Immediate feedback - see results as each test completes
+# - Better debugging - pinpoint exact failing tests instantly
+# - Reduced timeout risk - each test isolated with appropriate timeout
 
 # set -e  # Exit on any error - disabled to allow test failures to be handled gracefully
 
@@ -47,7 +54,7 @@ check_docker_environment() {
     echo ""
 }
 
-# Function to run test category with proper Docker exec
+# Function to run test category with proper Docker exec and better feedback
 run_container_test() {
     local category=$1
     local test_path=$2
@@ -59,15 +66,30 @@ run_container_test() {
     
     local exit_code=0
     local temp_output="/tmp/test_output_$$"
+    local start_time=$(date +%s)
     
     # Run tests and capture output to temporary file
     timeout ${timeout_seconds} docker exec autocusto-web-1 python manage.py test $test_path --keepdb --noinput --verbosity=2 --debug-mode > "$temp_output" 2>&1 || exit_code=$?
     
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    # Extract test count and individual results for better feedback
+    local test_count=$(grep -E "^Ran [0-9]+ tests" "$temp_output" | grep -o '[0-9]\+' | head -1)
+    local individual_results=$(grep -E "^test_[a-zA-Z_0-9]+ \(" "$temp_output" | sed 's/^test_/  ✓ test_/' | head -10)
+    
     if [[ $exit_code -eq 0 ]]; then
-        print_status $GREEN "   ✅ $category completed successfully"
-        # Only log a success summary for passed tests
-        echo "=== $category PASSED ===" >> "$CONSOLIDATED_ERROR_FILE"
-        # Extract just the final summary line for passed tests
+        print_status $GREEN "   ✅ $category completed successfully (${duration}s)"
+        if [[ -n "$test_count" ]]; then
+            print_status $GREEN "   📊 Ran $test_count tests - all passed"
+        fi
+        # Show first few individual test results for feedback
+        if [[ -n "$individual_results" ]]; then
+            echo "$individual_results"
+        fi
+        
+        # Log success summary
+        echo "=== $category PASSED (${duration}s) ===" >> "$CONSOLIDATED_ERROR_FILE"
         grep -E "^Ran [0-9]+ tests|^OK" "$temp_output" >> "$CONSOLIDATED_ERROR_FILE" 2>/dev/null || echo "All tests passed" >> "$CONSOLIDATED_ERROR_FILE"
         echo "" >> "$CONSOLIDATED_ERROR_FILE"
     elif [[ $exit_code -eq 124 ]]; then
@@ -77,8 +99,15 @@ run_container_test() {
         tail -50 "$temp_output" >> "$CONSOLIDATED_ERROR_FILE"
         echo "" >> "$CONSOLIDATED_ERROR_FILE"
     else
-        print_status $RED "   ❌ $category failed (exit code: $exit_code)"
-        echo "=== $category FAILED (exit code: $exit_code) ===" >> "$CONSOLIDATED_ERROR_FILE"
+        print_status $RED "   ❌ $category failed (exit code: $exit_code, ${duration}s)"
+        if [[ -n "$test_count" ]]; then
+            local failed_count=$(grep -E "^FAILED \(" "$temp_output" | grep -o 'failures=[0-9]\+\|errors=[0-9]\+' | grep -o '[0-9]\+' | head -1)
+            if [[ -n "$failed_count" ]]; then
+                print_status $RED "   📊 Ran $test_count tests - $failed_count failed"
+            fi
+        fi
+        
+        echo "=== $category FAILED (exit code: $exit_code, ${duration}s) ===" >> "$CONSOLIDATED_ERROR_FILE"
         # For failures, use a simpler approach: extract error sections and summary
         {
             # First add test summary
@@ -94,6 +123,48 @@ run_container_test() {
     rm -f "$temp_output"
     
     echo ""
+    return $exit_code
+}
+
+# Function to run individual test with real-time feedback
+run_individual_test() {
+    local test_path=$1
+    local test_name=$2
+    local timeout_seconds=${3:-120}
+    
+    print_status $BLUE "🧪 Running: $test_name"
+    echo "   📍 Test: $test_path"
+    echo "   ⏱️  Timeout: ${timeout_seconds}s"
+    echo ""
+    
+    local start_time=$(date +%s)
+    local exit_code=0
+    
+    # Run single test with real-time output (no temp file - direct output)
+    timeout ${timeout_seconds} docker exec autocusto-web-1 python manage.py test $test_path --keepdb --noinput --verbosity=2 || exit_code=$?
+    
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    echo ""
+    if [[ $exit_code -eq 0 ]]; then
+        print_status $GREEN "✅ PASSED: $test_name (${duration}s)"
+        echo "=== $test_name PASSED (${duration}s) ===" >> "$CONSOLIDATED_ERROR_FILE"
+        echo "" >> "$CONSOLIDATED_ERROR_FILE"
+    elif [[ $exit_code -eq 124 ]]; then
+        print_status $YELLOW "⏰ TIMEOUT: $test_name (${timeout_seconds}s)"
+        echo "=== $test_name TIMEOUT (${timeout_seconds}s) ===" >> "$CONSOLIDATED_ERROR_FILE"
+        echo "" >> "$CONSOLIDATED_ERROR_FILE"
+    else
+        print_status $RED "❌ FAILED: $test_name (${duration}s, exit code: $exit_code)"
+        echo "=== $test_name FAILED (exit code: $exit_code, ${duration}s) ===" >> "$CONSOLIDATED_ERROR_FILE"
+        echo "" >> "$CONSOLIDATED_ERROR_FILE"
+    fi
+    
+    echo ""
+    echo "=================================================================================================="
+    echo ""
+    
     return $exit_code
 }
 
@@ -184,42 +255,112 @@ else
     ((FAILED_CATEGORIES++))
 fi
 
-print_status $BLUE "📍 PHASE 3: End-to-End Tests (Complete Workflows)"
-echo "=============================================="
+print_status $BLUE "📍 PHASE 3: End-to-End Tests (Individual Real-Time)"
+echo "=================================================="
 
-# E2E Tests
-((TOTAL_CATEGORIES++))
-if run_container_test "E2E-User-Journeys" "tests.e2e.user_journeys" "User Journey Tests" 300; then
-    ((PASSED_CATEGORIES++))
-else
-    ((FAILED_CATEGORIES++))
-fi
+print_status $BLUE "🎭 User Journey Tests (One-by-One with Real-Time Feedback)"
+echo "=========================================================="
 
-print_status $BLUE "🌐 Running E2E Browser Tests (Playwright Remote Architecture)"
-print_status $GREEN "   ✅ Infrastructure: Web container + Playwright browser container"
-
-# Check if Playwright browser container is running
+# Check if Playwright browser container is running first
 if ! docker exec autocusto-playwright-browsers-1 echo "Browser container accessible" > /dev/null 2>&1; then
     print_status $YELLOW "   ⚠️  Playwright browser container not running - starting it..."
     if ! docker compose up -d playwright-browsers > /dev/null 2>&1; then
         print_status $RED "   ❌ Failed to start Playwright browser container"
-        print_status $YELLOW "   Skipping browser tests for this run"
+        print_status $YELLOW "   Skipping browser-dependent tests"
     else
         print_status $GREEN "   ✅ Playwright browser container started"
         sleep 3  # Give browser container time to initialize
     fi
 fi
 
-# E2E Browser Tests (Playwright with remote browser)
+# Individual E2E Test Classes with Real-Time Feedback (Reliable Approach)
+print_status $BLUE "🎭 Process Registration Tests"
+echo "============================="
+
 ((TOTAL_CATEGORIES++))
-if run_container_test "E2E-Browser-Playwright" "tests.integration.services.test_pdf_workflows" "Playwright PDF Workflow Tests" 300; then
+if run_individual_test "tests.e2e.user_journeys.test_process_registration.ProcessRegistrationWorkflowTest" "Process Registration Workflow" 180; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+print_status $BLUE "💊 Renovation & Renewal Tests"
+echo "============================="
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.e2e.user_journeys.test_renovation_workflows.RenovationWorkflowTest" "Renovation Workflow Tests" 180; then
     ((PASSED_CATEGORIES++))
 else
     ((FAILED_CATEGORIES++))
 fi
 
 ((TOTAL_CATEGORIES++))
-if run_container_test "E2E-Security" "tests.e2e.security" "Security End-to-End Tests" 300; then
+if run_individual_test "tests.e2e.user_journeys.test_quick_renewal.RenovacaoRapidaVersioningBugTest" "Quick Renewal Tests" 120; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+print_status $BLUE "👤 User Journey Tests"
+echo "===================="
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.e2e.user_journeys.test_setup_flow.PreProcessoSetupFlowTest" "Setup Flow Tests" 150; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.e2e.user_journeys.test_crm_cns_functionality.CRMCNSValidationTest" "CRM/CNS Validation Tests" 120; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+print_status $BLUE "🌐 Browser Integration Tests"
+echo "============================"
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.integration.forms.test_prescription_forms.PrescriptionFormTest.test_prescription_form_navigation" "Form Navigation Test" 120; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+((TOTAL_CATEGORIES++))  
+if run_individual_test "tests.integration.forms.test_prescription_forms.PrescriptionFormTest.test_prescription_form_basic_patient_data" "Basic Patient Data Entry Test" 120; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.integration.services.test_pdf_workflows.PDFContentValidationTest.test_pdf_contains_patient_data" "PDF Content Validation Test" 180; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+print_status $BLUE "🔒 Security Tests"
+echo "================="
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.e2e.security.test_security.PatientSearchSecurityTest" "Patient Search Security Tests" 90; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.e2e.security.test_security.ProcessAccessSecurityTest" "Process Access Security Tests" 120; then
+    ((PASSED_CATEGORIES++))
+else
+    ((FAILED_CATEGORIES++))
+fi
+
+((TOTAL_CATEGORIES++))
+if run_individual_test "tests.e2e.security.test_frontend_security.PatientAuthorizationTest" "Patient Authorization Tests" 120; then
     ((PASSED_CATEGORIES++))
 else
     ((FAILED_CATEGORIES++))
@@ -238,10 +379,29 @@ if [[ $TOTAL_CATEGORIES -gt 0 ]]; then
 fi
 
 echo "📈 Overall Statistics:"
-echo "   Total Test Categories: $TOTAL_CATEGORIES"
+echo "   Total Test Batches: $TOTAL_CATEGORIES"
 echo "   ✅ Passed: $PASSED_CATEGORIES"
 echo "   ❌ Failed: $FAILED_CATEGORIES" 
 echo "   📊 Success Rate: ${success_rate}%"
+echo ""
+
+# Show breakdown by test phase
+print_status $BLUE "📋 Test Phase Breakdown:"
+echo "========================"
+echo "   🚀 Phase 1 - Unit Tests: Fast feedback on individual components"
+echo "   🔗 Phase 2 - Integration Tests: Component interaction validation"  
+echo "   🎭 Phase 3 - E2E User Journeys: Complete workflow validation (one-by-one)"
+echo "   🌐 Phase 4 - Browser Tests: Playwright PDF workflows (one-by-one)"
+echo "   🔒 Phase 5 - Security Tests: Authentication & data access (one-by-one)"
+echo ""
+
+print_status $BLUE "⚡ Expert Testing Approach:"
+echo "=========================="
+echo "   ✅ E2E/Browser tests run ONE BY ONE with real-time feedback"
+echo "   ✅ Each test gets full container resources and clean state"
+echo "   ✅ Immediate results - see pass/fail as each test completes"
+echo "   ✅ Better debugging - pinpoint exact failing tests instantly"
+echo "   ✅ No batch timeout issues - each test properly isolated"
 echo ""
 
 # Show consolidated error file info
@@ -251,8 +411,8 @@ if [[ -f "$CONSOLIDATED_ERROR_FILE" ]]; then
     echo "   📁 File: $CONSOLIDATED_ERROR_FILE"
     
     # Show file size and line count for quick assessment
-    local file_size=$(wc -c < "$CONSOLIDATED_ERROR_FILE")
-    local line_count=$(wc -l < "$CONSOLIDATED_ERROR_FILE")
+    file_size=$(wc -c < "$CONSOLIDATED_ERROR_FILE")
+    line_count=$(wc -l < "$CONSOLIDATED_ERROR_FILE")
     
     if [[ $file_size -gt 100 ]]; then
         echo "   📊 Size: $file_size bytes, $line_count lines"

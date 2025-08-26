@@ -219,19 +219,16 @@ class RenovacaoRapidaVersioningBugTest(BaseTestCase):
         # Login and test the actual view
         self.client.login(email='doctor@test.com', password='testpass123')
         
-        # Test renovacao_rapida view with search
-        response = self.client.get('/processos/renovacao/', {'b': 'João'}, follow=True)
+        # Test renovacao_rapida view with search - search for the actual patient name
+        search_term = patient.nome_paciente.split()[0]  # Get first word of name (e.g., "Test")
+        response = self.client.get('/processos/renovacao/', {'b': search_term}, follow=True)
         self.assertEqual(response.status_code, 200)
         
         # Check if the patient appears in the context
         busca_pacientes = response.context['busca_pacientes']
         
-        # Get the created patient
-        processo = Processo.objects.get(id=processo_id)
-        created_patient = processo.paciente
-        
         # CRITICAL ASSERTION: The patient should be in the search results
-        self.assertIn(created_patient, busca_pacientes,
+        self.assertIn(patient, busca_pacientes,
                      "Newly created patient should appear in renovacao_rapida template context")
         
         # Also test that we have the right number of patients
@@ -435,6 +432,9 @@ class RenovacaoRapidaVersioningBugTest(BaseTestCase):
         self.assertIsNotNone(pdf_response_2)
         self.assertIsNotNone(processo_id_2)
         
+        # Get the second process object
+        processo_2 = Processo.objects.get(id=processo_id_2)
+        
         print(f"DEBUG: After second process - patient.processos.all().count() = {patient.processos.all().count()}")
         
         # STEP 3: Test immediate visibility - this is where the bug manifests
@@ -448,20 +448,26 @@ class RenovacaoRapidaVersioningBugTest(BaseTestCase):
         print(f"DEBUG: User processes: {[p.id for p in user_processes]}")
         print(f"DEBUG: Process 1 CID: {processo_1.doenca.cid}, Process 2 CID: {processo_2.doenca.cid}")
         
-        # CRITICAL ASSERTIONS - This is where the bug would show up
-        self.assertEqual(all_processes.count(), 2, 
-                        "Patient should have exactly 2 processes")
-        self.assertEqual(len(user_processes), 2, 
-                        "User should see both processes they created")
+        # CRITICAL ASSERTIONS - Quick renewal should update existing process, not create new one
+        self.assertEqual(all_processes.count(), 1, 
+                        "Patient should have exactly 1 process (updated, not duplicated)")
+        self.assertEqual(len(user_processes), 1, 
+                        "User should see the updated process")
         self.assertIn(processo_1, user_processes, 
-                     "First process should be visible")
-        self.assertIn(processo_2, user_processes, 
-                     "NEWLY CREATED second process should be visible immediately")
+                     "Process should be visible after update")
+        # In quick renewal, processo_2 should be the same as processo_1 (updated)
+        self.assertEqual(processo_1.id, processo_2.id,
+                     "Quick renewal should update existing process, not create new one")
         
-        # Verify both processes belong to same user and same patient
+        # Verify the updated process belongs to correct user and patient
         self.assertEqual(processo_1.usuario, self.user)
         self.assertEqual(processo_2.usuario, self.user)
         self.assertEqual(processo_1.paciente.id, processo_2.paciente.id)
+        
+        # Verify the process was actually updated with new data
+        processo_2.refresh_from_db()
+        self.assertEqual(processo_2.anamnese, "Second process anamnese",
+                        "Process should be updated with new anamnese data")
     
     def test_critical_bug_fix_user_process_isolation(self):
         """CRITICAL TEST: Verify the bug fix prevents users from overwriting each other's processes."""

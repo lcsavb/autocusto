@@ -17,33 +17,28 @@ Existing User → Login Form → Dashboard
 
 ### **2. Initial Setup (First-Time Users Only)**
 
-#### **Step 2a: Complete Medical Profile**
+#### **Step 2a: Setup Validation (Internal Process)**
 ```
-Login → System Check → Missing CRM/CNS → Redirect to /medicos/completar-perfil/
+PreProcesso Form Submission → /processos/cadastro/ → Internal Setup Check
 ```
+
+**ACTUAL BEHAVIOR (Corrected):**
+- PreProcesso form ALWAYS redirects to `/processos/cadastro/` with `302` status
+- The `/processos/cadastro/` view internally validates setup completeness
+- If CRM/CNS missing → redirects to `/medicos/completar-perfil/`
+- If no clinics → redirects to `/clinicas/cadastro/`
+- If setup complete → displays process creation form with `200` status
 
 **User Experience:**
-- User sees: "Complete seus dados médicos antes de criar processos"
-- Form requires: CRM number confirmation + CNS number confirmation
-- **Immutability Rule**: Once set, CRM/CNS cannot be changed
+- User fills CPF + CID on home page
+- Gets redirected to process creation URL
+- If setup incomplete, gets redirected to appropriate setup step
+- Session data (CPF, CID) preserved throughout all redirects
 
 **Technical Detail:**
-- Status Code: `302` redirect to `complete-profile`
-- Session preservation during setup process
-
-#### **Step 2b: Create Medical Facility**
-```
-Profile Complete → System Check → No Clinics → Redirect to /clinicas/cadastro/
-```
-
-**User Experience:**
-- User sees: "Cadastre uma clínica antes de criar processos"
-- Form requires: Clinic name, CNS, address, phone in Brazilian format
-- System automatically associates clinic with current doctor
-
-**Technical Detail:**
-- Status Code: `302` redirect to `clinicas-cadastro`
-- Phone validation: `(11) 99999-9999` format required
+- Initial redirect: `302` to `/processos/cadastro/` 
+- Internal validation happens in process view, not home view
+- Session preservation during entire setup chain
 
 ### **3. Process Creation Workflow**
 
@@ -74,14 +69,15 @@ session["cpf_paciente"] = entered_cpf
 Patient Selected → Session Validation → Setup Validation → Process Form
 ```
 
-**System Validation Chain:**
-1. **Session Check**: `paciente_existe` and `cid` must exist
+**System Validation Chain (CORRECTED):**
+1. **PreProcesso Submission**: Home form redirects to `/processos/cadastro/` with `302`
+2. **Session Check**: `/processos/cadastro/` validates `paciente_existe` and `cid` 
    - **Fail**: `302` redirect to home with "Sessão expirada"
-2. **Profile Check**: CRM and CNS must be complete
-   - **Fail**: `302` redirect to `complete-profile`
-3. **Clinic Check**: User must have at least one clinic
-   - **Fail**: `302` redirect to `clinicas-cadastro`
-4. **All Pass**: `200` display process creation form
+3. **Profile Check**: CRM and CNS must be complete
+   - **Fail**: `302` redirect to `/medicos/completar-perfil/`
+4. **Clinic Check**: User must have at least one clinic
+   - **Fail**: `302` redirect to `/clinicas/cadastro/`
+5. **All Pass**: `200` display process creation form with patient data
 
 **User Experience:**
 - **Existing Patient**: Form pre-populated with patient data
@@ -103,23 +99,26 @@ Form Submission → Validation → Database Save → PDF Generation → Serving
 
 ### **Direct URL Access Scenarios**
 
-#### **Scenario 1: New User Accesses `/processos/cadastro/` Directly**
+#### **Scenario 1: Direct Access Without PreProcesso Session**
 ```
-Direct Access → No Session Data → 302 Redirect to Home
+Direct Access to /processos/cadastro/ → Missing Session Data → 302 Redirect to Home
 ```
 **Message**: "Sessão expirada. Por favor, inicie o cadastro novamente."
+**Root Cause**: User bypassed PreProcesso form, no CPF/CID in session
 
-#### **Scenario 2: Setup Incomplete User**
+#### **Scenario 2: Setup Incomplete After PreProcesso**
 ```
-Direct Access → Session OK → CRM/CNS Missing → 302 Redirect to Profile
+PreProcesso Form → /processos/cadastro/ → Setup Validation → Missing CRM/CNS → 302 Redirect to Profile
 ```
 **Message**: "Complete seus dados médicos antes de criar processos."
+**Flow**: User completes profile → redirected back to /processos/cadastro/
 
-#### **Scenario 3: No Clinic User**
+#### **Scenario 3: No Clinics After Profile Complete**
 ```
-Direct Access → Session OK → Profile OK → No Clinics → 302 Redirect to Clinic
+Profile Complete → /processos/cadastro/ → Setup Validation → No Clinics → 302 Redirect to Clinic
 ```
 **Message**: "Cadastre uma clínica antes de criar processos."
+**Flow**: User creates clinic → redirected back to /processos/cadastro/
 
 ### **Form Validation Failures**
 

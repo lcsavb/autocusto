@@ -25,7 +25,7 @@ services:
       - /dev/shm:rw,noexec,nosuid,size=200m
     depends_on:
       - db
-      - playwright-browsers
+      - playwright-server
     env_file:
       - .backupenv
     environment:
@@ -40,36 +40,19 @@ services:
       - SQL_PASSWORD=rraptnor
       - SQL_HOST=db
       - SQL_PORT=5432
-      # Playwright remote browser configuration
-      - PLAYWRIGHT_BROWSERS_CONTAINER=playwright-browsers
-      - PLAYWRIGHT_CHROMIUM_WS_ENDPOINT=http://172.18.0.2:9222
+      # Playwright server configuration
+      - PW_TEST_CONNECT_WS_ENDPOINT=ws://playwright-server:3000/
 
-  playwright-browsers:
-    image: mcr.microsoft.com/playwright:v1.40.0-jammy
-    # Expose browser server ports for remote connection
+  playwright-server:
+    image: mcr.microsoft.com/playwright:v1.54.0-noble
+    # Expose Playwright server port
     ports:
-      - "9222:9222"  # Chrome DevTools Protocol
-      - "9223:9223"  # Firefox remote debugging
-      - "9224:9224"  # WebKit remote debugging
-    # Environment for browser server mode
-    environment:
-      - DISPLAY=:99
-    # Security context for browser isolation
-    security_opt:
-      - seccomp:unconfined
-    # Shared memory for browser performance
-    shm_size: 2gb 
-    # Start browser servers that web container can connect to
+      - "3000:3000"
+    # Start Playwright server
     command: >
       sh -c "
-        # Start virtual display
-        Xvfb :99 -screen 0 1920x1080x24 &
-        
-        # Start Chromium in remote debugging mode
-        /ms-playwright/chromium-1091/chrome-linux/chrome --headless --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 --disable-web-security --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-host-check &
-        
-        # Keep container running
-        tail -f /dev/null
+        echo 'Starting Playwright server...'
+        npx -y playwright@1.54.0 run-server --port 3000 --host 0.0.0.0
       "
 
 
