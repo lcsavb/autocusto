@@ -1,9 +1,9 @@
 # Stage 1: Builder
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim-bookworm AS builder
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Set work directory
 WORKDIR /app
@@ -18,7 +18,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.t
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/prod-wheels -r requirements-production.txt
 
 # Stage 2: Base runtime (shared dependencies)
-FROM python:3.11-slim AS base
+FROM python:3.11-slim-bookworm AS base
 
 # Install core runtime dependencies (pdftk, PostgreSQL client)
 RUN apt-get update && apt-get install -y \
@@ -28,9 +28,11 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     curl \
     unzip \
+    ca-certificates \
     # PostgreSQL client
-    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-    && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && install -d /usr/share/keyrings \
+    && wget --quiet --timeout=30 --tries=3 -O /usr/share/keyrings/postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && echo "deb [signed-by=/usr/share/keyrings/postgresql.asc] http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get install -y postgresql-client-17 \
     && rm -rf /var/lib/apt/lists/*

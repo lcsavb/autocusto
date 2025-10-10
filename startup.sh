@@ -14,7 +14,7 @@ cp -r /home/appuser/app/static/autocusto/processos/* /dev/shm/autocusto/static/p
 echo "Copying protocolos PDFs to memory..."
 cp -r /home/appuser/app/static/autocusto/protocolos/* /dev/shm/autocusto/static/protocolos/ 2>/dev/null || true
 
-echo "Memory mount setup complete. PDF templates available in /dev/shm/autocusto/static/"
+echo "Memory mount dsetup complete. PDF templates available in /dev/shm/autocusto/static/"
 
 # Execute the original command
 exec "$@"
