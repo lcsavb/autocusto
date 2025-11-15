@@ -185,29 +185,36 @@
             <div class="row align-items-center no-gutters">
                 <!-- Left Column: Hero Content -->
                 <div class="col-lg-6 p-4">
-                    <h1 class="display-4 mb-3">LME em 2 cliques!</h1>
-                    <p class="lead text-secondary mb-4">Receitas e formulários de alto custo sem complicação.</p>
-                    
-                    <div class="developer-info mb-4">
-                        <h5 class="mb-3">Sobre o desenvolvedor</h5>
-                        <p class="mb-2 text-muted text-justify">Olá, me chamo Lucas. Sou neurologista formado pela UNIFESP e estudo Informática da Saúde na <a href="https://www.th-deg.de" target=""_blank>Technische Hochschule Deggendorf</a>. Minha missão é não te deixar perder tempo com burocracia.</p>
-                        <p class="mb-3 text-muted text-justify">Sempre amei tecnologia e software livre; por isso, desenvolvi este app de código aberto, baseado nas dificuldades que encontrava no dia a dia.</p>
+                    <h1 class="display-4 mb-3">LME em 2 cliques</h1>
+                    <p class="lead text-secondary mb-4">Laudo Médico para Medicamentos de Alto Custo, PCDT e formulários do SUS sem complicação.</p>
+
+                    <!-- Descrição objetiva com palavras‑chave -->
+                    <section class="mb-4" aria-label="Descrição do serviço">
+                        <h5 class="mb-2">Automação de LME e receituários para o SUS</h5>
+                        <p class="text-muted text-justify mb-2">
+                            Gere <strong>LME</strong> (Laudo para Medicamentos de <strong>Alto Custo</strong> de acordo com as regras do <strong>PCDT</strong> sem necessidade de download manual de dezenas de <strong>PDFs</strong>. 
+                        </p>
+                        <ul class="text-muted small pl-3 mb-3">
+                            <li><strong>Casos frequentes:</strong> Asma, Epilepsia, Diabetes, Esquizofrenia, Transtorno Afetivo Bipolar, Esclerose Múltipla, Doença de Parkinson, Dor Crônica Intratável.</li>
+                            <li><strong>Conformidade:</strong> regras do <abbr title="Protocolo Clínico e Diretrizes Terapêuticas">PCDT</abbr>, fluxos do <strong>SUS</strong> e campos obrigatórios de LME.</li>
+                            <li><strong>Produtividade:</strong> impressão/assinatura em lote, preenchimento guiado, verificação de consistência.</li>
+                        </ul>
+
+                        <!-- Sitelinks utilitários -->
                         <div class="d-flex flex-wrap align-items-center justify-content-between">
-                            <a href="https://github.com/lcsavb/autocusto" target="_blank" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
-                                <span class="oi oi-code mr-2"></span>
-                                Ver código no GitHub
+                            <a href="{% url 'privacy' %}" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
+                                <span class="oi oi-shield mr-2"></span>
+                                Privacidade (LGPD)
                             </a>
-                            <div class="text-muted small">
-                                <a href="{% url 'privacy' %}" class="text-muted mr-3">
-                                    <span class="oi oi-shield mr-2"></span>
-                                    Privacidade
-                                </a>
-                                <a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank" class="text-muted">
-                                    <img src="https://www.gnu.org/graphics/gplv3-127x51.png" alt="GPL v3 License" style="height: 15px; width: auto;">
-                                </a>
-                            </div>
+                            <a href="https://github.com/lcsavb/autocusto" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
+                                <span class="oi oi-code mr-2"></span>
+                                Código aberto no GitHub
+                            </a>
+                            <a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank" rel="noopener" class="text-muted small">
+                                <img src="https://www.gnu.org/graphics/gplv3-127x51.png" alt="GPL v3 License" style="height: 15px; width: auto;">
+                            </a>
                         </div>
-                    </div>
+                    </section>
 
                     <!-- Feature Grid -->
                     <div class="features-grid">
@@ -216,21 +223,21 @@
                                 <div class="feature-card text-center">
                                     <span class="oi oi-clock feature-icon text-info mb-2"></span>
                                     <h6 class="text-dark">Rapidez</h6>
-                                    <p class="text-muted small">Prescrições em segundos</p>
+                                    <p class="text-muted small">Processos completos em segundos</p>
                                 </div>
                             </div>
                             <div class="col-6 col-md-4 p-2">
                                 <div class="feature-card text-center">
                                     <span class="oi oi-check feature-icon text-success mb-2"></span>
                                     <h6 class="text-dark">Precisão</h6>
-                                    <p class="text-muted small">Validação automática</p>
+                                    <p class="text-muted small">Validação automática de campos</p>
                                 </div>
                             </div>
                             <div class="col-6 col-md-4 p-2">
                                 <div class="feature-card text-center">
                                     <span class="oi oi-shield feature-icon text-warning mb-2"></span>
                                     <h6 class="text-dark">Segurança</h6>
-                                    <p class="text-muted small">Proteção de dados</p>
+                                    <p class="text-muted small">Proteção de dados (LGPD)</p>
                                 </div>
                             </div>
                             <div class="col-6 col-md-4 p-2">
@@ -251,7 +258,7 @@
                                 <div class="feature-card text-center">
                                     <span class="oi oi-graph feature-icon text-info mb-2"></span>
                                     <h6 class="text-dark">Gestão</h6>
-                                    <p class="text-muted small">Controle simplificado</p>
+                                    <p class="text-muted small">Controle e histórico</p>
                                 </div>
                             </div>
                         </div>

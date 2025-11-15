@@ -67,10 +67,10 @@ class PDFGenerator:
     def fill_and_concatenate(self, template_paths: List[str], form_data: dict) -> Optional[bytes]:
         """
         Fill PDF templates with data and concatenate into single document.
-        
-        WORKFLOW (pypdftk.concat flattens forms):
-        1. Fill each PDF template individually with form data
-        2. Concatenate the filled PDFs into final document
+
+        WORKFLOW:
+        1. Fill each PDF template individually with form data (flatten=True)
+        2. Concatenate the already-flattened PDFs into final document
         3. Clean up temporary files from /dev/shm
         4. Return the final PDF bytes
         
@@ -146,12 +146,12 @@ class PDFGenerator:
                     else:
                         cleaned_form_data[key] = str(value)
                 
-                # Fill form
+                # Fill form and flatten immediately to make fields non-editable
                 filled_path = pypdftk.fill_form(
                     template_path,
                     cleaned_form_data,
                     ram_pdf_path,
-                    flatten=False
+                    flatten=True  # Flatten each PDF after filling to merge form fields
                 )
                 
                 if filled_path and os.path.exists(filled_path):
@@ -199,6 +199,8 @@ class PDFGenerator:
             # Track output file for cleanup
             self.temp_files.append(output_path)
             
+            # Note: pypdftk.concat() does NOT support flatten parameter
+            # PDFs are already flattened during fill_form() above
             result = pypdftk.concat(pdf_paths, output_path)
             
             if result and os.path.exists(result):
