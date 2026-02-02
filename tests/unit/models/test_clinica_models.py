@@ -104,16 +104,19 @@ class CNSIntegrityTest(BaseTransactionTestCase):
         
     def test_cns_unique_constraint(self):
         """Test that CNS must be unique across all clinics"""
+        from django.db import transaction
+        
         # Create first clinic with unique CNS
         clinic1 = self.create_test_clinica(nome_clinica="Clinic 1")
         unique_cns = clinic1.cns_clinica
         
-        # Try to create second clinic with same CNS
+        # Try to create second clinic with same CNS - wrap in transaction
         with self.assertRaises(IntegrityError):
-            Clinica.objects.create(
-                nome_clinica="Clinic 2",
-                cns_clinica=unique_cns  # Same CNS
-            )
+            with transaction.atomic():
+                Clinica.objects.create(
+                    nome_clinica="Clinic 2",
+                    cns_clinica=unique_cns  # Same CNS
+                )
     
     def test_cns_not_in_version_model(self):
         """Verify CNS is NOT stored in ClinicaVersion model"""

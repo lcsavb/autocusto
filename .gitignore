@@ -137,7 +137,6 @@ dmypy.json
 
 # Test-related files and directories
 tests/screenshots/
-test_screenshots/
 pytest.ini
 
 # Documentation and temporary files (generated/working docs)
@@ -163,3 +162,8 @@ roadmap.md
 
 # Test configuration
 test_settings.py
+
+# GitHub Actions artifacts
+.github/workflows/artifacts/
+test-results/
+coverage/

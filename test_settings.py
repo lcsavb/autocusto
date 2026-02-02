@@ -1,17 +1,33 @@
 """
 Test settings for AutoCusto
-Uses SQLite for testing instead of PostgreSQL
+Uses PostgreSQL in CI (when SQL_ENGINE is set) or SQLite for local testing
 """
 
 from autocusto.settings import *
+import os
 
 # Override database settings for testing
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+# Use PostgreSQL if SQL_ENGINE is set (CI environment), otherwise use SQLite
+if os.environ.get('SQL_ENGINE'):
+    # Use PostgreSQL settings from environment (for CI)
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('SQL_DATABASE', 'autocusto'),
+            'USER': os.environ.get('SQL_USER', 'postgres'),
+            'PASSWORD': os.environ.get('SQL_PASSWORD', 'postgres'),
+            'HOST': os.environ.get('SQL_HOST', 'localhost'),
+            'PORT': os.environ.get('SQL_PORT', '5432'),
+        }
     }
-}
+else:
+    # Use SQLite for local testing
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
 
 # Enable migrations for frontend tests that need real database structure
 # Note: Unit tests can still use --nomigrations flag if needed for speed

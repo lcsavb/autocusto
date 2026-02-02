@@ -34,9 +34,9 @@ class ProcessRegistrationPlaywrightBase(PlaywrightFormTestBase):
         
         print("🔧 DEBUG: Setting up process registration test data...")
         
-        # Create test user and medico
+        # Create test user and medico with unique data
         self.user1 = User.objects.create_user(
-            email='medico@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123'
         )
         self.user1.is_medico = True
@@ -44,15 +44,15 @@ class ProcessRegistrationPlaywrightBase(PlaywrightFormTestBase):
         
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. Ana Costa",
-            crm_medico="67890",
-            cns_medico="333333333333333"
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
         )
         self.medico1.usuarios.add(self.user1)
         
         # Create clinica and emissor
         self.clinica1 = Clinica.objects.create(
             nome_clinica="Clínica Nova Vida",
-            cns_clinica="7654321",
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
             logradouro="Av. Principal",
             logradouro_num="456",
             cidade="Rio de Janeiro",
@@ -70,8 +70,8 @@ class ProcessRegistrationPlaywrightBase(PlaywrightFormTestBase):
         # Create test patients - both new and existing
         self.new_patient = Paciente.objects.create(
             nome_paciente="Carlos Oliveira",
-            cpf_paciente="98765432100",
-            cns_paciente="444444444444444",
+            cpf_paciente=self.data_generator.generate_unique_cpf(),
+            cns_paciente=self.data_generator.generate_unique_cns_paciente(),
             nome_mae="Rita Oliveira",
             idade="55",
             sexo="M",

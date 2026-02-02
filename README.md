@@ -38,17 +38,57 @@ AutoCusto, a Portuguese pun combining "Alto" (High) and "Auto" (Automatic), was 
 1. Clone the repository
 2. Build the containers
     ``` sudo docker-compose up ```
-3. Access the web-dev container shell
-   ``` sudo docker exec -it [web-dev container id*] /bin/bash ```
-   * ```sudo docker ps``` to find the container id
-5. Inside the container shell run
-   ``` python3 manage.py migrate ```
-6. Access the Django shell
-   ``` python3 manage.py shell ```
-7. Inside the django shell, run the following command to populate the database
-    ``` from processos.db import doencas, med, protocolos, normatizacao, med_protocolos ```
-
-## License
-<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/lcsavb/autocusto">Autocusto</a> by <span property="cc:attributionName">Lucas Barros</span> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1" alt=""></a></p>
+3. Initialize the database with essential data
+   ```bash
+   # Copy the initialization dump to the database container
+   sudo docker cp autocusto_init_data.sql [db-container-id]:/tmp/
    
-[^1] https://www.gov.br/saude/pt-br/assuntos/noticias/2021/setembro/maior-sistema-publico-de-saude-do-mundo-sus-completa-31-anos
+   # Restore the database with core data (diseases, medications, protocols)
+   sudo docker exec [db-container-id] psql -U lucas -d autocusto -f /tmp/autocusto_init_data.sql
+   
+   # Run Django migrations to ensure schema is up-to-date
+   sudo docker exec [web-container-id] python manage.py migrate
+   ```
+   
+   **Find container IDs with:** `sudo docker ps`
+   
+   This will populate your database with:
+   - 235+ diseases with ICD codes
+   - 300+ medications with dosages
+   - 80+ medical protocols
+   - Essential Django system data
+
+4. *(Optional)* Create a superuser for Django admin access
+   ```bash
+   sudo docker exec -it [web-container-id] python manage.py createsuperuser
+   ```
+
+5. Access the application at `http://localhost:8001`
+
+### Database initialization details
+
+The `autocusto_init_data.sql` file contains only the essential reference data needed to run the application:
+
+**✅ Included:**
+- All database schema and migrations
+- Disease definitions (ICD codes)
+- Medication catalog with dosages
+- Medical protocols and forms
+- Django auth system setup
+
+
+### Troubleshooting
+
+**Database connection errors:**
+- Ensure the database container is fully started before running commands
+- Wait a few seconds after `docker-compose up` before initializing the database
+
+**Permission errors:**
+- Make sure the `autocusto_init_data.sql` file has read permissions
+- Use `sudo` with docker commands if needed
+
+**Schema migration issues:**
+- Always run ` sudo docker exec [web_container_id] python manage.py migrate` after restoring the database
+- This ensures all Django models are synchronized with the database schema
+
+

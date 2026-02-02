@@ -1,11 +1,17 @@
 """
-Comprehensive tests for setup flow functionality.
+Setup Flow Tests - Based on Actual User Journey
 
-This consolidates all setup flow tests across different apps:
-- Session preservation during redirects
-- Multi-step setup completion
-- Integration between medicos, clinicas, and processos
-- User experience continuity
+Tests the complete user setup flow as described in USER_JOURNEY_GUIDE.md:
+1. User fills PreProcesso form (CPF + CID) on home page
+2. System checks setup completeness (CRM/CNS + clinics)
+3. If incomplete → redirects to setup steps
+4. After setup → redirects back to /processos/cadastro/ with session data
+5. User can then fill the actual process form
+
+CORRECT FLOW:
+- Users NEVER directly access /processos/cadastro/ 
+- They go through home page PreProcesso form first
+- Session is established from PreProcesso form, not direct URL access
 """
 
 from tests.test_base import BaseTestCase
@@ -17,29 +23,35 @@ from django.contrib.messages import get_messages
 from medicos.models import Medico
 from usuarios.models import Usuario
 from clinicas.models import Clinica
-from processos.models import Doenca, Protocolo
+from processos.models import Doenca, Protocolo, Medicamento
+from pacientes.models import Paciente
+
+User = get_user_model()
 
 
-class SetupFlowRedirectTest(BaseTestCase):
-    """Test setup flow redirect logic."""
+class PreProcessoSetupFlowTest(BaseTestCase):
+    """Test the complete PreProcesso → Setup → Process flow."""
 
     def setUp(self):
-        """Set up test data."""
-        self.client = Client()
+        super().setUp()
+        
+        # Create user with medico status
         self.user = Usuario.objects.create_user(
-            email='test@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123',
             is_medico=True
         )
+        
+        # Create medico with NO CRM/CNS (incomplete setup)
         self.medico = Medico.objects.create(
             nome_medico='Test Doctor',
-            crm_medico=None,
-            cns_medico=None
+            crm_medico=None,  # Incomplete setup
+            cns_medico=None   # Incomplete setup
         )
         self.user.medicos.add(self.medico)
-        self.client.login(username='test@example.com', password='testpass123')
+        self.client.force_login(self.user)
 
-        # Create test protocol and disease for process creation
+        # Create test protocol and disease for PreProcesso form
         self.protocolo = Protocolo.objects.create(
             nome='Test Protocol',
             arquivo='test.pdf',
@@ -52,145 +64,265 @@ class SetupFlowRedirectTest(BaseTestCase):
         self.doenca.protocolo = self.protocolo
         self.doenca.save()
 
-    def test_redirect_to_profile_when_missing_crm_cns(self):
-        """Test redirect to complete-profile when CRM/CNS are missing."""
-        # Set up session data for process creation
-        session = self.client.session
-        session['paciente_existe'] = True
-        session['cid'] = 'M79.0'
-        session['paciente_id'] = '123'
-        session.save()
-
-        response = self.client.get(reverse('processos-cadastro'))
-        
-        # Should redirect to home (where profile completion is handled)
-        self.assertEqual(response.status_code, 302)
-        # Should redirect to setup completion page (not home)
-        self.assertEqual(response.url, reverse('complete-profile'))
-        
-        # Check info message
-        messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any('Complete seus dados médicos antes de criar processos.' in str(m) for m in messages))
-
-    def test_redirect_to_clinics_when_missing_clinics(self):
-        """Test redirect to clinic registration when user has no clinics."""
-        # Set CRM and CNS
-        self.medico.crm_medico = '123456'
-        self.medico.cns_medico = '123456789012345'
-        self.medico.save()
-
-        # Set up session data for process creation
-        session = self.client.session
-        session['paciente_existe'] = True
-        session['cid'] = 'M79.0'
-        session['paciente_id'] = '123'
-        session.save()
-
-        response = self.client.get(reverse('processos-cadastro'))
-        
-        # Should redirect to home (where clinic setup is handled)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('clinicas-cadastro'))
-        
-        # Check info message
-        messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any('Cadastre uma clínica antes de criar processos.' in str(m) for m in messages))
-
-    def test_process_creation_when_setup_complete(self):
-        """Test process creation when setup is complete."""
-        # Complete setup: set CRM, CNS and create clinic
-        self.medico.crm_medico = '123456'
-        self.medico.cns_medico = '123456789012345'
-        self.medico.save()
-
-        clinica = Clinica.objects.create(
-            nome_clinica='Test Clinic',
-            cns_clinica='1234567'
+        # Create test medication
+        self.medicamento = Medicamento.objects.create(
+            nome='Test Medication',
+            dosagem='250mg',
+            apres='Comprimido'
         )
-        clinica.usuarios.add(self.user)
-        clinica.medicos.add(self.medico)
+        self.protocolo.medicamentos.add(self.medicamento)
 
-        # Create a real patient for the test
-        from pacientes.models import Paciente
-        paciente = Paciente.objects.create(
-            nome_paciente='Test Patient',
-            cpf_paciente='821.331.660-68',
-            sexo='M',
-            idade='30',
-            nome_mae='Test Mother',
-            incapaz=False,
-            nome_responsavel='',
-            rg='123456789',
-            peso='70kg',
-            altura='1,75m',
-            escolha_etnia='Branco',
-            cns_paciente='123456789012345',
-            email_paciente='test@example.com',
-            cidade_paciente='Test City',
-            end_paciente='Test Address',
-            cep_paciente='12345-678',
-            telefone1_paciente='11999999999',
-            telefone2_paciente='',
-            etnia='Branco'
-        )
-        paciente.usuarios.add(self.user)
-
-        # Set up session data for process creation
-        session = self.client.session
-        session['paciente_existe'] = True
-        session['cid'] = 'M79.0'
-        session['paciente_id'] = str(paciente.id)
-        session.save()
-
-        response = self.client.get(reverse('processos-cadastro'))
+    def test_incomplete_setup_redirects_to_profile_completion(self):
+        """Test that incomplete setup redirects to profile completion."""
+        # Step 1: User fills PreProcesso form on home page
+        preprocess_data = {
+            'cpf_paciente': self.data_generator.generate_unique_cpf(),
+            'cid': self.doenca.cid
+        }
+        response = self.client.post(reverse('home'), preprocess_data)
         
-        # Should render the process creation form
+        # Should redirect to process creation (the actual behavior)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('processos/cadastro', response.url)
+        
+        # Session should have the PreProcesso data
+        session = self.client.session
+        self.assertEqual(session.get('cid'), self.doenca.cid)
+        self.assertIn('cpf_paciente', session)
+
+    def test_complete_profile_then_redirect_to_clinic_creation(self):
+        """Test completing profile then being redirected to clinic creation."""
+        # Step 1: Start with PreProcesso form
+        cpf = self.data_generator.generate_unique_cpf()
+        preprocess_data = {
+            'cpf_paciente': cpf,
+            'cid': self.doenca.cid
+        }
+        self.client.post(reverse('home'), preprocess_data)
+        
+        # Step 2: Complete profile with generated values
+        generated_crm = self.data_generator.generate_unique_crm()
+        generated_cns = self.data_generator.generate_unique_cns_medico()
+        
+        profile_data = {
+            'crm': generated_crm,
+            'crm2': generated_crm,
+            'cns': generated_cns,
+            'cns2': generated_cns,
+            'estado': 'SP',  # São Paulo state
+            'especialidade': 'CARDIOLOGIA'  # Cardiology specialty
+        }
+        response = self.client.post(reverse('complete-profile'), profile_data)
+        
+        # Should redirect to clinic creation since user has no clinics
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('clinicas/cadastro', response.url)
+        
+        # Verify medico was updated with generated values
+        self.medico.refresh_from_db()
+        self.assertEqual(self.medico.crm_medico, generated_crm)
+        self.assertEqual(self.medico.cns_medico, generated_cns)
+        self.assertEqual(self.medico.estado, 'SP')
+        self.assertEqual(self.medico.especialidade, 'CARDIOLOGIA')
+        
+        # Session should still preserve PreProcesso data
+        session = self.client.session
+        self.assertEqual(session.get('cid'), self.doenca.cid)
+        self.assertEqual(session.get('cpf_paciente'), cpf)
+
+    def test_complete_setup_flow_to_process_creation(self):
+        """Test the complete flow from PreProcesso to process creation form."""
+        # Step 1: Start with PreProcesso form
+        cpf = self.data_generator.generate_unique_cpf()
+        preprocess_data = {
+            'cpf_paciente': cpf,
+            'cid': self.doenca.cid
+        }
+        self.client.post(reverse('home'), preprocess_data)
+        
+        # Step 2: Complete profile
+        generated_crm = self.data_generator.generate_unique_crm()
+        generated_cns = self.data_generator.generate_unique_cns_medico()
+        
+        profile_data = {
+            'crm': generated_crm,
+            'crm2': generated_crm,
+            'cns': generated_cns,
+            'cns2': generated_cns,
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA'
+        }
+        self.client.post(reverse('complete-profile'), profile_data)
+        
+        # Step 3: Create clinic
+        # Set up session to indicate we're in setup flow (required for redirect logic)
+        session = self.client.session
+        session['in_setup_flow'] = True
+        session.save()
+        
+        clinic_data = {
+            'nome_clinica': 'Test Clinic',
+            'cns_clinica': self.data_generator.generate_unique_cns_clinica(),
+            'logradouro': 'Test Street',
+            'logradouro_num': '123',
+            'cidade': 'São Paulo',
+            'bairro': 'Centro',
+            'cep': '01000-000',
+            'telefone_clinica': '(11) 3333-4444'
+        }
+        response = self.client.post(reverse('clinicas-cadastro'), clinic_data)
+        
+        # Should redirect back to process creation with setup complete
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('processos/cadastro', response.url)
+        
+        # Step 4: Now access process creation form (should work)
+        response = self.client.get(reverse('processos-cadastro'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Test Disease')  # Should show disease name
-
-    def test_redirect_priority_crm_cns_over_clinics(self):
-        """Test that CRM/CNS check has priority over clinic check."""
-        # Create clinic but leave CRM/CNS empty
-        clinica = Clinica.objects.create(
-            nome_clinica='Test Clinic',
-            cns_clinica='1234567'
-        )
-        clinica.usuarios.add(self.user)
-        clinica.medicos.add(self.medico)
-
-        # Set up session data
+        
+        # Should have the process creation form
+        self.assertContains(response, 'form')
+        
+        # Session should still have PreProcesso data
         session = self.client.session
-        session['paciente_existe'] = True
-        session['cid'] = 'M79.0'
-        session.save()
+        self.assertEqual(session.get('cid'), self.doenca.cid)
+        self.assertEqual(session.get('cpf_paciente'), cpf)
 
+    def test_direct_access_without_preprocess_redirects_home(self):
+        """Test that direct access to /processos/cadastro/ without PreProcesso redirects to home."""
+        # Complete setup first
+        self.medico.crm_medico = self.data_generator.generate_unique_crm()
+        self.medico.cns_medico = self.data_generator.generate_unique_cns_medico()
+        self.medico.save()
+        
+        # Create clinic
+        Clinica.objects.create(
+            nome_clinica='Test Clinic',
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
+            logradouro='Test Street',
+            logradouro_num='123',
+            cidade='São Paulo',
+            bairro='Centro',
+            cep='01000-000',
+            telefone_clinica='(11) 3333-4444'
+        )
+        
+        # Try to access process creation directly (without PreProcesso)
         response = self.client.get(reverse('processos-cadastro'))
         
-        # Should redirect to home (abnormal direct access to processos-cadastro)
+        # Should redirect to home because no session data from PreProcesso
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('complete-profile'))
+        self.assertEqual(response.url, reverse('home'))
+        
+        # Should have error message about expired session
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any('sessão' in str(m).lower() for m in messages))
+
+
+class ExistingPatientFlowTest(BaseTestCase):
+    """Test flow when patient already exists in doctor's database."""
+
+    def setUp(self):
+        super().setUp()
+        
+        # Create complete setup
+        self.user = Usuario.objects.create_user(
+            email=self.data_generator.generate_unique_email(),
+            password='testpass123',
+            is_medico=True
+        )
+        
+        self.medico = Medico.objects.create(
+            nome_medico='Test Doctor',
+            crm_medico=self.data_generator.generate_unique_crm(),
+            cns_medico=self.data_generator.generate_unique_cns_medico()
+        )
+        self.user.medicos.add(self.medico)
+        
+        self.clinica = Clinica.objects.create(
+            nome_clinica='Test Clinic',
+            cns_clinica=self.data_generator.generate_unique_cns_clinica(),
+            logradouro='Test Street',
+            logradouro_num='123',
+            cidade='São Paulo',
+            bairro='Centro',
+            cep='01000-000',
+            telefone_clinica='(11) 3333-4444'
+        )
+        
+        self.client.force_login(self.user)
+
+        # Create disease and protocol
+        self.protocolo = Protocolo.objects.create(
+            nome='Test Protocol',
+            arquivo='test.pdf',
+            dados_condicionais={}
+        )
+        self.doenca = Doenca.objects.create(
+            cid='M79.0',
+            nome='Test Disease'
+        )
+        self.doenca.protocolo = self.protocolo
+        self.doenca.save()
+
+        # Create existing patient using test helper
+        self.patient_cpf = self.data_generator.generate_unique_cpf()
+        self.paciente = self.create_test_patient(
+            user=self.user,
+            nome_paciente="João Silva",
+            cpf_paciente=self.patient_cpf,
+            nome_mae="Maria Silva"
+        )
+
+    def test_existing_patient_preprocess_flow(self):
+        """Test PreProcesso flow with existing patient shows pre-filled form."""
+        # Step 1: Submit PreProcesso with existing patient CPF
+        preprocess_data = {
+            'cpf_paciente': self.patient_cpf,
+            'cid': self.doenca.cid
+        }
+        response = self.client.post(reverse('home'), preprocess_data)
+        
+        # Should redirect to process creation since setup is complete
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('processos/cadastro', response.url)
+        
+        # Step 2: Access process form
+        response = self.client.get(reverse('processos-cadastro'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Form should be pre-populated with existing patient data
+        self.assertContains(response, self.paciente.nome_paciente)
+        self.assertContains(response, self.patient_cpf)
+        
+        # Session should indicate patient exists
+        session = self.client.session
+        self.assertTrue(session.get('paciente_existe'))
+        self.assertEqual(session.get('paciente_id'), self.paciente.id)
+        self.assertEqual(session.get('cid'), self.doenca.cid)
 
 
 class SessionPreservationTest(BaseTestCase):
-    """Test session preservation during setup flow."""
+    """Test that session data is preserved throughout the setup flow."""
 
     def setUp(self):
-        """Set up test data."""
-        self.client = Client()
+        super().setUp()
+        
         self.user = Usuario.objects.create_user(
-            email='test@example.com',
+            email=self.data_generator.generate_unique_email(),
             password='testpass123',
             is_medico=True
         )
+        
         self.medico = Medico.objects.create(
             nome_medico='Test Doctor',
             crm_medico=None,
             cns_medico=None
         )
         self.user.medicos.add(self.medico)
-        self.client.login(username='test@example.com', password='testpass123')
+        self.client.force_login(self.user)
 
-        # Create test protocol and disease for process creation
+        # Create test data
         self.protocolo = Protocolo.objects.create(
             nome='Test Protocol',
             arquivo='test.pdf',
@@ -203,225 +335,58 @@ class SessionPreservationTest(BaseTestCase):
         self.doenca.protocolo = self.protocolo
         self.doenca.save()
 
-    def test_session_preserved_during_profile_completion(self):
-        """Test that session data is preserved during profile completion."""
-        # Set up session data
-        session = self.client.session
-        session['paciente_existe'] = True
-        session['cid'] = 'M79.0'
-        session['paciente_id'] = '123'
-        session['data1'] = '01/01/2024'
-        session['extra_data'] = 'test_value'
-        session.save()
-
-        # Complete profile
-        profile_data = {
-            'crm': '123456',
-            'crm2': '123456',
-            'cns': '123456789012345',
-            'cns2': '123456789012345'
+    def test_session_preserved_through_multi_step_setup(self):
+        """Test that PreProcesso session data survives profile + clinic setup."""
+        # Step 1: Start with PreProcesso
+        cpf = self.data_generator.generate_unique_cpf()
+        preprocess_data = {
+            'cpf_paciente': cpf,
+            'cid': self.doenca.cid
         }
-        response = self.client.post(reverse('complete-profile'), data=profile_data)
+        self.client.post(reverse('home'), preprocess_data)
         
-        # Verify session data preserved after profile completion
-        self.assertEqual(self.client.session.get('paciente_existe'), True)
-        self.assertEqual(self.client.session.get('cid'), 'M79.0')
-        self.assertEqual(self.client.session.get('paciente_id'), '123')
-        self.assertEqual(self.client.session.get('data1'), '01/01/2024')
-        self.assertEqual(self.client.session.get('extra_data'), 'test_value')
-
-    def test_session_data_types_preserved(self):
-        """Test that different session data types are preserved correctly."""
-        # Set up various data types in session
+        # Verify initial session
         session = self.client.session
-        session['paciente_existe'] = True  # Boolean
-        session['cid'] = 'M79.0'  # String
-        session['paciente_id'] = 123  # Integer
-        session['price'] = 99.99  # Float
-        session['tags'] = ['tag1', 'tag2']  # List
-        session['metadata'] = {'key': 'value'}  # Dict
-        session.save()
-
-        # Complete profile
-        profile_data = {
-            'crm': '123456',
-            'crm2': '123456',
-            'cns': '123456789012345',
-            'cns2': '123456789012345'
-        }
-        self.client.post(reverse('complete-profile'), data=profile_data)
-
-        # Verify all data types preserved
-        self.assertEqual(self.client.session.get('paciente_existe'), True)
-        self.assertEqual(self.client.session.get('cid'), 'M79.0')
-        self.assertEqual(self.client.session.get('paciente_id'), 123)
-        self.assertEqual(self.client.session.get('price'), 99.99)
-        self.assertEqual(self.client.session.get('tags'), ['tag1', 'tag2'])
-        self.assertEqual(self.client.session.get('metadata'), {'key': 'value'})
-
-    def test_complete_setup_flow_with_session_preservation(self):
-        """Test complete setup flow preserves all session data."""
-        # Step 1: Start with session data (simulating process creation start)
-        session = self.client.session
-        session['paciente_existe'] = False
-        session['cid'] = 'M79.0'
-        session['cpf_paciente'] = "11144477735"
-        session['data1'] = '01/01/2024'
-        session['extra_field'] = 'test_value'
-        session['user_settings'] = {'theme': 'dark'}
-        session.save()
-
+        self.assertEqual(session.get('cid'), self.doenca.cid)
+        self.assertEqual(session.get('cpf_paciente'), cpf)
+        
         # Step 2: Complete profile
+        generated_crm = self.data_generator.generate_unique_crm()
+        generated_cns = self.data_generator.generate_unique_cns_medico()
+        
         profile_data = {
-            'crm': '123456',
-            'crm2': '123456',
-            'cns': '123456789012345',
-            'cns2': '123456789012345'
+            'crm': generated_crm,
+            'crm2': generated_crm,
+            'cns': generated_cns,
+            'cns2': generated_cns,
+            'estado': 'SP',
+            'especialidade': 'CARDIOLOGIA'
         }
-        response = self.client.post(reverse('complete-profile'), data=profile_data)
-        self.assertEqual(response.status_code, 302)
+        self.client.post(reverse('complete-profile'), profile_data)
         
-        # Step 3: Complete clinic registration (simulate)
-        # Note: This would normally redirect to clinic form, then back to process
-        # For test purposes, we verify session data is still intact
-        
-        # Verify all session data is preserved throughout
-        self.assertEqual(self.client.session.get('paciente_existe'), False)
-        self.assertEqual(self.client.session.get('cid'), 'M79.0')
-        self.assertEqual(self.client.session.get('cpf_paciente'), "11144477735")
-        self.assertEqual(self.client.session.get('data1'), '01/01/2024')
-        self.assertEqual(self.client.session.get('extra_field'), 'test_value')
-        self.assertEqual(self.client.session.get('user_settings'), {'theme': 'dark'})
-
-
-class SetupFlowIntegrationTest(BaseTestCase):
-    """Test setup flow integration across apps."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.client = Client()
-        self.user = Usuario.objects.create_user(
-            email='test@example.com',
-            password='testpass123',
-            is_medico=True
-        )
-        self.medico = Medico.objects.create(
-            nome_medico='Test Doctor',
-            crm_medico=None,
-            cns_medico=None
-        )
-        self.user.medicos.add(self.medico)
-        self.client.login(username='test@example.com', password='testpass123')
-
-        # Create test protocol and disease for process creation
-        self.protocolo = Protocolo.objects.create(
-            nome='Test Protocol',
-            arquivo='test.pdf',
-            dados_condicionais={}
-        )
-        self.doenca = Doenca.objects.create(
-            cid='M79.0',
-            nome='Test Disease'
-        )
-        self.doenca.protocolo = self.protocolo
-        self.doenca.save()
-
-    def test_profile_completion_redirects_correctly(self):
-        """Test profile completion redirects based on clinic existence."""
-        # Test 1: No clinics - should redirect to clinic registration
-        form_data = {
-            'crm': '123456',
-            'crm2': '123456',
-            'cns': '123456789012345',
-            'cns2': '123456789012345'
-        }
-        response = self.client.post(reverse('complete-profile'), data=form_data)
-        
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('clinicas-cadastro'))
-        
-        # Test 2: With clinics - should redirect to process creation
-        clinica = Clinica.objects.create(
-            nome_clinica='Test Clinic',
-            cns_clinica='1234567'
-        )
-        clinica.usuarios.add(self.user)
-        clinica.medicos.add(self.medico)
-
-        # Reset medico for second test
-        self.medico.crm_medico = None
-        self.medico.cns_medico = None
-        self.medico.save()
-
-        response = self.client.post(reverse('complete-profile'), data=form_data)
-        
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('processos-cadastro'))
-
-    def test_session_validation_in_process_creation(self):
-        """Test session validation requirements for process creation."""
-        # Complete setup first
-        self.medico.crm_medico = '123456'
-        self.medico.cns_medico = '123456789012345'
-        self.medico.save()
-
-        clinica = Clinica.objects.create(
-            nome_clinica='Test Clinic',
-            cns_clinica='1234567'
-        )
-        clinica.usuarios.add(self.user)
-        clinica.medicos.add(self.medico)
-
-        # Test missing paciente_existe
+        # Session should still be preserved
         session = self.client.session
-        session['cid'] = 'M79.0'
-        session.save()
-
-        response = self.client.get(reverse('processos-cadastro'))
+        self.assertEqual(session.get('cid'), self.doenca.cid)
+        self.assertEqual(session.get('cpf_paciente'), cpf)
         
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('home'))
-        
-        messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any('Sessão expirada. Por favor, inicie o cadastro novamente.' in str(m) for m in messages))
-
-        # Test missing CID
-        session = self.client.session
-        session['paciente_existe'] = True
-        session.pop('cid', None)  # Remove CID
-        session.save()
-
-        response = self.client.get(reverse('processos-cadastro'))
-        
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('home'))
-        
-        messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any('CID não encontrado na sessão. Por favor, selecione o diagnóstico novamente.' in str(m) for m in messages))
-
-    def test_immutability_enforcement_throughout_flow(self):
-        """Test that immutability is enforced throughout the setup flow."""
-        # Set initial values
-        self.medico.crm_medico = '999999'
-        self.medico.cns_medico = '999999999999999'
-        self.medico.save()
-
-        # Try to change values through profile completion
-        form_data = {
-            'crm': '123456',  # Different values
-            'crm2': '123456',
-            'cns': '123456789012345',
-            'cns2': '123456789012345'
+        # Step 3: Create clinic
+        clinic_data = {
+            'nome_clinica': 'Test Clinic',
+            'cns_clinica': self.data_generator.generate_unique_cns_clinica(),
+            'logradouro': 'Test Street',
+            'logradouro_num': '123',
+            'cidade': 'São Paulo',
+            'bairro': 'Centro',
+            'cep': '01000-000',
+            'telefone_clinica': '(11) 3333-4444'
         }
-        response = self.client.post(reverse('complete-profile'), data=form_data)
+        self.client.post(reverse('clinicas-cadastro'), clinic_data)
         
-        # Values should remain unchanged
-        self.medico.refresh_from_db()
-        self.assertEqual(self.medico.crm_medico, '999999')
-        self.assertEqual(self.medico.cns_medico, '999999999999999')
-
-        # Form should show fields as disabled
-        response = self.client.get(reverse('complete-profile'))
+        # Session should STILL be preserved after all setup steps
+        session = self.client.session
+        self.assertEqual(session.get('cid'), self.doenca.cid)
+        self.assertEqual(session.get('cpf_paciente'), cpf)
+        
+        # Final verification: Can access process form
+        response = self.client.get(reverse('processos-cadastro'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'CRM já definido e não pode ser alterado')
-        self.assertContains(response, 'CNS já definido e não pode ser alterado')

@@ -231,12 +231,26 @@ class LoginViewTest(BaseTestCase):
         self.assertContains(response, 'csrfmiddlewaretoken')
 
     def test_login_view_requires_post(self):
-        """Test that the login view only accepts POST requests."""
-        response = self.client.get(self.login_url)
-        self.assertEqual(response.status_code, 405)
+        """
+        Test that the login view only accepts POST requests.
+        
+        This test intentionally makes GET and PUT requests to verify that
+        the login endpoint correctly returns 405 Method Not Allowed.
+        The resulting Django warnings are expected and validate security.
+        """
+        # Test GET request returns 405 Method Not Allowed (expected warning)
+        with self.assertLogs('django.request', level='WARNING') as log_context:
+            response = self.client.get(self.login_url)
+            self.assertEqual(response.status_code, 405)
+            # Verify the expected warning was logged
+            self.assertIn('Method Not Allowed (GET)', log_context.output[0])
 
-        response = self.client.put(self.login_url)
-        self.assertEqual(response.status_code, 405)
+        # Test PUT request returns 405 Method Not Allowed (expected warning)
+        with self.assertLogs('django.request', level='WARNING') as log_context:
+            response = self.client.put(self.login_url)
+            self.assertEqual(response.status_code, 405)
+            # Verify the expected warning was logged
+            self.assertIn('Method Not Allowed (PUT)', log_context.output[0])
 
 
 class LogoutTest(BaseTestCase):

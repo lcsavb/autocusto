@@ -39,17 +39,23 @@ class RenovationWorkflowPlaywrightBase(PlaywrightFormTestBase):
         self.user1.is_medico = True
         self.user1.save()
         
+        # Import data generator early
+        from tests.test_base import UniqueDataGenerator
+        data_generator = UniqueDataGenerator()
+        
         self.medico1 = Medico.objects.create(
             nome_medico="Dr. João Silva",
-            crm_medico="12345",
-            cns_medico="111111111111111"
+            crm_medico=data_generator.generate_unique_crm(),
+            cns_medico=data_generator.generate_unique_cns_medico(),
+            estado='SP',
+            especialidade='CARDIOLOGIA'
         )
         self.medico1.usuarios.add(self.user1)
         
         # Create clinica and emissor
         self.clinica1 = Clinica.objects.create(
             nome_clinica="Clínica Teste",
-            cns_clinica="1234567",
+            cns_clinica=data_generator.generate_unique_cns_clinica(),
             logradouro="Rua A",
             logradouro_num="123",
             cidade="São Paulo",
@@ -64,51 +70,55 @@ class RenovationWorkflowPlaywrightBase(PlaywrightFormTestBase):
             clinica=self.clinica1
         )
         
-        # Create test patient
-        self.patient1 = Paciente.objects.create(
-            nome_paciente="Maria Santos",
-            cpf_paciente="11144477735",
-            cns_paciente="111111111111111",
-            nome_mae="Ana Santos",
-            idade="45",
-            sexo="F",
-            peso="65",
-            altura="165",
-            incapaz=False,
-            etnia="Branca",
-            telefone1_paciente="11999999999",
-            end_paciente="Rua B, 456",
-            rg="123456789",
-            escolha_etnia="Branca",
-            cidade_paciente="São Paulo",
-            cep_paciente="01000-000",
-            telefone2_paciente="11888888888",
-            nome_responsavel="",
-        )
-        self.patient1.usuarios.add(self.user1)
+        # Create test patients using proper versioning service with generated data
+        from processos.services.prescription.patient_versioning_service import PatientVersioningService
+        
+        versioning_service = PatientVersioningService()
+        
+        patient1_data = {
+            'nome_paciente': "Maria Santos",
+            'cpf_paciente': data_generator.generate_unique_cpf(),
+            'cns_paciente': data_generator.generate_unique_cns_paciente(),
+            'nome_mae': "Ana Santos",
+            'idade': "45",
+            'sexo': "F",
+            'peso': "65",
+            'altura': "165",
+            'incapaz': False,
+            'etnia': "Branca",
+            'telefone1_paciente': "11999999999",
+            'end_paciente': "Rua B, 456",
+            'rg': "123456789",
+            'escolha_etnia': "Branca",
+            'cidade_paciente': "São Paulo",
+            'cep_paciente': "01000-000",
+            'telefone2_paciente': "11888888888",
+            'nome_responsavel': "",
+        }
+        self.patient1 = versioning_service.create_or_update_patient_for_user(self.user1, patient1_data)
         
         # Create another patient for search testing
-        self.patient2 = Paciente.objects.create(
-            nome_paciente="João Silva",
-            cpf_paciente="22255588846",
-            cns_paciente="222222222222222",
-            nome_mae="Maria Silva",
-            idade="30",
-            sexo="M",
-            peso="70",
-            altura="175",
-            incapaz=False,
-            etnia="Branca",
-            telefone1_paciente="11888888888",
-            end_paciente="Rua C, 789",
-            rg="987654321",
-            escolha_etnia="Branca",
-            cidade_paciente="São Paulo",
-            cep_paciente="01000-000",
-            telefone2_paciente="11777777777",
-            nome_responsavel="",
-        )
-        self.patient2.usuarios.add(self.user1)
+        patient2_data = {
+            'nome_paciente': "João Silva",
+            'cpf_paciente': data_generator.generate_unique_cpf(),
+            'cns_paciente': data_generator.generate_unique_cns_paciente(),
+            'nome_mae': "Maria Silva",
+            'idade': "30",
+            'sexo': "M",
+            'peso': "70",
+            'altura': "175",
+            'incapaz': False,
+            'etnia': "Branca",
+            'telefone1_paciente': "11888888888",
+            'end_paciente': "Rua C, 789",
+            'rg': "987654321",
+            'escolha_etnia': "Branca",
+            'cidade_paciente': "São Paulo",
+            'cep_paciente': "01000-000",
+            'telefone2_paciente': "11777777777",
+            'nome_responsavel': "",
+        }
+        self.patient2 = versioning_service.create_or_update_patient_for_user(self.user1, patient2_data)
         
         # Create medications and protocol
         self.med1 = Medicamento.objects.create(
@@ -324,7 +334,7 @@ class RenovationWorkflowTest(RenovationWorkflowPlaywrightBase):
         
         if cpf_field:
             # Search using existing patient CPF
-            cpf_field.fill("11144477735")
+            cpf_field.fill(self.patient1.cpf_paciente)
             
             # Submit search
             submit_button = self.page.locator('button[type="submit"], input[type="submit"]').first
